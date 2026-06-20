@@ -1,0 +1,12 @@
+<div class="feedback-box" style="border-left-color: var(--accent); margin-bottom: 0; background-color: var(--bg-card);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <div class="feedback-header">Fermentation Target</div>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Milling Ash Estimate: <strong>{{ calibration.ash_content_estimate }}%</strong></span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+        ⏱️ {{ calibration.estimated_bulk_fermentation_hours }} Hours
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-secondary);">
+        {{ calibration.notes }}
+    </p>
+</div>

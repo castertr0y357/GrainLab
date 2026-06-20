@@ -1,0 +1,117 @@
+<div class="card" style="border-color: var(--accent);">
+    <h3 style="color: var(--accent); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <span>Compiled Formula</span>
+        <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-secondary);">Total Mass: {{ recipe.target_mass }}g</span>
+    </h3>
+
+    <!-- Recipe Table -->
+    <table class="recipe-table">
+        <thead>
+            <tr>
+                <th>Ingredient</th>
+                <th style="text-align: right;">Weight (g)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Added Flour Weight</strong></td>
+                <td style="text-align: right; font-weight: bold;">{{ recipe.added_flour }}g</td>
+            </tr>
+            <tr>
+                <td><strong>Added Liquid</strong> ({{ recipe.liquid_label }})</td>
+                <td style="text-align: right; font-weight: bold;">{{ recipe.liquid_weight }}g</td>
+            </tr>
+            {% if leaven_type == "sourdough" %}
+                <tr>
+                    <td><strong>Sourdough Starter</strong> (100% hydration)</td>
+                    <td style="text-align: right; font-weight: bold;">{{ recipe.starter_weight }}g</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td><strong>Instant Dry Yeast</strong></td>
+                    <td style="text-align: right; font-weight: bold;">{{ recipe.yeast_weight }}g</td>
+                </tr>
+            {% endif %}
+            
+            {% if recipe.added_butter > 0 %}
+                <tr>
+                    <td><strong>Butter</strong> (solid enrichment)</td>
+                    <td style="text-align: right; font-weight: bold;">{{ recipe.added_butter }}g</td>
+                </tr>
+            {% elif recipe.added_oil > 0 %}
+                <tr>
+                    <td><strong>Fats / Oil</strong> (liquid enrichment)</td>
+                    <td style="text-align: right; font-weight: bold;">{{ recipe.added_oil }}g</td>
+                </tr>
+            {% endif %}
+            
+            {% if recipe.effective_sugar_pct > 0 %}
+                <tr>
+                    <td><strong>Sugar</strong></td>
+                    <td style="text-align: right; font-weight: bold;">{{ recipe.sugar_weight }}g</td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td><strong>Salt</strong> (2% ratio)</td>
+                <td style="text-align: right; font-weight: bold;">{{ recipe.salt_weight }}g</td>
+            </tr>
+            <tr class="highlight-row" style="background-color: hsla(28, 88%, 56%, 0.05);">
+                <td>Total Scaled Weight</td>
+                <td style="text-align: right;">{{ recipe.target_mass }}g</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Substitution Alerts -->
+    {% if recipe.substitution_notes %}
+        <div style="margin-bottom: 1.5rem;">
+            {% for note in recipe.substitution_notes %}
+                <div class="feedback-box" style="border-left-color: var(--success); padding: 0.75rem; font-size: 0.95rem;">
+                    <div style="font-weight: bold; color: var(--success); margin-bottom: 0.25rem;">Substitution Adjustment</div>
+                    {{ note }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Thermal Profile -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="feedback-box" style="margin-bottom: 0;">
+            <div class="feedback-header">Liquid Water Temp</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0;">
+                {{ recipe.required_water_temp_f }}°F
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                ({{ recipe.required_water_temp_c }}°C) to hit DDT 78°F
+            </div>
+        </div>
+        <div class="feedback-box" style="margin-bottom: 0; border-left-color: var(--warning);">
+            <div class="feedback-header" style="color: var(--warning);">Target Doneness</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
+                {{ doneness_temp_f }}°F
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                ({{ doneness_temp_c }}°C) internal probe temp
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Sensory Benchmark -->
+    <div class="feedback-box" style="border-left-color: var(--accent-hover); margin-bottom: 1.5rem;">
+        <div class="feedback-header" style="color: var(--accent-hover);">AI Sensory Benchmarks</div>
+        <p style="font-size: 0.95rem;">{{ sensory_description }}</p>
+    </div>
+
+    <!-- Pitfall Injection Alerts -->
+    {% if pitfalls %}
+        <div style="margin-top: 1rem;">
+            <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Operational Warnings & Task Injections</h4>
+            {% for pitfall in pitfalls %}
+                <div class="warning-box">
+                    <h4>⚠️ {{ pitfall.title }}</h4>
+                    <p style="font-size: 0.9rem;">{{ pitfall.message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,208 @@
+<form id="calculator-form"
+      hx-post="{% url 'calculate_recipe_ajax' %}"
+      hx-trigger="change, keyup delay:300ms, load"
+      hx-target="#recipe-output-container"
+      x-data="{
+          hydration: {{ default_hydration|default:68 }},
+          fat: {{ default_fat|default:0 }},
+          sugar: {{ default_sugar|default:0 }},
+          starter: {{ default_starter|default:0 }},
+          leaven: '{% if default_starter > 0 %}sourdough{% else %}yeast{% endif %}',
+          grain: '{{ default_flour_type|default:"all_purpose" }}',
+          maturity: '{{ default_flour_maturity|default:"matured" }}',
+          portioned: {% if selected_form_factor.is_portioned %}true{% else %}false{% endif %},
+          subOriginal: 'water',
+          subSubstitute: 'none'
+      }"
+      x-init="$watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } })">
+
+    {% if selected_preset %}
+        <input type="hidden" name="preset_slug" value="{{ selected_preset.slug }}">
+    {% endif %}
+
+    <!-- 1. Decoupled Data Matrix Selectors -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="input-group">
+            <label for="id_dough_category">Dough Category (Biology)</label>
+            <select name="dough_category" id="id_dough_category" class="form-select"
+                    hx-get="{% url 'calculator' %}" 
+                    hx-target="#calculator-form-container"
+                    hx-select="#calculator-form"
+                    hx-swap="outerHTML">
+                {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if category.slug == selected_category.slug %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="id_form_factor">Form Factor (Geometry)</label>
+            <select name="form_factor" id="id_form_factor" class="form-select"
+                    hx-get="{% url 'calculator' %}" 
+                    hx-target="#calculator-form-container"
+                    hx-select="#calculator-form"
+                    hx-swap="outerHTML"
+                    @change="portioned = ($el.options[$el.selectedIndex].text.includes('Units') || $el.options[$el.selectedIndex].text.includes('Portioned') || $el.options[$el.selectedIndex].text.includes('Naan'))">
+                {% for ff in form_factors %}
+                    <option value="{{ ff.slug }}" {% if ff.slug == selected_form_factor.slug %}selected{% endif %}>
+                        {{ ff.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- 2. Dynamic Hardware & Portion Settings -->
+    <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Geometry Constraints</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <template x-if="!portioned">
+                <div class="input-group" style="grid-column: span 2;">
+                    <label for="target_weight">Target Total Mass (grams)</label>
+                    <input type="number" name="target_weight" id="target_weight" class="num-input" value="{{ selected_form_factor.target_weight }}">
+                </div>
+            </template>
+            <template x-if="portioned">
+                <>
+                    <div class="input-group">
+                        <label for="unit_weight">Unit Portion Weight (g)</label>
+                        <input type="number" name="unit_weight" id="unit_weight" class="num-input" value="{{ selected_form_factor.unit_weight }}">
+                    </div>
+                    <div class="input-group">
+                        <label for="portion_count">Desired Count</label>
+                        <input type="number" name="portion_count" id="portion_count" class="num-input" value="{{ selected_form_factor.default_count }}">
+                    </div>
+                </>
+            </template>
+        </div>
+    </div>
+
+    <!-- 3. Controlled Variance Sliders -->
+    <div class="slider-group">
+        <div class="slider-label">
+            <span>Hydration Ratio (Water)</span>
+            <span x-text="hydration + '%'" class="highlight-row"></span>
+        </div>
+        <input type="range" name="hydration_pct" min="40" max="100" x-model="hydration">
+        <div class="slider-desc">Lean doughs sit around 65-75%; batter-based recipes go up to 85-95%.</div>
+    </div>
+
+    <div class="slider-group">
+        <div class="slider-label">
+            <span>Enrichment Fats (Butter / Oil)</span>
+            <span x-text="fat + '%'" class="highlight-row"></span>
+        </div>
+        <input type="range" name="fat_pct" min="0" max="30" x-model="fat">
+        <div class="slider-desc">Soft buns need 8-12%; lean crusty targets require 0%.</div>
+    </div>
+
+    <div class="slider-group">
+        <div class="slider-label">
+            <span>Sugars (Sweetness / Yeast Fuel)</span>
+            <span x-text="sugar + '%'" class="highlight-row"></span>
+        </div>
+        <input type="range" name="sugar_pct" min="0" max="30" x-model="sugar">
+        <div class="slider-desc">Enhances browning and feeds yeast. Enriched rolls use 6-12%.</div>
+    </div>
+
+    <!-- Leaven Type Selector -->
+    <div style="margin-bottom: 1.5rem;">
+        <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Leavening Biology</label>
+        <div class="chip-container">
+            <span class="chip" :class="leaven === 'yeast' ? 'active' : ''" @click="leaven = 'yeast'">
+                Commercial Yeast (1.5%)
+            </span>
+            <span class="chip" :class="leaven === 'sourdough' ? 'active' : ''" @click="leaven = 'sourdough'">
+                Sourdough Starter (Wild Yeast)
+            </span>
+            <input type="hidden" name="leaven_type" :value="leaven">
+        </div>
+    </div>
+
+    <div class="slider-group" x-show="leaven === 'sourdough'" x-transition>
+        <div class="slider-label">
+            <span>Sourdough Starter Percentage</span>
+            <span x-text="starter + '%'" class="highlight-row"></span>
+        </div>
+        <input type="range" name="starter_pct" min="5" max="40" x-model="starter">
+        <div class="slider-desc">Baker's standard is 20%. The formula will balance natural starter hydration automatically.</div>
+    </div>
+
+    <!-- 4. Grain Type Selection (Thirst Modifiers) -->
+    <div style="margin-bottom: 1.5rem;">
+        <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Grain Profile (Ancient Grain Absorption)</label>
+        <div class="chip-container">
+            <span class="chip" :class="grain === 'all_purpose' ? 'active' : ''" @click="grain = 'all_purpose'">AP Flour (+0%)</span>
+            <span class="chip" :class="grain === 'whole_wheat' ? 'active' : ''" @click="grain = 'whole_wheat'">Whole Wheat (+3%)</span>
+            <span class="chip" :class="grain === 'spelt' ? 'active' : ''" @click="grain = 'spelt'">Ancient Spelt (+5%)</span>
+            <span class="chip" :class="grain === 'kamut' ? 'active' : ''" @click="grain = 'grain = spelt'; grain = 'kamut'">Ancient Kamut (+6%)</span>
+            <span class="chip" :class="grain === 'einkorn' ? 'active' : ''" @click="grain = 'einkorn'">Ancient Einkorn (+4%)</span>
+            <input type="hidden" name="grain_type" :value="grain">
+        </div>
+    </div>
+
+    <!-- 5. Flour Maturity Adjustment -->
+    <div style="margin-bottom: 1.5rem;">
+        <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Milling Maturity (Acid relaxation window)</label>
+        <div class="chip-container">
+            <span class="chip" :class="maturity === 'just_milled' ? 'active' : ''" @click="maturity = 'just_milled'">Fresh Milled (Today)</span>
+            <span class="chip" :class="maturity === 'dead_zone' ? 'active' : ''" @click="maturity = 'dead_zone'">1-2 Weeks Dead Zone (-2%)</span>
+            <span class="chip" :class="maturity === 'matured' ? 'active' : ''" @click="maturity = 'matured'">Matured (2+ Weeks)</span>
+            <input type="hidden" name="flour_maturity" :value="maturity">
+        </div>
+    </div>
+
+    <!-- 6. Desired Dough Temp Inputs -->
+    <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Dough Temperature Calibration (DDT = 78°F)</h4>
+        <div class="temp-grid">
+            <div class="input-group">
+                <label for="room_temp">Room Temp (°F)</label>
+                <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+            </div>
+            <div class="input-group">
+                <label for="flour_temp">Flour Temp (°F)</label>
+                <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
+            </div>
+            <div class="input-group">
+                <label for="mixing_method">Mixing Method</label>
+                <select name="mixing_method" id="mixing_method" class="form-select">
+                    <option value="stand_mixer">Stand Mixer (10°F friction)</option>
+                    <option value="hand_knead">Hand Knead (2°F friction)</option>
+                    <option value="bread_machine">Bread Machine (15°F friction)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Chemistry Re-Balancing Swaps -->
+    <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
+         x-init="$watch('subOriginal', val => { if(val === 'water') { subSubstitute = 'none' } else { subSubstitute = 'none' } })">
+        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Chemical Substitutions</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="input-group">
+                <label for="sub_original">Original Ingredient</label>
+                <select name="sub_original" id="sub_original" class="form-select" x-model="subOriginal">
+                    <option value="water">Water</option>
+                    <option value="fat">Oil / Fats</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="sub_substitute">Alternative Swap</label>
+                <select name="sub_substitute" id="sub_substitute" class="form-select" x-model="subSubstitute">
+                    <option value="none">No Swap</option>
+                    <template x-if="subOriginal === 'water'">
+                        <>
+                            <option value="whole_milk">Whole Milk</option>
+                            <option value="almond_milk">Almond Milk</option>
+                        </>
+                    </template>
+                    <template x-if="subOriginal === 'fat'">
+                        <option value="butter">Butter</option>
+                    </template>
+                </select>
+            </div>
+        </div>
+    </div>
+</form>

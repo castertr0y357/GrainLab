@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div x-data="{ searchOpen: false, query: '' }">
+    <!-- Top Search Header -->
+    <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 1.1rem; color: var(--text-secondary);">
+            Global Bread Target Search & Preset Jump
+        </label>
+        <div class="search-container">
+            <input type="text" 
+                   name="q" 
+                   placeholder="Query targets (e.g. Pretzel, Naan, Focaccia, Bagel)..." 
+                   class="search-input"
+                   x-model="query"
+                   @input="searchOpen = query.length >= 2"
+                   @click.away="searchOpen = false"
+                   hx-get="{% url 'search_presets' %}" 
+                   hx-trigger="keyup changed delay:300ms" 
+                   hx-target="#search-suggestions"
+                   hx-indicator="#search-indicator">
+            
+            <div id="search-indicator" class="htmx-indicator" style="position: absolute; right: 15px; top: 12px;">
+                <span class="spinner"></span>
+            </div>
+            
+            <div id="search-suggestions" 
+                 class="search-results" 
+                 x-show="searchOpen" 
+                 x-transition
+                 style="display: none;">
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+            Selecting a target instantly sets Category, geometry, and perfect starting ratios.
+        </div>
+    </div>
+
+    <!-- Main Workspace Dashboard Grid -->
+    <div class="dashboard-grid">
+        
+        <!-- Left: Formulas and Parameters Panel -->
+        <div>
+            <div class="card">
+                <div class="card-title">
+                    <span>Formula Ratios</span>
+                    <span id="calc-indicator" class="htmx-indicator">
+                        <span class="spinner"></span>
+                    </span>
+                </div>
+                
+                <div id="calculator-form-container">
+                    {% include "partials/calculator_form.html" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Compiled Recipe Outputs -->
+        <div>
+            <div id="recipe-output-container">
+                <!-- Swapped in dynamically by HTMX -->
+                <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+                    <span class="spinner" style="width: 40px; height: 40px;"></span>
+                    <p style="margin-top: 1rem;">Compiling baking matrix...</p>
+                </div>
+            </div>
+
+            <!-- Sourdough Fermentation Diagnostics Calibrator -->
+            <div class="card" style="margin-top: 1.5rem;" x-data="{ feedHours: '4_8', riseSpeed: 'normal', millType: 'stoneground', sifted: false }">
+                <div class="card-title">
+                    <span>Milling & Starter Diagnostic</span>
+                </div>
+                <form hx-post="{% url 'sourdough_calibrate' %}" 
+                      hx-trigger="change, load" 
+                      hx-target="#sourdough-diagnostic-output">
+                    {% csrf_token %}
+                    <div style="margin-bottom: 1rem;" class="input-group">
+                        <label for="id_starter_feed_hours">Starter Feeding Schedule</label>
+                        <select name="starter_feed_hours" id="id_starter_feed_hours" class="form-select" x-model="feedHours">
+                            <option value="4_8">Active Feed (4-8 hours ago)</option>
+                            <option value="8_12">Matured Feed (8-12 hours ago)</option>
+                            <option value="12_18">Hungry starter (12-18 hours ago)</option>
+                            <option value="18_plus">Starved starter (18+ hours ago)</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;" class="input-group">
+                        <label for="id_rise_speed">Starter Activity / Expansion Speed</label>
+                        <select name="rise_speed" id="id_rise_speed" class="form-select" x-model="riseSpeed">
+                            <option value="fast">Explosive (Doubles in <4 hours)</option>
+                            <option value="normal">Normal (Doubles in 4-8 hours)</option>
+                            <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="input-group">
+                            <label for="id_mill_type">Mill Machinery Profile</label>
+                            <select name="mill_type" id="id_mill_type" class="form-select" x-model="millType">
+                                <option value="stoneground">Stoneground Mill (High friction)</option>
+                                <option value="steel_roller">Steel Roller Mill (Low friction)</option>
+                            </select>
+                        </div>
+                        <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end;">
+                            <label for="id_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
+                            <label class="switch">
+                                <input type="checkbox" name="is_sifted" id="id_is_sifted" x-model="sifted">
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="sourdough-diagnostic-output" style="margin-top: 1rem;">
+                        <!-- Diagnostic calibration output swapped here -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
