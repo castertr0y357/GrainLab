@@ -78,6 +78,13 @@ class BreadPreset(models.Model):
     flour_type_default = models.CharField(max_length=50, default="all_purpose")
     flour_maturity_default = models.CharField(max_length=50, default="matured")
 
+    # Classifier coordinates and anchors
+    classifier_texture = models.IntegerField(default=50, help_text="0 for Crusty, 100 for Soft")
+    classifier_crumb = models.IntegerField(default=50, help_text="0 for Dense, 100 for Open Crumb")
+    accessibility_definition = models.TextField(blank=True, help_text="Brief accessibility definition")
+    cultural_anchor = models.CharField(max_length=250, blank=True, help_text="Cultural anchor/history")
+    crumb_preview = models.CharField(max_length=50, default="Balanced", help_text="Crumb Structure Preview (Open, Balanced, or Even)")
+
     class Meta:
         indexes = [
             models.Index(fields=['slug']),

@@ -11,6 +11,10 @@
 - [x] Add unit, integration, and dynamic route scanning tests
 - [x] Move local AI parameters exclusively to database settings (remove from env settings)
 - [x] Parameterize local port bindings and DB options inside `.env` configurations
+- [x] Implement coordinate-based Euclidean Classifier Engine and dynamic feedback panel
+- [x] Migrate form inputs to simplified Texture and Crumb sliders
+- [x] Fix JSX template syntax errors in Alpine.js forms
+- [x] Add automated unit tests verifying the classifier coordinates and ratio mappings
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)

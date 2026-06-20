@@ -104,6 +104,102 @@ class BakersMathTests(TestCase):
         self.assertEqual(recipe["liquid_label"], "Whole Milk")
 
 
+class ClassifierEngineTests(TestCase):
+    """
+    Tests the Euclidean distance classifier engine and the mapping
+    of texture and crumb scores to recipe percentages.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        cls.category = DoughCategory.objects.create(
+            name="Enriched & Soft",
+            slug="enriched-soft",
+            base_hydration=0.62,
+            base_fat=0.08,
+            base_sugar=0.08
+        )
+        cls.form_factor = FormFactor.objects.create(
+            name="Portioned Buns",
+            slug="buns",
+            is_portioned=True,
+            target_weight=960.0,
+            unit_weight=80.0,
+            default_count=12
+        )
+        # Create presets for classification
+        cls.bagel = BreadPreset.objects.create(
+            name="Bagel",
+            slug="bagel",
+            dough_category=cls.category,
+            form_factor=cls.form_factor,
+            classifier_texture=15,
+            classifier_crumb=15,
+            crumb_preview="Even"
+        )
+        cls.pretzel = BreadPreset.objects.create(
+            name="Pretzel",
+            slug="pretzel",
+            dough_category=cls.category,
+            form_factor=cls.form_factor,
+            classifier_texture=20,
+            classifier_crumb=10,
+            crumb_preview="Even"
+        )
+        cls.naan = BreadPreset.objects.create(
+            name="Naan",
+            slug="naan",
+            dough_category=cls.category,
+            form_factor=cls.form_factor,
+            classifier_texture=65,
+            classifier_crumb=35,
+            crumb_preview="Balanced"
+        )
+
+    def test_score_mapping_to_ratios(self):
+        """
+        Verify that texture and crumb scores map to fat, sugar, and hydration correctly.
+        """
+        client = Client()
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 100,  # Max texture score = 15% fat, 12% sugar
+            "crumb_score": 100,    # Max crumb score = 85% hydration
+        })
+        self.assertEqual(response.status_code, 200)
+        recipe = response.context["recipe"]
+        # Max texture maps to 15% fat and 12% sugar
+        self.assertAlmostEqual(recipe["effective_fat_pct"], 15.0, places=1)
+        self.assertAlmostEqual(recipe["effective_sugar_pct"], 12.0, places=1)
+        # Max crumb maps to 85% hydration
+        self.assertAlmostEqual(recipe["effective_hydration_pct"], 85.0, places=1)
+
+    def test_euclidean_distance_classification(self):
+        """
+        Verify that coordinates close to specific presets match them.
+        """
+        client = Client()
+        # Coordinates (16, 14) are very close to Bagel (15, 15)
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 16,
+            "crumb_score": 14,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["classified_preset"], self.bagel)
+
+        # Coordinates (60, 38) are very close to Naan (65, 35)
+        response2 = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 60,
+            "crumb_score": 38,
+        })
+        self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response2.context["classified_preset"], self.naan)
+
+
 class DynamicRouteScannerTests(TestCase):
     """
     Implements a dynamic route scanner that resolves and checks all

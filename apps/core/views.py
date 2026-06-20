@@ -1,4 +1,5 @@
 import logging
+import math
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
@@ -20,8 +21,29 @@ def calculator(request):
     ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
     
     # Default selection values
-    default_cat = DoughCategory.objects.filter(slug='lean-crusty').first() or categories.first()
-    default_ff = FormFactor.objects.filter(slug='loaf-pan').first() or form_factors.first()
+    category_slug = request.GET.get("dough_category")
+    ff_slug = request.GET.get("form_factor")
+    
+    default_cat = None
+    if category_slug:
+        default_cat = DoughCategory.objects.filter(slug=category_slug).first()
+    if not default_cat:
+        default_cat = DoughCategory.objects.filter(slug='lean-crusty').first() or categories.first()
+        
+    default_ff = None
+    if ff_slug:
+        default_ff = FormFactor.objects.filter(slug=ff_slug).first()
+    if not default_ff:
+        default_ff = FormFactor.objects.filter(slug='loaf-pan').first() or form_factors.first()
+        
+    # Calculate slider defaults based on category base ratios
+    base_hydration = default_cat.base_hydration if default_cat else 0.68
+    base_fat = default_cat.base_fat if default_cat else 0.0
+    
+    # crumb_score = (hydration_pct - 0.45) / 0.40 * 100
+    default_crumb_score = int(max(0.0, min(100.0, ((base_hydration - 0.45) / 0.40) * 100)))
+    # texture_score = fat_pct / 0.15 * 100
+    default_texture_score = int(max(0.0, min(100.0, (base_fat / 0.15) * 100)))
     
     context = {
         "categories": categories,
@@ -30,10 +52,12 @@ def calculator(request):
         "selected_category": default_cat,
         "selected_form_factor": default_ff,
         "ai_enabled": ai_enabled,
-        "default_hydration": int((default_cat.base_hydration if default_cat else 0.68) * 100),
-        "default_fat": int((default_cat.base_fat if default_cat else 0.0) * 100),
+        "default_hydration": int(base_hydration * 100),
+        "default_fat": int(base_fat * 100),
         "default_sugar": int((default_cat.base_sugar if default_cat else 0.0) * 100),
         "default_starter": int((default_cat.base_starter if default_cat else 0.0) * 100),
+        "default_texture_score": default_texture_score,
+        "default_crumb_score": default_crumb_score,
     }
     return render(request, "calculator.html", context)
 
@@ -79,6 +103,8 @@ def load_preset(request, preset_id):
         "default_starter": starter,
         "default_flour_type": preset.flour_type_default,
         "default_flour_maturity": preset.flour_maturity_default,
+        "default_texture_score": preset.classifier_texture,
+        "default_crumb_score": preset.classifier_crumb,
     }
     return render(request, "partials/calculator_form.html", context)
 
@@ -87,18 +113,26 @@ def load_preset(request, preset_id):
 def calculate_recipe_ajax(request):
     """
     Main calculation route. Intercepts inputs, processes Baker's Math and fail-safes,
-    queries Gemma client (or fallbacks), and outputs formatted recipe card.
+    runs the Classifier Engine, queries Gemma client (or fallbacks), and outputs recipe card.
     """
-    # 1. Parse parameters
+    # 1. Parse parameters and scores
     cat_slug = request.POST.get("dough_category")
     ff_slug = request.POST.get("form_factor")
     
     cat = get_object_or_404(DoughCategory, slug=cat_slug)
     ff = get_object_or_404(FormFactor, slug=ff_slug)
     
-    hydration_pct = float(request.POST.get("hydration_pct", 68)) / 100.0
-    fat_pct = float(request.POST.get("fat_pct", 0)) / 100.0
-    sugar_pct = float(request.POST.get("sugar_pct", 0)) / 100.0
+    texture_score = int(request.POST.get("texture_score", 50))
+    crumb_score = int(request.POST.get("crumb_score", 50))
+    
+    # Map simplified scores (0-100) to baker's math percentages
+    # Crumb (0-100) -> Hydration (45%-85%)
+    hydration_pct = 0.45 + (crumb_score / 100.0) * 0.40
+    # Texture (0-100) -> Fat (0%-15%)
+    fat_pct = (texture_score / 100.0) * 0.15
+    # Texture (0-100) -> Sugar (0%-12%)
+    sugar_pct = (texture_score / 100.0) * 0.12
+    
     starter_pct = float(request.POST.get("starter_pct", 0)) / 100.0
     
     grain_type = request.POST.get("grain_type", "all_purpose")
@@ -175,14 +209,28 @@ def calculate_recipe_ajax(request):
             "<p>Please verify your inputs are positive values.</p></div>"
         )
 
-    # 4. Fetch AI Diagnostics (Sensory benchmark & pitfalls)
+    # 4. Classifier Engine: Euclidean distance match
+    all_presets = BreadPreset.objects.select_related('dough_category', 'form_factor').all()
+    classified_preset = None
+    min_distance = float('inf')
+    
+    for p in all_presets:
+        dist = math.sqrt(
+            (p.classifier_texture - texture_score) ** 2 +
+            (p.classifier_crumb - crumb_score) ** 2
+        )
+        if dist < min_distance:
+            min_distance = dist
+            classified_preset = p
+
+    # 5. Fetch AI Diagnostics (Sensory benchmark & pitfalls)
     eff_hyd = recipe["effective_hydration_pct"] / 100.0
-    preset_slug = request.POST.get("preset_slug")
+    preset_slug = classified_preset.slug if classified_preset else None
     
     sensory_desc = gemma_client.get_sensory_benchmark(grain_type, flour_maturity, eff_hyd)
     pitfalls = gemma_client.get_contextual_pitfalls(cat.slug, eff_hyd, grain_type, preset_slug)
     
-    # 5. Core Thermal Doneness Temperature
+    # 6. Core Thermal Doneness Temperature
     doneness_temp_f = 190 if ff.is_enriched_profile else 205
     doneness_temp_c = round((doneness_temp_f - 32) * 5 / 9, 1)
 
@@ -195,6 +243,9 @@ def calculate_recipe_ajax(request):
         "doneness_temp_f": doneness_temp_f,
         "doneness_temp_c": doneness_temp_c,
         "leaven_type": leaven_type,
+        "classified_preset": classified_preset,
+        "texture_score": texture_score,
+        "crumb_score": crumb_score,
     }
     return render(request, "partials/recipe_output.html", context)
 

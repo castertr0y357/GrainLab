@@ -174,6 +174,11 @@ class Command(BaseCommand):
                 "starter_override": 0.0,
                 "flour_type_default": "all_purpose",
                 "flour_maturity_default": "matured",
+                "classifier_texture": 20,
+                "classifier_crumb": 10,
+                "accessibility_definition": "Requires shaping and a brief boiling alkaline bath before baking to develop its characteristic dark, shiny skin.",
+                "cultural_anchor": "Traditional Bavarian soft bread, heavily associated with German beer halls and seasonal festivals.",
+                "crumb_preview": "Even",
             },
             {
                 "name": "Naan",
@@ -186,6 +191,11 @@ class Command(BaseCommand):
                 "starter_override": 0.0,
                 "flour_type_default": "all_purpose",
                 "flour_maturity_default": "matured",
+                "classifier_texture": 65,
+                "classifier_crumb": 35,
+                "accessibility_definition": "Fast hot-pan skillet bake. Best cooked in a screaming hot cast-iron skillet to mimic a tandoor oven.",
+                "cultural_anchor": "Classic South Asian flatbread, traditionally brushed with ghee and served alongside curries.",
+                "crumb_preview": "Balanced",
             },
             {
                 "name": "Focaccia",
@@ -198,6 +208,11 @@ class Command(BaseCommand):
                 "starter_override": 0.0,
                 "flour_type_default": "whole_wheat",
                 "flour_maturity_default": "matured",
+                "classifier_texture": 25,
+                "classifier_crumb": 85,
+                "accessibility_definition": "No-knead sheet pan bake. Relies on dimpling the dough and drizzling generously with olive oil and coarse sea salt.",
+                "cultural_anchor": "Traditional Ligurian flatbread from Northern Italy, seasoned with fresh rosemary and sea salt.",
+                "crumb_preview": "Open",
             },
             {
                 "name": "Bagel",
@@ -210,6 +225,11 @@ class Command(BaseCommand):
                 "starter_override": 0.0,
                 "flour_type_default": "all_purpose",
                 "flour_maturity_default": "matured",
+                "classifier_texture": 15,
+                "classifier_crumb": 15,
+                "accessibility_definition": "Requires boiling in a malt-barley water bath before baking to lock in structure and crust shine.",
+                "cultural_anchor": "Traditional Jewish bakery bread, famously boiled and baked, originating in Poland.",
+                "crumb_preview": "Even",
             },
         ]
 

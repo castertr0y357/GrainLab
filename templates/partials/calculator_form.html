@@ -3,9 +3,8 @@
       hx-trigger="change, keyup delay:300ms, load"
       hx-target="#recipe-output-container"
       x-data="{
-          hydration: {{ default_hydration|default:68 }},
-          fat: {{ default_fat|default:0 }},
-          sugar: {{ default_sugar|default:0 }},
+          texture: {{ default_texture_score|default:50 }},
+          crumb: {{ default_crumb_score|default:50 }},
           starter: {{ default_starter|default:0 }},
           leaven: '{% if default_starter > 0 %}sourdough{% else %}yeast{% endif %}',
           grain: '{{ default_flour_type|default:"all_purpose" }}',
@@ -64,7 +63,7 @@
                 </div>
             </template>
             <template x-if="portioned">
-                <>
+                <div style="display: contents;">
                     <div class="input-group">
                         <label for="unit_weight">Unit Portion Weight (g)</label>
                         <input type="number" name="unit_weight" id="unit_weight" class="num-input" value="{{ selected_form_factor.unit_weight }}">
@@ -73,7 +72,7 @@
                         <label for="portion_count">Desired Count</label>
                         <input type="number" name="portion_count" id="portion_count" class="num-input" value="{{ selected_form_factor.default_count }}">
                     </div>
-                </>
+                </div>
             </template>
         </div>
     </div>
@@ -81,29 +80,27 @@
     <!-- 3. Controlled Variance Sliders -->
     <div class="slider-group">
         <div class="slider-label">
-            <span>Hydration Ratio (Water)</span>
-            <span x-text="hydration + '%'" class="highlight-row"></span>
+            <span>Texture (Softness vs. Crustiness)</span>
+            <span class="highlight-row">
+                Softness: <span x-text="texture + '%'"></span> | 
+                Fat: <span x-text="Math.round((texture / 100) * 15) + '%'"></span> | 
+                Sugar: <span x-text="Math.round((texture / 100) * 12) + '%'"></span>
+            </span>
         </div>
-        <input type="range" name="hydration_pct" min="40" max="100" x-model="hydration">
-        <div class="slider-desc">Lean doughs sit around 65-75%; batter-based recipes go up to 85-95%.</div>
+        <input type="range" name="texture_score" min="0" max="100" x-model="texture">
+        <div class="slider-desc">Manipulate softness: 100% texture softness scales enrichment to 15% fat and 12% sugar. 0% represents a lean, crusty dough.</div>
     </div>
 
     <div class="slider-group">
         <div class="slider-label">
-            <span>Enrichment Fats (Butter / Oil)</span>
-            <span x-text="fat + '%'" class="highlight-row"></span>
+            <span>Hydration (Dense vs. Open Crumb)</span>
+            <span class="highlight-row">
+                Crumb: <span x-text="crumb + '%'"></span> | 
+                Hydration: <span x-text="Math.round(45 + (crumb / 100) * 40) + '%'"></span>
+            </span>
         </div>
-        <input type="range" name="fat_pct" min="0" max="30" x-model="fat">
-        <div class="slider-desc">Soft buns need 8-12%; lean crusty targets require 0%.</div>
-    </div>
-
-    <div class="slider-group">
-        <div class="slider-label">
-            <span>Sugars (Sweetness / Yeast Fuel)</span>
-            <span x-text="sugar + '%'" class="highlight-row"></span>
-        </div>
-        <input type="range" name="sugar_pct" min="0" max="30" x-model="sugar">
-        <div class="slider-desc">Enhances browning and feeds yeast. Enriched rolls use 6-12%.</div>
+        <input type="range" name="crumb_score" min="0" max="100" x-model="crumb">
+        <div class="slider-desc">Adjust crumb structure: scales hydration from 45% (dense, tight crumb) to 85% (wild, open sourdough crumb).</div>
     </div>
 
     <!-- Leaven Type Selector -->
@@ -193,13 +190,15 @@
                 <select name="sub_substitute" id="sub_substitute" class="form-select" x-model="subSubstitute">
                     <option value="none">No Swap</option>
                     <template x-if="subOriginal === 'water'">
-                        <>
+                        <optgroup label="Milk Alternatives">
                             <option value="whole_milk">Whole Milk</option>
                             <option value="almond_milk">Almond Milk</option>
-                        </>
+                        </optgroup>
                     </template>
                     <template x-if="subOriginal === 'fat'">
-                        <option value="butter">Butter</option>
+                        <optgroup label="Fat Alternatives">
+                            <option value="butter">Butter</option>
+                        </optgroup>
                     </template>
                 </select>
             </div>

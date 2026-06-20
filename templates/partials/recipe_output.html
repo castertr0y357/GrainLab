@@ -1,3 +1,22 @@
+{% if classified_preset %}
+<div class="card" style="border-left: 5px solid var(--accent); margin-bottom: 1.5rem; background: var(--bg-secondary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+        <h4 style="margin: 0; color: var(--accent); font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+            🎯 Classification Match: {{ classified_preset.name }}
+        </h4>
+        <span style="background-color: var(--accent); color: var(--bg-primary); padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600;">
+            {{ classified_preset.crumb_preview }} Crumb
+        </span>
+    </div>
+    <p style="font-size: 0.95rem; margin: 0 0 0.5rem 0; line-height: 1.4; color: var(--text-primary);">
+        <strong>Baking Target:</strong> {{ classified_preset.accessibility_definition }}
+    </p>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; display: flex; align-items: center; gap: 0.25rem;">
+        🌍 <em>{{ classified_preset.cultural_anchor }}</em>
+    </p>
+</div>
+{% endif %}
+
 <div class="card" style="border-color: var(--accent);">
     <h3 style="color: var(--accent); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
         <span>Compiled Formula</span>
