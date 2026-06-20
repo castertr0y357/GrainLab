@@ -19,11 +19,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY . .
 
+# Set executable permissions on entrypoint
+RUN chmod +x /app/entrypoint.sh
+
 # Create a non-privileged user and switch to it
 RUN useradd -U -d /app django && chown -R django:django /app
 
 USER django
 
 EXPOSE 8000
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 CMD ["gunicorn", "grainlab.wsgi:application", "--bind", "0.0.0.0:8000"]

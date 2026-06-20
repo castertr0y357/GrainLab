@@ -1,3 +1,4 @@
+import os
 from django.core.management.base import BaseCommand
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting
 
@@ -232,5 +233,24 @@ class Command(BaseCommand):
             setting, created = SystemSetting.objects.get_or_create(key=key, defaults={"value": val})
             if created:
                 self.stdout.write(f"  Created setting: {key} = {val}")
+
+        # 5. Create default superuser if it doesn't exist
+        superuser_username = os.getenv("SUPERUSER_USERNAME")
+        superuser_email = os.getenv("SUPERUSER_EMAIL")
+        superuser_password = os.getenv("SUPERUSER_PASSWORD")
+
+        if superuser_username and superuser_password:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            if not User.objects.filter(username=superuser_username).exists():
+                self.stdout.write("Creating default superuser...")
+                User.objects.create_superuser(
+                    username=superuser_username,
+                    email=superuser_email or "",
+                    password=superuser_password
+                )
+                self.stdout.write(f"  Created superuser: {superuser_username}")
+            else:
+                self.stdout.write(f"  Superuser '{superuser_username}' already exists.")
 
         self.stdout.write(self.style.SUCCESS("Database seeding completed successfully!"))
