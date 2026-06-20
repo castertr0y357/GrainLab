@@ -1,0 +1,500 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* HSL Color Palette - Warm Bread Oven Themes */
+    --bg-primary: hsl(28, 14%, 8%);
+    --bg-secondary: hsl(28, 12%, 13%);
+    --bg-card: hsl(28, 10%, 18%);
+    --bg-input: hsl(28, 8%, 22%);
+    --text-primary: hsl(0, 0%, 96%);
+    --text-secondary: hsl(28, 15%, 75%);
+    --text-muted: hsl(28, 10%, 55%);
+    --accent: hsl(28, 88%, 56%);          /* Glowing Ember Orange */
+    --accent-hover: hsl(28, 100%, 64%);
+    --accent-glow: hsla(28, 88%, 56%, 0.25);
+    --border: hsl(28, 8%, 24%);
+    --border-glow: hsla(28, 88%, 56%, 0.4);
+    --success: hsl(145, 63%, 42%);
+    --warning: hsl(38, 92%, 50%);
+    --danger: hsl(0, 72%, 50%);
+    --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    
+    /* Layout properties */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--accent-hover);
+}
+
+/* Base Layout Grid */
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+header {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.logo span {
+    color: var(--accent);
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.nav-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.nav-btn.primary {
+    background-color: var(--accent);
+    color: var(--bg-primary);
+}
+
+.nav-btn.primary:hover {
+    background-color: var(--accent-hover);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Main Dashboard Workspace */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards */
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: var(--transition);
+}
+
+.card:hover {
+    border-color: var(--border-glow);
+}
+
+.card-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+/* Search Area */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+    font-family: var(--font-sans);
+    transition: var(--transition);
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-top: 0.5rem;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.search-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-item:hover {
+    background-color: var(--bg-card);
+}
+
+/* Slider styling */
+.slider-group {
+    margin-bottom: 1.5rem;
+}
+
+.slider-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.slider-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: -0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Tactile Range Sliders for Flour-Dusted Hands */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: var(--bg-input);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+input[type=range]::-webkit-slider-thumb {
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -9px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    transition: var(--transition);
+}
+
+input[type=range]:active::-webkit-slider-thumb {
+    background: var(--accent-hover);
+    transform: scale(1.2);
+    box-shadow: 0 0 12px var(--accent);
+}
+
+/* Chips and Selectors */
+.chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chip {
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.chip:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.chip.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg-primary);
+}
+
+/* Ingredient Output Panel */
+.recipe-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.recipe-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+}
+
+.recipe-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.1rem;
+}
+
+.recipe-table tr:hover {
+    background-color: var(--bg-card);
+}
+
+.highlight-row {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+/* Feedback Cards & AI Outputs */
+.feedback-box {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-card);
+    border-left: 4px solid var(--accent);
+    margin-bottom: 1rem;
+}
+
+.feedback-header {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    color: var(--accent);
+}
+
+.warning-box {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background-color: hsla(0, 72%, 50%, 0.1);
+    border: 1px solid var(--danger);
+    border-left: 4px solid var(--danger);
+    margin-bottom: 1rem;
+}
+
+.warning-box h4 {
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+/* Grid for DDT calculator inputs */
+.temp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.num-input {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    font-size: 1.1rem;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: var(--transition);
+}
+
+.num-input:focus {
+    border-color: var(--accent);
+}
+
+/* Form Styles */
+.form-select {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    font-size: 1rem;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: var(--transition);
+}
+
+/* Toggle Switch Styles */
+.switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-input);
+    transition: .4s;
+    border-radius: 34px;
+    border: 1px solid var(--border);
+}
+
+.slider-round:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-secondary);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider-round {
+    background-color: var(--accent);
+}
+
+input:checked + .slider-round:before {
+    transform: translateX(24px);
+    background-color: var(--bg-primary);
+}
+
+/* Spinning Loader */
+.spinner {
+    border: 3px solid rgba(255,255,255,0.1);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border-left-color: var(--accent);
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Active Loading indicators */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
