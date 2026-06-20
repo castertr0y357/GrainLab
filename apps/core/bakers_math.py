@@ -166,6 +166,7 @@ def calculate_recipe(
         "added_water": round(added_water, 1),
         "liquid_label": liquid_label,
         "liquid_weight": round(liquid_weight, 1),
+        "sugar_weight": round(sugar_weight, 1),
         "salt_weight": round(salt_weight, 1),
         "yeast_weight": round(yeast_weight, 1),
         "starter_weight": round(starter_weight, 1),

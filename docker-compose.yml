@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: grainlab
+      POSTGRES_USER: grainlab_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  web:
+    build: .
+    environment:
+      - DATABASE_URL=postgres://grainlab_user:${DB_PASSWORD}@db:5432/grainlab
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - AI_API_URL=${AI_API_URL}
+      - AI_MODEL_NAME=${AI_MODEL_NAME}
+      - MOCK_MODE=${MOCK_MODE}
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

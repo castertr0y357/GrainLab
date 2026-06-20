@@ -1,0 +1,19 @@
+# Python runtime caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Django local databases
+db.sqlite3
+db.sqlite3-journal
+
+# Environment settings and secrets
+.env
+
+# Logs and runtime files
+*.log
+staticfiles/
+static_collected/
+media/
