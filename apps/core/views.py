@@ -32,18 +32,18 @@ def calculator(request):
         selected_preset = BreadPreset.objects.filter(slug=preset_slug).first()
         
     default_cat = None
-    if selected_preset:
-        default_cat = selected_preset.dough_category
-    elif category_slug:
+    if category_slug:
         default_cat = DoughCategory.objects.filter(slug=category_slug).first()
+    elif selected_preset:
+        default_cat = selected_preset.dough_category
     if not default_cat:
         default_cat = DoughCategory.objects.filter(slug='lean-crusty').first() or categories.first()
         
     default_ff = None
-    if selected_preset:
-        default_ff = selected_preset.form_factor
-    elif ff_slug:
+    if ff_slug:
         default_ff = FormFactor.objects.filter(slug=ff_slug).first()
+    elif selected_preset:
+        default_ff = selected_preset.form_factor
     if not default_ff:
         default_ff = FormFactor.objects.filter(slug='loaf-pan').first() or form_factors.first()
         

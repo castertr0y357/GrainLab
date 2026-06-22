@@ -7,6 +7,7 @@
           crumb: {{ default_crumb_score|default:50 }},
           starter: {{ default_starter|default:0 }},
           leaven: '{% if default_starter > 0 %}sourdough{% else %}yeast{% endif %}',
+          get leavening_type() { return this.leaven; },
           grain: '{{ default_flour_type|default:"all_purpose" }}',
           maturity: '{{ default_flour_maturity|default:"matured" }}',
           portioned: {% if selected_form_factor.is_portioned %}true{% else %}false{% endif %},
@@ -189,7 +190,7 @@
                 Store Refined Flour
             </span>
             <span class="chip" :class="grain_mode === 'milled' ? 'active' : ''" 
-                  @click="grain_mode = 'milled';"
+                  @click="grain_mode = 'milled'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
                   style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
                 Fresh-Milled Whole Grain
             </span>
@@ -416,7 +417,7 @@
             </div>
         </div>
 
-        <div class="slider-group" x-show="leaven === 'sourdough'" x-transition>
+        <div class="slider-group" x-show="leavening_type === 'sourdough'" x-transition>
             <div class="slider-label">
                 <span>Sourdough Starter Percentage</span>
                 <span x-text="starter + '%'" class="highlight-row"></span>
@@ -437,7 +438,7 @@
         </div>
 
         <!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
-        <div x-show="leaven === 'sourdough'" x-transition
+        <div x-show="leavening_type === 'sourdough'" x-transition
              style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
             <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                 Sourdough Starter Diagnostics
