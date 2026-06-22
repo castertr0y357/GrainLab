@@ -491,7 +491,7 @@
                 hx-select="#calculator-form" 
                 hx-swap="outerHTML" 
                 hx-push-url="/"
-                @click="current_phase = 1; grain_mode = 'refined'; selected_master = 'null'; query = '';">
+                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; query = '';">
             🗑️ HARD RESET
         </button>
     </div>
