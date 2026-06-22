@@ -28,6 +28,16 @@
 - [x] Implement bottom Navigation Control bar with Step Back and touch-friendly Hard Reset buttons
 - [x] Refactor sidebar recipe output with flat, borderless styling, transparent pill badges, and state-aware progressive rendering mapping (Phases 1-4)
 - [x] Unify sidebar container styles using standard card classes and hide Phase 1 classification predictive data
+- [x] Move Bagel preset to Category 3 (Alkaline Bath) and expand subtypes list
+- [x] Relocate global search bar to Phase 1 and advance search selection directly to Phase 3
+- [x] Isolate sidebar state panel visibility to Phase 3+ and replace with placeholder string when current_phase < 3
+- [x] Map default historically ideal wheat berries in Grain Optimizer grid
+- [x] Integrate Gemma AI client grain blend optimizer with safety rebalancing fallback
+- [x] Relocate Temperature Calibration to Phase 3 and integrate Kneading Method / Proofing Environment parameters
+- [x] Implement mass-based and Form Factor dynamic baking temperature/time profile scaling
+- [x] Relocate sourdough starter diagnostics card to Phase 4
+- [x] Implement full-width Initialize Bake button and countertop active sequential timeline countdown dashboard
+- [x] Write and run automated tests verifying all refactored progressive workflow features and logic
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)
