@@ -16,6 +16,8 @@
 - [x] Fix JSX template syntax errors in Alpine.js forms
 - [x] Add automated unit tests verifying the classifier coordinates and ratio mappings
 - [x] Fix CSRF trusted origins for custom LOCAL_PORT, define SECURE_PROXY_SSL_HEADER, and make checkbox parsing robust to resolve settings save issue
+- [x] Correct HTMX script Subresource Integrity (SRI) digest in base.html to prevent browser blocking
+
 
 
 ## 🚀 Active Feature Tasks
