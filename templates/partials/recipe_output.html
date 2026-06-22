@@ -1,19 +1,20 @@
 {% if recipe.structural_warning %}
-<div class="warning-box" style="background-color: rgba(220, 53, 69, 0.1); border-color: var(--danger); border-left-width: 4px; margin-bottom: 1.5rem; padding: 1rem; border-radius: var(--radius-md);">
-    <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 1.05rem;">⚠️ Gluten Strength Notice</h4>
-    <p style="font-size: 0.95rem; margin: 0; line-height: 1.4;">
+<div x-show="current_phase > 1" x-transition
+     style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+    <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 1.05rem;">⚠️ Gluten Strength Notice</h4>
+    <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
         {{ recipe.structural_warning }}
     </p>
 </div>
 {% endif %}
 
 {% if classified_preset %}
-<div class="card" style="border-left: 5px solid var(--accent); margin-bottom: 1.5rem; background: var(--bg-secondary);">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
-        <h4 style="margin: 0; color: var(--accent); font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+<div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: none;">
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
+        <span style="background: rgba(255, 255, 255, 0.05); color: var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;">
             🎯 Classification Match: {{ classified_preset.name }}
-        </h4>
-        <span style="background-color: var(--accent); color: var(--bg-primary); padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600;">
+        </span>
+        <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;">
             {{ classified_preset.crumb_preview }} Crumb
         </span>
     </div>
@@ -26,103 +27,120 @@
 </div>
 {% endif %}
 
-<div class="card" style="border-color: var(--accent);">
-    <h3 style="color: var(--accent); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-        <span>Compiled Formula</span>
-        <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-secondary);">Total Mass: {{ recipe.target_mass }}g</span>
-    </h3>
+<!-- SLEEK EMPTY STATE -->
+<div x-show="current_phase == 1" x-transition
+     style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 3rem 1.5rem; background-color: #1a1a1f; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+    Select a dough category to initialize formula math...
+</div>
 
-    <!-- Recipe Table -->
-    <table class="recipe-table">
-        <thead>
-            <tr>
-                <th>Ingredient</th>
-                <th style="text-align: right;">Weight (g)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>Added Flour Weight</strong></td>
-                <td style="text-align: right; font-weight: bold;">{{ recipe.added_flour }}g</td>
-            </tr>
+<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 2, 3, 4) -->
+<div x-show="current_phase > 1" x-transition>
+    
+    <!-- COMPILED FORMULA -->
+    <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
+            <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: {{ recipe.target_mass }}g</span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Flour Base Weight Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Added Flour Weight</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_flour }}g</span>
+            </div>
+            
+            <!-- Individual Grains (Only injected and shown when current_phase == 4) -->
+            {% if current_phase == 4 %}
             {% if recipe.wheat_berry_mix %}
                 {% for berry, weight in recipe.wheat_berry_mix.items %}
-                    <tr style="font-size: 0.9rem; background-color: rgba(255, 255, 255, 0.02);">
-                        <td style="padding-left: 2.5rem; color: var(--text-secondary);">🌾 Mill Blend: {{ berry }}</td>
-                        <td style="text-align: right; color: var(--text-secondary); font-size: 0.95rem;">{{ weight }}g</td>
-                    </tr>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">🌾 Mill Blend: {{ berry }}</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ weight }}g</span>
+                    </div>
                 {% endfor %}
             {% endif %}
-            <tr>
-                <td><strong>Added Liquid</strong> ({{ recipe.liquid_label }})</td>
-                <td style="text-align: right; font-weight: bold;">{{ recipe.liquid_weight }}g</td>
-            </tr>
+            {% endif %}
+            
+            <!-- Added Liquid Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
+            </div>
+            
+            <!-- Leaven Row -->
             {% if leaven_type == "sourdough" %}
-                <tr>
-                    <td><strong>Sourdough Starter</strong> (100% hydration)</td>
-                    <td style="text-align: right; font-weight: bold;">{{ recipe.starter_weight }}g</td>
-                </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Sourdough Starter (100% hydration)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.starter_weight }}g</span>
+                </div>
             {% else %}
-                <tr>
-                    <td><strong>Instant Dry Yeast</strong></td>
-                    <td style="text-align: right; font-weight: bold;">{{ recipe.yeast_weight }}g</td>
-                </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Instant Dry Yeast</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.yeast_weight }}g</span>
+                </div>
             {% endif %}
             
+            <!-- Enrichments: Butter / Oil -->
             {% if recipe.added_butter > 0 %}
-                <tr>
-                    <td><strong>Butter</strong> (solid enrichment)</td>
-                    <td style="text-align: right; font-weight: bold;">{{ recipe.added_butter }}g</td>
-                </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Butter (solid enrichment)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_butter }}g</span>
+                </div>
             {% elif recipe.added_oil > 0 %}
-                <tr>
-                    <td><strong>Fats / Oil</strong> (liquid enrichment)</td>
-                    <td style="text-align: right; font-weight: bold;">{{ recipe.added_oil }}g</td>
-                </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Fats / Oil (liquid enrichment)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_oil }}g</span>
+                </div>
             {% endif %}
             
+            <!-- Enrichments: Sugar -->
             {% if recipe.effective_sugar_pct > 0 %}
-                <tr>
-                    <td><strong>Sugar</strong></td>
-                    <td style="text-align: right; font-weight: bold;">{{ recipe.sugar_weight }}g</td>
-                </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Sugar</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.sugar_weight }}g</span>
+                </div>
             {% endif %}
-            <tr>
-                <td><strong>Salt</strong> (2% ratio)</td>
-                <td style="text-align: right; font-weight: bold;">{{ recipe.salt_weight }}g</td>
-            </tr>
-            <tr class="highlight-row" style="background-color: hsla(28, 88%, 56%, 0.05);">
-                <td>Total Scaled Weight</td>
-                <td style="text-align: right;">{{ recipe.target_mass }}g</td>
-            </tr>
-        </tbody>
-    </table>
+            
+            <!-- Salt Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Salt (2% ratio)</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.salt_weight }}g</span>
+            </div>
+            
+            <!-- Total Scaled Weight Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
+                <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
+                <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;">{{ recipe.target_mass }}g</span>
+            </div>
+        </div>
+    </div>
 
-    <!-- Substitution Alerts -->
+    <!-- SUBSTITUTION ALERTS -->
     {% if recipe.substitution_notes %}
-        <div style="margin-bottom: 1.5rem;">
+        <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
             {% for note in recipe.substitution_notes %}
-                <div class="feedback-box" style="border-left-color: var(--success); padding: 0.75rem; font-size: 0.95rem;">
-                    <div style="font-weight: bold; color: var(--success); margin-bottom: 0.25rem;">Substitution Adjustment</div>
-                    {{ note }}
+                <div style="background-color: #1a1a1f; border-left: 4px solid var(--success); padding: 1rem; border-radius: var(--radius-sm);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Substitution Adjustment</div>
+                    <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">{{ note }}</p>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    <!-- Thermal Profile -->
+    <!-- THERMAL PROFILE -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-        <div class="feedback-box" style="margin-bottom: 0;">
-            <div class="feedback-header">Liquid Water Temp</div>
-            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0;">
+        <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Liquid Water Temp</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
                 {{ recipe.required_water_temp_f }}°F
             </div>
             <div style="font-size: 0.85rem; color: var(--text-secondary);">
                 ({{ recipe.required_water_temp_c }}°C) to hit DDT 78°F
             </div>
         </div>
-        <div class="feedback-box" style="margin-bottom: 0; border-left-color: var(--warning);">
-            <div class="feedback-header" style="color: var(--warning);">Target Doneness</div>
+        <div style="background-color: #1a1a1f; border-left: 4px solid var(--warning); padding: 1rem; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em;">Target Doneness</div>
             <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
                 {{ doneness_temp_f }}°F
             </div>
@@ -132,22 +150,23 @@
         </div>
     </div>
 
-    <!-- Custom Sensory Benchmark -->
-    <div class="feedback-box" style="border-left-color: var(--accent-hover); margin-bottom: 1.5rem;">
-        <div class="feedback-header" style="color: var(--accent-hover);">AI Sensory Benchmarks</div>
-        <p style="font-size: 0.95rem;">{{ sensory_description }}</p>
+    <!-- AI SENSORY BENCHMARKS -->
+    <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">AI Sensory Benchmarks</div>
+        <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.5;">{{ sensory_description }}</p>
     </div>
 
-    <!-- Pitfall Injection Alerts -->
+    <!-- PITFALL ALERTS -->
     {% if pitfalls %}
-        <div style="margin-top: 1rem;">
-            <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Operational Warnings & Task Injections</h4>
+        <div style="margin-top: 1.5rem;">
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Operational Warnings & Task Injections</div>
             {% for pitfall in pitfalls %}
-                <div class="warning-box">
-                    <h4>⚠️ {{ pitfall.title }}</h4>
-                    <p style="font-size: 0.9rem;">{{ pitfall.message }}</p>
+                <div style="background-color: #1a1a1f; border-left: 4px solid var(--warning); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+                    <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-size: 0.95rem; font-weight: 600;">⚠️ {{ pitfall.title }}</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;">{{ pitfall.message }}</p>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
+
 </div>

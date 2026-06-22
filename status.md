@@ -26,6 +26,7 @@
 - [x] Implement Grain Bin Optimizer and structural safety blender for high-rise presets with automatic 70% structural grain enforcement and warnings
 - [x] Implement context-aware validation sliders for Phase 4 (Hydration & Crumb/Texture) with dynamic constraints and shifting limits
 - [x] Implement bottom Navigation Control bar with Step Back and touch-friendly Hard Reset buttons
+- [x] Refactor sidebar recipe output with flat, borderless styling, transparent pill badges, and state-aware progressive rendering mapping (Phases 1-4)
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)

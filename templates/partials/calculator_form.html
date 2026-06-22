@@ -31,6 +31,7 @@
     {% if selected_preset %}
         <input type="hidden" name="preset_slug" value="{{ selected_preset.slug }}">
     {% endif %}
+    <input type="hidden" name="current_phase" :value="current_phase">
 
     <!-- Hidden Dough Category and Form Factor selectors linked to HTMX -->
     <div style="display: none;">
@@ -183,7 +184,7 @@
         <!-- Segmented Toggle -->
         <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
             <span class="chip" :class="grain_mode === 'refined' ? 'active' : ''" 
-                  @click="grain_mode = 'refined'; current_phase = 4; grain = 'all_purpose';"
+                  @click="grain_mode = 'refined'; current_phase = 4; grain = 'all_purpose'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
                   style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
                 Store Refined Flour
             </span>
@@ -283,7 +284,7 @@
             <button type="button" 
                     class="nav-btn primary"
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
-                    @click="current_phase = 4">
+                    @click="current_phase = 4; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 PROCEED TO RECIPE CONFIGURATION →
             </button>
         </div>
@@ -479,7 +480,7 @@
                 style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; flex: 1;"
                 x-show="current_phase > 1" 
                 x-transition
-                @click="current_phase--">
+                @click="current_phase--; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
             ← STEP BACK
         </button>
         
@@ -491,7 +492,7 @@
                 hx-select="#calculator-form" 
                 hx-swap="outerHTML" 
                 hx-push-url="/"
-                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; query = '';">
+                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; query = ''; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
             🗑️ HARD RESET
         </button>
     </div>

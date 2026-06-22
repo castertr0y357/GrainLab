@@ -152,6 +152,7 @@ def calculate_recipe_ajax(request):
     # 1. Parse parameters and scores
     cat_slug = request.POST.get("dough_category")
     ff_slug = request.POST.get("form_factor")
+    current_phase = int(request.POST.get("current_phase", 1))
     
     cat = get_object_or_404(DoughCategory, slug=cat_slug)
     ff = get_object_or_404(FormFactor, slug=ff_slug)
@@ -310,6 +311,7 @@ def calculate_recipe_ajax(request):
         "classified_preset": classified_preset,
         "texture_score": texture_score,
         "crumb_score": crumb_score,
+        "current_phase": current_phase,
     }
     return render(request, "partials/recipe_output.html", context)
 
