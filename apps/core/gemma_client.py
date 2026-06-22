@@ -10,6 +10,14 @@ from apps.core.bakers_math import (
 
 logger = logging.getLogger("grainlab.gemma")
 
+def _get_val(obj, key, default=None):
+    if hasattr(obj, key):
+        return getattr(obj, key)
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return default
+
+
 def _is_ai_enabled():
     """Checks if AI integration is active."""
     # Check both environment variables and database settings
@@ -356,4 +364,49 @@ def analyze_equipment_ai(name, equipment_type):
             "notes": "Baking accessory helper.",
             "details": {}
         }
+
+
+def optimize_grain_blend(preset_slug, preset_name, active_berries):
+    """
+    Queries Gemma model to optimize the percentage blend of active wheat berries
+    for a specific bread preset.
+    Returns: (shares_dict, structural_warning) or None
+    """
+    if not _is_ai_enabled():
+        return None
+        
+    system_prompt = (
+        "You are a food science assistant specializing in flour milling. "
+        "Analyze the requested bread preset and the active wheat berries available. "
+        "Optimize the percentage blend (between 0.0 and 1.0, summing to 1.0) of each active wheat berry "
+        "to achieve the best structural and flavor profile for the preset. "
+        "If the preset is a high-rise bread (like Boule, Baguette, Ciabatta, French Loaf, Pizza, Bagel) "
+        "and the user has selected a blend that lacks sufficient gluten strength (e.g. too much soft wheat/ancient grains), "
+        "you MUST set 'structural_warning' to a warning string explaining the hazard, and adjust the blend to include "
+        "at least 70% of a hard/structural wheat berry. "
+        "Return a JSON object containing:\n"
+        "1. 'shares': a dictionary mapping each active wheat berry name to its float share (e.g., {\"Hard Red Spring Wheat\": 0.7, \"Soft White Wheat\": 0.3})\n"
+        "2. 'structural_warning': a string warning if the configuration is impossible/unsafe, or null/empty if safe."
+    )
+    
+    # Serialize berries to simple representation for the model
+    berries_data = []
+    for b in active_berries:
+        berries_data.append({
+            "name": _get_val(b, 'name'),
+            "protein_content": _get_val(b, 'protein_content', 12.0),
+            "hardness": _get_val(b, 'hardness', 'hard'),
+            "moisture_absorption_coef": _get_val(b, 'moisture_absorption_coef', 1.0)
+        })
+        
+    user_prompt = json.dumps({
+        "preset_slug": preset_slug,
+        "preset_name": preset_name,
+        "active_berries": berries_data
+    })
+    
+    result = call_gemma_api(system_prompt, user_prompt, expected_keys=["shares"])
+    if result and isinstance(result.get("shares"), dict):
+        return result.get("shares"), result.get("structural_warning")
+    return None
 

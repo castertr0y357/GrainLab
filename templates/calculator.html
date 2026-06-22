@@ -5,7 +5,7 @@
 <div x-data="{
     current_phase: {% if selected_preset %}3{% else %}1{% endif %},
     grain_mode: '{% if selected_preset %}{% if selected_preset.flour_type_default == 'all_purpose' %}refined{% else %}milled{% endif %}{% else %}refined{% endif %}',
-    selected_master: '{% if selected_preset %}{% if selected_preset.slug == 'pretzel' %}alkaline{% elif selected_preset.slug == 'naan' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% elif selected_preset.dough_category.slug == 'chemically-leavened' or selected_preset.dough_category.slug == 'batter-based' %}quick{% else %}flatbread{% endif %}{% else %}null{% endif %}',
+    selected_master: '{% if selected_preset %}{% if selected_preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif selected_preset.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}{% else %}null{% endif %}',
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     
@@ -26,6 +26,143 @@
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ],
+
+    // Countertop View Timers & Sequential Timeline
+    countertopMode: false,
+    steps: [
+        { key: 'mix', name: 'Mix', desc: 'Combine ingredients into a cohesive shaggy mass.' },
+        { key: 'knead', name: 'Knead', desc: 'Work the dough to develop structural gluten alignment.' },
+        { key: 'autolyse', name: 'Rest/Autolyse', desc: 'Let the dough rest to relax gluten and absorb moisture.' },
+        { key: 'bulk', name: 'Bulk Ferment', desc: 'Primary fermentation: allow yeast/sourdough to aerate the dough.' },
+        { key: 'proof', name: 'Proof', desc: 'Final proofing: shape and rise in baking pan/mat.' },
+        { key: 'bake', name: 'Bake', desc: 'Oven bake: target internal temp and crisp crust development.' }
+    ],
+    currentStepIndex: 0,
+    stepTimeRemaining: 0,
+    stepTotalTime: 1,
+    timerInterval: null,
+    timerRunning: false,
+    durations: { mix: 5, knead: 10, autolyse: 30, bulk: 240, proof: 120, bake: 45 },
+
+    init() {
+        this.$watch('presetSlug', value => {
+            this.selectIdealGrain();
+        });
+        this.$watch('grain_mode', value => {
+            if (value === 'milled') {
+                this.selectIdealGrain();
+            }
+        });
+        if (this.grain_mode === 'milled') {
+            this.selectIdealGrain();
+        }
+    },
+
+    selectIdealGrain() {
+        let idealName = 'Hard Red Winter Wheat';
+        if (this.presetSlug) {
+            let s = this.presetSlug.toLowerCase();
+            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel'].includes(s)) {
+                idealName = 'Hard Red Spring Wheat';
+            } else if (['french-loaf', 'brioche', 'pretzel'].includes(s)) {
+                idealName = 'Hard Red Winter Wheat';
+            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan'].includes(s)) {
+                idealName = 'Hard White Wheat';
+            }
+        }
+        this.activeBerries.forEach(b => {
+            b.selected = (b.name === idealName);
+        });
+    },
+
+    startBake() {
+        let el = document.getElementById('countertop-data');
+        if (el) {
+            this.durations = {
+                mix: parseInt(el.getAttribute('data-mix-min')) || 5,
+                knead: parseInt(el.getAttribute('data-knead-min')) || 10,
+                autolyse: parseInt(el.getAttribute('data-autolyse-min')) || 30,
+                bulk: parseInt(el.getAttribute('data-bulk-min')) || 240,
+                proof: parseInt(el.getAttribute('data-proof-min')) || 120,
+                bake: parseInt(el.getAttribute('data-bake-min')) || 45
+            };
+        }
+        this.countertopMode = true;
+        this.currentStepIndex = 0;
+        this.stepTimeRemaining = this.durations[this.steps[0].key] * 60;
+        this.stepTotalTime = this.stepTimeRemaining;
+        this.startTimer();
+    },
+
+    startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerRunning = true;
+        this.timerInterval = setInterval(() => {
+            if (this.stepTimeRemaining > 0) {
+                this.stepTimeRemaining--;
+            } else {
+                this.nextStep();
+            }
+        }, 1000);
+    },
+
+    pauseTimer() {
+        this.timerRunning = false;
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    },
+
+    toggleTimer() {
+        if (this.timerRunning) {
+            this.pauseTimer();
+        } else {
+            this.startTimer();
+        }
+    },
+
+    nextStep() {
+        if (this.currentStepIndex < this.steps.length - 1) {
+            this.currentStepIndex++;
+            this.stepTimeRemaining = this.durations[this.steps[this.currentStepIndex].key] * 60;
+            this.stepTotalTime = this.stepTimeRemaining;
+            if (this.timerRunning) {
+                this.startTimer();
+            }
+        } else {
+            this.pauseTimer();
+            alert('🎉 Baking process completed!');
+        }
+    },
+
+    prevStep() {
+        if (this.currentStepIndex > 0) {
+            this.currentStepIndex--;
+            this.stepTimeRemaining = this.durations[this.steps[this.currentStepIndex].key] * 60;
+            this.stepTotalTime = this.stepTimeRemaining;
+            if (this.timerRunning) {
+                this.startTimer();
+            }
+        }
+    },
+
+    formatTime(seconds) {
+        let hrs = Math.floor(seconds / 3600);
+        let mins = Math.floor((seconds % 3600) / 60);
+        let secs = seconds % 60;
+        let parts = [];
+        if (hrs > 0) {
+            parts.push(hrs.toString().padStart(2, '0'));
+        }
+        parts.push(mins.toString().padStart(2, '0'));
+        parts.push(secs.toString().padStart(2, '0'));
+        return parts.join(':');
+    },
+
+    get progressPercent() {
+        return Math.round(((this.stepTotalTime - this.stepTimeRemaining) / this.stepTotalTime) * 100);
+    },
     
     // Helpers
     isHighRise() {
@@ -112,7 +249,8 @@
         
         <!-- Left: Formulas and Parameters Panel -->
         <div>
-            <div class="card">
+            <!-- Wizard Configuration View -->
+            <div class="card" x-show="!countertopMode" x-transition>
                 <div class="card-title">
                     <span>Formula Ratios</span>
                     <span id="calc-indicator" class="htmx-indicator">
@@ -122,6 +260,86 @@
                 
                 <div id="calculator-form-container">
                     {% include "partials/calculator_form.html" %}
+                </div>
+            </div>
+
+            <!-- Countertop Active Timeline View -->
+            <div class="card" x-show="countertopMode" x-transition style="display: none; padding: 1.5rem; min-height: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+                    <span style="font-weight: 700; font-size: 1.15rem; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase;">
+                        🚀 Countertop Live Timeline
+                    </span>
+                    <button type="button" 
+                            style="background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-weight: 600; font-size: 0.85rem;"
+                            @click="pauseTimer(); countertopMode = false;">
+                        EXIT BAKE ✕
+                    </button>
+                </div>
+
+                <!-- Sequential Timeline Progress Blocks -->
+                <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+                    <template x-for="(step, idx) in steps" :key="step.key">
+                        <div style="flex: 1; min-width: 90px; text-align: center; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);"
+                             :style="idx === currentStepIndex ? 'background-color: rgba(255, 136, 0, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 700;' : (idx < currentStepIndex ? 'color: var(--success); opacity: 0.6;' : 'color: var(--text-muted); opacity: 0.4; border: 1px solid transparent;'">
+                            <div style="font-size: 1.15rem;" x-text="idx < currentStepIndex ? '✅' : (idx === currentStepIndex ? '⏱️' : '💤')"></div>
+                            <div style="font-size: 0.8rem; text-transform: uppercase; margin-top: 0.25rem;" x-text="step.name"></div>
+                            <div style="font-size: 0.7rem; margin-top: 0.1rem;" x-text="durations[step.key] + 'm'"></div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Active Step Showcase -->
+                <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Active Step</div>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);" x-text="steps[currentStepIndex].name"></h3>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="steps[currentStepIndex].desc"></p>
+                </div>
+
+                <!-- Live Countdown Digital Timer Card -->
+                <div style="background: radial-gradient(circle at top left, #1a1a1f, #111115); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.5rem; box-shadow: var(--shadow-lg);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Time Remaining</div>
+                    
+                    <!-- High-contrast Digital Readout -->
+                    <div style="font-size: 4rem; font-family: monospace; font-weight: 800; color: var(--text-primary); letter-spacing: 0.05em; line-height: 1; margin-bottom: 1rem;" 
+                         x-text="formatTime(stepTimeRemaining)">
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div style="width: 100%; height: 8px; background-color: var(--border); border-radius: 9999px; overflow: hidden; margin-bottom: 0.5rem;">
+                        <div style="height: 100%; background-color: var(--accent); transition: width 1s linear;"
+                             :style="'width: ' + progressPercent + '%'">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="progressPercent + '% Completed'"></div>
+                </div>
+
+                <!-- Timer Controls & Navigation -->
+                <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <!-- Step Back -->
+                    <button type="button" 
+                            style="height: 52px; flex: 1; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm);"
+                            :disabled="currentStepIndex === 0"
+                            :style="currentStepIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+                            @click="prevStep()">
+                        ◀ STEP BACK
+                    </button>
+
+                    <!-- Play/Pause -->
+                    <button type="button" 
+                            style="height: 52px; width: 140px; font-weight: 700; cursor: pointer; border-radius: var(--radius-sm); border: none;"
+                            :style="timerRunning ? 'background-color: rgba(220, 53, 69, 0.2); border: 1px solid var(--danger); color: var(--danger);' : 'background-color: rgba(40, 167, 69, 0.2); border: 1px solid var(--success); color: var(--success);'"
+                            @click="toggleTimer()">
+                        <span x-text="timerRunning ? '⏸ PAUSE' : '▶ START'"></span>
+                    </button>
+
+                    <!-- Skip Step -->
+                    <button type="button" 
+                            style="height: 52px; flex: 1; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm);"
+                            :disabled="currentStepIndex === steps.length - 1"
+                            :style="currentStepIndex === steps.length - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+                            @click="nextStep()">
+                        SKIP STEP ▶
+                    </button>
                 </div>
             </div>
         </div>

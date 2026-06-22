@@ -40,6 +40,30 @@ def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score, pre
     if not active_berries:
         return {"House Blend": 1.0}, 1.0, None
 
+    # Check if AI is active and query Gemma for optimized blend
+    from apps.core.models import SystemSetting
+    from django.conf import settings
+    
+    db_enabled = SystemSetting.get_val("ai_enabled", "False").lower() in ("true", "1", "t")
+    env_mock = getattr(settings, "MOCK_MODE", True)
+    ai_active = db_enabled and not env_mock
+
+    if ai_active:
+        from apps.core import gemma_client
+        ai_res = gemma_client.optimize_grain_blend(preset_slug, preset_name, active_berries)
+        if ai_res:
+            shares, structural_warning = ai_res
+            # Calculate weighted absorption coefficient
+            weighted_absorption = 0.0
+            for b in active_berries:
+                name = _get_val(b, 'name')
+                share = shares.get(name, 0.0)
+                coef = _get_val(b, 'moisture_absorption_coef', 1.0)
+                weighted_absorption += share * coef
+            if weighted_absorption == 0.0:
+                weighted_absorption = 1.0
+            return shares, weighted_absorption, structural_warning
+
     # 1. Classify berries
     ancient_berries = []
     hard_berries = []

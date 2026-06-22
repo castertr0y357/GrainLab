@@ -24,7 +24,7 @@
           presetName = '{{ selected_preset.name|escapejs }}';
           presetSlug = '{{ selected_preset.slug|escapejs }}';
           query = '{{ selected_preset.name|escapejs }}';
-          selected_master = '{% if selected_preset.slug == 'pretzel' %}alkaline{% elif selected_preset.slug == 'naan' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}flatbread{% endif %}';
+          selected_master = '{% if selected_preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif selected_preset.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';
           {% endif %}
       ">
 
@@ -74,7 +74,7 @@
                  @click="selected_master = 'lean'; $refs.doughCategorySelect.value = 'lean-crusty'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
                 <span style="font-size: 2.25rem; margin-bottom: 0.5rem;">🌾</span>
                 <strong style="font-size: 1.05rem;">Lean & Crusty</strong>
-                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Standard Sourdough, Bagel, Focaccia</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Sourdough Boule, Baguette, Artisan Pizza</span>
             </div>
             <!-- Enriched Card -->
             <div class="card" 
@@ -83,16 +83,16 @@
                  @click="selected_master = 'enriched'; $refs.doughCategorySelect.value = 'enriched-soft'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
                 <span style="font-size: 2.25rem; margin-bottom: 0.5rem;">🍞</span>
                 <strong style="font-size: 1.05rem;">Enriched & Soft</strong>
-                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Sandwich Bread, Buns, Brioche</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Everyday Sandwich, Brioche, Cinnamon Rolls</span>
             </div>
             <!-- Alkaline Card -->
             <div class="card" 
                  style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; border-width: 2px; min-height: 120px; transition: var(--transition); margin-bottom: 0;"
                  :style="selected_master === 'alkaline' ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''"
-                 @click="selected_master = 'alkaline'; $refs.doughCategorySelect.value = 'enriched-soft'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
+                 @click="selected_master = 'alkaline'; $refs.doughCategorySelect.value = 'alkaline-bath'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
                 <span style="font-size: 2.25rem; margin-bottom: 0.5rem;">🥨</span>
                 <strong style="font-size: 1.05rem;">Alkaline Bath</strong>
-                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Soft Pretzels, Pretzel Buns</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Soft Pretzels, Boiled Bagels</span>
             </div>
             <!-- Quick Card -->
             <div class="card" 
@@ -113,36 +113,8 @@
                 <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Naan, Tortillas, Pita, Crackers</span>
             </div>
         </div>
-    </div>
 
-    <!-- PHASE 2: Sub-Type Preset Selection & Search -->
-    <div x-show="current_phase === 2" x-transition>
-        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
-            Phase 2: Select Sub-Type Preset
-        </div>
-        <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            {% for p in presets %}
-                <span class="chip" 
-                      x-show="
-                        (selected_master === 'lean' && '{{ p.dough_category.slug }}' === 'lean-crusty') ||
-                        (selected_master === 'enriched' && '{{ p.dough_category.slug }}' === 'enriched-soft' && '{{ p.slug }}' !== 'pretzel' && '{{ p.slug }}' !== 'naan') ||
-                        (selected_master === 'alkaline' && '{{ p.slug }}' === 'pretzel') ||
-                        (selected_master === 'quick' && ('{{ p.dough_category.slug }}' === 'chemically-leavened' || '{{ p.dough_category.slug }}' === 'batter-based')) ||
-                        (selected_master === 'flatbread' && ('{{ p.dough_category.slug }}' === 'non-leavened-crisp' || '{{ p.slug }}' === 'naan'))
-                      "
-                      hx-get="{% url 'load_preset' p.id %}"
-                      hx-target="#calculator-form-container"
-                      hx-select="#calculator-form"
-                      hx-swap="outerHTML"
-                      hx-push-url="?preset={{ p.slug }}"
-                      @click="current_phase = 3; presetName = '{{ p.name|escapejs }}'; presetSlug = '{{ p.slug|escapejs }}'; query = '{{ p.name|escapejs }}'; selected_master = '{% if p.slug == 'pretzel' %}alkaline{% elif p.slug == 'naan' %}flatbread{% elif p.dough_category.slug == 'lean-crusty' %}lean{% elif p.dough_category.slug == 'enriched-soft' %}enriched{% else %}flatbread{% endif %}';"
-                      style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
-                    {{ p.name }}
-                </span>
-            {% endfor %}
-        </div>
-        
-        <!-- Autocomplete search nested in progressive flow -->
+        <!-- Autocomplete search relocated prominently to Phase 1 -->
         <div style="background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 1rem; color: var(--text-secondary);">
                 Or Search Preset Target
@@ -172,6 +144,34 @@
                      style="display: none;">
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- PHASE 2: Sub-Type Preset Selection -->
+    <div x-show="current_phase === 2" x-transition>
+        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
+            Phase 2: Select Sub-Type Preset
+        </div>
+        <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            {% for p in presets %}
+                <span class="chip" 
+                      x-show="
+                        (selected_master === 'lean' && '{{ p.dough_category.slug }}' === 'lean-crusty') ||
+                        (selected_master === 'enriched' && '{{ p.dough_category.slug }}' === 'enriched-soft') ||
+                        (selected_master === 'alkaline' && '{{ p.dough_category.slug }}' === 'alkaline-bath') ||
+                        (selected_master === 'quick' && ('{{ p.dough_category.slug }}' === 'chemically-leavened' || '{{ p.dough_category.slug }}' === 'batter-based')) ||
+                        (selected_master === 'flatbread' && '{{ p.dough_category.slug }}' === 'non-leavened-crisp')
+                      "
+                      hx-get="{% url 'load_preset' p.id %}"
+                      hx-target="#calculator-form-container"
+                      hx-select="#calculator-form"
+                      hx-swap="outerHTML"
+                      hx-push-url="?preset={{ p.slug }}"
+                      @click="current_phase = 3; presetName = '{{ p.name|escapejs }}'; presetSlug = '{{ p.slug|escapejs }}'; query = '{{ p.name|escapejs }}'; selected_master = '{% if p.dough_category.slug == 'alkaline-bath' %}alkaline{% elif p.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif p.dough_category.slug == 'lean-crusty' %}lean{% elif p.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';"
+                      style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
+                    {{ p.name }}
+                </span>
+            {% endfor %}
         </div>
     </div>
 
@@ -224,45 +224,59 @@
                 <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
             </div>
 
-            <!-- Milling & Starter Diagnostic inline fields -->
-            <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
-                <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
-                    Milling & Starter Diagnostic Parameters
+            <!-- Relocated Dough Temperature Calibration Block -->
+            <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+                <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label for="room_temp">Room Temp (°F)</label>
+                        <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+                    </div>
+                    <div class="input-group">
+                        <label for="flour_temp">Flour Temp (°F)</label>
+                        <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
+                    </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div class="input-group">
-                        <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
-                        <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
-                                hx-post="{% url 'sourdough_calibrate' %}" 
-                                hx-target="#sourdough-diagnostic-output"
-                                hx-trigger="change">
-                            <option value="4_8">Active Feed (4-8 hours ago)</option>
-                            <option value="8_12">Matured Feed (8-12 hours ago)</option>
-                            <option value="12_18">Hungry starter (12-18 hours ago)</option>
-                            <option value="18_plus">Starved starter (18+ hours ago)</option>
+                        <label for="custom_mixer">Mixing Equipment</label>
+                        <select name="custom_mixer" id="custom_mixer" class="form-select" @change="use_custom = ($el.value !== 'static')">
+                            <option value="static">Standard Preset Method...</option>
+                            {% for mixer in mixers %}
+                                <option value="{{ mixer.id }}">{{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)</option>
+                            {% endfor %}
                         </select>
                     </div>
-
-                    <div class="input-group">
-                        <label for="flow_rise_speed">Starter activity speed</label>
-                        <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
-                                hx-post="{% url 'sourdough_calibrate' %}" 
-                                hx-target="#sourdough-diagnostic-output"
-                                hx-trigger="change">
-                            <option value="fast">Explosive (Doubles in <4 hours)</option>
-                            <option value="normal">Normal (Doubles in 4-8 hours)</option>
-                            <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
+                    <div class="input-group" x-show="!use_custom">
+                        <label for="mixing_method">Kneading Method</label>
+                        <select name="mixing_method" id="mixing_method" class="form-select">
+                            <option value="stand_mixer">Stand Mixer</option>
+                            <option value="hand_knead">Hand Knead</option>
+                            <option value="bread_machine">Bread Machine</option>
                         </select>
                     </div>
                 </div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="proofing_environment">Proofing Environment</label>
+                        <select name="proofing_environment" id="proofing_environment" class="form-select">
+                            <option value="ambient">Ambient Room</option>
+                            <option value="mat">Open Proofing Mat</option>
+                            <option value="box">Enclosed Proofing Box</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Milling Profile Parameters -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
+                    Milling Profile Parameters
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="input-group">
                         <label for="flow_mill_type">Mill Machinery Profile</label>
-                        <select name="mill_type" id="flow_mill_type" class="form-select"
-                                hx-post="{% url 'sourdough_calibrate' %}" 
-                                hx-target="#sourdough-diagnostic-output"
-                                hx-trigger="change">
+                        <select name="mill_type" id="flow_mill_type" class="form-select">
                             <option value="stoneground">Stoneground Mill (High friction)</option>
                             <option value="steel_roller">Steel Roller Mill (Low friction)</option>
                         </select>
@@ -270,10 +284,7 @@
                     <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; margin-bottom: 0;">
                         <label for="flow_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
                         <label class="switch">
-                            <input type="checkbox" name="is_sifted" id="flow_is_sifted"
-                                   hx-post="{% url 'sourdough_calibrate' %}" 
-                                   hx-target="#sourdough-diagnostic-output"
-                                   hx-trigger="change">
+                            <input type="checkbox" name="is_sifted" id="flow_is_sifted">
                             <span class="slider-round"></span>
                         </label>
                     </div>
@@ -319,9 +330,26 @@
             </div>
         </div>
 
-        <!-- Geometry constraints (Geometry) -->
-        <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Geometry Constraints</h4>
+        <!-- Geometry Constraints & Form Factor Selection -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Geometry Constraints</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="input-group" style="grid-column: span 2;">
+                    <label for="id_form_factor">Form Factor</label>
+                    <select name="form_factor" id="id_form_factor" class="form-select"
+                            hx-get="{% url 'calculator' %}" 
+                            hx-target="#calculator-form-container"
+                            hx-select="#calculator-form"
+                            hx-swap="outerHTML"
+                            @change="portioned = ($el.options[$el.selectedIndex].text.includes('Units') || $el.options[$el.selectedIndex].text.includes('Portioned') || $el.options[$el.selectedIndex].text.includes('Naan'))">
+                        {% for ff in form_factors %}
+                            <option value="{{ ff.slug }}" {% if ff.slug == selected_form_factor.slug %}selected{% endif %}>
+                                {{ ff.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <template x-if="!portioned">
                     <div class="input-group" style="grid-column: span 2;">
@@ -408,36 +436,40 @@
             </div>
         </div>
 
-        <!-- DDT Temperature Calibration -->
-        <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Dough Temperature Calibration (DDT = 78°F)</h4>
-            <div class="temp-grid">
+        <!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
+        <div x-show="leaven === 'sourdough'" x-transition
+             style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
+                Sourdough Starter Diagnostics
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="input-group">
-                    <label for="room_temp">Room Temp (°F)</label>
-                    <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
-                </div>
-                <div class="input-group">
-                    <label for="flour_temp">Flour Temp (°F)</label>
-                    <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
-                </div>
-                <div class="input-group">
-                    <label for="custom_mixer">Mixing Equipment</label>
-                    <select name="custom_mixer" id="custom_mixer" class="form-select" @change="use_custom = ($el.value !== 'static')">
-                        <option value="static">Standard Preset Method...</option>
-                        {% for mixer in mixers %}
-                            <option value="{{ mixer.id }}">{{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)</option>
-                        {% endfor %}
+                    <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
+                    <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
+                            hx-post="{% url 'sourdough_calibrate' %}" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="4_8">Active Feed (4-8 hours ago)</option>
+                        <option value="8_12">Matured Feed (8-12 hours ago)</option>
+                        <option value="12_18">Hungry starter (12-18 hours ago)</option>
+                        <option value="18_plus">Starved starter (18+ hours ago)</option>
                     </select>
                 </div>
-                <div class="input-group" x-show="!use_custom">
-                    <label for="mixing_method">Mixing Preset</label>
-                    <select name="mixing_method" id="mixing_method" class="form-select">
-                        <option value="stand_mixer">Stand Mixer (10°F friction)</option>
-                        <option value="hand_knead">Hand Knead (2°F friction)</option>
-                        <option value="bread_machine">Bread Machine (15°F friction)</option>
+
+                <div class="input-group">
+                    <label for="flow_rise_speed">Starter activity speed</label>
+                    <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
+                            hx-post="{% url 'sourdough_calibrate' %}" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="fast">Explosive (Doubles in &lt;4 hours)</option>
+                        <option value="normal">Normal (Doubles in 4-8 hours)</option>
+                        <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
                     </select>
                 </div>
             </div>
+            <!-- Calibration box target -->
+            <div id="sourdough-diagnostic-output" style="margin-top: 1rem;"></div>
         </div>
 
         <!-- Chemical Substitutions -->
@@ -471,6 +503,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Start Bake Action Button -->
+        <button type="button" 
+                class="nav-btn primary"
+                style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"
+                @click="startBake()">
+            🚀 INITIALIZE BAKE: LAUNCH COUNTERTOP VIEW
+        </button>
     </div>
 
     <!-- Navigation Control Bar -->

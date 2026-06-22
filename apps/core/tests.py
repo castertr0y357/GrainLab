@@ -418,3 +418,86 @@ class InventoryAndEquipmentTests(TestCase):
         self.assertNotIn("Grain B", recipe["wheat_berry_mix"])
 
 
+class RecipeRestructuringAndBakingTests(TestCase):
+    """
+    Tests the restructured progressive wizard features:
+    - Mass-based bake time/temp scaling.
+    - Sourdough bulk/proof countdown timer calculations.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        cls.category = DoughCategory.objects.create(
+            name="Lean & Crusty",
+            slug="lean-crusty",
+            base_hydration=0.68,
+            base_fat=0.0,
+            base_sugar=0.0
+        )
+        cls.form_factor = FormFactor.objects.create(
+            name="Standard 9x5 Loaf Pan",
+            slug="loaf-pan",
+            target_weight=900.0,
+            unit_weight=900.0,
+            default_count=1,
+            bake_temp_f=375,
+            bake_time_min=45,
+            is_enriched_profile=False
+        )
+
+    def test_bake_profile_scaling(self):
+        client = Client()
+        
+        # Test standard weight (900g) -> time should be close to 45 mins, temp 375F
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "target_weight": 900.0
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["bake_temp_f"], 375)
+        self.assertEqual(response.context["bake_time_min"], 45)
+
+        # Test scaled up weight (1500g) -> time should be increased, temp should decrease (by 10F)
+        response_large = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "target_weight": 1500.0
+        })
+        self.assertEqual(response_large.status_code, 200)
+        self.assertLess(response_large.context["bake_temp_f"], 375)
+        self.assertGreater(response_large.context["bake_time_min"], 45)
+
+    def test_dynamic_fermentation_timers(self):
+        client = Client()
+        
+        # Test yeast leaven (default bulk = 90 mins, proof = 60 mins at ambient)
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "leaven_type": "yeast",
+            "proofing_environment": "ambient"
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["estimated_bulk_minutes"], 90)
+        self.assertEqual(response.context["estimated_proof_minutes"], 60)
+
+        # Test proofing environment (mat -> 10% faster proofing = 54 mins)
+        response_mat = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "leaven_type": "yeast",
+            "proofing_environment": "mat"
+        })
+        self.assertEqual(response_mat.status_code, 200)
+        self.assertEqual(response_mat.context["estimated_proof_minutes"], 54)
+
+
+

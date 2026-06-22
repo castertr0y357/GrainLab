@@ -299,6 +299,49 @@ def calculate_recipe_ajax(request):
     doneness_temp_f = 190 if ff.is_enriched_profile else 205
     doneness_temp_c = round((doneness_temp_f - 32) * 5 / 9, 1)
 
+    # 7. Algorithmically scale baking profile based on mass and form factor
+    base_temp = ff.bake_temp_f
+    base_time = ff.bake_time_min
+    base_weight = ff.target_weight if not ff.is_portioned else (ff.unit_weight * ff.default_count)
+    
+    mass_ratio = target_mass / base_weight if base_weight > 0 else 1.0
+    scaled_time = round(base_time * (mass_ratio ** 0.4))
+    
+    scaled_temp = base_temp
+    if not ff.is_portioned:
+        if mass_ratio > 1.2:
+            scaled_temp = base_temp - 10
+        elif mass_ratio < 0.8:
+            scaled_temp = base_temp + 10
+
+    # 8. Calculate dynamic countdown timelines for Countertop Mode
+    estimated_bulk_hours = 1.5
+    estimated_proof_hours = 1.0
+    
+    if leaven_type == "sourdough":
+        starter_feed_hours = request.POST.get("starter_feed_hours", "4_8")
+        rise_speed = request.POST.get("flow_rise_speed", "normal")  # Map from Alpine name
+        mill_type = request.POST.get("mill_type", "stoneground")
+        is_sifted = request.POST.get("is_sifted") in ("on", "true", "True")
+        
+        calibration = gemma_client.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
+        estimated_bulk_hours = calibration.get("estimated_bulk_fermentation_hours", 4.0)
+        estimated_proof_hours = 2.0
+        
+    if room_temp < 70:
+        estimated_bulk_hours += 1.0
+    elif room_temp > 76:
+        estimated_bulk_hours = max(0.5 if leaven_type == 'yeast' else 3.0, estimated_bulk_hours - 1.0)
+        
+    proofing_env = request.POST.get("proofing_environment", "ambient")
+    if proofing_env == "mat":
+        estimated_proof_hours *= 0.9
+    elif proofing_env == "box":
+        estimated_proof_hours *= 0.75
+
+    estimated_bulk_minutes = int(estimated_bulk_hours * 60)
+    estimated_proof_minutes = int(estimated_proof_hours * 60)
+
     context = {
         "recipe": recipe,
         "ff": ff,
@@ -312,6 +355,10 @@ def calculate_recipe_ajax(request):
         "texture_score": texture_score,
         "crumb_score": crumb_score,
         "current_phase": current_phase,
+        "bake_temp_f": scaled_temp,
+        "bake_time_min": scaled_time,
+        "estimated_bulk_minutes": estimated_bulk_minutes,
+        "estimated_proof_minutes": estimated_proof_minutes,
     }
     return render(request, "partials/recipe_output.html", context)
 

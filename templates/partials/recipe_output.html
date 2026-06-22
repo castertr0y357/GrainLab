@@ -1,5 +1,5 @@
 {% if recipe.structural_warning %}
-<div x-show="current_phase > 1" x-transition
+<div x-show="current_phase >= 3" x-transition
      style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
     <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 1.05rem;">⚠️ Gluten Strength Notice</h4>
     <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
@@ -8,34 +8,14 @@
 </div>
 {% endif %}
 
-{% if classified_preset and current_phase > 1 %}
-<div x-show="current_phase > 1" x-transition
-     style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: none;">
-    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
-        <span style="background: rgba(255, 255, 255, 0.05); color: var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;">
-            🎯 Classification Match: {{ classified_preset.name }}
-        </span>
-        <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;">
-            {{ classified_preset.crumb_preview }} Crumb
-        </span>
-    </div>
-    <p style="font-size: 0.95rem; margin: 0 0 0.5rem 0; line-height: 1.4; color: var(--text-primary);">
-        <strong>Baking Target:</strong> {{ classified_preset.accessibility_definition }}
-    </p>
-    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; display: flex; align-items: center; gap: 0.25rem;">
-        🌍 <em>{{ classified_preset.cultural_anchor }}</em>
-    </p>
-</div>
-{% endif %}
-
 <!-- SLEEK EMPTY STATE -->
-<div x-show="current_phase == 1" x-transition
+<div x-show="current_phase < 3" x-transition
      style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 6rem 1.5rem;">
-    Select a dough category to initialize formula math...
+    Select a dough preset and flour medium to compile formulas...
 </div>
 
-<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 2, 3, 4) -->
-<div x-show="current_phase > 1" x-transition>
+<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 3, 4) -->
+<div x-show="current_phase >= 3" x-transition>
     
     <!-- COMPILED FORMULA -->
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
@@ -51,17 +31,17 @@
                 <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_flour }}g</span>
             </div>
             
-            <!-- Individual Grains (Only injected and shown when current_phase == 4) -->
-            {% if current_phase == 4 %}
-            {% if recipe.wheat_berry_mix %}
-                {% for berry, weight in recipe.wheat_berry_mix.items %}
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">🌾 Mill Blend: {{ berry }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ weight }}g</span>
-                    </div>
-                {% endfor %}
-            {% endif %}
-            {% endif %}
+            <!-- Individual Grains (Only shown when current_phase == 4) -->
+            <div x-show="current_phase == 4" x-transition style="display: contents;">
+                {% if recipe.wheat_berry_mix %}
+                    {% for berry, weight in recipe.wheat_berry_mix.items %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                            <span style="color: var(--text-muted);">🌾 Mill Blend: {{ berry }}</span>
+                            <span style="color: var(--text-secondary); font-weight: 500;">{{ weight }}g</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
             
             <!-- Added Liquid Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -113,6 +93,27 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
                 <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;">{{ recipe.target_mass }}g</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BAKING PROFILE -->
+    <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
+            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Oven Temp</div>
+            </div>
+            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Bake Time</div>
+            </div>
+            <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">
+                    {% if ff.steam_required %}Yes{% else %}No{% endif %}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Steam</div>
             </div>
         </div>
     </div>
@@ -169,5 +170,16 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
+    <div id="countertop-data" 
+         data-mix-min="5"
+         data-knead-min="{% if recipe.mixing_method == 'stand_mixer' %}10{% elif recipe.mixing_method == 'hand_knead' %}15{% else %}20{% endif %}"
+         data-autolyse-min="30"
+         data-bulk-min="{{ estimated_bulk_minutes }}"
+         data-proof-min="{{ estimated_proof_minutes }}"
+         data-bake-min="{{ bake_time_min }}"
+         style="display: none;">
+    </div>
 
 </div>
