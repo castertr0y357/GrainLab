@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div x-data="{ activeTab: 'wheat-berries' }">
+    <!-- Top Action Header -->
+    <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="margin: 0; color: var(--accent);">📦 Inventory Management</h2>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                Manage your flour supply and baking equipment specs to automatically scale recipes.
+            </div>
+        </div>
+        <button hx-post="{% url 'bulk_ai_analyze' %}" 
+                hx-indicator="#bulk-indicator" 
+                class="nav-btn primary" 
+                style="border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); font-weight: 600;">
+            🤖 Bulk AI Analyze
+            <span id="bulk-indicator" class="htmx-indicator">
+                <span class="spinner" style="width: 16px; height: 16px;"></span>
+            </span>
+        </button>
+    </div>
+
+    <!-- Tab Switchers -->
+    <div class="chip-container" style="margin-bottom: 1.5rem;">
+        <span class="chip" :class="activeTab === 'wheat-berries' ? 'active' : ''" @click="activeTab = 'wheat-berries'">
+            🌾 Wheat Berry Inventory
+        </span>
+        <span class="chip" :class="activeTab === 'equipment' ? 'active' : ''" @click="activeTab = 'equipment'">
+            🛠️ Equipment & Machinery
+        </span>
+    </div>
+
+    <!-- Tab Content 1: Wheat Berries -->
+    <div x-show="activeTab === 'wheat-berries'" x-transition>
+        <div class="dashboard-grid">
+            <!-- Left: Add Wheat Berry Form -->
+            <div>
+                <div class="card">
+                    <div class="card-title">Add New Wheat Berry</div>
+                    <form hx-post="{% url 'add_wheat_berry' %}" style="display: flex; flex-direction: column; gap: 1rem;">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <label for="wb_name">Berry Name</label>
+                            <input type="text" name="name" id="wb_name" class="num-input" placeholder="e.g. Hard Red Spring Wheat" required>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="wb_protein">Est. Protein Content (%)</label>
+                                <input type="number" step="0.1" name="protein_content" id="wb_protein" class="num-input" placeholder="e.g. 14.5" value="12.0">
+                            </div>
+                            <div class="input-group">
+                                <label for="wb_absorption">Thirst Factor (Absorption Coef)</label>
+                                <input type="number" step="0.01" name="moisture_absorption_coef" id="wb_absorption" class="num-input" placeholder="e.g. 1.0" value="1.0">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="wb_hardness">Hardness Profile</label>
+                            <select name="hardness" id="wb_hardness" class="form-select">
+                                <option value="hard">Hard Wheat (Breads)</option>
+                                <option value="soft">Soft Wheat (Pastries/Tender)</option>
+                                <option value="ancient">Ancient Wheat (Spelt/Einkorn)</option>
+                                <option value="durum">Durum Wheat (Semolina/Chewy)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="wb_notes">Description / Baking Notes</label>
+                            <textarea name="notes" id="wb_notes" class="num-input" style="height: 80px; resize: none;" placeholder="Enter details or let AI generate them..."></textarea>
+                        </div>
+
+                        <div class="switch-container">
+                            <label style="font-size: 0.9rem; color: var(--text-secondary);">Include in dynamic mixing</label>
+                            <label class="switch">
+                                <input type="checkbox" name="is_active" checked>
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="nav-btn primary" style="border: none; cursor: pointer; padding: 0.75rem; border-radius: var(--radius-sm); font-weight: 600;">
+                            Add Wheat Berry
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Wheat Berry List -->
+            <div>
+                <div class="card" style="overflow-x: auto; padding: 1rem;">
+                    <div class="card-title">My Supply Stack</div>
+                    {% if wheat_berries %}
+                        <table class="recipe-table" style="font-size: 0.95rem;">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Specs</th>
+                                    <th>Active</th>
+                                    <th>AI Specs</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for wb in wheat_berries %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ wb.name }}</strong>
+                                            {% if wb.notes %}
+                                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; max-width: 250px;">
+                                                    {{ wb.notes }}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="highlight-row">{{ wb.protein_content }}% Prot</span><br>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Absorp: {{ wb.moisture_absorption_coef }}</span>
+                                        </td>
+                                        <td>
+                                            <button hx-post="{% url 'toggle_wheat_berry_active' wb.id %}" 
+                                                    class="nav-btn" 
+                                                    style="background: none; border: none; cursor: pointer; padding: 0.2rem; font-size: 1.2rem;">
+                                                {% if wb.is_active %}🟢{% else %}🔴{% endif %}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            {% if wb.ai_analyzed %}
+                                                <span style="color: var(--success); font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
+                                                    🤖 AI-Analyzed
+                                                </span>
+                                                <button hx-post="{% url 'redo_ai_analysis' 'wheat_berry' wb.id %}" 
+                                                        hx-indicator="#wb-indicator-{{ wb.id }}"
+                                                        class="nav-btn" 
+                                                        style="font-size: 0.75rem; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">
+                                                    Redo AI
+                                                    <span id="wb-indicator-{{ wb.id }}" class="htmx-indicator"><span class="spinner" style="width:10px; height:10px;"></span></span>
+                                                </button>
+                                            {% else %}
+                                                <span style="color: var(--warning); font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
+                                                    ⏳ Pending
+                                                </span>
+                                                <button hx-post="{% url 'ai_analyze_wheat_berry' wb.id %}" 
+                                                        hx-indicator="#wb-indicator-{{ wb.id }}"
+                                                        class="nav-btn primary" 
+                                                        style="font-size: 0.75rem; border: none; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">
+                                                    AI Analyze
+                                                    <span id="wb-indicator-{{ wb.id }}" class="htmx-indicator"><span class="spinner" style="width:10px; height:10px;"></span></span>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: right; vertical-align: middle;">
+                                            <button hx-post="{% url 'delete_wheat_berry' wb.id %}" 
+                                                    hx-confirm="Are you sure you want to delete {{ wb.name }}?"
+                                                    class="nav-btn" 
+                                                    style="background: none; border: 1px solid var(--danger); color: var(--danger); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem;">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                            No wheat berries added yet. Use the form to bootstrap your supply.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content 2: Equipment -->
+    <div x-show="activeTab === 'equipment'" x-transition>
+        <div class="dashboard-grid">
+            <!-- Left: Add Equipment Form -->
+            <div>
+                <div class="card">
+                    <div class="card-title">Add Baking Equipment</div>
+                    <form hx-post="{% url 'add_equipment' %}" style="display: flex; flex-direction: column; gap: 1rem;">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <label for="eq_name">Equipment Name</label>
+                            <input type="text" name="name" id="eq_name" class="num-input" placeholder="e.g. Ankarsrum Mixer" required>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="eq_type">Equipment Type</label>
+                            <select name="equipment_type" id="eq_type" class="form-select">
+                                <option value="mixer">Kneader / Mixer</option>
+                                <option value="mill">Grain Mill</option>
+                                <option value="proofing_mat">Proofing Cabinet/Mat</option>
+                                <option value="oven_accessory">Oven Accessory (Baking Stone/Pan)</option>
+                                <option value="attachment">Mixer Attachment</option>
+                                <option value="other">Other baking helper</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="eq_friction">Friction Heat Factor (°F)</label>
+                            <input type="number" step="0.5" name="friction_heat_factor" id="eq_friction" class="num-input" placeholder="e.g. 10.0" value="0.0">
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">
+                                Temperature rise of dough during mixing (Fahrenheit). 0 if not a mixer.
+                            </span>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="eq_notes">Description / Specs</label>
+                            <textarea name="notes" id="eq_notes" class="num-input" style="height: 80px; resize: none;" placeholder="Enter details or let AI generate specs..."></textarea>
+                        </div>
+
+                        <button type="submit" class="nav-btn primary" style="border: none; cursor: pointer; padding: 0.75rem; border-radius: var(--radius-sm); font-weight: 600;">
+                            Add Equipment
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Equipment List -->
+            <div>
+                <div class="card" style="overflow-x: auto; padding: 1rem;">
+                    <div class="card-title">My Gear & Machinery</div>
+                    {% if equipment %}
+                        <table class="recipe-table" style="font-size: 0.95rem;">
+                            <thead>
+                                <tr>
+                                    <th>Name / Type</th>
+                                    <th>Specs</th>
+                                    <th>AI Specs</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for eq in equipment %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ eq.name }}</strong><br>
+                                            <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">
+                                                {{ eq.get_equipment_type_display }}
+                                            </span>
+                                            {% if eq.notes %}
+                                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; max-width: 250px;">
+                                                    {{ eq.notes }}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if eq.equipment_type == 'mixer' %}
+                                                <span class="highlight-row">Friction: +{{ eq.friction_heat_factor }}°F</span>
+                                            {% else %}
+                                                <span style="color: var(--text-muted); font-size: 0.85rem;">N/A (Friction)</span>
+                                            {% endif %}
+                                            {% if eq.details %}
+                                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                                    {% for k, v in eq.details.items %}
+                                                        <strong>{{ k }}:</strong> {{ v }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if eq.ai_analyzed %}
+                                                <span style="color: var(--success); font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
+                                                    🤖 AI-Analyzed
+                                                </span>
+                                                <button hx-post="{% url 'redo_ai_analysis' 'equipment' eq.id %}" 
+                                                        hx-indicator="#eq-indicator-{{ eq.id }}"
+                                                        class="nav-btn" 
+                                                        style="font-size: 0.75rem; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">
+                                                    Redo AI
+                                                    <span id="eq-indicator-{{ eq.id }}" class="htmx-indicator"><span class="spinner" style="width:10px; height:10px;"></span></span>
+                                                </button>
+                                            {% else %}
+                                                <span style="color: var(--warning); font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
+                                                    ⏳ Pending
+                                                </span>
+                                                <button hx-post="{% url 'ai_analyze_equipment' eq.id %}" 
+                                                        hx-indicator="#eq-indicator-{{ eq.id }}"
+                                                        class="nav-btn primary" 
+                                                        style="font-size: 0.75rem; border: none; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">
+                                                    AI Analyze
+                                                    <span id="eq-indicator-{{ eq.id }}" class="htmx-indicator"><span class="spinner" style="width:10px; height:10px;"></span></span>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: right; vertical-align: middle;">
+                                            <button hx-post="{% url 'delete_equipment' eq.id %}" 
+                                                    hx-confirm="Are you sure you want to delete {{ eq.name }}?"
+                                                    class="nav-btn" 
+                                                    style="background: none; border: 1px solid var(--danger); color: var(--danger); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem;">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                            No gear added yet. Use the form to list your machinery.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

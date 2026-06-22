@@ -1,9 +1,10 @@
 import logging
 import math
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting
+from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment
 from apps.core import bakers_math
 from apps.core import gemma_client
 
@@ -16,6 +17,7 @@ def calculator(request):
     categories = DoughCategory.objects.all().order_by('name')
     form_factors = FormFactor.objects.all().order_by('name')
     presets = BreadPreset.objects.all().order_by('name')
+    mixers = Equipment.objects.filter(equipment_type='mixer').order_by('name')
     
     # Load settings
     ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
@@ -45,10 +47,14 @@ def calculator(request):
     # texture_score = fat_pct / 0.15 * 100
     default_texture_score = int(max(0.0, min(100.0, (base_fat / 0.15) * 100)))
     
+    active_berries = list(WheatBerry.objects.filter(is_active=True))
+    
     context = {
         "categories": categories,
         "form_factors": form_factors,
         "presets": presets,
+        "mixers": mixers,
+        "active_berries": active_berries,
         "selected_category": default_cat,
         "selected_form_factor": default_ff,
         "ai_enabled": ai_enabled,
@@ -81,6 +87,7 @@ def load_preset(request, preset_id):
     preset = get_object_or_404(BreadPreset, id=preset_id)
     categories = DoughCategory.objects.all().order_by('name')
     form_factors = FormFactor.objects.all().order_by('name')
+    mixers = Equipment.objects.filter(equipment_type='mixer').order_by('name')
     
     # Use preset values or category base values
     cat = preset.dough_category
@@ -91,9 +98,13 @@ def load_preset(request, preset_id):
     sugar = int((preset.sugar_override if preset.sugar_override is not None else cat.base_sugar) * 100)
     starter = int((preset.starter_override if preset.starter_override is not None else cat.base_starter) * 100)
     
+    active_berries = list(WheatBerry.objects.filter(is_active=True))
+    
     context = {
         "categories": categories,
         "form_factors": form_factors,
+        "mixers": mixers,
+        "active_berries": active_berries,
         "selected_preset": preset,
         "selected_category": cat,
         "selected_form_factor": ff,
@@ -165,6 +176,17 @@ def calculate_recipe_ajax(request):
         substitution = {"original": sub_orig, "substitute": sub_new}
         
     # 3. Calculate Baker's Math and apply fail-safes
+    custom_mixer_id = request.POST.get("custom_mixer")
+    friction_override = None
+    if custom_mixer_id and custom_mixer_id != "static":
+        try:
+            mixer = Equipment.objects.get(id=int(custom_mixer_id))
+            friction_override = mixer.friction_heat_factor
+        except (ValueError, Equipment.DoesNotExist):
+            pass
+
+    active_berries = list(WheatBerry.objects.filter(is_active=True))
+
     try:
         # If AI is active, we can fetch substitution offsets from AI first
         ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
@@ -195,7 +217,11 @@ def calculate_recipe_ajax(request):
             room_temp_f=room_temp,
             flour_temp_f=flour_temp,
             mixing_method=mixing_method,
-            substitution=substitution if not ai_enabled else None  # Natively balanced in bakers_math if AI is off
+            substitution=substitution if not ai_enabled else None,  # Natively balanced in bakers_math if AI is off
+            active_berries=active_berries,
+            texture_score=texture_score,
+            crumb_score=crumb_score,
+            friction_override=friction_override
         )
         
         # Override AI explanations if AI offsets were loaded
@@ -304,3 +330,197 @@ def sourdough_calibrate(request):
         "calibration": calibration,
     }
     return render(request, "partials/sourdough_diagnostic_output.html", context)
+
+
+def inventory_page(request):
+    """
+    Renders inventory page listing wheat berries and equipment.
+    """
+    wheat_berries = WheatBerry.objects.all().order_by('name')
+    equipment = Equipment.objects.all().order_by('name')
+    context = {
+        "wheat_berries": wheat_berries,
+        "equipment": equipment,
+    }
+    return render(request, "inventory.html", context)
+
+
+def add_wheat_berry(request):
+    """
+    Creates a new wheat berry record in the inventory.
+    """
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        protein = float(request.POST.get("protein_content", 12.0) or 12.0)
+        hardness = request.POST.get("hardness", "hard")
+        absorption = float(request.POST.get("moisture_absorption_coef", 1.0) or 1.0)
+        notes = request.POST.get("notes", "").strip()
+        is_active = request.POST.get("is_active") in ("on", "true", "True")
+
+        if name:
+            WheatBerry.objects.create(
+                name=name,
+                protein_content=protein,
+                hardness=hardness,
+                moisture_absorption_coef=absorption,
+                notes=notes,
+                is_active=is_active
+            )
+
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def toggle_wheat_berry_active(request, id):
+    """
+    Toggles the active state of a wheat berry.
+    """
+    wb = get_object_or_404(WheatBerry, id=id)
+    wb.is_active = not wb.is_active
+    wb.save()
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def delete_wheat_berry(request, id):
+    """
+    Deletes a wheat berry from inventory.
+    """
+    wb = get_object_or_404(WheatBerry, id=id)
+    wb.delete()
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def ai_analyze_wheat_berry(request, id):
+    """
+    Runs AI analysis for a specific wheat berry.
+    """
+    wb = get_object_or_404(WheatBerry, id=id)
+    analysis = gemma_client.analyze_wheat_berry_ai(wb.name)
+    if analysis:
+        wb.protein_content = analysis.get("protein_content", wb.protein_content)
+        wb.moisture_absorption_coef = analysis.get("moisture_absorption_coef", wb.moisture_absorption_coef)
+        wb.hardness = analysis.get("hardness", wb.hardness)
+        wb.notes = analysis.get("notes", wb.notes)
+        wb.ai_analyzed = True
+        wb.save()
+    
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def add_equipment(request):
+    """
+    Creates a new equipment record in the inventory.
+    """
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        eq_type = request.POST.get("equipment_type", "other")
+        friction = float(request.POST.get("friction_heat_factor", 0.0) or 0.0)
+        notes = request.POST.get("notes", "").strip()
+
+        if name:
+            Equipment.objects.create(
+                name=name,
+                equipment_type=eq_type,
+                friction_heat_factor=friction,
+                notes=notes
+            )
+
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def delete_equipment(request, id):
+    """
+    Deletes equipment from inventory.
+    """
+    eq = get_object_or_404(Equipment, id=id)
+    eq.delete()
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def ai_analyze_equipment(request, id):
+    """
+    Runs AI analysis for a specific equipment item.
+    """
+    eq = get_object_or_404(Equipment, id=id)
+    analysis = gemma_client.analyze_equipment_ai(eq.name, eq.equipment_type)
+    if analysis:
+        eq.friction_heat_factor = analysis.get("friction_heat_factor", eq.friction_heat_factor)
+        eq.notes = analysis.get("notes", eq.notes)
+        eq.details = analysis.get("details", eq.details)
+        eq.ai_analyzed = True
+        eq.save()
+    
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def bulk_ai_analyze(request):
+    """
+    Analyzes all unanalyzed inventory items.
+    """
+    unanalyzed_berries = WheatBerry.objects.filter(ai_analyzed=False)
+    for wb in unanalyzed_berries:
+        analysis = gemma_client.analyze_wheat_berry_ai(wb.name)
+        if analysis:
+            wb.protein_content = analysis.get("protein_content", wb.protein_content)
+            wb.moisture_absorption_coef = analysis.get("moisture_absorption_coef", wb.moisture_absorption_coef)
+            wb.hardness = analysis.get("hardness", wb.hardness)
+            wb.notes = analysis.get("notes", wb.notes)
+            wb.ai_analyzed = True
+            wb.save()
+
+    unanalyzed_eq = Equipment.objects.filter(ai_analyzed=False)
+    for eq in unanalyzed_eq:
+        analysis = gemma_client.analyze_equipment_ai(eq.name, eq.equipment_type)
+        if analysis:
+            eq.friction_heat_factor = analysis.get("friction_heat_factor", eq.friction_heat_factor)
+            eq.notes = analysis.get("notes", eq.notes)
+            eq.details = analysis.get("details", eq.details)
+            eq.ai_analyzed = True
+            eq.save()
+
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+
+
+def redo_ai_analysis(request, item_type, id):
+    """
+    Re-analyzes an item (overriding manual tweaks).
+    """
+    if item_type == "wheat_berry":
+        wb = get_object_or_404(WheatBerry, id=id)
+        analysis = gemma_client.analyze_wheat_berry_ai(wb.name)
+        if analysis:
+            wb.protein_content = analysis.get("protein_content", wb.protein_content)
+            wb.moisture_absorption_coef = analysis.get("moisture_absorption_coef", wb.moisture_absorption_coef)
+            wb.hardness = analysis.get("hardness", wb.hardness)
+            wb.notes = analysis.get("notes", wb.notes)
+            wb.ai_analyzed = True
+            wb.save()
+    elif item_type == "equipment":
+        eq = get_object_or_404(Equipment, id=id)
+        analysis = gemma_client.analyze_equipment_ai(eq.name, eq.equipment_type)
+        if analysis:
+            eq.friction_heat_factor = analysis.get("friction_heat_factor", eq.friction_heat_factor)
+            eq.notes = analysis.get("notes", eq.notes)
+            eq.details = analysis.get("details", eq.details)
+            eq.ai_analyzed = True
+            eq.save()
+
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = reverse('inventory_page')
+    return response
+

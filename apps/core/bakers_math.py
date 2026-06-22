@@ -22,6 +22,105 @@ FRICTION_FACTORS = {
     "bread_machine": 15.0,
 }
 
+def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score):
+    """
+    Dynamically generates the wheat berry blend shares based on active berries and sliders.
+    Returns: (shares_dict, weighted_absorption_coef)
+        shares_dict: dict mapping wheat berry names to their blend fraction (0.0 to 1.0)
+        weighted_absorption_coef: float multiplier for hydration adjustment
+    """
+    if not active_berries:
+        return {"House Blend": 1.0}, 1.0
+
+    # 1. Classify berries
+    ancient_berries = []
+    hard_berries = []
+    soft_berries = []
+
+    for b in active_berries:
+        # Support both Django model instances and serialized dictionary attributes
+        hardness = getattr(b, 'hardness', b.get('hardness', 'hard')) if hasattr(b, 'hardness') or isinstance(b, dict) else 'hard'
+        protein = getattr(b, 'protein_content', b.get('protein_content', 12.0)) if hasattr(b, 'protein_content') or isinstance(b, dict) else 12.0
+        
+        if hardness == 'ancient':
+            ancient_berries.append(b)
+        elif hardness == 'soft' or (protein < 12.0 and hardness != 'durum' and hardness != 'hard'):
+            soft_berries.append(b)
+        else:
+            hard_berries.append(b)
+
+    # 2. Determine target protein content based on Texture (Softness) and Crumb (Openness)
+    target_protein = 11.5 - (texture_score / 100.0 * 2.5) + (crumb_score / 100.0 * 1.5) + 0.5
+    target_protein = max(9.0, min(15.0, target_protein))
+
+    # 3. Calculate blend shares
+    shares = {}
+    
+    has_hard = len(hard_berries) > 0
+    has_soft = len(soft_berries) > 0
+    has_ancient = len(ancient_berries) > 0
+
+    ancient_share = 0.15 if has_ancient else 0.0
+    if has_ancient:
+        share_per_ancient = ancient_share / len(ancient_berries)
+        for b in ancient_berries:
+            name = getattr(b, 'name', b.get('name'))
+            shares[name] = share_per_ancient
+
+    remaining_share = 1.0 - ancient_share
+
+    if has_hard and has_soft:
+        avg_p_hard = sum(getattr(b, 'protein_content', b.get('protein_content', 12.0)) for b in hard_berries) / len(hard_berries)
+        avg_p_soft = sum(getattr(b, 'protein_content', b.get('protein_content', 12.0)) for b in soft_berries) / len(soft_berries)
+        
+        if avg_p_hard != avg_p_soft:
+            x = (target_protein - avg_p_soft) / (avg_p_hard - avg_p_soft)
+            x = max(0.0, min(1.0, x))
+        else:
+            x = 0.5
+            
+        hard_share = x * remaining_share
+        soft_share = (1.0 - x) * remaining_share
+        
+        for b in hard_berries:
+            name = getattr(b, 'name', b.get('name'))
+            shares[name] = hard_share / len(hard_berries)
+        for b in soft_berries:
+            name = getattr(b, 'name', b.get('name'))
+            shares[name] = soft_share / len(soft_berries)
+            
+    elif has_hard:
+        for b in hard_berries:
+            name = getattr(b, 'name', b.get('name'))
+            shares[name] = remaining_share / len(hard_berries)
+            
+    elif has_soft:
+        for b in soft_berries:
+            name = getattr(b, 'name', b.get('name'))
+            shares[name] = remaining_share / len(soft_berries)
+            
+    elif has_ancient:
+        for b in ancient_berries:
+            name = getattr(b, 'name', b.get('name'))
+            shares[name] = 1.0 / len(ancient_berries)
+            
+    else:
+        return {"House Blend": 1.0}, 1.0
+
+    # 4. Calculate weighted absorption coefficient
+    weighted_absorption = 0.0
+    for b in active_berries:
+        name = getattr(b, 'name', b.get('name'))
+        share = shares.get(name, 0.0)
+        coef = getattr(b, 'moisture_absorption_coef', b.get('moisture_absorption_coef', 1.0))
+        weighted_absorption += share * coef
+
+    if weighted_absorption == 0.0:
+        weighted_absorption = 1.0
+
+    return shares, weighted_absorption
+
+
 def calculate_recipe(
     base_hydration,
     base_fat,
@@ -35,14 +134,26 @@ def calculate_recipe(
     room_temp_f=72.0,
     flour_temp_f=70.0,
     mixing_method="stand_mixer",
-    substitution=None  # Dict of {'original': 'water', 'substitute': 'whole_milk'}
+    substitution=None,  # Dict of {'original': 'water', 'substitute': 'whole_milk'}
+    active_berries=None, # List of WheatBerry models/dicts
+    texture_score=50,   # Used for custom berry blending
+    crumb_score=50,     # Used for custom berry blending
+    friction_override=None # Custom mixer friction value
 ):
     """
     Computes recipe ingredient weights by applying Baker's Math.
     Incorporates thirst modifiers, flour maturity adjustments, and sourdough hydration offsets.
     """
     # 1. Apply Fail-Safe Hydration Modifiers
-    thirst_mod = GRAIN_THIRST_MODIFIERS.get(grain_type, 0.0)
+    if active_berries:
+        berry_shares, weighted_absorption = calculate_wheat_berry_shares(
+            active_berries, texture_score, crumb_score
+        )
+        thirst_mod = weighted_absorption - 1.0
+    else:
+        berry_shares = {}
+        thirst_mod = GRAIN_THIRST_MODIFIERS.get(grain_type, 0.0)
+
     maturity_mod = MATURITY_HYDRATION_MODIFIERS.get(flour_maturity, 0.0)
     
     effective_hydration = base_hydration + thirst_mod + maturity_mod
@@ -59,25 +170,14 @@ def calculate_recipe(
         
         # Whole milk swap: 87% water, 4% fat, 5% sugar
         if original == "water" and substitute == "whole_milk":
-            # For whole milk, to get 100g of water equivalent, we need 100 / 0.87 = 115g of milk.
-            # This adds 115 * 0.04 = 4.6g fat and 115 * 0.05 = 5.75g sugar.
-            # We compensate by reducing added fat and sugar ratios.
             sub_notes.append("Using Whole Milk instead of Water. Water and fat ratios adjusted to maintain equilibrium.")
-            # We adjust effective ratios for the math engine:
-            # Let's say milk replaces all water. Liquid ratio is effective_hydration.
-            # We need milk_ratio = effective_hydration / 0.87.
-            # The fat contribution is milk_ratio * 0.04.
-            # The sugar contribution is milk_ratio * 0.05.
-            # We subtract these from the added fats and sugars.
             milk_ratio = effective_hydration / 0.87
             fat_excess = milk_ratio * 0.04
             sugar_excess = milk_ratio * 0.05
             
-            # Reduce added fats/sugars, but don't let them drop below 0
             effective_fat = max(0.0, effective_fat - fat_excess)
             effective_sugar = max(0.0, effective_sugar - sugar_excess)
             
-            # The liquid we measure is milk, not water
             sub_offsets["milk_required"] = milk_ratio
 
         # Almond milk swap: 97% water, 1% fat, 0% sugar
@@ -91,15 +191,12 @@ def calculate_recipe(
         # Butter replacing oil/fat: Butter is 80% fat, 18% water
         elif original == "fat" and substitute == "butter":
             sub_notes.append("Using Butter instead of pure Oil. Butter is 80% fat; increased butter weight by 25% and reduced added liquid.")
-            # For 1g fat, we need 1.25g butter, which adds 0.225g water.
             butter_ratio = effective_fat / 0.80
             water_excess = butter_ratio * 0.18
             effective_hydration = max(0.40, effective_hydration - water_excess)
             sub_offsets["butter_required"] = butter_ratio
 
     # 3. Calculate Baker's Math Scaling
-    # Total Mass = Flour + Water + Fat + Sugar + Salt + Leaven
-    # Let total ratios = 1 + Hydration% + Fat% + Sugar% + Salt% + Leaven%
     total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct
     
     # Base Flour Weight (100%)
@@ -120,7 +217,6 @@ def calculate_recipe(
 
     if leaven_type == "sourdough":
         starter_weight = leaven_weight
-        # Subtract starter components from main flour and water
         added_flour = flour_weight - (starter_weight / 2.0)
         added_water = water_weight - (starter_weight / 2.0)
     else:
@@ -151,7 +247,10 @@ def calculate_recipe(
     # 5. Desired Dough Temperature (DDT)
     # DDT target is 78°F. Water Temp = (3 * 78) - Room - Flour - Friction
     ddt_target_f = 78.0
-    friction = FRICTION_FACTORS.get(mixing_method, 10.0)
+    if friction_override is not None:
+        friction = friction_override
+    else:
+        friction = FRICTION_FACTORS.get(mixing_method, 10.0)
     required_water_temp_f = (3.0 * ddt_target_f) - room_temp_f - flour_temp_f - friction
 
     # 6. Build the final output dictionary
@@ -177,6 +276,7 @@ def calculate_recipe(
         "required_water_temp_f": round(required_water_temp_f, 1),
         "required_water_temp_c": round((required_water_temp_f - 32) * 5 / 9, 1),
         "substitution_notes": sub_notes,
+        "wheat_berry_mix": {name: round(flour_weight * share, 1) for name, share in berry_shares.items() if share > 0.0} if active_berries else None,
     }
 
 

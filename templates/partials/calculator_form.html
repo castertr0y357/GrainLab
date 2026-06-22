@@ -11,7 +11,8 @@
           maturity: '{{ default_flour_maturity|default:"matured" }}',
           portioned: {% if selected_form_factor.is_portioned %}true{% else %}false{% endif %},
           subOriginal: 'water',
-          subSubstitute: 'none'
+          subSubstitute: 'none',
+          use_custom: false
       }"
       x-init="$watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } })">
 
@@ -128,15 +129,28 @@
 
     <!-- 4. Grain Type Selection (Thirst Modifiers) -->
     <div style="margin-bottom: 1.5rem;">
-        <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Grain Profile (Ancient Grain Absorption)</label>
-        <div class="chip-container">
-            <span class="chip" :class="grain === 'all_purpose' ? 'active' : ''" @click="grain = 'all_purpose'">AP Flour (+0%)</span>
-            <span class="chip" :class="grain === 'whole_wheat' ? 'active' : ''" @click="grain = 'whole_wheat'">Whole Wheat (+3%)</span>
-            <span class="chip" :class="grain === 'spelt' ? 'active' : ''" @click="grain = 'spelt'">Ancient Spelt (+5%)</span>
-            <span class="chip" :class="grain === 'kamut' ? 'active' : ''" @click="grain = 'grain = spelt'; grain = 'kamut'">Ancient Kamut (+6%)</span>
-            <span class="chip" :class="grain === 'einkorn' ? 'active' : ''" @click="grain = 'einkorn'">Ancient Einkorn (+4%)</span>
-            <input type="hidden" name="grain_type" :value="grain">
-        </div>
+        {% if active_berries %}
+            <div style="background-color: hsla(28, 88%, 56%, 0.08); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.75rem 1rem;">
+                <span style="color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem;">
+                    🌾 Active Wheat Berry Mix Active
+                </span>
+                <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">
+                    Your custom wheat berry blend will be milled and balanced automatically based on your Texture & Crumb sliders. See details in the compiled recipe.
+                </span>
+            </div>
+            <!-- Keep hidden fallback input for bakers math check -->
+            <input type="hidden" name="grain_type" value="all_purpose">
+        {% else %}
+            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Grain Profile (Ancient Grain Absorption)</label>
+            <div class="chip-container">
+                <span class="chip" :class="grain === 'all_purpose' ? 'active' : ''" @click="grain = 'all_purpose'">AP Flour (+0%)</span>
+                <span class="chip" :class="grain === 'whole_wheat' ? 'active' : ''" @click="grain = 'whole_wheat'">Whole Wheat (+3%)</span>
+                <span class="chip" :class="grain === 'spelt' ? 'active' : ''" @click="grain = 'spelt'">Ancient Spelt (+5%)</span>
+                <span class="chip" :class="grain === 'kamut' ? 'active' : ''" @click="grain = 'grain = spelt'; grain = 'kamut'">Ancient Kamut (+6%)</span>
+                <span class="chip" :class="grain === 'einkorn' ? 'active' : ''" @click="grain = 'einkorn'">Ancient Einkorn (+4%)</span>
+                <input type="hidden" name="grain_type" :value="grain">
+            </div>
+        {% endif %}
     </div>
 
     <!-- 5. Flour Maturity Adjustment -->
@@ -163,7 +177,16 @@
                 <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
             </div>
             <div class="input-group">
-                <label for="mixing_method">Mixing Method</label>
+                <label for="custom_mixer">Mixing Equipment</label>
+                <select name="custom_mixer" id="custom_mixer" class="form-select" @change="use_custom = ($el.value !== 'static')">
+                    <option value="static">Standard Preset Method...</option>
+                    {% for mixer in mixers %}
+                        <option value="{{ mixer.id }}">{{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-group" x-show="!use_custom">
+                <label for="mixing_method">Mixing Preset</label>
                 <select name="mixing_method" id="mixing_method" class="form-select">
                     <option value="stand_mixer">Stand Mixer (10°F friction)</option>
                     <option value="hand_knead">Hand Knead (2°F friction)</option>

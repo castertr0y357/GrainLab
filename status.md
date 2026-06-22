@@ -17,6 +17,12 @@
 - [x] Add automated unit tests verifying the classifier coordinates and ratio mappings
 - [x] Fix CSRF trusted origins for custom LOCAL_PORT, define SECURE_PROXY_SSL_HEADER, and make checkbox parsing robust to resolve settings save issue
 - [x] Correct HTMX script Subresource Integrity (SRI) digest in base.html to prevent browser blocking
+- [x] Implement Wheat Berry inventory and dynamic blend mix generator matching Texture and Crumb sliders
+- [x] Implement Equipment inventory management and custom mixer friction heat water temperature calibration
+- [x] Add Gemma AI analysis support for wheat berry specs (protein, hardness, absorption) and equipment details (friction factor, notes)
+- [x] Implement batch/bulk AI analysis and redo AI analysis endpoints
+- [x] Add interactive frontend tab layout for managing supply gear and berries
+
 
 
 

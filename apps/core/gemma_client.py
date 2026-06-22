@@ -246,3 +246,114 @@ def calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
         "estimated_bulk_fermentation_hours": hours,
         "notes": notes,
     }
+
+
+def analyze_wheat_berry_ai(name):
+    """
+    Asks Gemma to estimate protein content, hardness, moisture absorption, and notes for a wheat berry.
+    """
+    system_prompt = (
+        "You are a food science assistant. Analyze the wheat berry name provided and estimate its properties. "
+        "Return a JSON object with keys: "
+        "'protein_content' (float, default 12.0), "
+        "'hardness' (string: 'hard', 'soft', 'durum', or 'ancient'), "
+        "'moisture_absorption_coef' (float, default 1.0; standard AP is 1.0, whole wheat is 1.03, spelt is 1.05, durum is 1.08, einkorn is 1.04), "
+        "and 'notes' (string, summary description of properties)."
+    )
+    user_prompt = json.dumps({"name": name})
+    
+    if _is_ai_enabled():
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["protein_content", "hardness", "moisture_absorption_coef"])
+        if result:
+            try:
+                result["protein_content"] = float(result.get("protein_content", 12.0))
+                result["moisture_absorption_coef"] = float(result.get("moisture_absorption_coef", 1.0))
+                result["hardness"] = str(result.get("hardness", "hard")).lower()
+                if result["hardness"] not in ('hard', 'soft', 'durum', 'ancient'):
+                    result["hardness"] = 'hard'
+                result["notes"] = str(result.get("notes", "Analyzed via local Gemma model."))
+                return result
+            except Exception as e:
+                logger.error(f"[AI] - Parsing - Failed converting wheat berry analysis data: {e}")
+    
+    # Fallback/mock responses if AI disabled or api fails
+    name_lower = name.lower()
+    if "spelt" in name_lower:
+        return {"protein_content": 11.5, "hardness": "ancient", "moisture_absorption_coef": 1.05, "notes": "Ancient grain with highly water-soluble gluten. Adds nutty flavor."}
+    elif "einkorn" in name_lower:
+        return {"protein_content": 12.5, "hardness": "ancient", "moisture_absorption_coef": 1.04, "notes": "Most ancient cultivated wheat. Soft gluten, rich yellow carotenoids."}
+    elif "soft" in name_lower or "white" in name_lower:
+        return {"protein_content": 9.5, "hardness": "soft", "moisture_absorption_coef": 0.97, "notes": "Low protein, weak gluten. Ideal for tender pastries, cookies, and soft rolls."}
+    elif "durum" in name_lower or "semolina" in name_lower:
+        return {"protein_content": 13.5, "hardness": "durum", "moisture_absorption_coef": 1.08, "notes": "Extremely hard durum wheat. Provides yellow tint and high stretch resilience."}
+    elif "spring" in name_lower:
+        return {"protein_content": 14.5, "hardness": "hard", "moisture_absorption_coef": 1.02, "notes": "High protein spring wheat. Extremely strong gluten, excellent for sourdough."}
+    else:
+        return {"protein_content": 13.0, "hardness": "hard", "moisture_absorption_coef": 1.0, "notes": "Standard hard wheat berry. Good gluten strength for general crusty breads."}
+
+
+def analyze_equipment_ai(name, equipment_type):
+    """
+    Asks Gemma to estimate friction heat factor and notes/details for an equipment item.
+    """
+    system_prompt = (
+        "You are a food science assistant. Analyze the equipment name and type provided and estimate its specifications. "
+        "Return a JSON object with keys: "
+        "'friction_heat_factor' (float, friction temperature rise in Fahrenheit. For mixers/kneaders, standard stand mixers add 10.0, Ankarsrum/spiral mixers add 6.0, manual hand kneading is 2.0, bread machines add 15.0. For other non-mixer equipment type, return 0.0), "
+        "'notes' (string, summary description of capabilities and recommendations), "
+        "and 'details' (JSON object containing other details like 'capacity_grams' (integer, estimated capacity) or 'recommended_speed' (string))."
+    )
+    user_prompt = json.dumps({"name": name, "type": equipment_type})
+
+    if _is_ai_enabled():
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["friction_heat_factor", "notes", "details"])
+        if result:
+            try:
+                result["friction_heat_factor"] = float(result.get("friction_heat_factor", 0.0))
+                result["notes"] = str(result.get("notes", "Analyzed via local Gemma model."))
+                if not isinstance(result.get("details"), dict):
+                    result["details"] = {}
+                return result
+            except Exception as e:
+                logger.error(f"[AI] - Parsing - Failed converting equipment analysis data: {e}")
+
+    # Fallback/mock responses if AI disabled or api fails
+    name_lower = name.lower()
+    if equipment_type == "mixer":
+        if "kitchenaid" in name_lower or "classic" in name_lower:
+            return {
+                "friction_heat_factor": 10.0,
+                "notes": "Planetary stand mixer. High speed mixing can introduce significant heat to dough.",
+                "details": {"capacity_grams": 1000, "recommended_speed": "Speed 2"}
+            }
+        elif "ankarsrum" in name_lower or "spiral" in name_lower:
+            return {
+                "friction_heat_factor": 6.0,
+                "notes": "Rotating bowl spiral mixer. Low friction design, preserves dough temperature well.",
+                "details": {"capacity_grams": 2500, "recommended_speed": "Medium low"}
+            }
+        elif "machine" in name_lower:
+            return {
+                "friction_heat_factor": 15.0,
+                "notes": "Enclosed bread machine motor. High friction and heat generation.",
+                "details": {"capacity_grams": 800, "recommended_speed": "Automatic"}
+            }
+        else:
+            return {
+                "friction_heat_factor": 8.0,
+                "notes": "Standard dough mixer. Moderate friction heating.",
+                "details": {"capacity_grams": 1200}
+            }
+    elif equipment_type == "mill":
+        return {
+            "friction_heat_factor": 0.0,
+            "notes": "Grain mill for processing wheat berries. Check stone temp during long runs to avoid overheating flour.",
+            "details": {"capacity_grams": 500}
+        }
+    else:
+        return {
+            "friction_heat_factor": 0.0,
+            "notes": "Baking accessory helper.",
+            "details": {}
+        }
+

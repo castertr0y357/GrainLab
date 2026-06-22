@@ -1,7 +1,7 @@
 import logging
 from django.test import TestCase, Client
 from django.urls import get_resolver, reverse
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting
+from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment
 from apps.core import bakers_math
 
 logger = logging.getLogger("grainlab.tests")
@@ -253,19 +253,102 @@ class DynamicRouteScannerTests(TestCase):
             if not name:
                 continue
             
-            url = reverse(name, args=[self.preset.id] if name == 'load_preset' else [])
+            # Prepare dummy args for routes requiring parameters
+            args = []
+            if name == 'load_preset':
+                args = [self.preset.id]
+            elif name in ('toggle_wheat_berry_active', 'delete_wheat_berry', 'ai_analyze_wheat_berry'):
+                wb, _ = WheatBerry.objects.get_or_create(name="Temp Route Scan Berry", defaults={"protein_content": 12.0})
+                args = [wb.id]
+            elif name in ('delete_equipment', 'ai_analyze_equipment'):
+                eq, _ = Equipment.objects.get_or_create(name="Temp Route Scan Eq", defaults={"equipment_type": "mixer"})
+                args = [eq.id]
+            elif name == 'redo_ai_analysis':
+                wb, _ = WheatBerry.objects.get_or_create(name="Temp Route Scan Redo Berry", defaults={"protein_content": 12.0})
+                args = ["wheat_berry", wb.id]
+
+            url = reverse(name, args=args)
             
             # Perform GET check
             response = client.get(url)
             
             # If route requires POST (e.g. calculate or settings save), GET might return 405.
-            # 200, 302, and 405 are all successful routing states (no 500 Internal Server Errors).
+            # 200, 204, 302, and 405 are all successful routing states (no 500 Internal Server Errors).
             self.assertIn(
                 response.status_code, 
-                [200, 302, 405], 
+                [200, 204, 302, 405], 
                 msg=f"Route '{url}' (name={name}) failed with status {response.status_code}!"
             )
             
             # Verify no ERROR level logs were generated
             # (Swallowed exceptions are flagged automatically as assertions fail)
             logger.info(f"Route scan passed: {url} -> status {response.status_code}")
+
+
+class InventoryAndEquipmentTests(TestCase):
+    """
+    Tests the Inventory models, dynamic mixing calculations,
+    and equipment DDT friction modifiers.
+    """
+    
+    def test_wheat_berry_shares_blending(self):
+        """
+        Verify that active wheat berries are mixed correctly based on sliders.
+        """
+        # 1. Test empty active berries returns House Blend
+        shares, coef = bakers_math.calculate_wheat_berry_shares([], 50, 50)
+        self.assertEqual(shares, {"House Blend": 1.0})
+        self.assertEqual(coef, 1.0)
+
+        # 2. Setup active berries
+        hard_red = {
+            "name": "Hard Red Winter",
+            "protein_content": 13.0,
+            "hardness": "hard",
+            "moisture_absorption_coef": 1.0,
+        }
+        soft_white = {
+            "name": "Soft White",
+            "protein_content": 9.0,
+            "hardness": "soft",
+            "moisture_absorption_coef": 0.96,
+        }
+        spelt = {
+            "name": "Spelt",
+            "protein_content": 11.5,
+            "hardness": "ancient",
+            "moisture_absorption_coef": 1.05,
+        }
+        
+        # Test soft target (texture_score=100, crumb_score=0)
+        active_berries = [hard_red, soft_white, spelt]
+        shares, coef = bakers_math.calculate_wheat_berry_shares(active_berries, 100, 0)
+        
+        # Spelt gets 15% flat
+        self.assertAlmostEqual(shares["Spelt"], 0.15)
+        # Soft White gets remaining share dynamically matching target protein of 9.5%
+        # Target protein 9.5%: x*13.0 + (1-x)*9.0 = 9.5 -> x = 0.125.
+        # Soft White gets (1-x) * 0.85 = 0.74375
+        self.assertAlmostEqual(shares["Soft White"], 0.74375)
+        self.assertAlmostEqual(shares["Hard Red Winter"], 0.10625)
+        
+        # Weighted absorption coefficient check:
+        # 0.15 * 1.05 + 0.74375 * 0.96 + 0.10625 * 1.0 = 0.1575 + 0.714 + 0.10625 = 0.97775
+        self.assertAlmostEqual(coef, 0.97775, places=4)
+
+    def test_equipment_friction_override(self):
+        """
+        Verify that custom equipment mixer friction adjusts the required water temp.
+        """
+        recipe = bakers_math.calculate_recipe(
+            base_hydration=0.68,
+            base_fat=0.0,
+            base_sugar=0.0,
+            target_mass=900.0,
+            room_temp_f=72.0,
+            flour_temp_f=70.0,
+            friction_override=6.0
+        )
+        self.assertEqual(recipe["required_water_temp_f"], 86.0)
+        self.assertEqual(recipe["required_water_temp_c"], 30.0)
+

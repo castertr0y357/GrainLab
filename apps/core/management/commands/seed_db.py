@@ -1,6 +1,6 @@
 import os
 from django.core.management.base import BaseCommand
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting
+from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment
 
 class Command(BaseCommand):
     help = "Seeds initial dough categories, form factors, presets, and default system settings."
@@ -253,6 +253,107 @@ class Command(BaseCommand):
             setting, created = SystemSetting.objects.get_or_create(key=key, defaults={"value": val})
             if created:
                 self.stdout.write(f"  Created setting: {key} = {val}")
+
+        # 4b. Default Wheat Berries
+        self.stdout.write("Seeding default wheat berries...")
+        wheat_berries_data = [
+            {
+                "name": "Hard Red Winter Wheat",
+                "protein_content": 13.0,
+                "hardness": "hard",
+                "moisture_absorption_coef": 1.0,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "Good baseline hard wheat with solid gluten development suitable for general crusty breads."
+            },
+            {
+                "name": "Hard Red Spring Wheat",
+                "protein_content": 14.5,
+                "hardness": "hard",
+                "moisture_absorption_coef": 1.02,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "High protein content, excellent gluten strength, perfect for open crumb and sourdoughs."
+            },
+            {
+                "name": "Soft White Wheat",
+                "protein_content": 9.5,
+                "hardness": "soft",
+                "moisture_absorption_coef": 0.97,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "Low protein, tender gluten. Great for cakes, pastries, biscuits, or softening hard wheat blends."
+            },
+            {
+                "name": "Spelt Wheat (Ancient)",
+                "protein_content": 11.5,
+                "hardness": "ancient",
+                "moisture_absorption_coef": 1.05,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "Highly soluble gluten, ancient variety. Provides a nutty, sweet flavor and a slightly relaxed crumb."
+            },
+            {
+                "name": "Einkorn (Ancient)",
+                "protein_content": 12.5,
+                "hardness": "ancient",
+                "moisture_absorption_coef": 1.04,
+                "is_active": False,
+                "ai_analyzed": True,
+                "notes": "The most ancient cultivated wheat. Weaker gluten structure, high carotenoid pigments (yellow color)."
+            }
+        ]
+
+        for wb_data in wheat_berries_data:
+            wb, created = WheatBerry.objects.update_or_create(
+                name=wb_data["name"], defaults=wb_data
+            )
+            if created:
+                self.stdout.write(f"  Created wheat berry: {wb.name}")
+
+        # 4c. Default Equipment
+        self.stdout.write("Seeding default equipment...")
+        equipment_data = [
+            {
+                "name": "KitchenAid Professional 600",
+                "equipment_type": "mixer",
+                "friction_heat_factor": 10.0,
+                "ai_analyzed": True,
+                "notes": "Planetary stand mixer. High speed mixing can introduce significant heat to dough.",
+                "details": {"capacity_grams": 1000, "recommended_speed": "Speed 2"}
+            },
+            {
+                "name": "Ankarsrum Assistant Mixer",
+                "equipment_type": "mixer",
+                "friction_heat_factor": 6.0,
+                "ai_analyzed": True,
+                "notes": "Rotating bowl spiral mixer. Low friction design, preserves dough temperature well.",
+                "details": {"capacity_grams": 2500, "recommended_speed": "Medium low"}
+            },
+            {
+                "name": "Mockmill 200 Grain Mill",
+                "equipment_type": "mill",
+                "friction_heat_factor": 0.0,
+                "ai_analyzed": True,
+                "notes": "Stoneburr grain mill, 200W motor. Fast throughput with minimum heat transfer.",
+                "details": {"capacity_grams": 500, "extraction_rate_pct": 100}
+            },
+            {
+                "name": "Hand Kneading (Manual)",
+                "equipment_type": "mixer",
+                "friction_heat_factor": 2.0,
+                "ai_analyzed": True,
+                "notes": "Human-powered mixing. Low friction, relies on hand stretches to build structure.",
+                "details": {"capacity_grams": 5000}
+            }
+        ]
+
+        for eq_data in equipment_data:
+            eq, created = Equipment.objects.update_or_create(
+                name=eq_data["name"], defaults=eq_data
+            )
+            if created:
+                self.stdout.write(f"  Created equipment: {eq.name}")
 
         # 5. Create default superuser if it doesn't exist
         superuser_username = os.getenv("SUPERUSER_USERNAME")
