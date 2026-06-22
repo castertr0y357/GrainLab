@@ -117,6 +117,23 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
+
+# Dynamically add the configured local port
+local_port = os.getenv('LOCAL_PORT')
+if local_port:
+    CSRF_TRUSTED_ORIGINS.extend([
+        f'http://localhost:{local_port}',
+        f'http://127.0.0.1:{local_port}',
+    ])
+
+# Allow trusted origins overrides via environment variables
+env_csrf = os.getenv('CSRF_TRUSTED_ORIGINS')
+if env_csrf:
+    CSRF_TRUSTED_ORIGINS.extend([o.strip() for o in env_csrf.split(',') if o.strip()])
+
+# Recognize headers from SSL-terminating reverse proxies
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Enforce secure cookies flags only if not in debug
 if not DEBUG:
     CSRF_COOKIE_SECURE = True

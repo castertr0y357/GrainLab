@@ -269,10 +269,10 @@ def save_settings(request):
     """
     Persists preferences to settings database.
     """
-    ai_enabled = request.POST.get("ai_enabled") == "on"
+    ai_enabled = request.POST.get("ai_enabled") in ("on", "true", "True")
     ai_api_url = request.POST.get("ai_api_url", "").strip()
     ai_model_name = request.POST.get("ai_model_name", "").strip()
-    ai_thinking_enabled = request.POST.get("ai_thinking_enabled") == "on"
+    ai_thinking_enabled = request.POST.get("ai_thinking_enabled") in ("on", "true", "True")
     ai_thinking_effort = request.POST.get("ai_thinking_effort", "medium")
     
     SystemSetting.set_val("ai_enabled", ai_enabled)
@@ -296,7 +296,7 @@ def sourdough_calibrate(request):
     starter_feed_hours = request.POST.get("starter_feed_hours", "4_8")
     rise_speed = request.POST.get("rise_speed", "normal")
     mill_type = request.POST.get("mill_type", "stoneground")
-    is_sifted = request.POST.get("is_sifted") == "on"
+    is_sifted = request.POST.get("is_sifted") in ("on", "true", "True")
     
     calibration = gemma_client.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
     
