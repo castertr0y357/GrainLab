@@ -688,7 +688,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2rem; gap: 1rem;">
         <button type="button" 
                 class="nav-btn" 
-                style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; flex: 1;"
+                style="height: 48px; font-weight: 700; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; flex: 1; text-transform: uppercase; transition: var(--transition);"
                 x-show="current_phase > 1" 
                 x-transition
                 @click="current_phase--; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
@@ -697,7 +697,7 @@
         
         <button type="button" 
                 class="nav-btn" 
-                style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; flex: 1;"
+                style="height: 48px; font-weight: 700; letter-spacing: 0.05em; background: transparent; border: 2px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: 9999px; flex: 1; text-transform: uppercase; transition: var(--transition);"
                 hx-get="{% url 'calculator' %}" 
                 hx-target="#calculator-form-container" 
                 hx-select="#calculator-form" 

@@ -15,10 +15,10 @@
 </div>
 
 <!-- Dynamic Header Injection (Phase 2+) -->
-<div x-show="current_phase >= 2" style="background-color: #1a1a1f; padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); border-radius: var(--radius-md) var(--radius-md) 0 0; margin-bottom: 1.5rem; text-align: center;">
-    <h3 style="color: var(--accent); margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
-        🎯 Recipe Target: {% if classified_preset %}{{ classified_preset.name }}{% else %}Custom Blend{% endif %}
-    </h3>
+<div x-show="current_phase >= 2" class="card-title" style="margin-bottom: 1.5rem; justify-content: center; text-align: center; border-bottom: 1px solid var(--border);">
+    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase;">
+        [Recipe Target: {% if classified_preset %}{{ classified_preset.name }}{% else %}Custom Blend{% endif %}]
+    </span>
 </div>
 
 <!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 4 ONLY) -->
