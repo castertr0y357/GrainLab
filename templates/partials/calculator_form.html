@@ -14,11 +14,7 @@
           subOriginal: 'water',
           subSubstitute: 'none',
           use_custom: false,
-          category_slug: '{{ selected_category.slug|default:"lean-crusty" }}',
-          proofingEnvVal: 'ambient',
-          millTypeVal: 'stoneground',
-          starterFeedHours: '4_8',
-          starterRiseSpeed: 'normal'
+          category_slug: '{{ selected_category.slug|default:"lean-crusty" }}'
       }"
       x-init="
           $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
@@ -31,37 +27,12 @@
           query = '{{ selected_preset.name|escapejs }}';
           selected_master = '{% if selected_preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif selected_preset.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';
           {% endif %}
-          if (leaven === 'sourdough') {
-              $nextTick(() => {
-                  let el = document.getElementById('flow_starter_feed_hours');
-                  if (el) el.dispatchEvent(new Event('change-custom'));
-              });
-          }
       ">
 
     {% if selected_preset %}
         <input type="hidden" name="preset_slug" value="{{ selected_preset.slug }}">
     {% endif %}
     <input type="hidden" name="current_phase" :value="current_phase">
-
-    <!-- Persistent Mode Toggle Header (Phase 3 & 4) -->
-    <div x-show="current_phase >= 3" x-transition style="margin-bottom: 1.5rem;">
-        <div style="display: flex; background: var(--bg-input, #1a1a1f); border: 1px solid var(--border, #333); border-radius: var(--radius-md, 8px); padding: 0.25rem; width: 100%;">
-            <button type="button" 
-                    style="flex: 1; height: 40px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm, 4px); border: none; transition: var(--transition); letter-spacing: 0.05em; text-transform: uppercase;"
-                    :style="!advancedMode ? 'background-color: var(--accent); color: #000; font-weight: 700; box-shadow: 0 0 10px rgba(255, 136, 0, 0.25);' : 'background: transparent; color: var(--text-muted, #888);'"
-                    @click="advancedMode = false">
-                [ Standard ]
-            </button>
-            <button type="button" 
-                    style="flex: 1; height: 40px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm, 4px); border: none; transition: var(--transition); letter-spacing: 0.05em; text-transform: uppercase;"
-                    :style="advancedMode ? 'background-color: var(--accent); color: #000; font-weight: 700; box-shadow: 0 0 10px rgba(255, 136, 0, 0.25);' : 'background: transparent; color: var(--text-muted, #888);'"
-                    @click="advancedMode = true">
-                [ Advanced ]
-            </button>
-        </div>
-        <input type="hidden" name="advanced_mode" :value="advancedMode ? 'true' : 'false'">
-    </div>
 
     <!-- Hidden Dough Category and Form Factor selectors linked to HTMX -->
     <div style="display: none;">
@@ -235,8 +206,6 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                 <template x-for="berry in activeBerries" :key="berry.id">
                     <label class="card" 
-                           x-show="advancedMode || berry.name === idealGrainName"
-                           x-transition
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
                            :style="berry.selected ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''">
                         <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" style="display: none;">
@@ -268,95 +237,50 @@
                         <label for="flour_temp">Flour Temp (°F)</label>
                         <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
                     </div>
-                <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div class="input-group">
-                        <label>Mixing Equipment</label>
-                        <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span class="chip" :class="customMixerVal === 'static' ? 'active' : ''"
-                                  @click="customMixerVal = 'static'; use_custom = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                Standard Method
-                            </span>
+                        <label for="custom_mixer">Mixing Equipment</label>
+                        <select name="custom_mixer" id="custom_mixer" class="form-select" @change="use_custom = ($el.value !== 'static')">
+                            <option value="static">Standard Preset Method...</option>
                             {% for mixer in mixers %}
-                                <span class="chip" :class="customMixerVal == '{{ mixer.id }}' ? 'active' : ''"
-                                      @click="customMixerVal = '{{ mixer.id }}'; use_custom = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                      style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                    {{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)
-                                </span>
+                                <option value="{{ mixer.id }}">{{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)</option>
                             {% endfor %}
-                            <input type="hidden" name="custom_mixer" :value="customMixerVal">
-                        </div>
+                        </select>
                     </div>
-                    
-                    <div class="input-group" x-show="!use_custom" x-transition>
-                        <label>Kneading Method</label>
-                        <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span class="chip" :class="mixingMethodVal === 'stand_mixer' ? 'active' : ''"
-                                  @click="mixingMethodVal = 'stand_mixer'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                Stand Mixer
-                            </span>
-                            <span class="chip" :class="mixingMethodVal === 'hand_knead' ? 'active' : ''"
-                                  @click="mixingMethodVal = 'hand_knead'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                Hand Knead
-                            </span>
-                            <span class="chip" :class="mixingMethodVal === 'bread_machine' ? 'active' : ''"
-                                  @click="mixingMethodVal = 'bread_machine'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                Bread Machine
-                            </span>
-                            <input type="hidden" name="mixing_method" :value="mixingMethodVal">
-                        </div>
+                    <div class="input-group" x-show="!use_custom">
+                        <label for="mixing_method">Kneading Method</label>
+                        <select name="mixing_method" id="mixing_method" class="form-select">
+                            <option value="stand_mixer">Stand Mixer</option>
+                            <option value="hand_knead">Hand Knead</option>
+                            <option value="bread_machine">Bread Machine</option>
+                        </select>
                     </div>
                 </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                     <div class="input-group">
-                        <label>Proofing Environment</label>
-                        <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span class="chip" :class="proofingEnvVal === 'ambient' ? 'active' : ''"
-                                  @click="proofingEnvVal = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                🏠 Ambient Room
-                            </span>
-                            <span class="chip" :class="proofingEnvVal === 'mat' ? 'active' : ''"
-                                  @click="proofingEnvVal = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                🌡️ Open Proofing Mat
-                            </span>
-                            <span class="chip" :class="proofingEnvVal === 'box' ? 'active' : ''"
-                                  @click="proofingEnvVal = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                📦 Enclosed Box
-                            </span>
-                            <input type="hidden" name="proofing_environment" :value="proofingEnvVal">
-                        </div>
+                        <label for="proofing_environment">Proofing Environment</label>
+                        <select name="proofing_environment" id="proofing_environment" class="form-select">
+                            <option value="ambient">Ambient Room</option>
+                            <option value="mat">Open Proofing Mat</option>
+                            <option value="box">Enclosed Proofing Box</option>
+                        </select>
                     </div>
                 </div>
             </div>
- 
+
             <!-- Milling Profile Parameters -->
             <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
                 <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                     Milling Profile Parameters
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="input-group">
-                        <label>Mill Machinery Profile</label>
-                        <div class="chip-container" style="display: flex; gap: 0.5rem; margin-bottom: 0;">
-                            <span class="chip" :class="millTypeVal === 'stoneground' ? 'active' : ''"
-                                  @click="millTypeVal = 'stoneground'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; text-align: center; border-radius: var(--radius-md); font-size: 0.85rem;">
-                                🪨 Stoneground
-                            </span>
-                            <span class="chip" :class="millTypeVal === 'steel_roller' ? 'active' : ''"
-                                  @click="millTypeVal = 'steel_roller'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; text-align: center; border-radius: var(--radius-md); font-size: 0.85rem;">
-                                ⚙️ Steel Roller
-                            </span>
-                            <input type="hidden" name="mill_type" :value="millTypeVal">
-                        </div>
+                        <label for="flow_mill_type">Mill Machinery Profile</label>
+                        <select name="mill_type" id="flow_mill_type" class="form-select">
+                            <option value="stoneground">Stoneground Mill (High friction)</option>
+                            <option value="steel_roller">Steel Roller Mill (Low friction)</option>
+                        </select>
                     </div>
                     <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; margin-bottom: 0;">
                         <label for="flow_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
@@ -412,20 +336,19 @@
             <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Geometry Constraints</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="input-group" style="grid-column: span 2;">
-                    <label>Form Factor</label>
-                    <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0;">
+                    <label for="id_form_factor">Form Factor</label>
+                    <select name="form_factor" id="id_form_factor" class="form-select"
+                            hx-get="{% url 'calculator' %}" 
+                            hx-target="#calculator-form-container"
+                            hx-select="#calculator-form"
+                            hx-swap="outerHTML"
+                            @change="portioned = ($el.options[$el.selectedIndex].text.includes('Units') || $el.options[$el.selectedIndex].text.includes('Portioned') || $el.options[$el.selectedIndex].text.includes('Naan'))">
                         {% for ff in form_factors %}
-                            <span class="chip {% if ff.slug == selected_form_factor.slug %}active{% endif %}"
-                                  hx-get="{% url 'calculator' %}?form_factor={{ ff.slug }}&dough_category={{ selected_category.slug }}&preset={{ selected_preset.slug }}"
-                                  hx-target="#calculator-form-container"
-                                  hx-select="#calculator-form"
-                                  hx-swap="outerHTML"
-                                  style="cursor: pointer; padding: 0.5rem 1rem; border-radius: var(--radius-md); font-weight: 600; display: inline-flex; align-items: center; justify-content: center; height: 44px;">
+                            <option value="{{ ff.slug }}" {% if ff.slug == selected_form_factor.slug %}selected{% endif %}>
                                 {{ ff.name }}
-                            </span>
+                            </option>
                         {% endfor %}
-                    </div>
-                    <input type="hidden" name="form_factor" value="{{ selected_form_factor.slug }}">
+                    </select>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -452,35 +375,32 @@
 
         <!-- Sliders -->
         <div class="slider-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.95rem; color: var(--accent);">Texture fine-tuning</label>
-                <span class="highlight-row" style="font-weight: 700; color: var(--text-primary);" x-text="texture + '%'"></span>
+            <div class="slider-label">
+                <span>Texture (Softness vs. Crustiness)</span>
+                <span class="highlight-row" x-text="texture + '%'"></span>
             </div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">Crusty (0%)</span>
-                <input type="range" name="texture_score" min="0" max="100" x-model="texture" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">Softness (100%)</span>
-            </div>
+            <input type="range" name="texture_score" min="0" max="100" x-model="texture">
+            <div class="slider-desc">Manipulate softness: enrichment scaling. 0% is lean/crusty.</div>
         </div>
 
-        <div class="slider-group" style="margin-top: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.95rem; color: var(--accent);">Hydration fine-tuning</label>
-                <span class="highlight-row" style="font-weight: 700; color: var(--text-primary);">
-                    Crumb: <span x-text="crumb + '%'"></span> | Est. Hydration: <span x-text="Math.round(45 + (crumb / 100) * 40) + '%'"></span>
+        <div class="slider-group">
+            <div class="slider-label">
+                <span>Hydration (Dense vs. Open Crumb)</span>
+                <span class="highlight-row">
+                    Crumb: <span x-text="crumb + '%'"></span> | 
+                    Effective Hydration: <span x-text="Math.round(45 + (crumb / 100) * 40) + '%'"></span>
                 </span>
             </div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">Dense (0%)</span>
-                <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">Open Crumb (100%)</span>
-            </div>
             <!-- Dynamic boundaries enforced -->
-            <template x-if="grain_mode === 'milled' && (weightedAbsorption() - 1.0) >= 0.05">
-                <div style="color: var(--warning); font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">
-                    ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
-                </div>
-            </template>
+            <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb">
+            <div class="slider-desc">
+                Adjust crumb structure. 
+                <template x-if="grain_mode === 'milled' && (weightedAbsorption() - 1.0) >= 0.05">
+                    <span style="color: var(--warning); display: block; margin-top: 0.25rem;">
+                        ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
+                    </span>
+                </template>
+            </div>
         </div>
 
         <!-- Leavening Biology -->
@@ -521,58 +441,32 @@
         <div x-show="leavening_type === 'sourdough'" x-transition
              style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
             <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
-                S            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;">
+                Sourdough Starter Diagnostics
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="input-group">
-                    <label>Starter Feeding Schedule</label>
-                    <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0;">
-                        <span class="chip" :class="starterFeedHours === '4_8' ? 'active' : ''"
-                              @click="starterFeedHours = '4_8'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Active (4-8h ago)
-                        </span>
-                        <span class="chip" :class="starterFeedHours === '8_12' ? 'active' : ''"
-                              @click="starterFeedHours = '8_12'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Matured (8-12h ago)
-                        </span>
-                        <span class="chip" :class="starterFeedHours === '12_18' ? 'active' : ''"
-                              @click="starterFeedHours = '12_18'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Hungry (12-18h ago)
-                        </span>
-                        <span class="chip" :class="starterFeedHours === '18_plus' ? 'active' : ''"
-                              @click="starterFeedHours = '18_plus'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Starved (18h+ ago)
-                        </span>
-                        <input type="hidden" name="starter_feed_hours" id="flow_starter_feed_hours" :value="starterFeedHours"
-                               hx-post="{% url 'sourdough_calibrate' %}" 
-                               hx-target="#sourdough-diagnostic-output"
-                               hx-trigger="change-custom"
-                               hx-include="#flow_starter_feed_hours, #flow_rise_speed">
-                    </div>
+                    <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
+                    <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
+                            hx-post="{% url 'sourdough_calibrate' %}" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="4_8">Active Feed (4-8 hours ago)</option>
+                        <option value="8_12">Matured Feed (8-12 hours ago)</option>
+                        <option value="12_18">Hungry starter (12-18 hours ago)</option>
+                        <option value="18_plus">Starved starter (18+ hours ago)</option>
+                    </select>
                 </div>
 
                 <div class="input-group">
-                    <label>Starter Activity Speed</label>
-                    <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0;">
-                        <span class="chip" :class="starterRiseSpeed === 'fast' ? 'active' : ''"
-                              @click="starterRiseSpeed = 'fast'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Explosive (&lt;4h)
-                        </span>
-                        <span class="chip" :class="starterRiseSpeed === 'normal' ? 'active' : ''"
-                              @click="starterRiseSpeed = 'normal'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Normal (4-8h)
-                        </span>
-                        <span class="chip" :class="starterRiseSpeed === 'slow' ? 'active' : ''"
-                              @click="starterRiseSpeed = 'slow'; $nextTick(() => { document.getElementById('flow_starter_feed_hours').dispatchEvent(new Event('change-custom')) })"
-                              style="height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
-                            Sluggish (8h+)
-                        </span>
-                        <input type="hidden" name="rise_speed" id="flow_rise_speed" :value="starterRiseSpeed">
-                    </div>
+                    <label for="flow_rise_speed">Starter activity speed</label>
+                    <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
+                            hx-post="{% url 'sourdough_calibrate' %}" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="fast">Explosive (Doubles in &lt;4 hours)</option>
+                        <option value="normal">Normal (Doubles in 4-8 hours)</option>
+                        <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
+                    </select>
                 </div>
             </div>
             <!-- Calibration box target -->
@@ -580,97 +474,33 @@
         </div>
 
         <!-- Chemical Substitutions -->
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
+        <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
              x-init="$watch('subOriginal', val => { subSubstitute = 'none' })">
-            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Chemical Substitutions</h4>
-            
-            <div style="margin-bottom: 1rem;">
-                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Original Ingredient</label>
-                <div class="chip-container" style="display: flex; gap: 0.5rem;">
-                    <span class="chip" :class="subOriginal === 'water' ? 'active' : ''"
-                          @click="subOriginal = 'water'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                          style="height: 44px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; border-radius: var(--radius-md);">
-                        💧 Water
-                    </span>
-                    <span class="chip" :class="subOriginal === 'fat' ? 'active' : ''"
-                          @click="subOriginal = 'fat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                          style="height: 44px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; border-radius: var(--radius-md);">
-                        🧈 Oil / Fats
-                    </span>
-                    <input type="hidden" name="sub_original" :value="subOriginal">
+            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Chemical Substitutions</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="input-group">
+                    <label for="sub_original">Original Ingredient</label>
+                    <select name="sub_original" id="sub_original" class="form-select" x-model="subOriginal">
+                        <option value="water">Water</option>
+                        <option value="fat">Oil / Fats</option>
+                    </select>
                 </div>
-            </div>
-
-            <div>
-                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Alternative Swap</label>
-                <div class="chip-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <span class="chip" :class="subSubstitute === 'none' ? 'active' : ''"
-                          @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                        No Swap
-                    </span>
-                    
-                    <!-- Water Swaps -->
-                    <template x-if="subOriginal === 'water'">
-                        <div style="display: contents;">
-                            <span class="chip" :class="subSubstitute === 'whole_milk' ? 'active' : ''"
-                                  @click="subSubstitute = 'whole_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                Whole Milk
-                            </span>
-                            <span class="chip" :class="subSubstitute === 'almond_milk' ? 'active' : ''"
-                                  @click="subSubstitute = 'almond_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                  style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                Almond Milk
-                            </span>
-                        </div>
-                    </template>
-                    
-                    <!-- Fat Swaps -->
-                    <template x-if="subOriginal === 'fat'">
-                        <div style="display: contents;">
-                            <!-- Standard Mode Swaps -->
-                            <template x-if="!advancedMode">
-                                <span class="chip" :class="subSubstitute === 'butter' ? 'active' : ''"
-                                      @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                      style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1.25rem; border-radius: var(--radius-md);">
-                                    Butter
-                                </span>
-                            </template>
-                            
-                            <!-- Advanced Mode Swaps -->
-                            <template x-if="advancedMode">
-                                <div style="display: contents;">
-                                    <span class="chip" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
-                                          @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md);">
-                                        Olive Oil
-                                    </span>
-                                    <span class="chip" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
-                                          @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md);">
-                                        Canola Oil
-                                    </span>
-                                    <span class="chip" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
-                                          @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md);">
-                                        Vegetable Oil
-                                    </span>
-                                    <span class="chip" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
-                                          @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md);">
-                                        Salted Butter
-                                    </span>
-                                    <span class="chip" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
-                                          @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'))"
-                                          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 0 1rem; border-radius: var(--radius-md);">
-                                        Unsalted Butter
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                    <input type="hidden" name="sub_substitute" :value="subSubstitute">
+                <div class="input-group">
+                    <label for="sub_substitute">Alternative Swap</label>
+                    <select name="sub_substitute" id="sub_substitute" class="form-select" x-model="subSubstitute">
+                        <option value="none">No Swap</option>
+                        <template x-if="subOriginal === 'water'">
+                            <optgroup label="Milk Alternatives">
+                                <option value="whole_milk">Whole Milk</option>
+                                <option value="almond_milk">Almond Milk</option>
+                            </optgroup>
+                        </template>
+                        <template x-if="subOriginal === 'fat'">
+                            <optgroup label="Fat Alternatives">
+                                <option value="butter">Butter</option>
+                            </optgroup>
+                        </template>
+                    </select>
                 </div>
             </div>
         </div>
@@ -688,7 +518,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2rem; gap: 1rem;">
         <button type="button" 
                 class="nav-btn" 
-                style="height: 48px; font-weight: 700; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; flex: 1; text-transform: uppercase; transition: var(--transition);"
+                style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; flex: 1;"
                 x-show="current_phase > 1" 
                 x-transition
                 @click="current_phase--; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
@@ -697,7 +527,7 @@
         
         <button type="button" 
                 class="nav-btn" 
-                style="height: 48px; font-weight: 700; letter-spacing: 0.05em; background: transparent; border: 2px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: 9999px; flex: 1; text-transform: uppercase; transition: var(--transition);"
+                style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; flex: 1;"
                 hx-get="{% url 'calculator' %}" 
                 hx-target="#calculator-form-container" 
                 hx-select="#calculator-form" 

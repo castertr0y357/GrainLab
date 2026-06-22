@@ -103,36 +103,6 @@ class BakersMathTests(TestCase):
         self.assertLess(recipe["effective_sugar_pct"], 8.0)
         self.assertEqual(recipe["liquid_label"], "Whole Milk")
 
-    def test_advanced_fat_substitutions(self):
-        """
-        Verify that advanced fat substitutions (olive oil, canola oil, vegetable oil, salted/unsalted butter)
-        are calculated correctly by the math engine.
-        """
-        # Olive oil swap: should map to pure 100% fat swap with no hydration offset, label "Olive Oil"
-        recipe_olive = bakers_math.calculate_recipe(
-            base_hydration=0.65,
-            base_fat=0.05,
-            base_sugar=0.0,
-            target_mass=1000.0,
-            substitution={"original": "fat", "substitute": "olive_oil"}
-        )
-        self.assertEqual(recipe_olive["fat_label"], "Olive Oil")
-        self.assertAlmostEqual(recipe_olive["added_oil"], recipe_olive["fat_weight_display"])
-        self.assertEqual(recipe_olive["added_butter"], 0.0)
-
-        # Salted butter swap: 80% fat, 18% water, label "Salted Butter"
-        recipe_butter = bakers_math.calculate_recipe(
-            base_hydration=0.65,
-            base_fat=0.05,
-            base_sugar=0.0,
-            target_mass=1000.0,
-            substitution={"original": "fat", "substitute": "salted_butter"}
-        )
-        self.assertEqual(recipe_butter["fat_label"], "Salted Butter")
-        self.assertAlmostEqual(recipe_butter["added_butter"], recipe_butter["fat_weight_display"])
-        self.assertEqual(recipe_butter["added_oil"], 0.0)
-        self.assertLess(recipe_butter["added_water"], recipe_olive["added_water"])
-
 
 class ClassifierEngineTests(TestCase):
     """

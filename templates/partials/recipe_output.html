@@ -1,5 +1,5 @@
 {% if recipe.structural_warning %}
-<div x-show="current_phase == 4" x-transition
+<div x-show="current_phase >= 3" x-transition
      style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
     <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 1.05rem;">⚠️ Gluten Strength Notice</h4>
     <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
@@ -9,20 +9,13 @@
 {% endif %}
 
 <!-- SLEEK EMPTY STATE -->
-<div x-show="current_phase === 1" x-transition
+<div x-show="current_phase < 3" x-transition
      style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 6rem 1.5rem;">
-    Select a dough category to initialize formula math...
+    Select a dough preset and flour medium to compile formulas...
 </div>
 
-<!-- Dynamic Header Injection (Phase 2+) -->
-<div x-show="current_phase >= 2" class="card-title" style="margin-bottom: 1.5rem; justify-content: center; text-align: center; border-bottom: 1px solid var(--border);">
-    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase;">
-        [Recipe Target: {% if classified_preset %}{{ classified_preset.name }}{% else %}Custom Blend{% endif %}]
-    </span>
-</div>
-
-<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 4 ONLY) -->
-<div x-show="current_phase == 4" x-transition>
+<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 3, 4) -->
+<div x-show="current_phase >= 3" x-transition>
     
     <!-- COMPILED FORMULA -->
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
@@ -50,16 +43,10 @@
                 {% endif %}
             </div>
             
-            <!-- Added Liquid Row with Indentation -->
-            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                    <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label == 'Water' %}Pure Water{% else %}{{ recipe.liquid_label }}{% endif %}</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.liquid_weight }}g</span>
-                </div>
+            <!-- Added Liquid Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
             </div>
             
             <!-- Leaven Row -->
@@ -75,19 +62,16 @@
                 </div>
             {% endif %}
             
-            <!-- Enrichments: Butter / Oil with Indentation -->
-            {% if recipe.fat_weight_display > 0 %}
-                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-primary); font-weight: 600;">
-                            {% if recipe.added_butter > 0 %}Fats / Oil (solid enrichment){% else %}Fats / Oil (liquid enrichment){% endif %}
-                        </span>
-                        <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.fat_weight_display }}g</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">↳ {{ recipe.fat_label }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.fat_weight_display }}g</span>
-                    </div>
+            <!-- Enrichments: Butter / Oil -->
+            {% if recipe.added_butter > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Butter (solid enrichment)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_butter }}g</span>
+                </div>
+            {% elif recipe.added_oil > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Fats / Oil (liquid enrichment)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_oil }}g</span>
                 </div>
             {% endif %}
             
@@ -114,7 +98,7 @@
     </div>
 
     <!-- BAKING PROFILE -->
-    <div x-show="!countertopMode" style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+    <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
         <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
@@ -147,7 +131,7 @@
     {% endif %}
 
     <!-- THERMAL PROFILE -->
-    <div x-show="!countertopMode" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
         <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm);">
             <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Liquid Water Temp</div>
             <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">

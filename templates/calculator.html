@@ -2,29 +2,12 @@
 {% load static %}
 
 {% block content %}
-<style>
-@keyframes container-flash {
-    0% { background-color: rgba(220, 53, 69, 0.15); border-left-color: var(--danger); }
-    100% { background-color: rgba(220, 53, 69, 0.45); border-left-color: #ff3333; }
-}
-</style>
 <div x-data="{
     current_phase: {% if selected_preset %}3{% else %}1{% endif %},
     grain_mode: '{% if selected_preset %}{% if selected_preset.flour_type_default == 'all_purpose' %}refined{% else %}milled{% endif %}{% else %}refined{% endif %}',
     selected_master: '{% if selected_preset %}{% if selected_preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif selected_preset.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}{% else %}null{% endif %}',
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
-    advancedMode: false,
-    isCountUp: false,
-    alarmInterval: null,
-    bakeTemp: '',
-    steamRequired: '',
-    waterTempF: '',
-    waterTempC: '',
-    donenessF: '',
-    donenessC: '',
-    customMixerVal: 'static',
-    mixingMethodVal: 'stand_mixer',
     
     // Auto-correction and warning computed on client side
     presetName: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
@@ -70,30 +53,12 @@
                 this.selectIdealGrain();
             }
         });
-        this.$watch('advancedMode', value => {
-            if (!value) {
-                this.selectIdealGrain();
-                let form = document.getElementById('calculator-form');
-                if (form) {
-                    let formAlpine = Alpine.$data(form);
-                    if (formAlpine && ['olive_oil', 'canola_oil', 'vegetable_oil', 'salted_butter', 'unsalted_butter'].includes(formAlpine.subSubstitute)) {
-                        formAlpine.subSubstitute = 'none';
-                    }
-                }
-            }
-            this.$nextTick(() => {
-                let form = document.getElementById('calculator-form');
-                if (form) {
-                    htmx.trigger(form, 'change');
-                }
-            });
-        });
         if (this.grain_mode === 'milled') {
             this.selectIdealGrain();
         }
     },
 
-    get idealGrainName() {
+    selectIdealGrain() {
         let idealName = 'Hard Red Winter Wheat';
         if (this.presetSlug) {
             let s = this.presetSlug.toLowerCase();
@@ -105,13 +70,8 @@
                 idealName = 'Hard White Wheat';
             }
         }
-        return idealName;
-    },
-
-    selectIdealGrain() {
-        let ideal = this.idealGrainName;
         this.activeBerries.forEach(b => {
-            b.selected = (b.name === ideal);
+            b.selected = (b.name === idealName);
         });
     },
 
@@ -126,40 +86,22 @@
                 proof: parseInt(el.getAttribute('data-proof-min')) || 120,
                 bake: parseInt(el.getAttribute('data-bake-min')) || 45
             };
-            this.bakeTemp = el.getAttribute('data-bake-temp') || '';
-            this.steamRequired = el.getAttribute('data-steam') || '';
-            this.waterTempF = el.getAttribute('data-water-temp-f') || '';
-            this.waterTempC = el.getAttribute('data-water-temp-c') || '';
-            this.donenessF = el.getAttribute('data-doneness-f') || '';
-            this.donenessC = el.getAttribute('data-doneness-c') || '';
         }
         this.countertopMode = true;
         this.currentStepIndex = 0;
-        this.isCountUp = false;
         this.stepTimeRemaining = this.durations[this.steps[0].key] * 60;
         this.stepTotalTime = this.stepTimeRemaining;
-        
-        // Suppress automatic timer progression/start on transition
-        this.pauseTimer();
+        this.startTimer();
     },
 
     startTimer() {
         if (this.timerInterval) clearInterval(this.timerInterval);
-        if (this.alarmInterval) clearInterval(this.alarmInterval);
         this.timerRunning = true;
         this.timerInterval = setInterval(() => {
-            if (!this.isCountUp) {
-                if (this.stepTimeRemaining > 0) {
-                    this.stepTimeRemaining--;
-                } else {
-                    this.isCountUp = true;
-                    this.playAlarm();
-                    this.alarmInterval = setInterval(() => {
-                        this.playAlarm();
-                    }, 2000);
-                }
+            if (this.stepTimeRemaining > 0) {
+                this.stepTimeRemaining--;
             } else {
-                this.stepTimeRemaining++;
+                this.nextStep();
             }
         }, 1000);
     },
@@ -169,10 +111,6 @@
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
-        }
-        if (this.alarmInterval) {
-            clearInterval(this.alarmInterval);
-            this.alarmInterval = null;
         }
     },
 
@@ -185,24 +123,27 @@
     },
 
     nextStep() {
-        this.pauseTimer();
-        this.isCountUp = false;
         if (this.currentStepIndex < this.steps.length - 1) {
             this.currentStepIndex++;
             this.stepTimeRemaining = this.durations[this.steps[this.currentStepIndex].key] * 60;
             this.stepTotalTime = this.stepTimeRemaining;
+            if (this.timerRunning) {
+                this.startTimer();
+            }
         } else {
+            this.pauseTimer();
             alert('🎉 Baking process completed!');
         }
     },
 
     prevStep() {
-        this.pauseTimer();
-        this.isCountUp = false;
         if (this.currentStepIndex > 0) {
             this.currentStepIndex--;
             this.stepTimeRemaining = this.durations[this.steps[this.currentStepIndex].key] * 60;
             this.stepTotalTime = this.stepTimeRemaining;
+            if (this.timerRunning) {
+                this.startTimer();
+            }
         }
     },
 
@@ -216,57 +157,11 @@
         }
         parts.push(mins.toString().padStart(2, '0'));
         parts.push(secs.toString().padStart(2, '0'));
-        let timeStr = parts.join(':');
-        return this.isCountUp ? '+' + timeStr : timeStr;
+        return parts.join(':');
     },
 
     get progressPercent() {
-        if (this.isCountUp) return 100;
-        if (!this.stepTotalTime) return 0;
-        let pct = Math.round(((this.stepTotalTime - this.stepTimeRemaining) / this.stepTotalTime) * 100);
-        return Math.max(0, Math.min(100, pct));
-    },
-
-    playAlarm() {
-        try {
-            let ctx = new (window.AudioContext || window.webkitAudioContext)();
-            let osc = ctx.createOscillator();
-            let gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            gain.gain.setValueAtTime(0.5, ctx.currentTime);
-            osc.start();
-            setTimeout(() => osc.stop(), 300);
-        } catch (e) {
-            console.error('Audio Context Error', e);
-        }
-    },
-
-    get activeStepDesc() {
-        let key = this.steps[this.currentStepIndex].key;
-        if (key === 'mix') {
-            return 'Combine ingredients into a cohesive shaggy mass. Make sure all flour is fully hydrated and no dry pockets remain.';
-        } else if (key === 'knead') {
-            let method = this.customMixerVal !== 'static' ? 'stand_mixer' : this.mixingMethodVal;
-            if (method === 'stand_mixer') {
-                return 'Knead in stand mixer using the Dough Hook attachment. Start at Speed 1 for 2 minutes to incorporate, then increase to Speed 2. Knead until the dough clears the sides of the bowl, becomes shiny and smooth, and passes the windowpane elasticity test.';
-            } else if (method === 'bread_machine') {
-                return 'Process in bread machine using dough cycle knead blades. Run until dough forms a smooth, elastic ball and passes the windowpane test.';
-            } else {
-                return 'Knead by hand on a lightly floured surface using the heel of your hand to stretch and fold the dough. Work rhythmically for 10-15 minutes until the dough feels supple, smooth, and passes the windowpane elasticity test.';
-            }
-        } else if (key === 'autolyse') {
-            return 'Let the dough rest covered. This autolyse phase allows flour proteins to absorb water and start gluten development naturally without mechanical force.';
-        } else if (key === 'bulk') {
-            return 'Primary bulk fermentation: let the dough rest in a warm area. Yeast activity will aerate the dough structure. Watch for a rounded dome and a clean expansion.';
-        } else if (key === 'proof') {
-            return 'Final proofing: shape the dough and transfer to its baking vessel (baking stone, Dutch oven, or loaf pan). Let it rise until light and puffy.';
-        } else if (key === 'bake') {
-            return 'Bake in the preheated oven. Apply steam if required for oven spring. Bake until the crust is deep golden brown and the internal probe temperature matches targets.';
-        }
-        return this.steps[this.currentStepIndex].desc;
+        return Math.round(((this.stepTotalTime - this.stepTimeRemaining) / this.stepTotalTime) * 100);
     },
     
     // Helpers
@@ -394,88 +289,52 @@
                 </div>
 
                 <!-- Active Step Showcase -->
-                <div :style="isCountUp ? 'animation: container-flash 1s infinite alternate; border-left-width: 4px; border-left-style: solid;' : ''"
-                     style="background-color: #1a1a1f; border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem; transition: background-color 0.5s ease;">
+                <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;">
                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Active Step</div>
                     <h3 style="margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);" x-text="steps[currentStepIndex].name"></h3>
-                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="activeStepDesc"></p>
-
-                    <!-- Shifted Static Readouts injected here during execution mode -->
-                    <div style="margin-top: 1.25rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem;">
-                        <div style="background-color: rgba(255, 255, 255, 0.03); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
-                            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Oven Temp</div>
-                            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
-                        </div>
-                        <div style="background-color: rgba(255, 255, 255, 0.03); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
-                            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Steam Req.</div>
-                            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);" x-text="steamRequired"></div>
-                        </div>
-                        <div style="background-color: rgba(255, 255, 255, 0.03); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
-                            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Water Temp</div>
-                            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);" x-text="waterTempF + '°F (' + waterTempC + '°C)'"></div>
-                        </div>
-                        <div style="background-color: rgba(255, 255, 255, 0.03); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border-left: 3px solid var(--warning);">
-                            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Doneness</div>
-                            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);" x-text="donenessF + '°F (' + donenessC + '°C)'"></div>
-                        </div>
-                    </div>
-
-                    <!-- Preheat Alert for Proofing Step -->
-                    <template x-if="steps[currentStepIndex].key === 'proof'">
-                        <div style="margin-top: 1rem; background-color: rgba(255, 136, 0, 0.15); border-left: 4px solid var(--accent); padding: 0.75rem; border-radius: var(--radius-sm);">
-                            <h5 style="color: var(--accent); margin: 0 0 0.25rem 0; font-size: 0.9rem; font-weight: 700;">⚠️ PREHEAT ALERT</h5>
-                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
-                                Preheat your oven with your baking stone, Dutch oven, or pan hardware to <strong x-text="bakeTemp + '°F'"></strong> now. Do this 30 to 45 minutes prior to the final bake step to ensure proper heat retention.
-                            </p>
-                        </div>
-                    </template>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="steps[currentStepIndex].desc"></p>
                 </div>
 
                 <!-- Live Countdown Digital Timer Card -->
-                <div style="background: radial-gradient(circle at top left, #1a1a1f, #111115); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.5rem; box-shadow: var(--shadow-lg);"
-                     :style="isCountUp ? 'border-color: var(--danger); box-shadow: 0 0 15px rgba(220, 53, 69, 0.25);' : ''">
-                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;"
-                         :style="isCountUp ? 'color: var(--danger); font-weight: 700;' : ''"
-                         x-text="isCountUp ? '🚨 OVERTIME ELAPSED' : 'Time Remaining'"></div>
+                <div style="background: radial-gradient(circle at top left, #1a1a1f, #111115); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.5rem; box-shadow: var(--shadow-lg);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Time Remaining</div>
                     
                     <!-- High-contrast Digital Readout -->
                     <div style="font-size: 4rem; font-family: monospace; font-weight: 800; color: var(--text-primary); letter-spacing: 0.05em; line-height: 1; margin-bottom: 1rem;" 
-                         :style="isCountUp ? 'color: var(--danger);' : ''"
                          x-text="formatTime(stepTimeRemaining)">
                     </div>
 
                     <!-- Progress Bar -->
                     <div style="width: 100%; height: 8px; background-color: var(--border); border-radius: 9999px; overflow: hidden; margin-bottom: 0.5rem;">
                         <div style="height: 100%; background-color: var(--accent); transition: width 1s linear;"
-                             :style="isCountUp ? 'background-color: var(--danger); width: 100%;' : 'width: ' + progressPercent + '%'">
+                             :style="'width: ' + progressPercent + '%'">
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);"
-                         x-text="isCountUp ? 'Step Concluded' : progressPercent + '% Completed'"></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="progressPercent + '% Completed'"></div>
                 </div>
 
                 <!-- Timer Controls & Navigation -->
-                <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; margin-bottom: 1rem; width: 100%;">
+                <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; margin-bottom: 1rem;">
                     <!-- Step Back -->
                     <button type="button" 
-                            style="height: 56px; flex: 1; font-weight: 700; background: var(--bg-input); border: 2px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; transition: var(--transition); font-size: 0.85rem; letter-spacing: 0.05em;"
+                            style="height: 52px; flex: 1; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm);"
                             :disabled="currentStepIndex === 0"
                             :style="currentStepIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
                             @click="prevStep()">
                         ◀ STEP BACK
                     </button>
 
-                    <!-- Play/Pause / START STEP -->
+                    <!-- Play/Pause -->
                     <button type="button" 
-                            style="height: 56px; width: 180px; font-weight: 800; cursor: pointer; border-radius: 9999px; border: none; transition: var(--transition); font-size: 0.95rem; letter-spacing: 0.05em; box-shadow: var(--shadow-md);"
-                            :style="timerRunning ? 'background-color: rgba(220, 53, 69, 0.25); border: 2px solid var(--danger); color: var(--danger);' : 'background-color: rgba(40, 167, 69, 0.25); border: 2px solid var(--success); color: var(--success);'"
+                            style="height: 52px; width: 140px; font-weight: 700; cursor: pointer; border-radius: var(--radius-sm); border: none;"
+                            :style="timerRunning ? 'background-color: rgba(220, 53, 69, 0.2); border: 1px solid var(--danger); color: var(--danger);' : 'background-color: rgba(40, 167, 69, 0.2); border: 1px solid var(--success); color: var(--success);'"
                             @click="toggleTimer()">
-                        <span x-text="timerRunning ? '⏸ PAUSE' : '▶ START STEP'"></span>
+                        <span x-text="timerRunning ? '⏸ PAUSE' : '▶ START'"></span>
                     </button>
 
                     <!-- Skip Step -->
                     <button type="button" 
-                            style="height: 56px; flex: 1; font-weight: 700; background: var(--bg-input); border: 2px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; transition: var(--transition); font-size: 0.85rem; letter-spacing: 0.05em;"
+                            style="height: 52px; flex: 1; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm);"
                             :disabled="currentStepIndex === steps.length - 1"
                             :style="currentStepIndex === steps.length - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
                             @click="nextStep()">

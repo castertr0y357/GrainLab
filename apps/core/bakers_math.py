@@ -287,16 +287,12 @@ def calculate_recipe(
             sub_offsets["almond_milk_required"] = almond_ratio
 
         # Butter replacing oil/fat: Butter is 80% fat, 18% water
-        elif original == "fat" and substitute in ["butter", "salted_butter", "unsalted_butter"]:
-            name_display = substitute.replace("_", " ").title()
-            sub_notes.append(f"Using {name_display} instead of pure Oil. Butter is 80% fat; increased butter weight by 25% and reduced added liquid.")
+        elif original == "fat" and substitute == "butter":
+            sub_notes.append("Using Butter instead of pure Oil. Butter is 80% fat; increased butter weight by 25% and reduced added liquid.")
             butter_ratio = effective_fat / 0.80
             water_excess = butter_ratio * 0.18
             effective_hydration = max(0.40, effective_hydration - water_excess)
             sub_offsets["butter_required"] = butter_ratio
-        elif original == "fat" and substitute in ["olive_oil", "canola_oil", "vegetable_oil"]:
-            name_display = substitute.replace("_", " ").title()
-            sub_notes.append(f"Using {name_display} as pure fat enrichment.")
 
     # 3. Calculate Baker's Math Scaling
     total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct
@@ -329,7 +325,6 @@ def calculate_recipe(
     liquid_weight = added_water
     added_butter = 0.0
     added_oil = fat_weight
-    fat_label = "Shortening/Oil"
 
     if substitution:
         substitute = substitution.get("substitute")
@@ -343,16 +338,9 @@ def calculate_recipe(
             liquid_weight = flour_weight * sub_offsets["almond_milk_required"]
             if leaven_type == "sourdough":
                 liquid_weight -= (starter_weight / 2.0)
-        elif substitute in ["butter", "salted_butter", "unsalted_butter"]:
+        elif substitute == "butter":
             added_butter = flour_weight * sub_offsets["butter_required"]
             added_oil = 0.0
-            fat_label = substitute.replace("_", " ").title()
-        elif substitute in ["olive_oil", "canola_oil", "vegetable_oil"]:
-            added_butter = 0.0
-            added_oil = fat_weight
-            fat_label = substitute.replace("_", " ").title()
-
-    fat_weight_display = added_butter if added_butter > 0 else added_oil
 
     # 5. Desired Dough Temperature (DDT)
     # DDT target is 78°F. Water Temp = (3 * 78) - Room - Flour - Friction
@@ -381,8 +369,6 @@ def calculate_recipe(
         "starter_weight": round(starter_weight, 1),
         "added_butter": round(added_butter, 1),
         "added_oil": round(added_oil, 1),
-        "fat_label": fat_label,
-        "fat_weight_display": round(fat_weight_display, 1),
         "thirst_modifier_applied": thirst_mod,
         "maturity_modifier_applied": maturity_mod,
         "required_water_temp_f": round(required_water_temp_f, 1),
