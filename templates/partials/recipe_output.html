@@ -8,8 +8,9 @@
 </div>
 {% endif %}
 
-{% if classified_preset %}
-<div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: none;">
+{% if classified_preset and current_phase > 1 %}
+<div x-show="current_phase > 1" x-transition
+     style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: none;">
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
         <span style="background: rgba(255, 255, 255, 0.05); color: var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;">
             🎯 Classification Match: {{ classified_preset.name }}
@@ -29,7 +30,7 @@
 
 <!-- SLEEK EMPTY STATE -->
 <div x-show="current_phase == 1" x-transition
-     style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 3rem 1.5rem; background-color: #1a1a1f; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+     style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 6rem 1.5rem;">
     Select a dough category to initialize formula math...
 </div>
 
