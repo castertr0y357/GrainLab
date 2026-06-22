@@ -276,6 +276,15 @@ class Command(BaseCommand):
                 "notes": "High protein content, excellent gluten strength, perfect for open crumb and sourdoughs."
             },
             {
+                "name": "Hard White Wheat",
+                "protein_content": 12.5,
+                "hardness": "hard",
+                "moisture_absorption_coef": 1.0,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "Mild flavor and light color. Combines the gluten strength of hard red with a sweeter taste profile."
+            },
+            {
                 "name": "Soft White Wheat",
                 "protein_content": 9.5,
                 "hardness": "soft",
@@ -294,6 +303,15 @@ class Command(BaseCommand):
                 "notes": "Highly soluble gluten, ancient variety. Provides a nutty, sweet flavor and a slightly relaxed crumb."
             },
             {
+                "name": "Kamut (Ancient)",
+                "protein_content": 13.5,
+                "hardness": "ancient",
+                "moisture_absorption_coef": 1.06,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "Rich, buttery flavored ancient khorasan grain. High protein but extensible gluten structures."
+            },
+            {
                 "name": "Einkorn (Ancient)",
                 "protein_content": 12.5,
                 "hardness": "ancient",
@@ -301,6 +319,15 @@ class Command(BaseCommand):
                 "is_active": False,
                 "ai_analyzed": True,
                 "notes": "The most ancient cultivated wheat. Weaker gluten structure, high carotenoid pigments (yellow color)."
+            },
+            {
+                "name": "Rye (Ancient)",
+                "protein_content": 10.0,
+                "hardness": "ancient",
+                "moisture_absorption_coef": 1.08,
+                "is_active": True,
+                "ai_analyzed": True,
+                "notes": "Distinct earthy flavor with high soluble dietary fiber (pentosans). Very weak gluten strength."
             }
         ]
 

@@ -1,5 +1,12 @@
 import math
 
+def _get_val(obj, key, default=None):
+    if hasattr(obj, key):
+        return getattr(obj, key)
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return default
+
 # Coefficients and constants for Baker's Math
 GRAIN_THIRST_MODIFIERS = {
     "all_purpose": 0.0,
@@ -22,15 +29,16 @@ FRICTION_FACTORS = {
     "bread_machine": 15.0,
 }
 
-def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score):
+def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score, preset_slug=None, preset_name=None):
     """
     Dynamically generates the wheat berry blend shares based on active berries and sliders.
-    Returns: (shares_dict, weighted_absorption_coef)
+    Returns: (shares_dict, weighted_absorption_coef, structural_warning)
         shares_dict: dict mapping wheat berry names to their blend fraction (0.0 to 1.0)
         weighted_absorption_coef: float multiplier for hydration adjustment
+        structural_warning: warning string or None
     """
     if not active_berries:
-        return {"House Blend": 1.0}, 1.0
+        return {"House Blend": 1.0}, 1.0, None
 
     # 1. Classify berries
     ancient_berries = []
@@ -38,9 +46,9 @@ def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score):
     soft_berries = []
 
     for b in active_berries:
-        # Support both Django model instances and serialized dictionary attributes
-        hardness = getattr(b, 'hardness', b.get('hardness', 'hard')) if hasattr(b, 'hardness') or isinstance(b, dict) else 'hard'
-        protein = getattr(b, 'protein_content', b.get('protein_content', 12.0)) if hasattr(b, 'protein_content') or isinstance(b, dict) else 12.0
+        # Support both Django model instances and serialized dictionary attributes safely
+        hardness = _get_val(b, 'hardness', 'hard')
+        protein = _get_val(b, 'protein_content', 12.0)
         
         if hardness == 'ancient':
             ancient_berries.append(b)
@@ -64,14 +72,14 @@ def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score):
     if has_ancient:
         share_per_ancient = ancient_share / len(ancient_berries)
         for b in ancient_berries:
-            name = getattr(b, 'name', b.get('name'))
+            name = _get_val(b, 'name')
             shares[name] = share_per_ancient
 
     remaining_share = 1.0 - ancient_share
 
     if has_hard and has_soft:
-        avg_p_hard = sum(getattr(b, 'protein_content', b.get('protein_content', 12.0)) for b in hard_berries) / len(hard_berries)
-        avg_p_soft = sum(getattr(b, 'protein_content', b.get('protein_content', 12.0)) for b in soft_berries) / len(soft_berries)
+        avg_p_hard = sum(_get_val(b, 'protein_content', 12.0) for b in hard_berries) / len(hard_berries)
+        avg_p_soft = sum(_get_val(b, 'protein_content', 12.0) for b in soft_berries) / len(soft_berries)
         
         if avg_p_hard != avg_p_soft:
             x = (target_protein - avg_p_soft) / (avg_p_hard - avg_p_soft)
@@ -83,42 +91,105 @@ def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score):
         soft_share = (1.0 - x) * remaining_share
         
         for b in hard_berries:
-            name = getattr(b, 'name', b.get('name'))
+            name = _get_val(b, 'name')
             shares[name] = hard_share / len(hard_berries)
         for b in soft_berries:
-            name = getattr(b, 'name', b.get('name'))
+            name = _get_val(b, 'name')
             shares[name] = soft_share / len(soft_berries)
             
     elif has_hard:
         for b in hard_berries:
-            name = getattr(b, 'name', b.get('name'))
+            name = _get_val(b, 'name')
             shares[name] = remaining_share / len(hard_berries)
             
     elif has_soft:
         for b in soft_berries:
-            name = getattr(b, 'name', b.get('name'))
+            name = _get_val(b, 'name')
             shares[name] = remaining_share / len(soft_berries)
             
     elif has_ancient:
         for b in ancient_berries:
-            name = getattr(b, 'name', b.get('name'))
+            name = _get_val(b, 'name')
             shares[name] = 1.0 / len(ancient_berries)
             
     else:
-        return {"House Blend": 1.0}, 1.0
+        return {"House Blend": 1.0}, 1.0, None
 
-    # 4. Calculate weighted absorption coefficient
+    # 4. Enforce structural safety for high-rise presets
+    is_high_rise = False
+    preset_label = "High-Rise Bread"
+    if preset_slug:
+        preset_slug_lower = preset_slug.lower()
+        is_high_rise = 'bagel' in preset_slug_lower or 'boule' in preset_slug_lower or 'artisan' in preset_slug_lower
+        if preset_name:
+            preset_label = preset_name
+    elif preset_name:
+        preset_name_lower = preset_name.lower()
+        is_high_rise = 'bagel' in preset_name_lower or 'boule' in preset_name_lower or 'artisan' in preset_name_lower
+        preset_label = preset_name
+
+    structural_warning = None
+    if is_high_rise:
+        current_hard_share = sum(shares.get(_get_val(b, 'name'), 0.0) for b in hard_berries)
+        if current_hard_share < 0.70:
+            # We must adjust the blend so the hard grain is at 70%
+            structural_warning_grain = "Hard Red Wheat"
+            
+            if not has_hard:
+                # Get strongest hard grain from database
+                from apps.core.models import WheatBerry
+                strongest_db = WheatBerry.objects.filter(hardness='hard').order_by('-protein_content').first()
+                if strongest_db:
+                    injected_grain = strongest_db
+                    structural_warning_grain = strongest_db.name
+                else:
+                    # Fallback structural grain
+                    class MockBerry:
+                        name = "Hard Red Winter Wheat"
+                        protein_content = 13.0
+                        hardness = "hard"
+                        moisture_absorption_coef = 1.0
+                    injected_grain = MockBerry()
+                    structural_warning_grain = injected_grain.name
+                hard_berries.append(injected_grain)
+                if injected_grain not in active_berries:
+                    active_berries = list(active_berries) + [injected_grain]
+            else:
+                strongest_selected = max(hard_berries, key=lambda b: _get_val(b, 'protein_content', 12.0))
+                structural_warning_grain = _get_val(strongest_selected, 'name')
+
+            structural_warning = f"❌ Structural Hazard: Selected grain blend lacks the gluten strength required for a {preset_label}. Adjusting blend to include 70% {structural_warning_grain} for safety."
+            
+            # Recalculate shares with 70% hard and 30% weak/ancient
+            shares = {}
+            share_per_hard = 0.70 / len(hard_berries)
+            for b in hard_berries:
+                name = _get_val(b, 'name')
+                shares[name] = share_per_hard
+            
+            weak_berries = soft_berries + ancient_berries
+            if weak_berries:
+                share_per_weak = 0.30 / len(weak_berries)
+                for b in weak_berries:
+                    name = _get_val(b, 'name')
+                    shares[name] = share_per_weak
+            else:
+                for b in hard_berries:
+                    name = _get_val(b, 'name')
+                    shares[name] = 1.0 / len(hard_berries)
+
+    # 5. Calculate weighted absorption coefficient
     weighted_absorption = 0.0
     for b in active_berries:
-        name = getattr(b, 'name', b.get('name'))
+        name = _get_val(b, 'name')
         share = shares.get(name, 0.0)
-        coef = getattr(b, 'moisture_absorption_coef', b.get('moisture_absorption_coef', 1.0))
+        coef = _get_val(b, 'moisture_absorption_coef', 1.0)
         weighted_absorption += share * coef
 
     if weighted_absorption == 0.0:
         weighted_absorption = 1.0
 
-    return shares, weighted_absorption
+    return shares, weighted_absorption, structural_warning
 
 
 def calculate_recipe(
@@ -138,16 +209,19 @@ def calculate_recipe(
     active_berries=None, # List of WheatBerry models/dicts
     texture_score=50,   # Used for custom berry blending
     crumb_score=50,     # Used for custom berry blending
-    friction_override=None # Custom mixer friction value
+    friction_override=None, # Custom mixer friction value
+    preset_slug=None,
+    preset_name=None
 ):
     """
     Computes recipe ingredient weights by applying Baker's Math.
     Incorporates thirst modifiers, flour maturity adjustments, and sourdough hydration offsets.
     """
     # 1. Apply Fail-Safe Hydration Modifiers
+    structural_warning = None
     if active_berries:
-        berry_shares, weighted_absorption = calculate_wheat_berry_shares(
-            active_berries, texture_score, crumb_score
+        berry_shares, weighted_absorption, structural_warning = calculate_wheat_berry_shares(
+            active_berries, texture_score, crumb_score, preset_slug=preset_slug, preset_name=preset_name
         )
         thirst_mod = weighted_absorption - 1.0
     else:
@@ -277,6 +351,7 @@ def calculate_recipe(
         "required_water_temp_c": round((required_water_temp_f - 32) * 5 / 9, 1),
         "substitution_notes": sub_notes,
         "wheat_berry_mix": {name: round(flour_weight * share, 1) for name, share in berry_shares.items() if share > 0.0} if active_berries else None,
+        "structural_warning": structural_warning,
     }
 
 

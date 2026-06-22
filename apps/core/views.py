@@ -25,27 +25,47 @@ def calculator(request):
     # Default selection values
     category_slug = request.GET.get("dough_category")
     ff_slug = request.GET.get("form_factor")
+    preset_slug = request.GET.get("preset")
     
+    selected_preset = None
+    if preset_slug:
+        selected_preset = BreadPreset.objects.filter(slug=preset_slug).first()
+        
     default_cat = None
-    if category_slug:
+    if selected_preset:
+        default_cat = selected_preset.dough_category
+    elif category_slug:
         default_cat = DoughCategory.objects.filter(slug=category_slug).first()
     if not default_cat:
         default_cat = DoughCategory.objects.filter(slug='lean-crusty').first() or categories.first()
         
     default_ff = None
-    if ff_slug:
+    if selected_preset:
+        default_ff = selected_preset.form_factor
+    elif ff_slug:
         default_ff = FormFactor.objects.filter(slug=ff_slug).first()
     if not default_ff:
         default_ff = FormFactor.objects.filter(slug='loaf-pan').first() or form_factors.first()
         
     # Calculate slider defaults based on category base ratios
-    base_hydration = default_cat.base_hydration if default_cat else 0.68
-    base_fat = default_cat.base_fat if default_cat else 0.0
-    
-    # crumb_score = (hydration_pct - 0.45) / 0.40 * 100
-    default_crumb_score = int(max(0.0, min(100.0, ((base_hydration - 0.45) / 0.40) * 100)))
-    # texture_score = fat_pct / 0.15 * 100
-    default_texture_score = int(max(0.0, min(100.0, (base_fat / 0.15) * 100)))
+    if selected_preset:
+        base_hydration = selected_preset.hydration_override if selected_preset.hydration_override is not None else default_cat.base_hydration
+        base_fat = selected_preset.fat_override if selected_preset.fat_override is not None else default_cat.base_fat
+        default_sugar = int((selected_preset.sugar_override if selected_preset.sugar_override is not None else default_cat.base_sugar) * 100)
+        default_starter = int((selected_preset.starter_override if selected_preset.starter_override is not None else default_cat.base_starter) * 100)
+        default_flour_type = selected_preset.flour_type_default
+        default_flour_maturity = selected_preset.flour_maturity_default
+        default_texture_score = selected_preset.classifier_texture
+        default_crumb_score = selected_preset.classifier_crumb
+    else:
+        base_hydration = default_cat.base_hydration if default_cat else 0.68
+        base_fat = default_cat.base_fat if default_cat else 0.0
+        default_sugar = int((default_cat.base_sugar if default_cat else 0.0) * 100)
+        default_starter = int((default_cat.base_starter if default_cat else 0.0) * 100)
+        default_flour_type = "all_purpose"
+        default_flour_maturity = "matured"
+        default_crumb_score = int(max(0.0, min(100.0, ((base_hydration - 0.45) / 0.40) * 100)))
+        default_texture_score = int(max(0.0, min(100.0, (base_fat / 0.15) * 100)))
     
     active_berries = list(WheatBerry.objects.filter(is_active=True))
     
@@ -55,13 +75,16 @@ def calculator(request):
         "presets": presets,
         "mixers": mixers,
         "active_berries": active_berries,
+        "selected_preset": selected_preset,
         "selected_category": default_cat,
         "selected_form_factor": default_ff,
         "ai_enabled": ai_enabled,
         "default_hydration": int(base_hydration * 100),
         "default_fat": int(base_fat * 100),
-        "default_sugar": int((default_cat.base_sugar if default_cat else 0.0) * 100),
-        "default_starter": int((default_cat.base_starter if default_cat else 0.0) * 100),
+        "default_sugar": default_sugar,
+        "default_starter": default_starter,
+        "default_flour_type": default_flour_type,
+        "default_flour_maturity": default_flour_maturity,
         "default_texture_score": default_texture_score,
         "default_crumb_score": default_crumb_score,
     }
@@ -185,7 +208,20 @@ def calculate_recipe_ajax(request):
         except (ValueError, Equipment.DoesNotExist):
             pass
 
-    active_berries = list(WheatBerry.objects.filter(is_active=True))
+    selected_grain_ids = request.POST.getlist("selected_grains")
+    if selected_grain_ids:
+        active_berries = list(WheatBerry.objects.filter(id__in=[int(x) for x in selected_grain_ids]))
+    else:
+        active_berries = list(WheatBerry.objects.filter(is_active=True))
+
+    preset_slug = request.POST.get("preset_slug")
+    preset_name = None
+    if preset_slug:
+        try:
+            preset_obj = BreadPreset.objects.get(slug=preset_slug)
+            preset_name = preset_obj.name
+        except BreadPreset.DoesNotExist:
+            pass
 
     try:
         # If AI is active, we can fetch substitution offsets from AI first
@@ -221,7 +257,9 @@ def calculate_recipe_ajax(request):
             active_berries=active_berries,
             texture_score=texture_score,
             crumb_score=crumb_score,
-            friction_override=friction_override
+            friction_override=friction_override,
+            preset_slug=preset_slug,
+            preset_name=preset_name
         )
         
         # Override AI explanations if AI offsets were loaded

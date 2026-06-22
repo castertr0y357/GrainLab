@@ -296,9 +296,10 @@ class InventoryAndEquipmentTests(TestCase):
         Verify that active wheat berries are mixed correctly based on sliders.
         """
         # 1. Test empty active berries returns House Blend
-        shares, coef = bakers_math.calculate_wheat_berry_shares([], 50, 50)
+        shares, coef, warning = bakers_math.calculate_wheat_berry_shares([], 50, 50)
         self.assertEqual(shares, {"House Blend": 1.0})
         self.assertEqual(coef, 1.0)
+        self.assertIsNone(warning)
 
         # 2. Setup active berries
         hard_red = {
@@ -322,7 +323,7 @@ class InventoryAndEquipmentTests(TestCase):
         
         # Test soft target (texture_score=100, crumb_score=0)
         active_berries = [hard_red, soft_white, spelt]
-        shares, coef = bakers_math.calculate_wheat_berry_shares(active_berries, 100, 0)
+        shares, coef, warning = bakers_math.calculate_wheat_berry_shares(active_berries, 100, 0)
         
         # Spelt gets 15% flat
         self.assertAlmostEqual(shares["Spelt"], 0.15)
@@ -351,4 +352,69 @@ class InventoryAndEquipmentTests(TestCase):
         )
         self.assertEqual(recipe["required_water_temp_f"], 86.0)
         self.assertEqual(recipe["required_water_temp_c"], 30.0)
+
+    def test_high_rise_safety_enforcement_override(self):
+        """
+        Verify that choosing only ancient/weak grains for a bagel triggers
+        safety override (forcing 70% hard structural grain and warning).
+        """
+        # Ensure a hard wheat exists in database for fallback
+        WheatBerry.objects.get_or_create(
+            name="Hard Red Spring Wheat",
+            defaults={"protein_content": 14.5, "hardness": "hard", "moisture_absorption_coef": 1.02}
+        )
+        
+        spelt = {
+            "name": "Spelt",
+            "protein_content": 11.5,
+            "hardness": "ancient",
+            "moisture_absorption_coef": 1.05,
+        }
+        
+        # Test bagel target with only spelt (weak grain, 0% hard)
+        shares, coef, warning = bakers_math.calculate_wheat_berry_shares(
+            [spelt], 50, 50, preset_slug="bagel", preset_name="Bagel"
+        )
+        
+        self.assertIsNotNone(warning)
+        self.assertIn("Structural Hazard", warning)
+        self.assertIn("Bagel", warning)
+        # Structural hard grain gets 70%
+        self.assertAlmostEqual(shares["Hard Red Spring Wheat"], 0.70)
+        self.assertAlmostEqual(shares["Spelt"], 0.30)
+
+    def test_views_selected_grains_integration(self):
+        """
+        Verify that calculate_recipe_ajax view respects selected_grains list.
+        """
+        category = DoughCategory.objects.create(
+            name="Lean & Crusty",
+            slug="lean-crusty-test",
+            base_hydration=0.68,
+            base_fat=0.0,
+            base_sugar=0.0
+        )
+        form_factor = FormFactor.objects.create(
+            name="Standard 9x5 Loaf Pan",
+            slug="loaf-pan-test",
+            target_weight=900.0
+        )
+        wb1 = WheatBerry.objects.create(name="Grain A", protein_content=14.0, hardness="hard", moisture_absorption_coef=1.0)
+        wb2 = WheatBerry.objects.create(name="Grain B", protein_content=10.0, hardness="soft", moisture_absorption_coef=0.95)
+        
+        client = Client()
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": category.slug,
+            "form_factor": form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            # Only Grain A is selected
+            "selected_grains": [wb1.id]
+        })
+        self.assertEqual(response.status_code, 200)
+        recipe = response.context["recipe"]
+        # Only Grain A should be in the mix
+        self.assertIn("Grain A", recipe["wheat_berry_mix"])
+        self.assertNotIn("Grain B", recipe["wheat_berry_mix"])
+
 

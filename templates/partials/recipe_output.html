@@ -1,3 +1,12 @@
+{% if recipe.structural_warning %}
+<div class="warning-box" style="background-color: rgba(220, 53, 69, 0.1); border-color: var(--danger); border-left-width: 4px; margin-bottom: 1.5rem; padding: 1rem; border-radius: var(--radius-md);">
+    <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 1.05rem;">⚠️ Gluten Strength Notice</h4>
+    <p style="font-size: 0.95rem; margin: 0; line-height: 1.4;">
+        {{ recipe.structural_warning }}
+    </p>
+</div>
+{% endif %}
+
 {% if classified_preset %}
 <div class="card" style="border-left: 5px solid var(--accent); margin-bottom: 1.5rem; background: var(--bg-secondary);">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">

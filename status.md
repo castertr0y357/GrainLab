@@ -22,9 +22,10 @@
 - [x] Add Gemma AI analysis support for wheat berry specs (protein, hardness, absorption) and equipment details (friction factor, notes)
 - [x] Implement batch/bulk AI analysis and redo AI analysis endpoints
 - [x] Add interactive frontend tab layout for managing supply gear and berries
-
-
-
+- [x] Convert bread calculator UI into a 4-phase step-by-step progressive flowchart interface guided by Alpine.js and HTMX
+- [x] Implement Grain Bin Optimizer and structural safety blender for high-rise presets with automatic 70% structural grain enforcement and warnings
+- [x] Implement context-aware validation sliders for Phase 4 (Hydration & Crumb/Texture) with dynamic constraints and shifting limits
+- [x] Implement bottom Navigation Control bar with Step Back and touch-friendly Hard Reset buttons
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)

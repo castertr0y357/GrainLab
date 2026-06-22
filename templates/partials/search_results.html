@@ -3,8 +3,10 @@
         <div class="search-item" 
              hx-get="{% url 'load_preset' preset.id %}" 
              hx-target="#calculator-form-container"
-             hx-swap="innerHTML"
-             @click="searchOpen = false; query = '{{ preset.name }}'">
+             hx-select="#calculator-form"
+             hx-swap="outerHTML"
+             hx-push-url="?preset={{ preset.slug }}"
+             @click="searchOpen = false; query = '{{ preset.name|escapejs }}'; current_phase = 3; presetName = '{{ preset.name|escapejs }}'; presetSlug = '{{ preset.slug|escapejs }}'; selected_master = '{% if preset.slug == 'pretzel' %}alkaline{% elif preset.slug == 'naan' %}flatbread{% elif preset.dough_category.slug == 'lean-crusty' %}lean{% elif preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}flatbread{% endif %}';">
             <strong>{{ preset.name }}</strong>
             <span style="font-size: 0.85rem; color: var(--text-muted);">
                 {{ preset.dough_category.name }} • {{ preset.form_factor.name }}
