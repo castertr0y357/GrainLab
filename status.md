@@ -46,7 +46,9 @@
 - [x] Overhaul Phase 4 fine-tuning sliders to flank tracking rails with polar extremes and remove description text blocks
 - [x] Re-engineer Countertop Live Timeline view state into an interactive, manual kitchen control deck with Audio beep loop, Count-Up overtime, large pill buttons, dynamic readout shifts, mixer speeds/hooks instruction blocks, and proof preheat alerts
 - [x] Write and run unit tests verifying the AJAX countertop metadata attribute outputs and timeline calculations
-- [x] Fix querySelector attribute double-quote termination and Alpine syntax error in calculator template
+- [x] Refactor Phase 4 Editor Modes (tactile buttons with neon glow active state)
+- [x] Implement Form Factor Cards (remove dropdown, replace with option pills, group/show recommended in Standard Mode, show all in Advanced Mode)
+- [x] Implement Unit-Based Yield Scaling Engine (replace manual mass text inputs with dynamic yield stepping modifier, programmatic multiplication, and dynamic helper texts)
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)

@@ -90,7 +90,7 @@ class Command(BaseCommand):
         # 2. Form Factors
         form_factors_data = [
             {
-                "name": "Standard 9x5 Pan",
+                "name": "Standard 9x5 Loaf Pan",
                 "slug": "standard-9x5-pan",
                 "is_portioned": False,
                 "target_weight": 900.0,
@@ -102,7 +102,7 @@ class Command(BaseCommand):
                 "is_enriched_profile": False,
             },
             {
-                "name": "Free-form Shaped Loaf",
+                "name": "Free-form / Shaped Loaf (Boule)",
                 "slug": "freeform-loaf",
                 "is_portioned": False,
                 "target_weight": 750.0,
@@ -114,16 +114,28 @@ class Command(BaseCommand):
                 "is_enriched_profile": False,
             },
             {
-                "name": "Portioned Buns/Rolls",
+                "name": "Portioned Sheet Pan (Buns/Rolls)",
                 "slug": "portioned-buns-rolls",
                 "is_portioned": True,
-                "target_weight": 960.0,
-                "unit_weight": 80.0,
+                "target_weight": 1080.0,
+                "unit_weight": 90.0,
                 "default_count": 12,
                 "bake_temp_f": 375,
                 "bake_time_min": 20,
                 "steam_required": False,
                 "is_enriched_profile": True,
+            },
+            {
+                "name": "Baguette / Long Loaf",
+                "slug": "baguette-long-loaf",
+                "is_portioned": True,
+                "target_weight": 900.0,
+                "unit_weight": 300.0,
+                "default_count": 3,
+                "bake_temp_f": 450,
+                "bake_time_min": 25,
+                "steam_required": True,
+                "is_enriched_profile": False,
             },
             {
                 "name": "Sheet Pan",
@@ -172,7 +184,7 @@ class Command(BaseCommand):
                 "name": "Baguette",
                 "slug": "baguette",
                 "dough_category": categories["lean-crusty"],
-                "form_factor": form_factors["freeform-loaf"],
+                "form_factor": form_factors["baguette-long-loaf"],
                 "hydration_override": 0.68,
                 "fat_override": 0.0,
                 "sugar_override": 0.0,
