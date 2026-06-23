@@ -29,7 +29,7 @@ FRICTION_FACTORS = {
     "bread_machine": 15.0,
 }
 
-def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score, preset_slug=None, preset_name=None):
+def calculate_wheat_berry_shares(active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None) -> tuple[dict[str, float], float, str | None]:
     """
     Dynamically generates the wheat berry blend shares based on active berries and sliders.
     Returns: (shares_dict, weighted_absorption_coef, structural_warning)
@@ -217,26 +217,26 @@ def calculate_wheat_berry_shares(active_berries, texture_score, crumb_score, pre
 
 
 def calculate_recipe(
-    base_hydration,
-    base_fat,
-    base_sugar,
-    target_mass,
-    grain_type="all_purpose",
-    flour_maturity="matured",
-    leaven_type="yeast",
-    leaven_pct=0.015,  # 1.5% yeast or 20% starter
-    salt_pct=0.02,     # 2% salt
-    room_temp_f=72.0,
-    flour_temp_f=70.0,
-    mixing_method="stand_mixer",
-    substitution=None,  # Dict of {'original': 'water', 'substitute': 'whole_milk'}
-    active_berries=None, # List of WheatBerry models/dicts
-    texture_score=50,   # Used for custom berry blending
-    crumb_score=50,     # Used for custom berry blending
-    friction_override=None, # Custom mixer friction value
-    preset_slug=None,
-    preset_name=None
-):
+    base_hydration: float,
+    base_fat: float,
+    base_sugar: float,
+    target_mass: float,
+    grain_type: str = "all_purpose",
+    flour_maturity: str = "matured",
+    leaven_type: str = "yeast",
+    leaven_pct: float = 0.015,  # 1.5% yeast or 20% starter
+    salt_pct: float = 0.02,     # 2% salt
+    room_temp_f: float = 72.0,
+    flour_temp_f: float = 70.0,
+    mixing_method: str = "stand_mixer",
+    substitution: dict[str, str] = None,  # Dict of {'original': 'water', 'substitute': 'whole_milk'}
+    active_berries: list = None, # List of WheatBerry models/dicts
+    texture_score: int = 50,   # Used for custom berry blending
+    crumb_score: int = 50,     # Used for custom berry blending
+    friction_override: float = None, # Custom mixer friction value
+    preset_slug: str = None,
+    preset_name: str = None
+) -> dict:
     """
     Computes recipe ingredient weights by applying Baker's Math.
     Incorporates thirst modifiers, flour maturity adjustments, and sourdough hydration offsets.
@@ -393,7 +393,7 @@ def calculate_recipe(
     }
 
 
-def get_local_sensory_benchmark(grain_type, flour_maturity, effective_hydration):
+def get_local_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float) -> str:
     """
     Fallback engine that returns high-quality, bread-science-aligned
     physical descriptions of the dough rise and sensory cues.
@@ -420,7 +420,7 @@ def get_local_sensory_benchmark(grain_type, flour_maturity, effective_hydration)
     return desc
 
 
-def get_local_contextual_pitfalls(category_slug, effective_hydration, grain_type, preset_slug=None):
+def get_local_contextual_pitfalls(category_slug: str, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list[dict[str, str]]:
     """
     Fallback engine to generate warnings and special instructions.
     """

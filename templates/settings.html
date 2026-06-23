@@ -5,13 +5,19 @@
 <div class="card" style="max-width: 600px; margin: 2rem auto;"
      x-data="{ 
          ai_enabled: {% if ai_enabled %}true{% else %}false{% endif %},
-         thinking_enabled: {% if ai_thinking_enabled %}true{% else %}false{% endif %}
+         thinking_enabled: {% if ai_thinking_enabled %}true{% else %}false{% endif %},
+         submitting: false
      }">
     <h2 style="color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
         ⚙️ Application Preferences
     </h2>
 
-    <form hx-post="{% url 'save_settings' %}" hx-target="#settings-feedback" hx-indicator="#settings-indicator">
+    <form hx-post="{% url 'save_settings' %}" 
+          hx-target="#settings-feedback" 
+          hx-indicator="#settings-indicator"
+          hx-disabled-elt="button[type='submit']"
+          @submit="submitting = true"
+          @htmx:after-request="submitting = false">
         {% csrf_token %}
         
         <!-- Parent AI Integration Toggle -->
@@ -69,11 +75,12 @@
         </div>
 
         <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
-            <button type="submit" class="nav-btn primary" style="border: none; cursor: pointer; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: var(--radius-sm);">
-                Save Configurations
+            <button type="submit" class="nav-btn primary" style="border: none; cursor: pointer; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 0.5rem;" :disabled="submitting">
+                <span class="spinner" x-show="submitting" style="width: 16px; height: 16px; border-width: 2px;"></span>
+                <span x-text="submitting ? 'Saving...' : 'Save Configurations'">Save Configurations</span>
             </button>
             <span id="settings-indicator" class="htmx-indicator">
-                <span class="spinner"></span>
+                <span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>
             </span>
         </div>
     </form>

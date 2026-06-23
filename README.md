@@ -34,3 +34,38 @@ Alternatively, to run it natively using Python:
 ## 🔑 Default Developer Credentials
 * Username: `admin`
 * Password: `adminpass123` (or customize via `SUPERUSER_PASSWORD` in `.env`)
+
+## 💾 Backup & Recovery
+
+### Automated Backups
+To generate a compressed, timestamped database backup, run the following Django command:
+```bash
+python manage.py backup_db
+```
+Backups are saved to the `backups/` directory (automatically git-ignored) and pruned automatically after 30 days.
+
+### Database Restoration
+
+#### SQLite (Default)
+To restore a local SQLite database from a backup:
+1. Locate your compressed backup file in `backups/` (e.g. `backup-20260622-235427.sql.gz`).
+2. Decompress the backup file:
+   ```bash
+   # On Windows (PowerShell)
+   Expand-Archive backups/backup-20260622-235427.sql.gz -DestinationPath .
+   # On Linux/macOS
+   gunzip -c backups/backup-20260622-235427.sql.gz > db.sqlite3
+   ```
+3. If using Windows/PowerShell without gzip extraction tools, you can rename the `.gz` target or extract it via standard tools like 7-Zip, replacing the root `db.sqlite3` file.
+
+#### PostgreSQL
+To restore a PostgreSQL database backup:
+1. Decompress the sql backup file:
+   ```bash
+   gunzip -k backups/backup-20260622-235427.sql.gz
+   ```
+2. Run pg_restore (for custom format backups) or standard psql:
+   ```bash
+   pg_restore -h localhost -p 5432 -U grainlab_user -d grainlab backups/backup-20260622-235427.sql
+   ```
+

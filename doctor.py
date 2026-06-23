@@ -6,6 +6,7 @@ environment setups, network loops, and local LLM endpoint reachability.
 import os
 import sys
 import socket
+import subprocess
 import urllib.parse
 import urllib.request
 import django
@@ -112,6 +113,35 @@ def check_gemma_api():
         print("[Info] Check that your model name matches 'gemma:12b' or customize it in settings.")
 
 
+def check_dependency_audit():
+    """Verify that dependencies are secure using pip-audit."""
+    print("\n[Security] Auditing dependencies for vulnerabilities...")
+    try:
+        # Check if pip-audit is installed
+        result = subprocess.run(["pip-audit", "--version"], capture_output=True, text=True)
+        if result.returncode != 0:
+            print("[Warning] [Doctor] - Security - pip-audit failed to execute. Install via 'pip install pip-audit'.")
+            return True
+    except FileNotFoundError:
+        print("[Warning] [Doctor] - Security - pip-audit is not installed. Install via 'pip install pip-audit' to audit dependencies.")
+        return True
+
+    # Run audit on requirements.txt
+    try:
+        audit_res = subprocess.run(["pip-audit", "-r", "requirements.txt"], capture_output=True, text=True)
+        if audit_res.returncode == 0:
+            print("[Success] [Doctor] - Security - No known vulnerabilities detected in requirements.txt.")
+            return True
+        else:
+            print("[Error] [Doctor] - Security - Known vulnerabilities detected:")
+            print(audit_res.stdout)
+            print(audit_res.stderr)
+            return False
+    except Exception as e:
+        print(f"[Warning] [Doctor] - Security - Dependency audit check encountered an error: {e}")
+        return True
+
+
 def main():
     print("=" * 60)
     print("GRAINLAB SYSTEM DIAGNOSTICS")
@@ -120,13 +150,14 @@ def main():
     check_env()
     db_ok = check_database()
     check_gemma_api()
+    audit_ok = check_dependency_audit()
     
     print("\n" + "=" * 60)
-    if db_ok:
+    if db_ok and audit_ok:
         print("[Success] DIAGNOSTICS COMPLETED: Workspace is healthy and ready to compile!")
         sys.exit(0)
     else:
-        print("[Error] DIAGNOSTICS COMPLETED: One or more critical systems are misconfigured.")
+        print("[Error] DIAGNOSTICS COMPLETED: One or more critical systems are misconfigured or vulnerable.")
         sys.exit(1)
 
 

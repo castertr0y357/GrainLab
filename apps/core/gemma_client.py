@@ -18,7 +18,7 @@ def _get_val(obj, key, default=None):
     return default
 
 
-def _is_ai_enabled():
+def _is_ai_enabled() -> bool:
     """Checks if AI integration is active."""
     # Check both environment variables and database settings
     db_enabled = SystemSetting.get_val("ai_enabled", "False").lower() in ("true", "1", "t")
@@ -26,7 +26,7 @@ def _is_ai_enabled():
     return db_enabled and not env_mock
 
 
-def _get_api_config():
+def _get_api_config() -> tuple[str, str]:
     """Retrieves API details from SystemSettings."""
     url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
     model = SystemSetting.get_val("ai_model_name", "gemma:12b")
@@ -36,7 +36,7 @@ def _get_api_config():
     return url, model
 
 
-def call_gemma_api(system_prompt, user_prompt, expected_keys=None):
+def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
     """
     Submits a structured prompt to local Gemma and parses the JSON response.
     Returns None if any step fails.
@@ -93,7 +93,7 @@ def call_gemma_api(system_prompt, user_prompt, expected_keys=None):
 
 
 # 1. Contextual Pitfall Analysis & Special Step Injection
-def get_contextual_pitfalls(category_slug, effective_hydration, grain_type, preset_slug=None):
+def get_contextual_pitfalls(category_slug: str, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
     """
     Retrieves pitfall analysis from Gemma, falling back to local python rules.
     """
@@ -120,7 +120,7 @@ def get_contextual_pitfalls(category_slug, effective_hydration, grain_type, pres
 
 
 # 2. Custom Sensory Benchmark Synthesizer
-def get_sensory_benchmark(grain_type, flour_maturity, effective_hydration):
+def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float) -> str:
     """
     Retrieves sensory text from Gemma, falling back to local description mappings.
     """
@@ -145,7 +145,7 @@ def get_sensory_benchmark(grain_type, flour_maturity, effective_hydration):
 
 
 # 3. Closed-Loop Chemistry Re-Balancing (Substitutions)
-def get_substitution_offset(original_ing, substitute_ing, current_recipe):
+def get_substitution_offset(original_ing: str, substitute_ing: str, current_recipe: dict) -> dict:
     """
     Retrieves mathematical hydration/fat offsets from Gemma, falling back to local logic.
     """
@@ -203,7 +203,7 @@ def get_substitution_offset(original_ing, substitute_ing, current_recipe):
 
 
 # 4. Structured Milling Profile & Sourdough Diagnostic Calibration
-def calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted):
+def calibrate_fermentation(starter_feed_hours: str, rise_speed: str, mill_type: str, is_sifted: bool) -> dict:
     """
     Computes diagnostic parameters based on sourdough activity and sifting factors.
     """
@@ -256,7 +256,7 @@ def calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
     }
 
 
-def analyze_wheat_berry_ai(name):
+def analyze_wheat_berry_ai(name: str) -> dict | None:
     """
     Asks Gemma to estimate protein content, hardness, moisture absorption, and notes for a wheat berry.
     """
@@ -300,7 +300,7 @@ def analyze_wheat_berry_ai(name):
         return {"protein_content": 13.0, "hardness": "hard", "moisture_absorption_coef": 1.0, "notes": "Standard hard wheat berry. Good gluten strength for general crusty breads."}
 
 
-def analyze_equipment_ai(name, equipment_type):
+def analyze_equipment_ai(name: str, equipment_type: str) -> dict | None:
     """
     Asks Gemma to estimate friction heat factor and notes/details for an equipment item.
     """
@@ -366,7 +366,7 @@ def analyze_equipment_ai(name, equipment_type):
         }
 
 
-def optimize_grain_blend(preset_slug, preset_name, active_berries):
+def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: list) -> tuple[dict, str | None] | None:
     """
     Queries Gemma model to optimize the percentage blend of active wheat berries
     for a specific bread preset.

@@ -48,12 +48,22 @@
 - [x] Write and run unit tests verifying the AJAX countertop metadata attribute outputs and timeline calculations
 - [x] Refactor Phase 4 Editor Modes (tactile buttons with neon glow active state)
 - [x] Implement Form Factor Cards (remove dropdown, replace with option pills, group/show recommended in Standard Mode, show all in Advanced Mode)
-- [x] Implement Unit-Based Yield Scaling Engine (replace manual mass text inputs with dynamic yield stepping modifier, programmatic multiplication, and dynamic helper texts)
+- [x] Implement unit-based yield scaling engine and form factor card refactoring
+- [x] Complete security and code quality audit configurations (.env bootstrapping, pre-flight DB checks, auto-seeding, correlation middleware, and logger filters)
+- [x] Implement database backups command and schedule guidelines in README
+- [x] Migrate inventory IDs to UUIDs and implement database-level soft deletes on WheatBerry and Equipment models
+- [x] Offload local AI Gemma analyses to background thread pool tasks with UUID task polling, progress bars, and HTMX indicators
+- [x] Integrate Alpine.js and HTMX double-submit button protections across settings and inventory forms
+- [x] Write and verify comprehensive security, soft-delete, and correlation ID unit tests
 
 ## 🚀 Active Feature Tasks
-- None (All tasks and follow-up updates completed)
+- None (All tasks and audit updates completed successfully)
 
 ## 🧱 Architectural Changes & Decisions
 - SPA-feel using HTMX and Alpine.js with Gunicorn/Django serving html fragments.
 - High-contrast, mobile-friendly Vanilla CSS for kitchen environment safety.
 - Strict compliance with Separation of Infrastructure and Application Settings guidelines.
+- Offloaded synchronous HTTP third-party/local AI API queries to background threads with UUID-based status polling.
+- Migrated primary keys to non-predictable UUIDs for IDOR security compliance.
+- Switched deletion queries to soft deletes via custom SoftDeleteQuerySet and AllObjectsManager to prevent accidental data loss.
+- Injected Correlation IDs in logging formats and response headers (`X-Correlation-ID`) for request-response trace correlation.

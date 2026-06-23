@@ -122,6 +122,13 @@ header {
     box-shadow: 0 0 12px var(--accent-glow);
 }
 
+button:disabled, .nav-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    pointer-events: none;
+}
+
 /* Main Dashboard Workspace */
 .dashboard-grid {
     display: grid;
