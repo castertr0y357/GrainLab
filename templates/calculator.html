@@ -12,6 +12,7 @@
     // Auto-correction and warning computed on client side
     presetName: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     presetSlug: '{% if selected_preset %}{{ selected_preset.slug }}{% endif %}',
+    editor_mode: 'standard',
     
     // Grains inventory data mapped from django context
     activeBerries: [
@@ -73,6 +74,21 @@
         this.activeBerries.forEach(b => {
             b.selected = (b.name === idealName);
         });
+    },
+
+    isIdealGrain(berryName) {
+        let idealName = 'Hard Red Winter Wheat';
+        if (this.presetSlug) {
+            let s = this.presetSlug.toLowerCase();
+            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel'].includes(s)) {
+                idealName = 'Hard Red Spring Wheat';
+            } else if (['french-loaf', 'brioche', 'pretzel'].includes(s)) {
+                idealName = 'Hard Red Winter Wheat';
+            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan'].includes(s)) {
+                idealName = 'Hard White Wheat';
+            }
+        }
+        return berryName === idealName;
     },
 
     startBake() {
@@ -347,6 +363,12 @@
         <!-- Right: Compiled Recipe Outputs -->
         <div>
             <div class="card" style="margin-bottom: 0; min-height: 100%;">
+                <!-- Header Injection -->
+                <div x-show="current_phase >= 2 && presetName" x-transition
+                     style="font-size: 0.95rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    [ Recipe Target: <span x-text="presetName"></span> ]
+                </div>
+                
                 <div id="recipe-output-container">
                     <!-- Swapped in dynamically by HTMX -->
                     <div style="text-align: center; padding: 6rem 1.5rem; color: var(--text-muted);">

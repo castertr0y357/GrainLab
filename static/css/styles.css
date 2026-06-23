@@ -498,3 +498,42 @@ input:checked + .slider-round:before {
 .htmx-request.htmx-indicator {
     display: inline-block;
 }
+
+/* Tactile Pill Buttons & Segmented Controllers */
+.pill-btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.pill-btn {
+    padding: 0.65rem 1.15rem;
+    background-color: var(--bg-input);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.pill-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.pill-btn.active {
+    background-color: rgba(255, 136, 0, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 10px var(--border-glow);
+}
+

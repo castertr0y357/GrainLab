@@ -14,12 +14,17 @@
           subOriginal: 'water',
           subSubstitute: 'none',
           use_custom: false,
-          category_slug: '{{ selected_category.slug|default:"lean-crusty" }}'
+          category_slug: '{{ selected_category.slug|default:"lean-crusty" }}',
+          custom_mixer: 'static',
+          mixing_method: 'stand_mixer',
+          proofing_environment: 'ambient',
+          mill_type: 'stoneground'
       }"
       x-init="
           $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });
+          $watch('editor_mode', value => { if (value === 'standard') { if (subOriginal === 'fat' && !['none', 'butter'].includes(subSubstitute)) { subSubstitute = 'none'; } } });
           {% if selected_preset %}
           current_phase = 3;
           presetName = '{{ selected_preset.name|escapejs }}';
@@ -33,6 +38,27 @@
         <input type="hidden" name="preset_slug" value="{{ selected_preset.slug }}">
     {% endif %}
     <input type="hidden" name="current_phase" :value="current_phase">
+    <input type="hidden" name="editor_mode" :value="editor_mode">
+
+    <!-- Global Mode Control: Standard vs. Advanced Toggles -->
+    <div x-show="current_phase === 3 || current_phase === 4" x-transition
+         style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Editor Mode:</span>
+        <div style="display: flex; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem;">
+            <button type="button" 
+                    style="border: none; border-radius: var(--radius-sm); padding: 0.35rem 1rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: var(--transition);"
+                    :style="editor_mode === 'standard' ? 'background-color: var(--accent); color: #000; box-shadow: var(--shadow-sm);' : 'background: transparent; color: var(--text-secondary);'"
+                    @click="editor_mode = 'standard'; selectIdealGrain(); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                Standard
+            </button>
+            <button type="button" 
+                    style="border: none; border-radius: var(--radius-sm); padding: 0.35rem 1rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: var(--transition);"
+                    :style="editor_mode === 'advanced' ? 'background-color: var(--accent); color: #000; box-shadow: var(--shadow-sm);' : 'background: transparent; color: var(--text-secondary);'"
+                    @click="editor_mode = 'advanced'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                Advanced
+            </button>
+        </div>
+    </div>
 
     <!-- Hidden Dough Category and Form Factor selectors linked to HTMX -->
     <div style="display: none;">
@@ -206,6 +232,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                 <template x-for="berry in activeBerries" :key="berry.id">
                     <label class="card" 
+                           x-show="editor_mode === 'advanced' || isIdealGrain(berry.name)"
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
                            :style="berry.selected ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''">
                         <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" style="display: none;">
@@ -238,33 +265,62 @@
                         <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div class="input-group">
-                        <label for="custom_mixer">Mixing Equipment</label>
-                        <select name="custom_mixer" id="custom_mixer" class="form-select" @change="use_custom = ($el.value !== 'static')">
-                            <option value="static">Standard Preset Method...</option>
+                        <label>Mixing Equipment</label>
+                        <input type="hidden" name="custom_mixer" :value="custom_mixer">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="custom_mixer === 'static' ? 'active' : ''"
+                                    @click="custom_mixer = 'static'; use_custom = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Standard Preset
+                            </button>
                             {% for mixer in mixers %}
-                                <option value="{{ mixer.id }}">{{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)</option>
+                                <button type="button" class="pill-btn" :class="custom_mixer === '{{ mixer.id }}' ? 'active' : ''"
+                                        @click="custom_mixer = '{{ mixer.id }}'; use_custom = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    {{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)
+                                </button>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
-                    <div class="input-group" x-show="!use_custom">
-                        <label for="mixing_method">Kneading Method</label>
-                        <select name="mixing_method" id="mixing_method" class="form-select">
-                            <option value="stand_mixer">Stand Mixer</option>
-                            <option value="hand_knead">Hand Knead</option>
-                            <option value="bread_machine">Bread Machine</option>
-                        </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;" x-show="!use_custom">
+                    <div class="input-group">
+                        <label>Kneading Method</label>
+                        <input type="hidden" name="mixing_method" :value="mixing_method">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="mixing_method === 'stand_mixer' ? 'active' : ''"
+                                    @click="mixing_method = 'stand_mixer'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Stand Mixer
+                            </button>
+                            <button type="button" class="pill-btn" :class="mixing_method === 'hand_knead' ? 'active' : ''"
+                                    @click="mixing_method = 'hand_knead'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Hand Knead
+                            </button>
+                            <button type="button" class="pill-btn" :class="mixing_method === 'bread_machine' ? 'active' : ''"
+                                    @click="mixing_method = 'bread_machine'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Bread Machine
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                     <div class="input-group">
-                        <label for="proofing_environment">Proofing Environment</label>
-                        <select name="proofing_environment" id="proofing_environment" class="form-select">
-                            <option value="ambient">Ambient Room</option>
-                            <option value="mat">Open Proofing Mat</option>
-                            <option value="box">Enclosed Proofing Box</option>
-                        </select>
+                        <label>Proofing Environment</label>
+                        <input type="hidden" name="proofing_environment" :value="proofing_environment">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
+                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Ambient Room
+                            </button>
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
+                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Open Proofing Mat
+                            </button>
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
+                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Enclosed Proofing Box
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -276,11 +332,18 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="input-group">
-                        <label for="flow_mill_type">Mill Machinery Profile</label>
-                        <select name="mill_type" id="flow_mill_type" class="form-select">
-                            <option value="stoneground">Stoneground Mill (High friction)</option>
-                            <option value="steel_roller">Steel Roller Mill (Low friction)</option>
-                        </select>
+                        <label>Mill Machinery Profile</label>
+                        <input type="hidden" name="mill_type" :value="mill_type">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="mill_type === 'stoneground' ? 'active' : ''"
+                                    @click="mill_type = 'stoneground'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Stoneground Mill
+                            </button>
+                            <button type="button" class="pill-btn" :class="mill_type === 'steel_roller' ? 'active' : ''"
+                                    @click="mill_type = 'steel_roller'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Steel Roller Mill
+                            </button>
+                        </div>
                     </div>
                     <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; margin-bottom: 0;">
                         <label for="flow_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
@@ -474,33 +537,92 @@
         </div>
 
         <!-- Chemical Substitutions -->
-        <div class="card" style="padding: 1rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
-             x-init="$watch('subOriginal', val => { subSubstitute = 'none' })">
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
+             x-init="$watch('subOriginal', val => { subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change')); })">
             <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Chemical Substitutions</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="input-group">
-                    <label for="sub_original">Original Ingredient</label>
-                    <select name="sub_original" id="sub_original" class="form-select" x-model="subOriginal">
-                        <option value="water">Water</option>
-                        <option value="fat">Oil / Fats</option>
-                    </select>
+            
+            <input type="hidden" name="sub_original" :value="subOriginal">
+            <input type="hidden" name="sub_substitute" :value="subSubstitute">
+
+            <!-- Original Ingredient Pill Row -->
+            <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Original Ingredient</label>
+                <div class="pill-btn-group">
+                    <button type="button" class="pill-btn" :class="subOriginal === 'water' ? 'active' : ''"
+                            @click="subOriginal = 'water'; subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        Water
+                    </button>
+                    <button type="button" class="pill-btn" :class="subOriginal === 'fat' ? 'active' : ''"
+                            @click="subOriginal = 'fat'; subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        Oil / Fats
+                    </button>
                 </div>
-                <div class="input-group">
-                    <label for="sub_substitute">Alternative Swap</label>
-                    <select name="sub_substitute" id="sub_substitute" class="form-select" x-model="subSubstitute">
-                        <option value="none">No Swap</option>
-                        <template x-if="subOriginal === 'water'">
-                            <optgroup label="Milk Alternatives">
-                                <option value="whole_milk">Whole Milk</option>
-                                <option value="almond_milk">Almond Milk</option>
-                            </optgroup>
-                        </template>
-                        <template x-if="subOriginal === 'fat'">
-                            <optgroup label="Fat Alternatives">
-                                <option value="butter">Butter</option>
-                            </optgroup>
-                        </template>
-                    </select>
+            </div>
+
+            <!-- Alternative Swap Pill Row -->
+            <div>
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Alternative Swap</label>
+                
+                <!-- If Water selected -->
+                <div x-show="subOriginal === 'water'" class="pill-btn-group">
+                    <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
+                            @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        No Swap
+                    </button>
+                    <button type="button" class="pill-btn" :class="subSubstitute === 'whole_milk' ? 'active' : ''"
+                            @click="subSubstitute = 'whole_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        Whole Milk
+                    </button>
+                    <button type="button" class="pill-btn" :class="subSubstitute === 'almond_milk' ? 'active' : ''"
+                            @click="subSubstitute = 'almond_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        Almond Milk
+                    </button>
+                </div>
+
+                <!-- If Fat selected -->
+                <div x-show="subOriginal === 'fat'">
+                    <!-- Standard Mode Fat Swaps -->
+                    <template x-if="editor_mode === 'standard'">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
+                                    @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                No Swap
+                            </button>
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'butter' ? 'active' : ''"
+                                    @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Butter
+                            </button>
+                        </div>
+                    </template>
+                    <!-- Advanced Mode Fat Swaps -->
+                    <template x-if="editor_mode === 'advanced'">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
+                                    @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                No Swap
+                            </button>
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
+                                    @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Olive Oil
+                            </button>
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
+                                    @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Canola Oil
+                            </button>
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
+                                    @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Vegetable Oil
+                            </button>
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
+                                    @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Salted Butter
+                            </button>
+                            <button type="button" class="pill-btn" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
+                                    @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Unsalted Butter
+                            </button>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

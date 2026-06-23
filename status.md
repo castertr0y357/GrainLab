@@ -38,6 +38,11 @@
 - [x] Relocate sourdough starter diagnostics card to Phase 4
 - [x] Implement full-width Initialize Bake button and countertop active sequential timeline countdown dashboard
 - [x] Write and run automated tests verifying all refactored progressive workflow features and logic
+- [x] Implement persistent global Standard vs Advanced toggles for Phase 3 and Phase 4
+- [x] Convert Mixing Equipment, Kneading Method, Proofing Environment, Milling Profile, and Chemical Substitutions to tactile option pill button layouts
+- [x] Add dynamic target recipe header at the top of the right-hand sidebar
+- [x] Enforce progressive ledger visibility: hide Compiled Formula rows during Phase 1-3
+- [x] Expand Compiled Formula layout to display precise sub-item breakdowns under parent headers
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)

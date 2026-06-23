@@ -499,5 +499,64 @@ class RecipeRestructuringAndBakingTests(TestCase):
         self.assertEqual(response_mat.status_code, 200)
         self.assertEqual(response_mat.context["estimated_proof_minutes"], 54)
 
+    def test_advanced_substitutions_oils_and_butters(self):
+        # 1. Olive Oil (direct 1:1, no hydration offset)
+        recipe_olive_oil = bakers_math.calculate_recipe(
+            base_hydration=0.68,
+            base_fat=0.10,
+            base_sugar=0.0,
+            target_mass=1000.0,
+            substitution={"original": "fat", "substitute": "olive_oil"}
+        )
+        self.assertEqual(recipe_olive_oil["effective_hydration_pct"], 68.0)
+        self.assertEqual(recipe_olive_oil["effective_fat_pct"], 10.0)
+        self.assertEqual(recipe_olive_oil["fat_substitute_label"], "Olive Oil")
+        self.assertAlmostEqual(recipe_olive_oil["added_oil"], recipe_olive_oil["flour_weight"] * 0.10, places=1)
+        self.assertEqual(recipe_olive_oil["added_butter"], 0.0)
+
+        # 2. Salted Butter (80% fat, 18% water)
+        recipe_salted_butter = bakers_math.calculate_recipe(
+            base_hydration=0.68,
+            base_fat=0.10,
+            base_sugar=0.0,
+            target_mass=1000.0,
+            substitution={"original": "fat", "substitute": "salted_butter"}
+        )
+        # Butter ratio = 0.10 / 0.80 = 0.125
+        # Water excess = 0.125 * 0.18 = 0.0225 (2.25%)
+        # Effective hydration = 68.0 - 2.25 = 65.75%
+        self.assertEqual(recipe_salted_butter["effective_hydration_pct"], 65.8)
+        self.assertEqual(recipe_salted_butter["fat_substitute_label"], "Salted Butter")
+        self.assertAlmostEqual(recipe_salted_butter["added_butter"], recipe_salted_butter["flour_weight"] * 0.125, places=1)
+        self.assertEqual(recipe_salted_butter["added_oil"], 0.0)
+
+        # 3. Unsalted Butter (80% fat, 18% water)
+        recipe_unsalted_butter = bakers_math.calculate_recipe(
+            base_hydration=0.68,
+            base_fat=0.10,
+            base_sugar=0.0,
+            target_mass=1000.0,
+            substitution={"original": "fat", "substitute": "unsalted_butter"}
+        )
+        self.assertEqual(recipe_unsalted_butter["effective_hydration_pct"], 65.8)
+        self.assertEqual(recipe_unsalted_butter["fat_substitute_label"], "Unsalted Butter")
+        self.assertAlmostEqual(recipe_unsalted_butter["added_butter"], recipe_unsalted_butter["flour_weight"] * 0.125, places=1)
+        self.assertEqual(recipe_unsalted_butter["added_oil"], 0.0)
+
+    def test_ajax_calculate_with_advanced_substitution(self):
+        client = Client()
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "sub_original": "fat",
+            "sub_substitute": "olive_oil",
+            "editor_mode": "advanced"
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("fat_substitute_label", response.context["recipe"])
+        self.assertEqual(response.context["recipe"]["fat_substitute_label"], "Olive Oil")
+
 
 

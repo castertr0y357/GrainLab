@@ -24,22 +24,32 @@
             <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: {{ recipe.target_mass }}g</span>
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <!-- Low-visibility placeholder row shown during Phase 3 -->
+        <div x-show="current_phase < 4" x-transition style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; text-align: center; padding: 1.5rem 0;">
+            Ingredient ledger is compiled in Phase 4.
+        </div>
+
+        <div x-show="current_phase == 4" x-transition style="display: flex; flex-direction: column; gap: 0.75rem;">
             <!-- Flour Base Weight Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Added Flour Weight</span>
                 <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_flour }}g</span>
             </div>
             
-            <!-- Individual Grains (Only shown when current_phase == 4) -->
-            <div x-show="current_phase == 4" x-transition style="display: contents;">
+            <!-- Individual Grains / Mill Blend Sub-Items -->
+            <div style="display: contents;">
                 {% if recipe.wheat_berry_mix %}
                     {% for berry, weight in recipe.wheat_berry_mix.items %}
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                            <span style="color: var(--text-muted);">🌾 Mill Blend: {{ berry }}</span>
+                            <span style="color: var(--text-muted);">↳ {{ berry }}</span>
                             <span style="color: var(--text-secondary); font-weight: 500;">{{ weight }}g</span>
                         </div>
                     {% endfor %}
+                {% else %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ {% if recipe.grain_type == "whole_wheat" %}Whole Wheat Flour{% elif recipe.grain_type == "spelt" %}Spelt Flour{% elif recipe.grain_type == "kamut" %}Kamut Flour{% elif recipe.grain_type == "einkorn" %}Einkorn Flour{% else %}Refined Flour (AP/Bread){% endif %}</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.added_flour }}g</span>
+                    </div>
                 {% endif %}
             </div>
             
@@ -48,6 +58,12 @@
                 <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
                 <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
             </div>
+            <div style="display: contents;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label == "Whole Milk" %}Whole Milk{% elif recipe.liquid_label == "Almond Milk" %}Almond Milk{% else %}Pure Water{% endif %}</span>
+                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.liquid_weight }}g</span>
+                </div>
+            </div>
             
             <!-- Leaven Row -->
             {% if leaven_type == "sourdough" %}
@@ -55,23 +71,44 @@
                     <span style="color: var(--text-primary); font-weight: 600;">Sourdough Starter (100% hydration)</span>
                     <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.starter_weight }}g</span>
                 </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ Sourdough Starter</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.starter_weight }}g</span>
+                    </div>
+                </div>
             {% else %}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: var(--text-primary); font-weight: 600;">Instant Dry Yeast</span>
                     <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.yeast_weight }}g</span>
                 </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ Commercial Yeast</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.yeast_weight }}g</span>
+                    </div>
+                </div>
             {% endif %}
             
             <!-- Enrichments: Butter / Oil -->
-            {% if recipe.added_butter > 0 %}
+            {% if recipe.added_butter > 0 or recipe.added_oil > 0 %}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">Butter (solid enrichment)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_butter }}g</span>
+                    <span style="color: var(--text-primary); font-weight: 600;">
+                        {% if recipe.added_butter > 0 %}Butter (solid enrichment){% else %}Fats / Oil (liquid enrichment){% endif %}
+                    </span>
+                    <span style="color: var(--text-primary); font-weight: 700;">
+                        {% if recipe.added_butter > 0 %}{{ recipe.added_butter }}{% else %}{{ recipe.added_oil }}{% endif %}g
+                    </span>
                 </div>
-            {% elif recipe.added_oil > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">Fats / Oil (liquid enrichment)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_oil }}g</span>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">
+                            ↳ {% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label }}{% elif recipe.added_butter > 0 %}Butter{% else %}Default Fat/Oil{% endif %}
+                        </span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">
+                            {% if recipe.added_butter > 0 %}{{ recipe.added_butter }}{% else %}{{ recipe.added_oil }}{% endif %}g
+                        </span>
+                    </div>
                 </div>
             {% endif %}
             
@@ -81,12 +118,24 @@
                     <span style="color: var(--text-primary); font-weight: 600;">Sugar</span>
                     <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.sugar_weight }}g</span>
                 </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ Granulated Sugar</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.sugar_weight }}g</span>
+                    </div>
+                </div>
             {% endif %}
             
             <!-- Salt Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Salt (2% ratio)</span>
                 <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.salt_weight }}g</span>
+            </div>
+            <div style="display: contents;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
+                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.salt_weight }}g</span>
+                </div>
             </div>
             
             <!-- Total Scaled Weight Row -->
