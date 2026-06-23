@@ -43,6 +43,9 @@
 - [x] Add dynamic target recipe header at the top of the right-hand sidebar
 - [x] Enforce progressive ledger visibility: hide Compiled Formula rows during Phase 1-3
 - [x] Expand Compiled Formula layout to display precise sub-item breakdowns under parent headers
+- [x] Overhaul Phase 4 fine-tuning sliders to flank tracking rails with polar extremes and remove description text blocks
+- [x] Re-engineer Countertop Live Timeline view state into an interactive, manual kitchen control deck with Audio beep loop, Count-Up overtime, large pill buttons, dynamic readout shifts, mixer speeds/hooks instruction blocks, and proof preheat alerts
+- [x] Write and run unit tests verifying the AJAX countertop metadata attribute outputs and timeline calculations
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and follow-up updates completed)
