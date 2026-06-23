@@ -18,7 +18,7 @@
     activeBerries: [
         {% for wb in active_berries %}
         {
-            id: {{ wb.id }},
+            id: '{{ wb.id }}',
             name: '{{ wb.name|escapejs }}',
             hardness: '{{ wb.hardness }}',
             protein: {{ wb.protein_content }},
