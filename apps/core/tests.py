@@ -558,5 +558,24 @@ class RecipeRestructuringAndBakingTests(TestCase):
         self.assertIn("fat_substitute_label", response.context["recipe"])
         self.assertEqual(response.context["recipe"]["fat_substitute_label"], "Olive Oil")
 
+    def test_countertop_metadata_attributes_output(self):
+        client = Client()
+        response = client.post(reverse("calculate_recipe_ajax"), {
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "target_weight": 900.0,
+            "room_temp": 72,
+            "flour_temp": 70
+        })
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertIn('id="countertop-data"', html)
+        self.assertIn('data-bake-temp="', html)
+        self.assertIn('data-bake-steam="', html)
+        self.assertIn('data-doneness-temp="', html)
+        self.assertIn('data-water-temp="', html)
+
 
 

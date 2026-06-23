@@ -537,3 +537,13 @@ input:checked + .slider-round:before {
     box-shadow: 0 0 10px var(--border-glow);
 }
 
+@keyframes flash-bg {
+    0% { background-color: #1a1a1f; }
+    50% { background-color: rgba(220, 53, 69, 0.25); }
+    100% { background-color: #1a1a1f; }
+}
+.flash-alarm {
+    animation: flash-bg 1.2s infinite;
+}
+
+

@@ -437,33 +437,33 @@
         </div>
 
         <!-- Sliders -->
-        <div class="slider-group">
-            <div class="slider-label">
-                <span>Texture (Softness vs. Crustiness)</span>
-                <span class="highlight-row" x-text="texture + '%'"></span>
+        <div class="slider-group" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Texture Variance</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="texture + '%'"></span>
             </div>
-            <input type="range" name="texture_score" min="0" max="100" x-model="texture">
-            <div class="slider-desc">Manipulate softness: enrichment scaling. 0% is lean/crusty.</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Softness (' + texture + '%)'"></span>
+                <input type="range" name="texture_score" min="0" max="100" x-model="texture" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Crusty (' + (100 - texture) + '%)'"></span>
+            </div>
         </div>
 
-        <div class="slider-group">
-            <div class="slider-label">
-                <span>Hydration (Dense vs. Open Crumb)</span>
-                <span class="highlight-row">
-                    Crumb: <span x-text="crumb + '%'"></span> | 
-                    Effective Hydration: <span x-text="Math.round(45 + (crumb / 100) * 40) + '%'"></span>
-                </span>
+        <div class="slider-group" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Hydration Variance</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="'Crumb: ' + crumb + '% | Effective Hydration: ' + Math.round(45 + (crumb / 100) * 40) + '%'"></span>
             </div>
-            <!-- Dynamic boundaries enforced -->
-            <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb">
-            <div class="slider-desc">
-                Adjust crumb structure. 
-                <template x-if="grain_mode === 'milled' && (weightedAbsorption() - 1.0) >= 0.05">
-                    <span style="color: var(--warning); display: block; margin-top: 0.25rem;">
-                        ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
-                    </span>
-                </template>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Dense (' + (100 - crumb) + '%)'"></span>
+                <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Open (' + crumb + '%)'"></span>
             </div>
+            <template x-if="grain_mode === 'milled' && (weightedAbsorption() - 1.0) >= 0.05">
+                <div style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4;">
+                    ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
+                </div>
+            </template>
         </div>
 
         <!-- Leavening Biology -->
@@ -480,13 +480,16 @@
             </div>
         </div>
 
-        <div class="slider-group" x-show="leavening_type === 'sourdough'" x-transition>
-            <div class="slider-label">
-                <span>Sourdough Starter Percentage</span>
-                <span x-text="starter + '%'" class="highlight-row"></span>
+        <div class="slider-group" x-show="leavening_type === 'sourdough'" x-transition style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Sourdough Starter Percentage</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="starter + '%'"></span>
             </div>
-            <input type="range" name="starter_pct" min="5" max="40" x-model="starter">
-            <div class="slider-desc">Baker's standard is 20%. starter hydration balanced automatically.</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;">Mild (5%)</span>
+                <input type="range" name="starter_pct" min="5" max="40" x-model="starter" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;">Sour (40%)</span>
+            </div>
         </div>
 
         <!-- Flour Maturity -->

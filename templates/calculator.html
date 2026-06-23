@@ -44,6 +44,14 @@
     timerInterval: null,
     timerRunning: false,
     durations: { mix: 5, knead: 10, autolyse: 30, bulk: 240, proof: 120, bake: 45 },
+    isAlarm: false,
+    elapsedOvertime: 0,
+    audioCtx: null,
+    alarmInterval: null,
+    bakeTemp: '',
+    bakeSteam: '',
+    donenessTemp: '',
+    waterTemp: '',
 
     init() {
         this.$watch('presetSlug', value => {
@@ -102,22 +110,53 @@
                 proof: parseInt(el.getAttribute('data-proof-min')) || 120,
                 bake: parseInt(el.getAttribute('data-bake-min')) || 45
             };
+            this.bakeTemp = el.getAttribute('data-bake-temp') || '';
+            this.bakeSteam = el.getAttribute('data-bake-steam') || '';
+            this.donenessTemp = el.getAttribute('data-doneness-temp') || '';
+            this.waterTemp = el.getAttribute('data-water-temp') || '';
         }
         this.countertopMode = true;
         this.currentStepIndex = 0;
         this.stepTimeRemaining = this.durations[this.steps[0].key] * 60;
         this.stepTotalTime = this.stepTimeRemaining;
-        this.startTimer();
+        
+        this.stopAlarm();
+        this.pauseTimer();
+        
+        // Unlock AudioContext on user gesture
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
+            }
+        }
     },
 
     startTimer() {
         if (this.timerInterval) clearInterval(this.timerInterval);
         this.timerRunning = true;
+        
+        // Unlock/resume AudioContext on user gesture
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
+            }
+        } else if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
         this.timerInterval = setInterval(() => {
-            if (this.stepTimeRemaining > 0) {
-                this.stepTimeRemaining--;
+            if (!this.isAlarm) {
+                if (this.stepTimeRemaining > 0) {
+                    this.stepTimeRemaining--;
+                } else {
+                    this.isAlarm = true;
+                    this.elapsedOvertime = 0;
+                    this.playAlarm();
+                }
             } else {
-                this.nextStep();
+                this.elapsedOvertime++;
             }
         }, 1000);
     },
@@ -131,7 +170,10 @@
     },
 
     toggleTimer() {
-        if (this.timerRunning) {
+        if (this.isAlarm) {
+            this.stopAlarm();
+            this.pauseTimer();
+        } else if (this.timerRunning) {
             this.pauseTimer();
         } else {
             this.startTimer();
@@ -139,28 +181,62 @@
     },
 
     nextStep() {
+        this.stopAlarm();
+        this.pauseTimer();
         if (this.currentStepIndex < this.steps.length - 1) {
             this.currentStepIndex++;
             this.stepTimeRemaining = this.durations[this.steps[this.currentStepIndex].key] * 60;
             this.stepTotalTime = this.stepTimeRemaining;
-            if (this.timerRunning) {
-                this.startTimer();
-            }
         } else {
-            this.pauseTimer();
             alert('🎉 Baking process completed!');
         }
     },
 
     prevStep() {
+        this.stopAlarm();
+        this.pauseTimer();
         if (this.currentStepIndex > 0) {
             this.currentStepIndex--;
             this.stepTimeRemaining = this.durations[this.steps[this.currentStepIndex].key] * 60;
             this.stepTotalTime = this.stepTimeRemaining;
-            if (this.timerRunning) {
-                this.startTimer();
+        }
+    },
+
+    playAlarm() {
+        if (this.alarmInterval) return;
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
             }
         }
+        const playBeep = () => {
+            if (!this.audioCtx) return;
+            if (this.audioCtx.state === 'suspended') {
+                this.audioCtx.resume();
+            }
+            const osc = this.audioCtx.createOscillator();
+            const gainNode = this.audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(this.audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gainNode.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.3);
+            osc.start(this.audioCtx.currentTime);
+            osc.stop(this.audioCtx.currentTime + 0.3);
+        };
+        playBeep();
+        this.alarmInterval = setInterval(playBeep, 1000);
+    },
+
+    stopAlarm() {
+        if (this.alarmInterval) {
+            clearInterval(this.alarmInterval);
+            this.alarmInterval = null;
+        }
+        this.isAlarm = false;
+        this.elapsedOvertime = 0;
     },
 
     formatTime(seconds) {
@@ -177,7 +253,42 @@
     },
 
     get progressPercent() {
+        if (this.isAlarm) return 100;
+        if (!this.stepTotalTime) return 0;
         return Math.round(((this.stepTotalTime - this.stepTimeRemaining) / this.stepTotalTime) * 100);
+    },
+
+    getStepDescription(key) {
+        if (key === 'mix') {
+            let method = 'stand_mixer';
+            const methodInput = document.querySelector('input[name="mixing_method"]');
+            if (methodInput) {
+                method = methodInput.value;
+            }
+            if (method === 'stand_mixer') {
+                return 'Combine ingredients in the mixer bowl. Fit the mixer with the Dough Hook attachment. Mix on low speed (Speed 1-2) for 5 minutes until a cohesive shaggy mass forms and no dry flour remains.';
+            } else if (method === 'bread_machine') {
+                return 'Place all ingredients into the bread machine pan in the order recommended by the manufacturer. Set the machine to the dough cycle to begin the initial mixing sequence.';
+            } else {
+                return 'Combine all ingredients in a large mixing bowl using a sturdy spatula or your hands. Work the mixture until all dry flour is fully hydrated and a rough, shaggy dough mass is formed.';
+            }
+        }
+        if (key === 'knead') {
+            let method = 'stand_mixer';
+            const methodInput = document.querySelector('input[name="mixing_method"]');
+            if (methodInput) {
+                method = methodInput.value;
+            }
+            if (method === 'stand_mixer') {
+                return 'Increase speed to medium-low (Speed 2-3). Knead for 8-10 minutes until the dough clears the sides of the bowl, clings to the hook, and passes the windowpane elasticity test.';
+            } else if (method === 'bread_machine') {
+                return 'Allow the bread machine to run its programmed kneading cycle. The paddle will develop the gluten structure dynamically until the dough is smooth, elastic, and non-sticky.';
+            } else {
+                return 'Turn the dough out onto a clean work surface. Hand-knead using a rhythmic fold-and-roll motion. Knead for 10-15 minutes until the dough surface is smooth, supple, and passes the windowpane test.';
+            }
+        }
+        const step = this.steps.find(s => s.key === key);
+        return step ? step.desc : '';
     },
     
     // Helpers
@@ -287,7 +398,7 @@
                     </span>
                     <button type="button" 
                             style="background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-weight: 600; font-size: 0.85rem;"
-                            @click="pauseTimer(); countertopMode = false;">
+                            @click="stopAlarm(); pauseTimer(); countertopMode = false;">
                         EXIT BAKE ✕
                     </button>
                 </div>
@@ -305,10 +416,45 @@
                 </div>
 
                 <!-- Active Step Showcase -->
-                <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;">
-                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Active Step</div>
+                <div :class="isAlarm ? 'flash-alarm' : ''"
+                     style="border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;"
+                     :style="isAlarm ? 'border-left: 4px solid var(--danger);' : 'background-color: #1a1a1f; border-left: 4px solid var(--accent);'">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;" :style="isAlarm ? 'color: var(--danger);' : 'color: var(--accent);'">Active Step</div>
                     <h3 style="margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);" x-text="steps[currentStepIndex].name"></h3>
-                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="steps[currentStepIndex].desc"></p>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="getStepDescription(steps[currentStepIndex].key)"></p>
+
+                    <!-- Water Temperature Calibration dynamic readout during Mix/Knead steps -->
+                    <div x-show="steps[currentStepIndex].key === 'mix' || steps[currentStepIndex].key === 'knead'" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 1rem; align-items: center;">
+                        <div style="background-color: rgba(255, 136, 0, 0.1); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); flex: 1;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Water Temp Calibration</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="waterTemp + '°F'"></div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Target DDT is 78°F</div>
+                        </div>
+                    </div>
+
+                    <!-- Baking Profile and Target Doneness dynamic readouts during Bake step -->
+                    <div x-show="steps[currentStepIndex].key === 'bake'" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div style="background-color: rgba(255, 136, 0, 0.1); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Baking Profile</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTemp + '°F | ' + durations.bake + 'm'"></div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);" x-text="'Steam: ' + bakeSteam"></div>
+                        </div>
+                        <div style="background-color: rgba(255, 193, 7, 0.1); border-left: 3px solid var(--warning); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em;">Target Doneness</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" x-text="donenessTemp + '°F'"></div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Internal probe temperature</div>
+                        </div>
+                    </div>
+
+                    <!-- Preheat Alert during Proof Step under 45 minutes -->
+                    <div x-show="steps[currentStepIndex].key === 'proof' && stepTimeRemaining <= 2700" 
+                         x-transition
+                         style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-top: 1rem;">
+                        <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 700; font-size: 0.95rem;">🔥 OVEN PREHEAT TRIGGER WARNING</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
+                            Launch preheating sequence immediately! Turn oven to <span x-text="bakeTemp"></span>°F with your Dutch oven, baking stone, or pan hardware inside. The final bake step starts in <span x-text="Math.round(stepTimeRemaining / 60)"></span> minutes.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Live Countdown Digital Timer Card -->
@@ -316,41 +462,42 @@
                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Time Remaining</div>
                     
                     <!-- High-contrast Digital Readout -->
-                    <div style="font-size: 4rem; font-family: monospace; font-weight: 800; color: var(--text-primary); letter-spacing: 0.05em; line-height: 1; margin-bottom: 1rem;" 
-                         x-text="formatTime(stepTimeRemaining)">
+                    <div style="font-size: 4rem; font-family: monospace; font-weight: 800; letter-spacing: 0.05em; line-height: 1; margin-bottom: 1rem; transition: color 0.3s;"
+                         :style="isAlarm ? 'color: var(--danger);' : 'color: var(--text-primary);'"
+                         x-text="isAlarm ? '+' + formatTime(elapsedOvertime) : formatTime(stepTimeRemaining)">
                     </div>
 
                     <!-- Progress Bar -->
                     <div style="width: 100%; height: 8px; background-color: var(--border); border-radius: 9999px; overflow: hidden; margin-bottom: 0.5rem;">
-                        <div style="height: 100%; background-color: var(--accent); transition: width 1s linear;"
-                             :style="'width: ' + progressPercent + '%'">
+                        <div style="height: 100%; background-color: var(--accent); transition: width 0.3s linear;"
+                             :style="isAlarm ? 'width: 100%; background-color: var(--danger);' : 'width: ' + progressPercent + '%;'">
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="progressPercent + '% Completed'"></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="isAlarm ? 'Milestone Concluded' : progressPercent + '% Completed'"></div>
                 </div>
 
                 <!-- Timer Controls & Navigation -->
                 <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; margin-bottom: 1rem;">
                     <!-- Step Back -->
                     <button type="button" 
-                            style="height: 52px; flex: 1; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm);"
+                            style="height: 52px; flex: 1; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; transition: var(--transition);"
                             :disabled="currentStepIndex === 0"
                             :style="currentStepIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
                             @click="prevStep()">
                         ◀ STEP BACK
                     </button>
 
-                    <!-- Play/Pause -->
+                    <!-- Play/Pause/Silence -->
                     <button type="button" 
-                            style="height: 52px; width: 140px; font-weight: 700; cursor: pointer; border-radius: var(--radius-sm); border: none;"
-                            :style="timerRunning ? 'background-color: rgba(220, 53, 69, 0.2); border: 1px solid var(--danger); color: var(--danger);' : 'background-color: rgba(40, 167, 69, 0.2); border: 1px solid var(--success); color: var(--success);'"
+                            style="height: 52px; flex: 2; font-weight: 700; cursor: pointer; border-radius: 9999px; transition: var(--transition); border: none;"
+                            :style="isAlarm ? 'background-color: var(--danger); color: #fff; box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);' : (timerRunning ? 'background-color: rgba(220, 53, 69, 0.2); border: 1px solid var(--danger); color: var(--danger);' : 'background-color: var(--accent); color: #000;')"
                             @click="toggleTimer()">
-                        <span x-text="timerRunning ? '⏸ PAUSE' : '▶ START'"></span>
+                        <span x-text="isAlarm ? '🔕 SILENCE ALARM' : (timerRunning ? '⏸ PAUSE STEP' : '▶ START STEP')"></span>
                     </button>
 
                     <!-- Skip Step -->
                     <button type="button" 
-                            style="height: 52px; flex: 1; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm);"
+                            style="height: 52px; flex: 1; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; transition: var(--transition);"
                             :disabled="currentStepIndex === steps.length - 1"
                             :style="currentStepIndex === steps.length - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
                             @click="nextStep()">
