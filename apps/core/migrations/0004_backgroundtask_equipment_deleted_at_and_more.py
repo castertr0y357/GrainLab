@@ -4,6 +4,24 @@ import uuid
 from django.db import migrations, models
 
 
+def convert_pk_to_uuid(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            # Check core_equipment
+            cursor.execute("SELECT data_type FROM information_schema.columns WHERE table_name='core_equipment' AND column_name='id';")
+            row = cursor.fetchone()
+            if row and row[0] != 'uuid':
+                cursor.execute('ALTER TABLE core_equipment ALTER COLUMN id DROP IDENTITY IF EXISTS;')
+                cursor.execute('ALTER TABLE core_equipment ALTER COLUMN id TYPE uuid USING gen_random_uuid();')
+
+            # Check core_wheatberry
+            cursor.execute("SELECT data_type FROM information_schema.columns WHERE table_name='core_wheatberry' AND column_name='id';")
+            row = cursor.fetchone()
+            if row and row[0] != 'uuid':
+                cursor.execute('ALTER TABLE core_wheatberry ALTER COLUMN id DROP IDENTITY IF EXISTS;')
+                cursor.execute('ALTER TABLE core_wheatberry ALTER COLUMN id TYPE uuid USING gen_random_uuid();')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -36,6 +54,7 @@ class Migration(migrations.Migration):
             name='deleted_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
+        migrations.RunPython(convert_pk_to_uuid, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
             model_name='equipment',
             name='id',
