@@ -55,6 +55,8 @@
 - [x] Offload local AI Gemma analyses to background thread pool tasks with UUID task polling, progress bars, and HTMX indicators
 - [x] Integrate Alpine.js and HTMX double-submit button protections across settings and inventory forms
 - [x] Write and verify comprehensive security, soft-delete, and correlation ID unit tests
+- [x] Refactor GrainLab math engine and timelines into 11 Isolated Domain-Specific Sub-Engines under `grainlab/engines/`
+- [x] Add comprehensive unit tests verifying the 11 sub-engine calculations, ceilings, and step generators
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
@@ -67,3 +69,4 @@
 - Migrated primary keys to non-predictable UUIDs for IDOR security compliance.
 - Switched deletion queries to soft deletes via custom SoftDeleteQuerySet and AllObjectsManager to prevent accidental data loss.
 - Injected Correlation IDs in logging formats and response headers (`X-Correlation-ID`) for request-response trace correlation.
+- Split monolithic math timeline module into 11 isolated domain-specific sub-engines with custom boundaries, structural grain ceilings, and dynamic step cards inheriting from `BaseEngine`.

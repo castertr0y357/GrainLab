@@ -1,0 +1,83 @@
+from grainlab.engines.base_engine import BaseEngine
+
+class FryEngine(BaseEngine):
+    name = "Fried Doughs Engine"
+    slug = "fry"
+
+    presets = [
+        "Yeast-Raised Donuts", "Fluffy New Orleans Beignets", "Puffed Sopapillas",
+        "Traditional Native Frybread", "Cake Donuts", "Apple Fritters",
+        "Crullers (Fried Execution)"
+    ]
+
+    def calculate_recipe(self, **kwargs) -> dict:
+        recipe = super().calculate_recipe(**kwargs)
+        
+        # Oil recovery temperature dip calculations:
+        # Frying target is 365°F. The oil temp drops ~10°F when cool dough is introduced.
+        fry_temp_target = 365.0
+        oil_preheat = fry_temp_target + 10.0
+        
+        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
+            f"Hydro-Convection Frying: Preheat frying oil to {oil_preheat}°F. Once dough is dropped, the active temperature recovery dip will stabilize near {fry_temp_target}°F.",
+            "Drainage rest: Drain fried pieces on a elevated wire rack rather than flat paper towels to prevent soggy skin condensation."
+        ]
+        return recipe
+
+    def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
+        mix_min = 8
+        proof_min = estimated_proof_minutes or 45
+        
+        # Side A & B frying steps (measured in seconds!)
+        side_a_sec = 120
+        flip_sec = 10
+        side_b_sec = 120
+        
+        return [
+            {
+                "key": "mix",
+                "name": "Dough Mix & Knead",
+                "duration_sec": mix_min * 60,
+                "desc": "Mix ingredients to form a soft, supple leavened dough. Knead until smooth.",
+                "is_mix": True
+            },
+            {
+                "key": "proof",
+                "name": "Portion & Proof",
+                "duration_sec": proof_min * 60,
+                "desc": "Roll out and cut into shapes. Proof on parchment squares until airy and delicate.",
+                "is_proof": True
+            },
+            {
+                "key": "preheat",
+                "name": "Oil Preheat & Recovery Check",
+                "duration_sec": 10 * 60,
+                "desc": "Heat neutral fry oil to 375°F. Confirm your drainage racks, spider tools, and coatings are ready."
+            },
+            {
+                "key": "fry_a",
+                "name": "Fry Side A",
+                "duration_sec": side_a_sec,  # 120 seconds
+                "desc": "Gently drop proofed dough into hot oil. Fry Side A. Watch for rapid expansion and bubble formation.",
+                "is_bake": True  # Treat fry as bake for countertop template readouts
+            },
+            {
+                "key": "flip",
+                "name": "Flip Prompt",
+                "duration_sec": flip_sec,  # 10 seconds
+                "desc": "⚠️ FLIP IMMEDIATELY! Use metal chopsticks or a spider tool to turn the dough over in the hot oil."
+            },
+            {
+                "key": "fry_b",
+                "name": "Fry Side B",
+                "duration_sec": side_b_sec,  # 120 seconds
+                "desc": "Fry Side B until golden brown and cooked through. Ensure internal temperature reaches 195°F.",
+                "is_bake": True
+            },
+            {
+                "key": "drain",
+                "name": "Drain & Cool",
+                "duration_sec": 5 * 60,
+                "desc": "Transfer to wire rack to drain excess oil. Glaze or coat in sugar while warm."
+            }
+        ]

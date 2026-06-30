@@ -62,7 +62,7 @@
           presetName = '{{ selected_preset.name|escapejs }}';
           presetSlug = '{{ selected_preset.slug|escapejs }}';
           query = '{{ selected_preset.name|escapejs }}';
-          selected_master = '{% if selected_preset.dough_category.slug == "alkaline-bath" %}alkaline{% elif selected_preset.dough_category.slug == "non-leavened-crisp" %}flatbread{% elif selected_preset.dough_category.slug == "lean-crusty" %}lean{% elif selected_preset.dough_category.slug == "enriched-soft" %}enriched{% else %}quick{% endif %}';
+          selected_master = '{% if selected_preset.dough_category.slug == "alkaline-bath" %}alkaline{% elif selected_preset.dough_category.slug == "flatbreads-griddles" or selected_preset.dough_category.slug == "pastry-lamination" or selected_preset.dough_category.slug == "fried-doughs" or selected_preset.dough_category.slug == "fresh-pasta-noodles" %}flatbread{% elif selected_preset.dough_category.slug == "lean-crusty" %}lean{% elif selected_preset.dough_category.slug == "enriched-soft" %}enriched{% else %}quick{% endif %}';
           form_factor_val = '{{ selected_preset.form_factor.slug|escapejs }}';
           recommended_ff_slug = '{{ selected_preset.form_factor.slug|escapejs }}';
           portioned = {% if selected_preset.form_factor.is_portioned %}true{% else %}false{% endif %};
@@ -151,7 +151,7 @@
             <div class="card" 
                  style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; border-width: 2px; min-height: 120px; transition: var(--transition); margin-bottom: 0;"
                  :style="selected_master === 'quick' ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''"
-                 @click="selected_master = 'quick'; $refs.doughCategorySelect.value = 'chemically-leavened'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
+                 @click="selected_master = 'quick'; $refs.doughCategorySelect.value = 'quick-breads-scones'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
                 <span style="font-size: 2.25rem; margin-bottom: 0.5rem;">🧁</span>
                 <strong style="font-size: 1.05rem;">Quick Breads</strong>
                 <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Biscuits, Scones, Muffins</span>
@@ -160,7 +160,7 @@
             <div class="card" 
                  style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; border-width: 2px; min-height: 120px; transition: var(--transition); margin-bottom: 0;"
                  :style="selected_master === 'flatbread' ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''"
-                 @click="selected_master = 'flatbread'; $refs.doughCategorySelect.value = 'non-leavened-crisp'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
+                 @click="selected_master = 'flatbread'; $refs.doughCategorySelect.value = 'flatbreads-griddles'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
                 <span style="font-size: 2.25rem; margin-bottom: 0.5rem;">🫓</span>
                 <strong style="font-size: 1.05rem;">Flatbreads</strong>
                 <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Naan, Tortillas, Pita, Crackers</span>
@@ -212,15 +212,15 @@
                         (selected_master === 'lean' && '{{ p.dough_category.slug }}' === 'lean-crusty') ||
                         (selected_master === 'enriched' && '{{ p.dough_category.slug }}' === 'enriched-soft') ||
                         (selected_master === 'alkaline' && '{{ p.dough_category.slug }}' === 'alkaline-bath') ||
-                        (selected_master === 'quick' && ('{{ p.dough_category.slug }}' === 'chemically-leavened' || '{{ p.dough_category.slug }}' === 'batter-based')) ||
-                        (selected_master === 'flatbread' && '{{ p.dough_category.slug }}' === 'non-leavened-crisp')
+                        (selected_master === 'quick' && ('{{ p.dough_category.slug }}' === 'quick-breads-scones' || '{{ p.dough_category.slug }}' === 'cakes-batters' || '{{ p.dough_category.slug }}' === 'choux-paste' || '{{ p.dough_category.slug }}' === 'cookies-shortbread')) ||
+                        (selected_master === 'flatbread' && ('{{ p.dough_category.slug }}' === 'flatbreads-griddles' || '{{ p.dough_category.slug }}' === 'pastry-lamination' || '{{ p.dough_category.slug }}' === 'fried-doughs' || '{{ p.dough_category.slug }}' === 'fresh-pasta-noodles'))
                       "
                       hx-get="{% url 'load_preset' p.id %}"
                       hx-target="#calculator-form-container"
                       hx-select="#calculator-form"
                       hx-swap="outerHTML"
                       hx-push-url="?preset={{ p.slug }}"
-                      @click="current_phase = 3; presetName = '{{ p.name|escapejs }}'; presetSlug = '{{ p.slug|escapejs }}'; query = '{{ p.name|escapejs }}'; selected_master = '{% if p.dough_category.slug == 'alkaline-bath' %}alkaline{% elif p.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif p.dough_category.slug == 'lean-crusty' %}lean{% elif p.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';"
+                      @click="current_phase = 3; presetName = '{{ p.name|escapejs }}'; presetSlug = '{{ p.slug|escapejs }}'; query = '{{ p.name|escapejs }}'; selected_master = '{% if p.dough_category.slug == 'alkaline-bath' %}alkaline{% elif p.dough_category.slug == 'flatbreads-griddles' or p.dough_category.slug == 'pastry-lamination' or p.dough_category.slug == 'fried-doughs' or p.dough_category.slug == 'fresh-pasta-noodles' %}flatbread{% elif p.dough_category.slug == 'lean-crusty' %}lean{% elif p.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';"
                       style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
                     {{ p.name }}
                 </span>

@@ -222,12 +222,7 @@
 
     <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
     <div id="countertop-data" 
-         data-mix-min="5"
-         data-knead-min="{% if recipe.mixing_method == 'stand_mixer' %}10{% elif recipe.mixing_method == 'hand_knead' %}15{% else %}20{% endif %}"
-         data-autolyse-min="30"
-         data-bulk-min="{{ estimated_bulk_minutes }}"
-         data-proof-min="{{ estimated_proof_minutes }}"
-         data-bake-min="{{ bake_time_min }}"
+         data-steps="{{ countertop_steps_json }}"
          data-bake-temp="{{ bake_temp_f }}"
          data-bake-steam="{% if ff.steam_required %}Yes{% else %}No{% endif %}"
          data-doneness-temp="{{ doneness_temp_f }}"

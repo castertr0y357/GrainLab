@@ -6,7 +6,7 @@
              hx-select="#calculator-form"
              hx-swap="outerHTML"
              hx-push-url="?preset={{ preset.slug }}"
-             @click="searchOpen = false; query = '{{ preset.name|escapejs }}'; current_phase = 3; presetName = '{{ preset.name|escapejs }}'; presetSlug = '{{ preset.slug|escapejs }}'; selected_master = '{% if preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif preset.dough_category.slug == 'non-leavened-crisp' %}flatbread{% elif preset.dough_category.slug == 'lean-crusty' %}lean{% elif preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';">
+             @click="searchOpen = false; query = '{{ preset.name|escapejs }}'; current_phase = 3; presetName = '{{ preset.name|escapejs }}'; presetSlug = '{{ preset.slug|escapejs }}'; selected_master = '{% if preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif preset.dough_category.slug == 'flatbreads-griddles' or preset.dough_category.slug == 'pastry-lamination' or preset.dough_category.slug == 'fried-doughs' or preset.dough_category.slug == 'fresh-pasta-noodles' %}flatbread{% elif preset.dough_category.slug == 'lean-crusty' %}lean{% elif preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}';">
             <strong>{{ preset.name }}</strong>
             <span style="font-size: 0.85rem; color: var(--text-muted);">
                 {{ preset.dough_category.name }} • {{ preset.form_factor.name }}

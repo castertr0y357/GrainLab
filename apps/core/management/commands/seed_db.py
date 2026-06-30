@@ -35,7 +35,7 @@ class Command(BaseCommand):
             {
                 "name": "Alkaline Bath",
                 "slug": "alkaline-bath",
-                "base_hydration": 0.55,
+                "base_hydration": 0.53,
                 "base_fat": 0.02,
                 "base_sugar": 0.02,
                 "base_salt": 0.02,
@@ -44,8 +44,19 @@ class Command(BaseCommand):
                 "description": "Doughs boiled in an alkaline bath (e.g. baking soda/lye) to develop character skin shine and texture.",
             },
             {
-                "name": "Chemically Leavened",
-                "slug": "chemically-leavened",
+                "name": "Flatbreads & Griddles",
+                "slug": "flatbreads-griddles",
+                "base_hydration": 0.58,
+                "base_fat": 0.05,
+                "base_sugar": 0.0,
+                "base_salt": 0.02,
+                "base_yeast": 0.0,
+                "base_starter": 0.0,
+                "description": "Flat griddled or quick-baked flatbreads.",
+            },
+            {
+                "name": "Quick Breads & Scones",
+                "slug": "quick-breads-scones",
                 "base_hydration": 0.60,
                 "base_fat": 0.10,
                 "base_sugar": 0.15,
@@ -55,26 +66,70 @@ class Command(BaseCommand):
                 "description": "Leavened with baking powder or baking soda. Quick breads, biscuits, and scones.",
             },
             {
-                "name": "Batter-Based",
-                "slug": "batter-based",
-                "base_hydration": 0.85,
-                "base_fat": 0.15,
-                "base_sugar": 0.20,
+                "name": "Cakes & Batters",
+                "slug": "cakes-batters",
+                "base_hydration": 0.90,
+                "base_fat": 0.30,
+                "base_sugar": 0.40,
+                "base_salt": 0.005,
+                "base_yeast": 0.0,
+                "base_starter": 0.0,
+                "description": "High moisture content forming pourable batters or foam-emulsified structures.",
+            },
+            {
+                "name": "Pastry & Lamination",
+                "slug": "pastry-lamination",
+                "base_hydration": 0.55,
+                "base_fat": 0.10,
+                "base_sugar": 0.05,
+                "base_salt": 0.015,
+                "base_yeast": 0.01,
+                "base_starter": 0.0,
+                "description": "Laminated butter sheets or short pastries (croissants, puff pastry, tart doughs).",
+            },
+            {
+                "name": "Choux Paste",
+                "slug": "choux-paste",
+                "base_hydration": 0.80,
+                "base_fat": 0.40,
+                "base_sugar": 0.0,
                 "base_salt": 0.01,
                 "base_yeast": 0.0,
                 "base_starter": 0.0,
-                "description": "High moisture content forming pourable batters. Pancakes, waffles, or muffins.",
+                "description": "Cooked flour paste emulsified with eggs for hollow baked pastry shells.",
             },
             {
-                "name": "Non-Leavened / Crisp",
-                "slug": "non-leavened-crisp",
-                "base_hydration": 0.45,
-                "base_fat": 0.05,
-                "base_sugar": 0.0,
-                "base_salt": 0.02,
+                "name": "Cookies & Shortbread",
+                "slug": "cookies-shortbread",
+                "base_hydration": 0.15,
+                "base_fat": 0.50,
+                "base_sugar": 0.50,
+                "base_salt": 0.005,
                 "base_yeast": 0.0,
                 "base_starter": 0.0,
-                "description": "Dense unleavened doughs designed for thin, crispy, or flat results. Tortillas, crackers, or flatbreads.",
+                "description": "Low-moisture baking with high spread factor and tender chew/snap crumb.",
+            },
+            {
+                "name": "Fried Doughs",
+                "slug": "fried-doughs",
+                "base_hydration": 0.58,
+                "base_fat": 0.05,
+                "base_sugar": 0.05,
+                "base_salt": 0.015,
+                "base_yeast": 0.015,
+                "base_starter": 0.0,
+                "description": "Yeasted or chemically leavened doughs fried in hot oil.",
+            },
+            {
+                "name": "Fresh Pasta & Noodles",
+                "slug": "fresh-pasta-noodles",
+                "base_hydration": 0.38,
+                "base_fat": 0.0,
+                "base_sugar": 0.0,
+                "base_salt": 0.0,
+                "base_yeast": 0.0,
+                "base_starter": 0.0,
+                "description": "Dense, compacted, unleavened semolina or wheat noodle dough.",
             },
         ]
 
@@ -86,6 +141,9 @@ class Command(BaseCommand):
             categories[cat.slug] = cat
             if created:
                 self.stdout.write(f"  Created dough category: {cat.name}")
+
+        # Remove old unused categories if present to clean up
+        DoughCategory.objects.filter(slug__in=["chemically-leavened", "non-leavened-crisp", "batter-based"]).delete()
 
         # 2. Form Factors
         form_factors_data = [
@@ -248,6 +306,7 @@ class Command(BaseCommand):
                 "cultural_anchor": "Deeply tied to Naples, Italy, where the art of pizza making is recognized as UNESCO intangible heritage.",
                 "crumb_preview": "Open",
             },
+            
             # Enriched & Soft Presets
             {
                 "name": "Everyday Sandwich",
@@ -334,6 +393,7 @@ class Command(BaseCommand):
                 "cultural_anchor": "The ultimate partner to the classic American smash burger.",
                 "crumb_preview": "Even",
             },
+            
             # Alkaline Bath Presets
             {
                 "name": "Pretzel",
@@ -369,11 +429,12 @@ class Command(BaseCommand):
                 "cultural_anchor": "Traditional Jewish bakery bread, famously boiled and baked, originating in Poland.",
                 "crumb_preview": "Even",
             },
-            # Flatbread / Crisp Presets
+            
+            # Flatbreads & Griddles Presets
             {
                 "name": "Naan",
                 "slug": "naan",
-                "dough_category": categories["non-leavened-crisp"],
+                "dough_category": categories["flatbreads-griddles"],
                 "form_factor": form_factors["sheet-pan"],
                 "hydration_override": 0.60,
                 "fat_override": 0.05,
@@ -386,6 +447,139 @@ class Command(BaseCommand):
                 "accessibility_definition": "Fast hot-pan skillet bake. Best cooked in a screaming hot cast-iron skillet to mimic a tandoor oven.",
                 "cultural_anchor": "Classic South Asian flatbread, traditionally brushed with ghee and served alongside curries.",
                 "crumb_preview": "Balanced",
+            },
+            
+            # Quick Breads Presets
+            {
+                "name": "Southern Buttermilk Biscuits",
+                "slug": "biscuits",
+                "dough_category": categories["quick-breads-scones"],
+                "form_factor": form_factors["portioned-buns-rolls"],
+                "hydration_override": 0.60,
+                "fat_override": 0.12,
+                "sugar_override": 0.0,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 55,
+                "classifier_crumb": 30,
+                "accessibility_definition": "Tender layered biscuits, leavened chemically, baked hot for high flake growth.",
+                "cultural_anchor": "The soul of Southern breakfast cooking.",
+                "crumb_preview": "Balanced",
+            },
+
+            # Cakes & Batters Presets
+            {
+                "name": "Yellow Layer Cake",
+                "slug": "yellow-cake",
+                "dough_category": categories["cakes-batters"],
+                "form_factor": form_factors["sheet-pan"],
+                "hydration_override": 0.85,
+                "fat_override": 0.25,
+                "sugar_override": 0.35,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 90,
+                "classifier_crumb": 10,
+                "accessibility_definition": "Emulsified butter batter baking, soft structure setting rapidly in oven.",
+                "cultural_anchor": "Traditional birthday slice standard.",
+                "crumb_preview": "Even",
+            },
+
+            # Pastry & Lamination Presets
+            {
+                "name": "Classic Croissants",
+                "slug": "croissants",
+                "dough_category": categories["pastry-lamination"],
+                "form_factor": form_factors["portioned-buns-rolls"],
+                "hydration_override": 0.55,
+                "fat_override": 0.10,
+                "sugar_override": 0.05,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 50,
+                "classifier_crumb": 80,
+                "accessibility_definition": "Laminated croissant dough sheets with single folds, high steam puffing rise.",
+                "cultural_anchor": "The pride of Parisian viennoiserie.",
+                "crumb_preview": "Open",
+            },
+
+            # Choux Paste Presets
+            {
+                "name": "Chocolate Éclairs",
+                "slug": "eclairs",
+                "dough_category": categories["choux-paste"],
+                "form_factor": form_factors["portioned-buns-rolls"],
+                "hydration_override": 0.80,
+                "fat_override": 0.40,
+                "sugar_override": 0.0,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 30,
+                "classifier_crumb": 90,
+                "accessibility_definition": "Pre-gelatinized starch paste, egg-integrated V-stage, hot steam puffing.",
+                "cultural_anchor": "High-end French patisserie log shells.",
+                "crumb_preview": "Open",
+            },
+
+            # Cookies & Shortbread Presets
+            {
+                "name": "Chewy Chocolate Chip Cookies",
+                "slug": "cookies",
+                "dough_category": categories["cookies-shortbread"],
+                "form_factor": form_factors["portioned-buns-rolls"],
+                "hydration_override": 0.15,
+                "fat_override": 0.45,
+                "sugar_override": 0.50,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 80,
+                "classifier_crumb": 5,
+                "accessibility_definition": "Low moisture baking with high spread coefficient, chewy center, crisp edges.",
+                "cultural_anchor": "The ultimate home-baked classic cookie.",
+                "crumb_preview": "Even",
+            },
+
+            # Fried Doughs Presets
+            {
+                "name": "Yeast-Raised Donuts",
+                "slug": "donuts",
+                "dough_category": categories["fried-doughs"],
+                "form_factor": form_factors["portioned-buns-rolls"],
+                "hydration_override": 0.58,
+                "fat_override": 0.06,
+                "sugar_override": 0.06,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 75,
+                "classifier_crumb": 25,
+                "accessibility_definition": "Yeasted dough fried in hot oil, flipping at intervals to rise light.",
+                "cultural_anchor": "The corner donut shop benchmark.",
+                "crumb_preview": "Even",
+            },
+
+            # Fresh Pasta & Noodles Presets
+            {
+                "name": "Fresh Egg Tagliatelle",
+                "slug": "tagliatelle",
+                "dough_category": categories["fresh-pasta-noodles"],
+                "form_factor": form_factors["sheet-pan"],
+                "hydration_override": 0.38,
+                "fat_override": 0.0,
+                "sugar_override": 0.0,
+                "starter_override": 0.0,
+                "flour_type_default": "all_purpose",
+                "flour_maturity_default": "matured",
+                "classifier_texture": 5,
+                "classifier_crumb": 5,
+                "accessibility_definition": "Stiff unleavened semolina compacted dough, run through mechanical roller setting passes.",
+                "cultural_anchor": "Emilian traditional egg pasta.",
+                "crumb_preview": "Even",
             },
         ]
 
@@ -554,7 +748,5 @@ class Command(BaseCommand):
                     password=superuser_password
                 )
                 self.stdout.write(f"  Created superuser: {superuser_username}")
-            else:
-                self.stdout.write(f"  Superuser '{superuser_username}' already exists.")
 
         self.stdout.write(self.style.SUCCESS("Database seeding completed successfully!"))

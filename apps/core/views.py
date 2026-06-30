@@ -266,7 +266,8 @@ def calculate_recipe_ajax(request):
             crumb_score=crumb_score,
             friction_override=friction_override,
             preset_slug=preset_slug,
-            preset_name=preset_name
+            preset_name=preset_name,
+            category_slug=cat.slug
         )
         
         # Override AI explanations if AI offsets were loaded
@@ -296,10 +297,10 @@ def calculate_recipe_ajax(request):
 
     # 5. Fetch AI Diagnostics (Sensory benchmark & pitfalls)
     eff_hyd = recipe["effective_hydration_pct"] / 100.0
-    preset_slug = classified_preset.slug if classified_preset else None
+    preset_slug_resolved = preset_slug or (classified_preset.slug if classified_preset else None)
     
     sensory_desc = gemma_client.get_sensory_benchmark(grain_type, flour_maturity, eff_hyd)
-    pitfalls = gemma_client.get_contextual_pitfalls(cat.slug, eff_hyd, grain_type, preset_slug)
+    pitfalls = gemma_client.get_contextual_pitfalls(cat.slug, eff_hyd, grain_type, preset_slug_resolved)
     
     # 6. Core Thermal Doneness Temperature
     doneness_temp_f = 190 if ff.is_enriched_profile else 205
@@ -348,6 +349,20 @@ def calculate_recipe_ajax(request):
     estimated_bulk_minutes = int(estimated_bulk_hours * 60)
     estimated_proof_minutes = int(estimated_proof_hours * 60)
 
+    # Resolve active sub-engine and load dynamic timeline steps
+    from grainlab.engines import router
+    import json
+    active_engine = router.get_engine_for_preset(preset_slug_resolved, cat.slug)
+    steps_list = active_engine.get_live_timeline_steps(
+        recipe_data=recipe,
+        estimated_bulk_minutes=estimated_bulk_minutes,
+        estimated_proof_minutes=estimated_proof_minutes,
+        bake_time_min=scaled_time,
+        mixing_method=mixing_method,
+        preset_slug=preset_slug_resolved
+    )
+    countertop_steps_json = json.dumps(steps_list)
+
     context = {
         "recipe": recipe,
         "ff": ff,
@@ -365,6 +380,7 @@ def calculate_recipe_ajax(request):
         "bake_time_min": scaled_time,
         "estimated_bulk_minutes": estimated_bulk_minutes,
         "estimated_proof_minutes": estimated_proof_minutes,
+        "countertop_steps_json": countertop_steps_json,
     }
     return render(request, "partials/recipe_output.html", context)
 

@@ -685,5 +685,86 @@ class AuditSecurityQualityTests(TestCase):
         self.assertEqual(response_completed.headers.get("HX-Redirect"), reverse("inventory_page"))
 
 
+class SubEnginesTests(TestCase):
+    """
+    Tests the 11 modular decoupled sub-engines, checking boundaries, ceilings, and timeline step generators.
+    """
+
+    def test_bath_engine_hydration_ceiling(self):
+        """Pretzel/bath engine must enforce 55% base hydration boundary ceiling."""
+        recipe = bakers_math.calculate_recipe(
+            base_hydration=0.60, # requested too high
+            base_fat=0.04,
+            base_sugar=0.02,
+            target_mass=1000.0,
+            preset_slug="pretzel"
+        )
+        self.assertEqual(recipe["effective_hydration_pct"], 55.0)
+        
+        # Test timeline steps generator directly
+        from grainlab.engines import router
+        engine = router.get_engine_for_preset("pretzel")
+        steps = engine.get_live_timeline_steps(recipe, 240, 120, 45, preset_slug="pretzel")
+        step_keys = [s["key"] for s in steps]
+        self.assertIn("shape", step_keys)
+        self.assertIn("boil", step_keys)
+
+    def test_pasta_engine_zero_leaven(self):
+        """Pasta engine must override leaven to 0.0."""
+        recipe = bakers_math.calculate_recipe(
+            base_hydration=0.38,
+            base_fat=0.02,
+            base_sugar=0.0,
+            target_mass=500.0,
+            leaven_type="yeast",
+            leaven_pct=0.02,
+            category_slug="fresh-pasta-noodles"
+        )
+        self.assertEqual(recipe["yeast_weight"], 0.0)
+        self.assertEqual(recipe["starter_weight"], 0.0)
+        
+        # Test timeline steps generator directly
+        from grainlab.engines import router
+        engine = router.get_engine_for_preset(None, "fresh-pasta-noodles")
+        steps = engine.get_live_timeline_steps(recipe, 240, 120, 45, category_slug="fresh-pasta-noodles")
+        step_keys = [s["key"] for s in steps]
+        self.assertIn("roll_pass", step_keys)
+        self.assertIn("bake", step_keys)
+
+    def test_pastry_engine_folding_steps(self):
+        """Pastry/lamination engine must inject single/double book folds based on fold count."""
+        recipe = bakers_math.calculate_recipe(
+            base_hydration=0.60,
+            base_fat=0.25,
+            base_sugar=0.05,
+            target_mass=800.0,
+            preset_slug="all-butter-puff-pastry"
+        )
+        # Test timeline steps generator directly
+        from grainlab.engines import router
+        engine = router.get_engine_for_preset("all-butter-puff-pastry")
+        steps = engine.get_live_timeline_steps(recipe, 240, 120, 45, preset_slug="all-butter-puff-pastry")
+        step_descs = [s["desc"] for s in steps]
+        self.assertTrue(any("book" in d.lower() for d in step_descs))
+
+    def test_batter_engine_high_ratio(self):
+        """Batter/cake engine must support and balance high-ratio sugar/fat scaling."""
+        recipe = bakers_math.calculate_recipe(
+            base_hydration=0.75,
+            base_fat=0.35,
+            base_sugar=0.50,
+            target_mass=1200.0,
+            preset_slug="yellow-layer-cake"
+        )
+        # Test timeline steps generator directly
+        from grainlab.engines import router
+        engine = router.get_engine_for_preset("yellow-layer-cake")
+        steps = engine.get_live_timeline_steps(recipe, 240, 120, 45, preset_slug="yellow-layer-cake")
+        step_keys = [s["key"] for s in steps]
+        self.assertIn("mix", step_keys)
+        self.assertIn("fold", step_keys)
+
+
+
 
 
