@@ -5,7 +5,7 @@
 <div x-data="{
     current_phase: {% if selected_preset %}3{% else %}1{% endif %},
     grain_mode: '{% if selected_preset %}{% if selected_preset.flour_type_default == 'all_purpose' %}refined{% else %}milled{% endif %}{% else %}refined{% endif %}',
-    selected_master: '{% if selected_preset %}{% if selected_preset.dough_category.slug == 'alkaline-bath' %}alkaline{% elif selected_preset.dough_category.slug == 'flatbreads-griddles' or selected_preset.dough_category.slug == 'pastry-lamination' or selected_preset.dough_category.slug == 'fried-doughs' or selected_preset.dough_category.slug == 'fresh-pasta-noodles' %}flatbread{% elif selected_preset.dough_category.slug == 'lean-crusty' %}lean{% elif selected_preset.dough_category.slug == 'enriched-soft' %}enriched{% else %}quick{% endif %}{% else %}null{% endif %}',
+    selected_master: '{% if selected_preset %}{{ selected_preset.dough_category.slug }}{% else %}null{% endif %}',
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     
