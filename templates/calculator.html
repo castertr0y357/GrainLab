@@ -20,6 +20,7 @@
     advisoryHighRiskName: '',
     advisoryHighRiskReason: '',
     advisoryLoading: false,
+    advisoryLoadingMessage: '',
     
     /* Grains inventory data mapped from django context */
     activeBerries: [
@@ -87,6 +88,25 @@
             return;
         }
         this.advisoryLoading = true;
+        
+        // Start premium themed loading messages
+        const messages = [
+            "Consulting Baker's Almanac...",
+            "Evaluating Gluten Matrices...",
+            "Optimizing Crumb Profiles...",
+            "Synthesizing Food Chemistry..."
+        ];
+        let idx = 0;
+        this.advisoryLoadingMessage = messages[0];
+        const timer = setInterval(() => {
+            if (!this.advisoryLoading) {
+                clearInterval(timer);
+                return;
+            }
+            idx = (idx + 1) % messages.length;
+            this.advisoryLoadingMessage = messages[idx];
+        }, 750);
+
         fetch('/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug))
             .then(res => res.json())
             .then(data => {

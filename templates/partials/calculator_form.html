@@ -301,9 +301,9 @@
             <!-- NEW: Dynamic AI Grain Advisory Container -->
             <div style="background-color: #16161a; border: 1px solid #2d2d30; border-top: 3px solid var(--accent); padding: 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
                 <!-- Loading State -->
-                <div x-show="advisoryLoading" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 1rem 0;">
+                <div x-show="advisoryLoading" style="display: flex; align-items: center; gap: 0.75rem; justify-content: center; padding: 1rem 0;">
                     <span class="spinner" style="width: 20px; height: 20px;"></span>
-                    <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">Analyzing grain compatibility...</span>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;" x-text="advisoryLoadingMessage"></span>
                 </div>
                 
                 <!-- Empty / Custom / Manual Blend Placeholder -->
