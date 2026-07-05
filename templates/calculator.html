@@ -9,12 +9,12 @@
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     
-    // Auto-correction and warning computed on client side
+    /* Auto-correction and warning computed on client side */
     presetName: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     presetSlug: '{% if selected_preset %}{{ selected_preset.slug }}{% endif %}',
     editor_mode: 'standard',
     
-    // Grains inventory data mapped from django context
+    /* Grains inventory data mapped from django context */
     activeBerries: [
         {% for wb in active_berries %}
         {
@@ -28,7 +28,7 @@
         {% endfor %}
     ],
 
-    // Countertop View Timers & Sequential Timeline
+    /* Countertop View Timers & Sequential Timeline */
     countertopMode: false,
     steps: [
         { key: 'mix', name: 'Mix', desc: 'Combine ingredients into a cohesive shaggy mass.' },
@@ -107,7 +107,7 @@
                 try {
                     this.steps = JSON.parse(stepsData);
                 } catch (e) {
-                    console.error("Failed to parse countertop steps:", e);
+                    console.error('Failed to parse countertop steps:', e);
                 }
             }
             this.bakeTemp = el.getAttribute('data-bake-temp') || '';
@@ -123,7 +123,7 @@
         this.stopAlarm();
         this.pauseTimer();
         
-        // Unlock AudioContext on user gesture
+        /* Unlock AudioContext on user gesture */
         if (!this.audioCtx) {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             if (AudioContextClass) {
@@ -136,7 +136,7 @@
         if (this.timerInterval) clearInterval(this.timerInterval);
         this.timerRunning = true;
         
-        // Unlock/resume AudioContext on user gesture
+        /* Unlock/resume AudioContext on user gesture */
         if (!this.audioCtx) {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             if (AudioContextClass) {
@@ -291,7 +291,7 @@
         return step ? step.desc : '';
     },
     
-    // Helpers
+    /* Helpers */
     isHighRise() {
         if (!this.presetSlug) return false;
         let slug = this.presetSlug.toLowerCase();
