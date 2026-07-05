@@ -58,7 +58,9 @@
               $nextTick(() => htmx.trigger('#calculator-form', 'change'));
           });
           {% if selected_preset %}
-          current_phase = 3;
+          if (current_phase < 2) {
+              current_phase = 3;
+          }
           presetName = '{{ selected_preset.name|escapejs }}';
           presetSlug = '{{ selected_preset.slug|escapejs }}';
           query = '{{ selected_preset.name|escapejs }}';
@@ -66,6 +68,20 @@
           form_factor_val = '{{ selected_preset.form_factor.slug|escapejs }}';
           recommended_ff_slug = '{{ selected_preset.form_factor.slug|escapejs }}';
           portioned = {% if selected_preset.form_factor.is_portioned %}true{% else %}false{% endif %};
+          
+          if (presetSlug === 'cookies') {
+              grain_mode = 'milled';
+          } else {
+              grain_mode = '{% if selected_preset.flour_type_default == 'all_purpose' %}refined{% else %}milled{% endif %}';
+          }
+          presetModified = false;
+          selectIdealGrain();
+          
+          // Reset mixing equipment to standard values
+          custom_mixer = 'static';
+          use_custom = false;
+          mixing_method = 'stand_mixer';
+          proofing_environment = 'ambient';
           {% endif %}
       ">
 
@@ -80,7 +96,7 @@
     <input type="hidden" name="portion_count" :value="formFactorBaseline.base_count * yield_scale">
 
     <!-- Global Mode Control: Standard vs. Advanced Toggles -->
-    <div x-show="current_phase === 3 || current_phase === 4" x-transition
+    <div x-show="current_phase === 3" x-transition
          style="display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
         <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Editor Mode</span>
         <div style="display: flex; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: 9999px; padding: 0.25rem;">
@@ -192,43 +208,68 @@
         </div>
     </div>
 
-    <!-- PHASE 2: Sub-Type Preset Selection -->
+    <!-- PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION -->
     <div x-show="current_phase === 2" x-transition>
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
-            Phase 2: Select Sub-Type Preset
+            PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION
+        </div>
+
+        <!-- Top Panel (Preset Macro Deck) -->
+        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+            Preset Macro Deck
         </div>
         <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <!-- Custom / Manual Blend Pill -->
+            <span class="chip" 
+                  :class="!presetSlug ? 'active' : ''"
+                  @click="
+                      presetName = 'Custom / Manual Blend';
+                      presetSlug = '';
+                      query = '';
+                      presetModified = false;
+                      resetAdvisory();
+                      $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                  "
+                  style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
+                Custom / Manual Blend
+            </span>
+            
+            <!-- Operational Presets Loop -->
             {% for p in presets %}
                 <span class="chip" 
                       x-show="selected_master === '{{ p.dough_category.slug }}'"
+                      :class="presetSlug === '{{ p.slug }}' ? 'active' : ''"
                       hx-get="{% url 'load_preset' p.id %}"
                       hx-target="#calculator-form-container"
                       hx-select="#calculator-form"
                       hx-swap="outerHTML"
                       hx-push-url="?preset={{ p.slug }}"
-                      @click="current_phase = 3; presetName = '{{ p.name|escapejs }}'; presetSlug = '{{ p.slug|escapejs }}'; query = '{{ p.name|escapejs }}'; selected_master = '{{ p.dough_category.slug }}';"
+                      @click="
+                          presetName = '{{ p.name|escapejs }}';
+                          presetSlug = '{{ p.slug|escapejs }}';
+                          query = '{{ p.name|escapejs }}';
+                          selected_master = '{{ p.dough_category.slug }}';
+                      "
                       style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
                     {{ p.name }}
                 </span>
             {% endfor %}
         </div>
-    </div>
 
-    <!-- PHASE 3: Flour Medium & Grain Blender Selection -->
-    <div x-show="current_phase === 3" x-transition>
-        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
-            Phase 3: Flour Medium Selection
+        <!-- Middle Panel (Flour Medium & Grain Optimizer) -->
+        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+            Flour Medium Selection
         </div>
         
         <!-- Segmented Toggle -->
         <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
             <span class="chip" :class="grain_mode === 'refined' ? 'active' : ''" 
-                  @click="grain_mode = 'refined'; current_phase = 4; grain = 'all_purpose'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                  @click="grain_mode = 'refined'; grain = 'all_purpose'; presetModified = true; current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
                   style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
                 Store Refined Flour
             </span>
             <span class="chip" :class="grain_mode === 'milled' ? 'active' : ''" 
-                  @click="grain_mode = 'milled'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                  @click="grain_mode = 'milled'; presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
                   style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
                 Fresh-Milled Whole Grain
             </span>
@@ -246,8 +287,8 @@
                     <label class="card" 
                            x-show="editor_mode === 'advanced' || isIdealGrain(berry.name)"
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
-                           :style="berry.selected ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''">
-                        <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" style="display: none;">
+                           :style="berry.selected ? (isIdealGrain(berry.name) ? 'border-color: #ffd700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); background-color: rgba(255, 215, 0, 0.05);' : 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);') : ''">
+                        <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
                         <span style="font-size: 1.25rem;">🌾</span>
                         <div>
                             <strong x-text="berry.name" style="font-size: 0.9rem; display: block; color: var(--text-primary);"></strong>
@@ -255,6 +296,38 @@
                         </div>
                     </label>
                 </template>
+            </div>
+
+            <!-- NEW: Dynamic AI Grain Advisory Container -->
+            <div style="background-color: #16161a; border: 1px solid #2d2d30; border-top: 3px solid var(--accent); padding: 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                <!-- Loading State -->
+                <div x-show="advisoryLoading" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 1rem 0;">
+                    <span class="spinner" style="width: 20px; height: 20px;"></span>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">Analyzing grain compatibility...</span>
+                </div>
+                
+                <!-- Empty / Custom / Manual Blend Placeholder -->
+                <div x-show="!advisoryLoading && !advisoryRecommendedName && !advisoryRecommendedReason" style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; text-align: center; padding: 0.5rem 0;">
+                    Awaiting grain profile initialization...
+                </div>
+                
+                <!-- Advisory Content -->
+                <div x-show="!advisoryLoading && (advisoryRecommendedName || advisoryRecommendedReason)" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <span style="color: var(--accent); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">
+                            [ RECOMMENDED STOCK ]
+                        </span>
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;" x-text="advisoryRecommendedName"></strong>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="advisoryRecommendedReason"></p>
+                    </div>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                        <span style="color: var(--danger); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">
+                            [ HIGH RISK STOCK ]
+                        </span>
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;" x-text="advisoryHighRiskName"></strong>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="advisoryHighRiskReason"></p>
+                    </div>
+                </div>
             </div>
             
             <!-- Soft-Locking Warning Alert -->
@@ -367,20 +440,20 @@
                 </div>
             </div>
             
-            <!-- Phase 3 to 4 Proceed button -->
+            <!-- Proceed button -->
             <button type="button" 
                     class="nav-btn primary"
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
-                    @click="current_phase = 4; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                    @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 PROCEED TO RECIPE CONFIGURATION →
             </button>
         </div>
     </div>
 
-    <!-- PHASE 4: Contextual Variance Sliders & Baking Configuration -->
-    <div x-show="current_phase === 4" x-transition>
+    <!-- PHASE 3: Contextual Variance Sliders & Baking Configuration -->
+    <div x-show="current_phase === 3" x-transition>
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
-            Phase 4: Recipe Fine-Tuning
+            Phase 3: Recipe Fine-Tuning
         </div>
 
         <!-- Client-side Formula Ratios Readout Panel -->

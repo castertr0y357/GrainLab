@@ -9,12 +9,12 @@
 {% endif %}
 
 <!-- SLEEK EMPTY STATE -->
-<div x-show="current_phase < 3" x-transition
+<div x-show="current_phase === 1" x-transition
      style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 6rem 1.5rem;">
     Select a dough preset and flour medium to compile formulas...
 </div>
 
-<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 3, 4) -->
+<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 3) -->
 <div x-show="current_phase >= 3" x-transition>
     
     <!-- COMPILED FORMULA -->
@@ -23,13 +23,8 @@
             <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
             <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: {{ recipe.target_mass }}g</span>
         </div>
-        
-        <!-- Low-visibility placeholder row shown during Phase 3 -->
-        <div x-show="current_phase < 4" x-transition style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; text-align: center; padding: 1.5rem 0;">
-            Ingredient ledger is compiled in Phase 4.
-        </div>
 
-        <div x-show="current_phase == 4" x-transition style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <!-- Flour Base Weight Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Added Flour Weight</span>

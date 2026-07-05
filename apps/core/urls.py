@@ -22,4 +22,5 @@ urlpatterns = [
     path('inventory/bulk-analyze/', views.bulk_ai_analyze, name='bulk_ai_analyze'),
     path('inventory/redo-analyze/<str:item_type>/<uuid:id>/', views.redo_ai_analysis, name='redo_ai_analysis'),
     path('tasks/status/<uuid:task_id>/', views.task_status, name='task_status'),
+    path('ai-grain-advisory/', views.ai_grain_advisory, name='ai_grain_advisory'),
 ]

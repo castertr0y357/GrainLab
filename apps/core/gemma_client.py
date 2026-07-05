@@ -410,3 +410,67 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
         return result.get("shares"), result.get("structural_warning")
     return None
 
+
+def get_grain_advisory_ai(preset_slug: str) -> dict | None:
+    """
+    Submits a prompt to Gemma asking for recommended and high risk stocks for the preset.
+    """
+    if _is_ai_enabled():
+        system_prompt = (
+            "You are a baking science expert. Analyze the given bread/pastry preset and identify the recommended stock and the high risk stock. "
+            "Return a JSON object containing the following keys:\n"
+            "- 'recommended_name': Name of the ideal grain variant (e.g., 'Soft White Wheat' or 'Hard Red Spring Wheat')\n"
+            "- 'recommended_reason': 1-2 sentence food science explanation of why it fits the crumb structure\n"
+            "- 'high_risk_name': Name of the high risk grain variant that will ruin the bake\n"
+            "- 'high_risk_reason': 1-2 sentence food science explanation of why it ruins the bake"
+        )
+        user_prompt = json.dumps({"preset_slug": preset_slug})
+        return call_gemma_api(system_prompt, user_prompt, expected_keys=[
+            "recommended_name", "recommended_reason", "high_risk_name", "high_risk_reason"
+        ])
+    return None
+
+
+def get_local_grain_advisory(preset_slug: str) -> dict:
+    """
+    Local fallback logic providing structured recommended and high risk stocks for presets.
+    """
+    slug = preset_slug.lower()
+    
+    if slug in ["cookies", "biscuits", "yellow-cake"]:
+        return {
+            "recommended_name": "Soft White Wheat",
+            "recommended_reason": "Low protein content preserves tenderness and maximizes spread control, ensuring a delicate crumb.",
+            "high_risk_name": "Hard Red Spring Wheat",
+            "high_risk_reason": "Excessive 14.5% protein matrix will develop rubbery, bread-like gluten and cause structural tightening."
+        }
+    elif slug in ["baguette", "sourdough-boule", "ciabatta", "artisan-pizza", "bagel", "eclairs"]:
+        return {
+            "recommended_name": "Hard Red Spring Wheat",
+            "recommended_reason": "High protein content (14.5%) developments a strong, elastic gluten network required to hold high hydration and support oven spring.",
+            "high_risk_name": "Soft White Wheat",
+            "high_risk_reason": "Insufficient gluten strength will lead to a slack, runny dough that collapses in the oven and lacks structure."
+        }
+    elif slug in ["everyday-sandwich", "challah", "cinnamon-rolls", "burger-buns", "naan", "donuts", "tagliatelle"]:
+        return {
+            "recommended_name": "Hard White Wheat",
+            "recommended_reason": "Provides a balanced 12.5% protein content that supports mild structure while retaining a tender, soft, and uniform crumb.",
+            "high_risk_name": "Soft White Wheat",
+            "high_risk_reason": "Will fail to hold shape during baking, causing flat rolls or weak sandwich loaves that tear easily."
+        }
+    elif slug in ["french-loaf", "brioche", "pretzel", "croissants"]:
+        return {
+            "recommended_name": "Hard Red Winter Wheat",
+            "recommended_reason": "Moderate 13.0% protein content develops clean, classic gluten structure suitable for rich enriched doughs and lamination.",
+            "high_risk_name": "Soft White Wheat",
+            "high_risk_reason": "Weaker protein structure will melt under high fat enrichment, yielding dense, oily, or unrisen products."
+        }
+    
+    return {
+        "recommended_name": "Hard Red Winter Wheat",
+        "recommended_reason": "A versatile choice providing reliable gluten development and water absorption across standard profiles.",
+        "high_risk_name": "Soft White Wheat (for bread products)",
+        "high_risk_reason": "Too weak to support yeasted rising structures, leading to dense bakes or collapse."
+    }
+
+

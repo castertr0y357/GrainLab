@@ -765,6 +765,43 @@ class SubEnginesTests(TestCase):
         self.assertIn("fold", step_keys)
 
 
+class AIGrainAdvisoryTests(TestCase):
+    """
+    Tests for the AI Grain Advisory endpoint and local fallback logic.
+    """
+    def setUp(self):
+        self.client = Client()
+
+    def test_advisory_empty_slug(self):
+        """If preset_slug is empty, returns empty string fields."""
+        response = self.client.get(reverse('ai_grain_advisory'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["recommended_name"], "")
+        self.assertEqual(data["recommended_reason"], "")
+        self.assertEqual(data["high_risk_name"], "")
+        self.assertEqual(data["high_risk_reason"], "")
+
+    def test_advisory_cookies_preset(self):
+        """Cookies preset returns Soft White Wheat and Hard Red Spring warnings."""
+        response = self.client.get(reverse('ai_grain_advisory') + '?preset_slug=cookies')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["recommended_name"], "Soft White Wheat")
+        self.assertIn("protein", data["recommended_reason"].lower())
+        self.assertEqual(data["high_risk_name"], "Hard Red Spring Wheat")
+        self.assertIn("protein", data["high_risk_reason"].lower())
+
+    def test_advisory_baguette_preset(self):
+        """Baguette preset returns Hard Red Spring Wheat recommendations."""
+        response = self.client.get(reverse('ai_grain_advisory') + '?preset_slug=baguette')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["recommended_name"], "Hard Red Spring Wheat")
+        self.assertEqual(data["high_risk_name"], "Soft White Wheat")
+
+
+
 
 
 

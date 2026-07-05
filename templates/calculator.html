@@ -13,6 +13,13 @@
     presetName: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     presetSlug: '{% if selected_preset %}{{ selected_preset.slug }}{% endif %}',
     editor_mode: 'standard',
+    presetModified: false,
+    
+    advisoryRecommendedName: '',
+    advisoryRecommendedReason: '',
+    advisoryHighRiskName: '',
+    advisoryHighRiskReason: '',
+    advisoryLoading: false,
     
     /* Grains inventory data mapped from django context */
     activeBerries: [
@@ -56,6 +63,10 @@
     init() {
         this.$watch('presetSlug', value => {
             this.selectIdealGrain();
+            this.fetchAdvisory(value);
+            if (value) {
+                this.presetModified = false;
+            }
         });
         this.$watch('grain_mode', value => {
             if (value === 'milled') {
@@ -65,18 +76,51 @@
         if (this.grain_mode === 'milled') {
             this.selectIdealGrain();
         }
+        if (this.presetSlug) {
+            this.fetchAdvisory(this.presetSlug);
+        }
+    },
+
+    fetchAdvisory(slug) {
+        if (!slug) {
+            this.resetAdvisory();
+            return;
+        }
+        this.advisoryLoading = true;
+        fetch('/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug))
+            .then(res => res.json())
+            .then(data => {
+                this.advisoryRecommendedName = data.recommended_name;
+                this.advisoryRecommendedReason = data.recommended_reason;
+                this.advisoryHighRiskName = data.high_risk_name;
+                this.advisoryHighRiskReason = data.high_risk_reason;
+                this.advisoryLoading = false;
+            })
+            .catch(err => {
+                console.error('Failed fetching advisory:', err);
+                this.advisoryLoading = false;
+            });
+    },
+
+    resetAdvisory() {
+        this.advisoryRecommendedName = '';
+        this.advisoryRecommendedReason = '';
+        this.advisoryHighRiskName = '';
+        this.advisoryHighRiskReason = '';
     },
 
     selectIdealGrain() {
         let idealName = 'Hard Red Winter Wheat';
         if (this.presetSlug) {
             let s = this.presetSlug.toLowerCase();
-            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel'].includes(s)) {
+            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
                 idealName = 'Hard Red Spring Wheat';
-            } else if (['french-loaf', 'brioche', 'pretzel'].includes(s)) {
+            } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
                 idealName = 'Hard Red Winter Wheat';
-            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan'].includes(s)) {
+            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
                 idealName = 'Hard White Wheat';
+            } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
+                idealName = 'Soft White Wheat';
             }
         }
         this.activeBerries.forEach(b => {
@@ -88,16 +132,19 @@
         let idealName = 'Hard Red Winter Wheat';
         if (this.presetSlug) {
             let s = this.presetSlug.toLowerCase();
-            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel'].includes(s)) {
+            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
                 idealName = 'Hard Red Spring Wheat';
-            } else if (['french-loaf', 'brioche', 'pretzel'].includes(s)) {
+            } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
                 idealName = 'Hard Red Winter Wheat';
-            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan'].includes(s)) {
+            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
                 idealName = 'Hard White Wheat';
+            } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
+                idealName = 'Soft White Wheat';
             }
         }
         return berryName === idealName;
     },
+
 
     startBake() {
         let el = document.getElementById('countertop-data');
@@ -510,9 +557,9 @@
         <div>
             <div class="card" style="margin-bottom: 0; min-height: 100%;">
                 <!-- Header Injection -->
-                <div x-show="current_phase >= 2 && presetName" x-transition
+                <div x-show="current_phase >= 3 && presetName" x-transition
                      style="font-size: 0.95rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                    [ Recipe Target: <span x-text="presetName"></span> ]
+                    [ Recipe Target: <span x-text="presetName"></span> <span x-show="presetModified" style="color: var(--warning); font-size: 0.8rem; text-transform: uppercase; margin-left: 0.25rem;">(Modified)</span> ]
                 </div>
                 
                 <div id="recipe-output-container">
