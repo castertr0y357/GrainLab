@@ -6,10 +6,26 @@ This file defines the template structure for local workspace rules and skills.
 You **MUST** run the project verification command after every code change to guarantee stability and prevent regressions.
 
 ### Rebuild and Verify Command
-Run the following command from the workspace root:
+1. Run local Django unit and integration tests:
 ```bash
 python manage.py test
 ```
+
+2. **Docker Rebuild & Active Environment Log Verification**:
+   To catch runtime boot issues, template syntax errors, or JavaScript compilation warnings, rebuild and verify the container environment:
+   - Rebuild the stack from scratch:
+     ```bash
+     docker compose down
+     docker compose up -d --build
+     ```
+   - Run a programmatic health check request against the server:
+     ```bash
+     curl -I http://localhost:8005/
+     ```
+   - Review server logs to ensure no active exceptions occurred on boot or during the check:
+     ```bash
+     docker compose logs web
+     ```
 
 > [!IMPORTANT]
 > 1. Never skip verification before committing. The verification step **MUST** execute all unit and integration test suites.

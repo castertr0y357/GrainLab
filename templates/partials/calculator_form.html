@@ -88,9 +88,9 @@
     {% if selected_preset %}
         <input type="hidden" name="preset_slug" value="{{ selected_preset.slug }}">
     {% endif %}
-    <input type="hidden" name="current_phase" :value="current_phase">
-    <input type="hidden" name="editor_mode" :value="editor_mode">
-    <input type="hidden" name="form_factor" :value="form_factor_val">
+    <input type="hidden" name="current_phase" :value="current_phase" value="{% if selected_preset %}3{% else %}1{% endif %}">
+    <input type="hidden" name="editor_mode" :value="editor_mode" value="standard">
+    <input type="hidden" name="form_factor" :value="form_factor_val" value="{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}freeform-loaf{% endif %}">
     <input type="hidden" name="target_weight" :value="formFactorBaseline.unit_weight * formFactorBaseline.base_count * yield_scale">
     <input type="hidden" name="unit_weight" :value="formFactorBaseline.unit_weight">
     <input type="hidden" name="portion_count" :value="formFactorBaseline.base_count * yield_scale">

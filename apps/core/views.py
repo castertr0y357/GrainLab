@@ -158,7 +158,11 @@ def calculate_recipe_ajax(request):
     # 1. Parse parameters and scores
     cat_slug = request.POST.get("dough_category")
     ff_slug = request.POST.get("form_factor")
-    current_phase = int(request.POST.get("current_phase", 1))
+    current_phase_str = request.POST.get("current_phase", "1")
+    try:
+        current_phase = int(current_phase_str) if current_phase_str and current_phase_str.strip() else 1
+    except ValueError:
+        current_phase = 1
     
     cat = get_object_or_404(DoughCategory, slug=cat_slug)
     ff = get_object_or_404(FormFactor, slug=ff_slug)
