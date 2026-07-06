@@ -4,7 +4,7 @@
 {% block content %}
 <div x-data="{
     current_phase: {% if selected_preset %}3{% else %}1{% endif %},
-    grain_mode: '{% if selected_preset %}{% if selected_preset.flour_type_default == 'all_purpose' %}refined{% else %}milled{% endif %}{% else %}refined{% endif %}',
+    grain_mode: {% if selected_preset %}'{% if selected_preset.flour_type_default == "all_purpose" %}refined{% else %}milled{% endif %}'{% else %}null{% endif %},
     selected_master: '{% if selected_preset %}{{ selected_preset.dough_category.slug }}{% else %}null{% endif %}',
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
@@ -162,7 +162,7 @@
             hardness: '{{ wb.hardness }}',
             protein: {{ wb.protein_content }},
             absorption: {{ wb.moisture_absorption_coef }},
-            selected: {% if wb.is_active %}true{% else %}false{% endif %}
+            selected: false
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ],
@@ -318,18 +318,22 @@
     },
 
     selectIdealGrain() {
+        if (!this.presetSlug) {
+            this.activeBerries.forEach(b => {
+                b.selected = false;
+            });
+            return;
+        }
         let idealName = 'Hard Red Winter Wheat';
-        if (this.presetSlug) {
-            let s = this.presetSlug.toLowerCase();
-            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
-                idealName = 'Hard Red Spring Wheat';
-            } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
-                idealName = 'Hard Red Winter Wheat';
-            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
-                idealName = 'Hard White Wheat';
-            } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
-                idealName = 'Soft White Wheat';
-            }
+        let s = this.presetSlug.toLowerCase();
+        if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
+            idealName = 'Hard Red Spring Wheat';
+        } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
+            idealName = 'Hard Red Winter Wheat';
+        } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
+            idealName = 'Hard White Wheat';
+        } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
+            idealName = 'Soft White Wheat';
         }
         this.activeBerries.forEach(b => {
             b.selected = (b.name === idealName);
@@ -337,18 +341,19 @@
     },
 
     isIdealGrain(berryName) {
+        if (!this.presetSlug) {
+            return false;
+        }
         let idealName = 'Hard Red Winter Wheat';
-        if (this.presetSlug) {
-            let s = this.presetSlug.toLowerCase();
-            if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
-                idealName = 'Hard Red Spring Wheat';
-            } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
-                idealName = 'Hard Red Winter Wheat';
-            } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
-                idealName = 'Hard White Wheat';
-            } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
-                idealName = 'Soft White Wheat';
-            }
+        let s = this.presetSlug.toLowerCase();
+        if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
+            idealName = 'Hard Red Spring Wheat';
+        } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
+            idealName = 'Hard Red Winter Wheat';
+        } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
+            idealName = 'Hard White Wheat';
+        } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
+            idealName = 'Soft White Wheat';
         }
         return berryName === idealName;
     },
@@ -658,7 +663,7 @@
                                 hx-select="#calculator-form" 
                                 hx-swap="outerHTML" 
                                 hx-push-url="/"
-                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; query = ''; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                             🗑️ HARD RESET
                         </button>
                     </div>

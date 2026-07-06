@@ -647,6 +647,8 @@
             <!-- Proceed button inside the main container, shown for both modes! -->
             <button type="button" 
                     class="nav-btn primary"
+                    x-show="grain_mode === 'refined' || grain_mode === 'milled'"
+                    x-transition
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
                     @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 PROCEED TO RECIPE CONFIGURATION →
