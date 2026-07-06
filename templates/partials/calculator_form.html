@@ -746,27 +746,4 @@
         </button>
     </div>
 
-    <!-- Navigation Control Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2rem; gap: 1rem;">
-        <button type="button" 
-                class="nav-btn" 
-                style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; flex: 1;"
-                x-show="current_phase > 1" 
-                x-transition
-                @click="current_phase--; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-            ← STEP BACK
-        </button>
-        
-        <button type="button" 
-                class="nav-btn" 
-                style="height: 52px; font-weight: 600; letter-spacing: 0.05em; background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; flex: 1;"
-                hx-get="{% url 'calculator' %}" 
-                hx-target="#calculator-form-container" 
-                hx-select="#calculator-form" 
-                hx-swap="outerHTML" 
-                hx-push-url="/"
-                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; query = ''; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-            🗑️ HARD RESET
-        </button>
-    </div>
 </form>
