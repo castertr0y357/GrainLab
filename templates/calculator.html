@@ -671,7 +671,7 @@
                 </div>
                 
                 <!-- Phase 2 Recommendations -->
-                <div x-show="current_phase === 2" x-transition>
+                <div x-show="current_phase === 2 && grain_mode === 'milled'" x-transition>
                     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1.5rem;">
                         <h3 style="color: var(--accent); margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
                             🤖 AI Grain Advisory Details
@@ -747,7 +747,7 @@
                     </div>
                 </div>
                 
-                <div id="recipe-output-container" x-show="current_phase === 1 || current_phase >= 3">
+                <div id="recipe-output-container" x-show="current_phase === 1 || current_phase >= 3 || (current_phase === 2 && grain_mode !== 'milled')">
                     <!-- Swapped in dynamically by HTMX -->
                     <div style="text-align: center; padding: 6rem 1.5rem; color: var(--text-muted);">
                         <span class="spinner" style="width: 40px; height: 40px;"></span>
