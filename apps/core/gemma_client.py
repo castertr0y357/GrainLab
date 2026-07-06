@@ -99,8 +99,10 @@ def get_contextual_pitfalls(category_slug: str, effective_hydration: float, grai
     """
     if _is_ai_enabled():
         system_prompt = (
-            "Analyze the bread recipe variables and identify potential baking pitfalls "
+            "Analyze the recipe variables and identify potential baking pitfalls "
             "or custom step additions (e.g., pretzel soda boiling, high-hydration sticky dough). "
+            "You MUST tailor your critique specifically to the active baking category and preset. "
+            "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast or proofing for cookies/cakes, and do not mention cookie spread or creaming for sourdough/pizza. "
             "Return a JSON object containing a list called 'pitfalls' where each item has "
             "'title' and 'message' keys."
         )
@@ -120,20 +122,25 @@ def get_contextual_pitfalls(category_slug: str, effective_hydration: float, grai
 
 
 # 2. Custom Sensory Benchmark Synthesizer
-def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float) -> str:
+def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
     """
     Retrieves sensory text from Gemma, falling back to local description mappings.
     """
     if _is_ai_enabled():
         system_prompt = (
-            "Synthesize a descriptive sensory benchmark describing what the rising dough should look "
-            "and feel like (texture, touch resilience, visual swelling, surface air bubbles) "
-            "based on the flour maturity and grain type. Return a JSON object with the key 'sensory_description'."
+            "You are a baking science expert. Synthesize a descriptive sensory benchmark describing what the mixture (dough, batter, or paste) should look "
+            "and feel like (texture, touch resilience, structure, visual indicators) "
+            "based on the flour maturity and grain type. "
+            "You MUST tailor your description specifically to the active recipe category and preset. Do NOT mention ingredients or processes "
+            "(e.g., yeast, rising, kneading, proofing, bubbles) that are not part of the target recipe class. For example, do not mention rising or yeast for cookies, and do not mention cookie spread or creaming for sourdough."
+            "Return a JSON object with the key 'sensory_description'."
         )
         user_prompt = json.dumps({
             "grain_type": grain_type,
             "flour_maturity": flour_maturity,
             "hydration": effective_hydration,
+            "category": category_slug,
+            "preset": preset_slug,
         })
         
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["sensory_description"])
@@ -141,7 +148,7 @@ def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydrat
             return result["sensory_description"]
 
     # Fallback
-    return get_local_sensory_benchmark(grain_type, flour_maturity, effective_hydration)
+    return get_local_sensory_benchmark(grain_type, flour_maturity, effective_hydration, category_slug, preset_slug)
 
 
 # 3. Closed-Loop Chemistry Re-Balancing (Substitutions)
@@ -819,6 +826,8 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     system_prompt = (
         "You are an expert food chemist and professional baker. "
         "Analyze the provided hovered workspace setting relative to the active baking category and preset. "
+        "You MUST tailor your critique specifically to the active baking category and preset. "
+        "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast, proofing, rising, or gluten structure for cookies/cakes, and do not mention creaming, cookie spread, or cake emulsifiers for lean bread/sourdough boule. "
         "Determine the real-world Return on Investment (ROI) of human labor for this setting, "
         "and draft a tight 2-sentence conversational critique (The Last 10% Analysis) explaining exactly why it matters "
         "or if it is minor/machine-replaceable. "

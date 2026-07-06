@@ -114,24 +114,62 @@ def calculate_recipe(
     )
 
 
-def get_local_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float) -> str:
+def get_local_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
+    # Identify group
+    if category_slug in ['lean-crusty', 'enriched-soft', 'alkaline-bath', 'flatbreads-griddles', 'fried-doughs']:
+        group = "bread"
+    elif category_slug in ['quick-breads-scones', 'cakes-batters', 'pastry-lamination', 'cookies-shortbread', 'choux-paste']:
+        group = "sweet_tender"
+    elif category_slug in ['fresh-pasta-noodles']:
+        group = "pasta"
+    else:
+        group = "bread"
+        
     grain_name = grain_type.replace("_", " ").title()
-    desc = f"For fresh-milled {grain_name} dough: "
     
-    if effective_hydration >= 0.75:
-        desc += "The dough will be wet and sticky. Look for a glossy surface and a clean, dome-like rise. "
-    elif effective_hydration >= 0.65:
-        desc += "Expect a supple, holding structure. The dough should feel alive, resilient, and elastic when touched. "
-    else:
-        desc += "Dough is firm and tight. It will not double dramatically; monitor for a rounded dome and a smooth outer skin. "
+    if group == "bread":
+        desc = f"For fresh-milled {grain_name} dough: "
+        if effective_hydration >= 0.75:
+            desc += "The dough will be wet and sticky. Look for a glossy surface and a clean, dome-like rise. "
+        elif effective_hydration >= 0.65:
+            desc += "Expect a supple, holding structure. The dough should feel alive, resilient, and elastic when touched. "
+        else:
+            desc += "Dough is firm and tight. It will not double dramatically; monitor for a rounded dome and a smooth outer skin. "
+            
+        if flour_maturity == "just_milled":
+            desc += "As this flour was milled today, gluten activity is highly active but lacks extensibility. Expect rapid enzyme fermentation; handle gently to avoid tearing."
+        elif flour_maturity == "dead_zone":
+            desc += "Caution: Flour is in the 1-2 week enzyme dead zone. Gluten structure is relaxed and vulnerable. The dough will feel sticky and might lack holding power; do not over-proof."
+        else:
+            desc += "Flour is fully matured. Gluten bonds are stable and predictable. The rise will be steady with solid gas retention."
+            
+    elif group == "sweet_tender":
+        desc = f"For fresh-milled {grain_name} confections: "
+        if category_slug == 'cookies-shortbread':
+            desc += "Expect a thick, soft paste or firm chilled dough. The fat should be fully creamed with flour particles evenly coated to control spread. "
+        elif category_slug == 'cakes-batters':
+            desc += "Expect a highly aerated, smooth fluid batter. It should hold micro-air bubbles from egg/fat whipping with zero large pockets. "
+        else:
+            desc += "The batter/dough should be delicate and soft. Mixing should be kept to an absolute minimum to ensure a tender crumb. "
+            
+        if flour_maturity == "just_milled":
+            desc += "As this flour was milled today, its enzymes will promote fast browning. Keep mixing short to avoid any accidental gluten development."
+        elif flour_maturity == "dead_zone":
+            desc += "Caution: Flour is in the 1-2 week dead zone. The structural proteins are slightly unstable. Bake promptly after mixing to ensure the rise sets correctly."
+        else:
+            desc += "Flour is fully matured. It will provide a highly stable, predictable structure and excellent tender mouthfeel."
+            
+    elif group == "pasta":
+        desc = f"For fresh-milled {grain_name} pasta: "
+        desc += "Expect a very dense, dry, and crumbly initial mixture. It should consolidate into a firm, non-sticky mass after firm pressure. "
         
-    if flour_maturity == "just_milled":
-        desc += "As this flour was milled today, gluten activity is highly active but lacks extensibility. Expect rapid enzyme fermentation; handle gently to avoid tearing."
-    elif flour_maturity == "dead_zone":
-        desc += "Caution: Flour is in the 1-2 week enzyme dead zone. Gluten structure is relaxed and vulnerable. The dough will feel sticky and might lack holding power; do not over-proof."
-    else:
-        desc += "Flour is fully matured. Gluten bonds are stable and predictable. The rise will be steady with solid gas retention."
-        
+        if flour_maturity == "just_milled":
+            desc += "Today's fresh-milled flour hydrates rapidly but the gluten needs extra resting time. Let the wrapped dough sit for 45 minutes before sheeting."
+        elif flour_maturity == "dead_zone":
+            desc += "Caution: Flour is in the 1-2 week dead zone. The dough might feel slightly brittle during sheeting; roll out slowly to prevent edge cracking."
+        else:
+            desc += "Flour is fully matured. Gluten structure is stable and resilient, providing an excellent al dente bite when boiled."
+            
     return desc
 
 
