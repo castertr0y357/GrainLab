@@ -823,27 +823,64 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     Queries Gemma to generate a custom labor ROI tag and 'Last 10%' critique analysis.
     """
     import json
+    from apps.core.models import BreadPreset
+    
+    preset = BreadPreset.objects.filter(slug=preset_slug).first()
+    preset_name = preset.name if preset else (preset_slug.replace("-", " ").title() if preset_slug else "Custom / Manual Blend")
+    
     system_prompt = (
-        "You are an expert food chemist and professional baker. "
+        "You are an expert, highly practical food scientist who values human time and forearm fatigue. "
+        "The tone must be conversational, insightful, and focused entirely on the sensory experience of eating and the physical reality of cooking. "
         "Analyze the provided hovered workspace setting relative to the active baking category and preset. "
         "You MUST tailor your critique specifically to the active baking category and preset. "
-        "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast, proofing, rising, or gluten structure for cookies/cakes, and do not mention creaming, cookie spread, or cake emulsifiers for lean bread/sourdough boule. "
-        "Determine the real-world Return on Investment (ROI) of human labor for this setting, "
-        "and draft a tight 2-sentence conversational critique (The Last 10% Analysis) explaining exactly why it matters "
-        "or if it is minor/machine-replaceable. "
+        "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast or proofing for cookies/cakes, and do not mention cookie spread or creaming for sourdough/pizza. "
+        "\n"
+        "🚨 CRITICAL RULES:\n"
+        "1. Banned Terminology: You are strictly prohibited from using these words or variants in your generated JSON response: "
+        "anomalies, parameter, workspace, matrix, objective, configuration, optimization, performance, detected, asset, baseline.\n"
+        "2. Strict Context Anchoring: The 'last_10_percent_analysis' field must explicitly synthesize the hovered element name directly with the active recipe target name (e.g. 'Soft White Wheat' + 'Chewy Chocolate Chip Cookies'). It cannot output generic definitions.\n"
+        "\n"
         "Return a JSON object containing:\n"
-        "1. 'labor_roi': a string tag representing ranking (e.g. 'High Priority / Worth the Extra Step' or 'Low Priority / Minor Textural Return')\n"
-        "2. 'last_10_percent_analysis': a tight 2-sentence critique."
+        "- 'labor_roi_rating': a string tag representing ranking (e.g., 'High Priority / Worth the Extra Step', 'Low Priority / Minor Textural Return', 'High Priority / Absolute Requirement')\n"
+        "- 'last_10_percent_analysis': a tight 2-sentence conversational critique.\n"
+        "\n"
+        "EXAMPLES:\n"
+        "Example A (Hovering 'Soft White Wheat' on 'Chewy Chocolate Chip Cookies'):\n"
+        "{\n"
+        "  \"labor_roi_rating\": \"High Priority / Worth the Extra Step\",\n"
+        "  \"last_10_percent_analysis\": \"Using Soft White Wheat here ensures your cookies melt into a perfectly tender, uniform pool instead of puffing up into cakey domes. To unlock the real magic, give this fresh-milled dough a 12-hour rest in the fridge before baking so the bran has time to fully absorb the butter fat.\"\n"
+        "}\n"
+        "\n"
+        "Example B (Hovering 'Manual Spatula' on 'Chewy Chocolate Chip Cookies'):\n"
+        "{\n"
+        "  \"labor_roi_rating\": \"Low Priority / Minor Textural Return\",\n"
+        "  \"last_10_percent_analysis\": \"There is zero reason to wear out your forearm hand-mixing a massive batch of cookie dough. Throw it in the stand mixer with the paddle attachment on low speed; you will get the exact same tender crumb without the manual exhaustion.\"\n"
+        "}\n"
+        "\n"
+        "Example C (Hovering 'Manual Spatula' on 'Buttermilk Biscuits'):\n"
+        "{\n"
+        "  \"labor_roi_rating\": \"High Priority / Absolute Requirement\",\n"
+        "  \"last_10_percent_analysis\": \"Put the electric mixers away. Hand-folding your wet ingredients with a spatula is the exact threshold where biscuit magic lives; a machine will activate the gluten webs in seconds, turning a flaky, layered biscuit into a tough hockey puck.\"\n"
+        "}"
     )
+    
+    # Format the element name to human readable form for the prompt
+    element_clean = element.replace("grain_", "").replace("_", " ").title()
+    
     user_prompt = json.dumps({
-        "element": element,
+        "hovered_element": element_clean,
+        "recipe_target_name": preset_name,
         "category_slug": category_slug,
         "preset_slug": preset_slug
     })
+    
     try:
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["labor_roi", "last_10_percent_analysis"])
-        if result and "labor_roi" in result and "last_10_percent_analysis" in result:
-            return result
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["labor_roi_rating", "last_10_percent_analysis"])
+        if result and "labor_roi_rating" in result and "last_10_percent_analysis" in result:
+            return {
+                "labor_roi": result["labor_roi_rating"],
+                "last_10_percent_analysis": result["last_10_percent_analysis"]
+            }
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling sidebar insight API: {str(e)}")
     return None
