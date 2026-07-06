@@ -947,8 +947,9 @@ class Command(BaseCommand):
         ]
 
         for wb_data in wheat_berries_data:
-            wb, created = WheatBerry.objects.update_or_create(
-                name=wb_data["name"], defaults=wb_data
+            wb_defaults = {**wb_data, "deleted_at": None}
+            wb, created = WheatBerry.all_objects.update_or_create(
+                name=wb_data["name"], defaults=wb_defaults
             )
             if created:
                 self.stdout.write(f"  Created wheat berry: {wb.name}")
@@ -973,7 +974,15 @@ class Command(BaseCommand):
                 "details": {"capacity_grams": 2500, "recommended_speed": "Medium low"}
             },
             {
-                "name": "Mockmill 200 Grain Mill",
+                "name": "KoMo Classic Mill",
+                "equipment_type": "mill",
+                "friction_heat_factor": 0.0,
+                "ai_analyzed": True,
+                "notes": "Stoneburr grain mill, 360W motor. Beautiful solid wood casing.",
+                "details": {"capacity_grams": 1000}
+            },
+            {
+                "name": "Mockmill Lino 100",
                 "equipment_type": "mill",
                 "friction_heat_factor": 0.0,
                 "ai_analyzed": True,
@@ -991,8 +1000,9 @@ class Command(BaseCommand):
         ]
 
         for eq_data in equipment_data:
-            eq, created = Equipment.objects.update_or_create(
-                name=eq_data["name"], defaults=eq_data
+            eq_defaults = {**eq_data, "deleted_at": None}
+            eq, created = Equipment.all_objects.update_or_create(
+                name=eq_data["name"], defaults=eq_defaults
             )
             if created:
                 self.stdout.write(f"  Created equipment: {eq.name}")
