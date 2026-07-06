@@ -62,6 +62,8 @@
 - [x] Remove confusing standard/advanced editor modes, displaying all active stocks and permissible form factors cleanly
 - [x] Style form factor selection buttons to match the substitution pills exactly, with dynamic status tags and active warning/accent glows
 - [x] Support intuitive fractional batch scaling (steps of 0.5, minimum scale of 0.5) using the direct multiplier formula
+- [x] Limit grain advisory visibility in Phase 2 strictly to Fresh-Milled Whole Grain mode, hiding it for refined flour
+- [x] Disable auto-advancing when clicking Store Refined Flour, displaying the Proceed to Recipe Configuration button instead
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
