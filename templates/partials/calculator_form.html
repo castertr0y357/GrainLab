@@ -307,6 +307,34 @@
             PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION
         </div>
 
+        <!-- Global AI Toggle Control Bar -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: #1a1a1f; border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; transition: var(--transition);"
+             :style="global_ai_enabled ? 'border-color: #ff9800; box-shadow: 0 0 10px rgba(255, 152, 0, 0.2);' : ''">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Dough Analysis Mode</span>
+                <span x-show="global_ai_enabled" x-transition 
+                      style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #ff9800; font-weight: 800; background: rgba(255, 152, 0, 0.1); padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); border: 1px solid rgba(255, 152, 0, 0.3); text-transform: uppercase; letter-spacing: 0.05em;">
+                    <span style="width: 6px; height: 6px; background-color: #ff9800; border-radius: 50%;"></span>
+                    AI Armed
+                </span>
+            </div>
+            
+            <div style="display: flex; background: rgba(255,255,255,0.05); padding: 0.2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                <button type="button" 
+                        @click="global_ai_enabled = false; clearHoveredElement()" 
+                        style="padding: 0.35rem 0.85rem; border-radius: 15px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: var(--transition);"
+                        :style="!global_ai_enabled ? 'background: var(--bg-secondary); color: var(--text-primary); box-shadow: var(--shadow-sm);' : 'background: transparent; color: var(--text-muted);'">
+                    Standard Mode
+                </button>
+                <button type="button" 
+                        @click="global_ai_enabled = true; if (hovered_element) { setHoveredElement(hovered_element); }" 
+                        style="padding: 0.35rem 0.85rem; border-radius: 15px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.25rem;"
+                        :style="global_ai_enabled ? 'background: #ff9800; color: #000; box-shadow: 0 0 10px rgba(255, 152, 0, 0.4);' : 'background: transparent; color: var(--text-muted);'">
+                    🤖 AI Insights Enabled
+                </button>
+            </div>
+        </div>
+
         <!-- Top Panel (Preset Macro Deck) -->
         <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
             Preset Macro Deck
@@ -357,11 +385,21 @@
         <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
             <span class="chip" :class="grain_mode === 'refined' ? 'active' : ''" 
                   @click="grain_mode = 'refined'; grain = 'all_purpose'; presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                  @mouseenter="setHoveredElement('refined')"
+                  @mouseleave="clearHoveredElement()"
+                  @focusin="setHoveredElement('refined')"
+                  @focusout="clearHoveredElement()"
+                  tabindex="0"
                   style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
                 Store Refined Flour
             </span>
             <span class="chip" :class="grain_mode === 'milled' ? 'active' : ''" 
                   @click="grain_mode = 'milled'; presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                  @mouseenter="setHoveredElement('milled')"
+                  @mouseleave="clearHoveredElement()"
+                  @focusin="setHoveredElement('milled')"
+                  @focusout="clearHoveredElement()"
+                  tabindex="0"
                   style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
                 Fresh-Milled Whole Grain
             </span>
@@ -377,6 +415,11 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                 <template x-for="berry in sortedBerries" :key="berry.id">
                     <label class="card" 
+                           @mouseenter="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
+                           @mouseleave="clearHoveredElement()"
+                           @focusin="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
+                           @focusout="clearHoveredElement()"
+                           tabindex="0"
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
                            :style="getGrainStyle(berry)">
                         <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
@@ -404,7 +447,23 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
                 
                 <!-- Component 1: Dynamic Temperature Calibration Node -->
-                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                <div class="card" 
+                     @mouseenter="
+                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
+                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
+                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
+                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
+                     "
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="
+                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
+                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
+                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
+                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
+                     "
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
                     <!-- Case A: biological_yeast_activity -->
                     <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity'">
                         <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
@@ -465,7 +524,11 @@
                             <button type="button" 
                                     class="pill-btn" 
                                     :class="mixing_method === tool.id ? 'active' : ''"
-                                    @click="mixing_method = tool.id; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    @click="mixing_method = tool.id; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement(tool.id)"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement(tool.id)"
+                                    @focusout="clearHoveredElement()">
                                 <span x-text="tool.name"></span>
                             </button>
                         </template>
@@ -488,7 +551,11 @@
                             <button type="button" 
                                     class="pill-btn" 
                                     :class="active_action === action ? 'active' : ''"
-                                    @click="active_action = action; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    @click="active_action = action; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement(action)"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement(action)"
+                                    @focusout="clearHoveredElement()">
                                 <span x-text="action.toUpperCase().replace('_', ' ')"></span>
                             </button>
                         </template>
@@ -496,7 +563,19 @@
                 </div>
 
                 <!-- Component 3: Adaptive Environment Mapping -->
-                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                <div class="card" 
+                     @mouseenter="
+                        if (activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation') setHoveredElement('bench_rest');
+                        else if (activeProductionProfile.environmental_rest_strategy !== 'gas_proofing') setHoveredElement('refrigerator');
+                     "
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="
+                        if (activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation') setHoveredElement('bench_rest');
+                        else if (activeProductionProfile.environmental_rest_strategy !== 'gas_proofing') setHoveredElement('refrigerator');
+                     "
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
                     <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Rest &amp; Environment Strategy</h4>
                     
                     <!-- Case A: gas_proofing strategy -->
@@ -504,15 +583,27 @@
                         <input type="hidden" name="proofing_environment" :value="proofing_environment">
                         <div class="pill-btn-group">
                             <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
-                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement('ambient'); event.stopPropagation();"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement('ambient'); event.stopPropagation();"
+                                    @focusout="clearHoveredElement()">
                                 Ambient Room
                             </button>
                             <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
-                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement('mat'); event.stopPropagation();"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement('mat'); event.stopPropagation();"
+                                    @focusout="clearHoveredElement()">
                                 Open Proofing Mat
                             </button>
                             <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
-                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement('box'); event.stopPropagation();"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement('box'); event.stopPropagation();"
+                                    @focusout="clearHoveredElement()">
                                 Enclosed Proofing Box
                             </button>
                         </div>
@@ -542,7 +633,12 @@
                 </div>
 
                 <!-- Component 4: Milling Profile Parameters (Smoothly hides if refined flour is active) -->
-                <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;"
+                <div @mouseenter="setHoveredElement('milled')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('milled')"
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;"
                      x-show="grain_mode === 'milled'" x-transition>
                     <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                         Milling Profile Parameters
@@ -626,7 +722,11 @@
                                 class="pill-btn"
                                 :class="{'active': form_factor_val === ff_slug}"
                                 :style="form_factor_val === ff_slug && ff_data.tier === 'sub-optimal' ? 'background-color: rgba(255, 159, 28, 0.1); border-color: var(--warning); color: var(--warning); box-shadow: 0 0 10px hsla(38, 92%, 50%, 0.4);' : ''"
-                                @click="form_factor_val = ff_slug;">
+                                @click="form_factor_val = ff_slug;"
+                                @mouseenter="setHoveredElement(ff_slug)"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement(ff_slug)"
+                                @focusout="clearHoveredElement()">
                             <span x-text="ff_data.name + ' (' + (ff_data.tier === 'recommended' ? 'Recommended' : 'Sub-Optimal') + ')'"></span>
                         </button>
                     </template>
@@ -792,15 +892,27 @@
                 <!-- If Water selected -->
                 <div x-show="subOriginal === 'water'" class="pill-btn-group">
                     <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
-                            @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                            @mouseenter="setHoveredElement('refined')"
+                            @mouseleave="clearHoveredElement()"
+                            @focusin="setHoveredElement('refined')"
+                            @focusout="clearHoveredElement()">
                         No Swap
                     </button>
                     <button type="button" class="pill-btn" :class="subSubstitute === 'whole_milk' ? 'active' : ''"
-                            @click="subSubstitute = 'whole_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            @click="subSubstitute = 'whole_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                            @mouseenter="setHoveredElement('whole_milk')"
+                            @mouseleave="clearHoveredElement()"
+                            @focusin="setHoveredElement('whole_milk')"
+                            @focusout="clearHoveredElement()">
                         Whole Milk
                     </button>
                     <button type="button" class="pill-btn" :class="subSubstitute === 'almond_milk' ? 'active' : ''"
-                            @click="subSubstitute = 'almond_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            @click="subSubstitute = 'almond_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                            @mouseenter="setHoveredElement('almond_milk')"
+                            @mouseleave="clearHoveredElement()"
+                            @focusin="setHoveredElement('almond_milk')"
+                            @focusout="clearHoveredElement()">
                         Almond Milk
                     </button>
                 </div>
@@ -809,31 +921,59 @@
                 <div x-show="subOriginal === 'fat'">
                     <div class="pill-btn-group">
                         <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
-                                @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('refined')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('refined')"
+                                @focusout="clearHoveredElement()">
                             No Swap
                         </button>
                         <button type="button" class="pill-btn" :class="subSubstitute === 'butter' ? 'active' : ''"
-                                @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('butter')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('butter')"
+                                @focusout="clearHoveredElement()">
                             Butter
                         </button>
                         <button type="button" class="pill-btn" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
-                                @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('unsalted_butter')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('unsalted_butter')"
+                                @focusout="clearHoveredElement()">
                             Unsalted Butter
                         </button>
                         <button type="button" class="pill-btn" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
-                                @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('salted_butter')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('salted_butter')"
+                                @focusout="clearHoveredElement()">
                             Salted Butter
                         </button>
                         <button type="button" class="pill-btn" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
-                                @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('olive_oil')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('olive_oil')"
+                                @focusout="clearHoveredElement()">
                             Olive Oil
                         </button>
                         <button type="button" class="pill-btn" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
-                                @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('canola_oil')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('canola_oil')"
+                                @focusout="clearHoveredElement()">
                             Canola Oil
                         </button>
                         <button type="button" class="pill-btn" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
-                                @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('vegetable_oil')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('vegetable_oil')"
+                                @focusout="clearHoveredElement()">
                             Vegetable Oil
                         </button>
                     </div>

@@ -811,3 +811,33 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
     }
 
 
+def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -> dict | None:
+    """
+    Queries Gemma to generate a custom labor ROI tag and 'Last 10%' critique analysis.
+    """
+    import json
+    system_prompt = (
+        "You are an expert food chemist and professional baker. "
+        "Analyze the provided hovered workspace setting relative to the active baking category and preset. "
+        "Determine the real-world Return on Investment (ROI) of human labor for this setting, "
+        "and draft a tight 2-sentence conversational critique (The Last 10% Analysis) explaining exactly why it matters "
+        "or if it is minor/machine-replaceable. "
+        "Return a JSON object containing:\n"
+        "1. 'labor_roi': a string tag representing ranking (e.g. 'High Priority / Worth the Extra Step' or 'Low Priority / Minor Textural Return')\n"
+        "2. 'last_10_percent_analysis': a tight 2-sentence critique."
+    )
+    user_prompt = json.dumps({
+        "element": element,
+        "category_slug": category_slug,
+        "preset_slug": preset_slug
+    })
+    try:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["labor_roi", "last_10_percent_analysis"])
+        if result and "labor_roi" in result and "last_10_percent_analysis" in result:
+            return result
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling sidebar insight API: {str(e)}")
+    return None
+
+
+

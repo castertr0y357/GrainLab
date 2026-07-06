@@ -832,3 +832,35 @@ class GeometryEvaluationTests(TestCase):
         self.assertEqual(ge["status"], "sub-optimal")
         self.assertEqual(ge["profile_adjustments"]["oven_temp_offset_f"], -25)
         self.assertEqual(ge["profile_adjustments"]["bake_time_offset_m"], 5)
+
+
+class SidebarInsightTests(TestCase):
+    """
+    Tests the new Split-Pane Contextual Sidebar Insight view and client logic.
+    """
+    def test_sidebar_insight_empty_element(self):
+        response = self.client.get(reverse('ai_sidebar_insight'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("labor_roi", data)
+        self.assertIn("last_10_percent_analysis", data)
+        self.assertEqual(data["labor_roi"], "Low Priority / Minor Textural Return")
+
+    def test_sidebar_insight_valid_element(self):
+        response = self.client.get(reverse('ai_sidebar_insight') + '?element=stand_mixer')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("labor_roi", data)
+        self.assertIn("last_10_percent_analysis", data)
+        self.assertEqual(data["labor_roi"], "Low Priority / Minor Textural Return")
+        self.assertIn("planetary friction heat", data["last_10_percent_analysis"].lower())
+
+    def test_sidebar_insight_unknown_element(self):
+        response = self.client.get(reverse('ai_sidebar_insight') + '?element=nonexistent_widget')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("labor_roi", data)
+        self.assertIn("last_10_percent_analysis", data)
+        self.assertEqual(data["labor_roi"], "Low Priority / Minor Textural Return")
+        self.assertIn("an objective workspace configuration parameter", data["last_10_percent_analysis"].lower())
+

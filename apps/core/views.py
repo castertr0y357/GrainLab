@@ -895,4 +895,203 @@ def ai_grain_advisory(request):
     return JsonResponse(advisory)
 
 
+def ai_sidebar_insight(request):
+    """
+    Returns dynamic labor ROI and critique analysis for the hovered element.
+    """
+    from django.http import JsonResponse
+    from apps.core import gemma_client
+    
+    element = request.GET.get("element", "").strip()
+    category_slug = request.GET.get("category_slug", "").strip()
+    preset_slug = request.GET.get("preset_slug", "").strip()
+    
+    if not element:
+        return JsonResponse({
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Hover over any ingredient or control setting on the left to see objective science and AI magic diagnostics."
+        })
+        
+    # Standard python local fallback dictionary definition
+    fallbacks = {
+        # Flour mediums
+        "refined": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Commercial refined flour handles consistently without requiring hydration shifts. However, it lacks the deep, nutty cellular flavor matrix of fresh-milled grain."
+        },
+        "milled": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Fresh-milled whole grains possess active wheat germ oils and enzymes that elevate flavor profiles and crust blister complexes. Adjust hydration dynamically to accommodate increased bran absorption."
+        },
+        # Grains
+        "grain_hard_red_spring": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Spring wheat brings massive gluten elasticity and gas holding power to hearth baking, ensuring a high-rise open crumb. Highly worth milling fresh for rustic breads."
+        },
+        "grain_hard_red_winter": {
+            "labor_roi": "Low Priority / Effortless Texture Shift",
+            "last_10_percent_analysis": "An all-purpose workhorse hard wheat. Good balance of elasticity and extensibility, but lacks the high-torque ceiling of spring varieties."
+        },
+        "grain_soft_white": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Soft white wheat delivers an exceptionally tender crumb for cookies and pastries by avoiding gluten toughness. Critical for achieving melting spread."
+        },
+        "grain_hard_white": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Provides strong structure without the bitter tannin flavors of red wheats. Useful if you want mild flavor with high lift."
+        },
+        "grain_spelt": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Ancient grain that injects deep nutty flavor and high extensibility. Restrict mechanical energy to avoid collapsing its fragile gluten bonds."
+        },
+        "grain_kamut": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Ancient Khorasan wheat adds a rich golden color and sweet flavor. Absorbs liquid slowly, demanding patience during mixing."
+        },
+        "grain_rye": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Savory rye grass grain that introduces high pentosans and complex earthy sweetness. Expect sticky handling and a tight, moist crumb."
+        },
+        # Tools
+        "stand_mixer": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Develops gluten rapidly but introduces planetary friction heat. A machine can easily handle this step, but watch internal temperatures."
+        },
+        "bread_machine": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Enclosed, high-friction kneader. Convenient for zero-effort development but risks over-warming yeast and restricting airy rise."
+        },
+        "food_processor": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Intense blade shearing forces rapid hydration and gluten alignment. Great for quick pie crusts or biscuits, but easy to over-mix."
+        },
+        "hand_beaters": {
+            "labor_roi": "Low Priority / Effortless Texture Shift",
+            "last_10_percent_analysis": "Light whipping beaters are perfect for aerating eggs and creamed fat. A machine is highly recommended here to build micro-bubbles."
+        },
+        "whisk": {
+            "labor_roi": "Low Priority / Effortless Texture Shift",
+            "last_10_percent_analysis": "Manual whisking is perfect for aerating pancake or cake batters. Requires minimal physical effort while keeping gluten developer low."
+        },
+        "spatula_bowl": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Zero-friction manual mixing is critical for delicate batters. Using a hand spatula prevents gluten development, preserving short tenderness."
+        },
+        # Actions
+        "knead": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Kneading develops the structural gluten matrix needed to trap gas and support oven spring. Highly worth the effort for crusty loaves."
+        },
+        "cream": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Creaming traps microscopic air bubbles inside the fat phase, creating the tender crumb of cookies and cakes. Essential for proper rise."
+        },
+        "fold": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Gentle folding layers the dough and develops structure without degassing. Crucial for retaining large, irregular open crumb cells."
+        },
+        "cut_in": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Distributing cold fat pieces throughout dry flour creates flat butter pockets. Crucial for baking flaky, laminated scone and pastry layers."
+        },
+        "sheet": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Sheeting aligns gluten strands uniformly, allowing dough to stretch paper-thin without puncturing. Critical for laminated pastry layers."
+        },
+        "extrude": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Forcing dense dough through shaped dies under pressure. Commercial dies are highly efficient, but manual extrusion yields a rougher sauce-binding surface."
+        },
+        # Environments
+        "ambient": {
+            "labor_roi": "Low Priority / Effortless Texture Shift",
+            "last_10_percent_analysis": "Countertop proofing provides a steady, natural rise at room temperature. Safe and consistent, requiring minimal intervention."
+        },
+        "mat": {
+            "labor_roi": "Low Priority / Effortless Texture Shift",
+            "last_10_percent_analysis": "A heated mat speeds up yeast activity by warming the bowl bottom. Saves time but can result in uneven fermentation temperatures."
+        },
+        "box": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Warm, humid enclosed chamber prevents the dough surface from drying out. Ensures a uniform rise and excellent crust browning."
+        },
+        "refrigerator": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Cold retardation solidifies butter fats and allows active enzymes to release sugars. Essential for creating complex flavors and deep blisters."
+        },
+        "bench_rest": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Relaxing the gluten matrix prevents dough from snapping back during final shaping, guaranteeing uniform size and structure."
+        },
+        # Form Factors
+        "cast-iron-dutch-oven": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Retains intense heat and traps steam released from the dough. Ensures optimal starch gelatinization and maximum oven spring."
+        },
+        "open-baking-stone-steel": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Transfers heat instantly to the bottom of the dough. Crucial for a crisp bottom crust and rapid gas expansion in hearth loaves."
+        },
+        "standard-9x5-pan": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Forces the dough to rise vertically by restricting lateral expansion. Great for soft sandwich breads, but has low structural ROI."
+        },
+        "perforated-baking-sheet": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Enables even heat circulation and steam escape around portioned dough, forming the signature shiny crust of bagels and pretzels."
+        },
+        # Substitutions
+        "butter": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Solid butter contains 18% water, which turns to steam and creates tiny layers during baking. Crucial for a flaky, melting texture."
+        },
+        "unsalted_butter": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Unsalted solid butter allows precise control over salt while providing emulsified dairy fats for a tender crumb."
+        },
+        "salted_butter": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Salted butter adds dairy fats but introduces unmeasured salt, which can interfere with yeast activity or gluten tightening."
+        },
+        "olive_oil": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Liquid fats coat gluten strands completely, producing an exceptionally extensible dough and a moist, long-lasting tender crumb."
+        },
+        "canola_oil": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Provides pure liquid fat to tenderize dough without contributing any flavor. Great for neutral cakes or flatbreads."
+        },
+        "vegetable_oil": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Neutral liquid fat that remains fluid at room temperature, keeping the baked crumb soft and preventing staleness."
+        },
+        "whole_milk": {
+            "labor_roi": "High Priority / Worth the Extra Step",
+            "last_10_percent_analysis": "Milk sugars (lactose) and fats soften gluten networks, creating a highly tender sandwich slice with deep golden crust browning."
+        },
+        "almond_milk": {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "Nut proteins and water substitute standard liquid. Lacks the tenderizing fats of dairy milk, yielding a slightly tougher bake."
+        }
+    }
+    
+    # Try querying Gemma if AI is active and enabled
+    ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
+    insight = None
+    if ai_enabled:
+        try:
+            insight = gemma_client.get_sidebar_insight_ai(element, category_slug, preset_slug)
+        except Exception as e:
+            logger.error(f"[AI] - Sidebar - Failed querying Gemma: {e}")
+            
+    if not insight:
+        # Fall back to our clean local dictionary mapping
+        insight = fallbacks.get(element, {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
+        })
+        
+    return JsonResponse(insight)
+
+
 
