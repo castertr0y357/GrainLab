@@ -9,7 +9,7 @@
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     
-    global_ai_enabled: false,
+    global_ai_enabled: {% if ai_enabled %}true{% else %}false{% endif %},
     hovered_element: null,
     sidebar_insight_loading: false,
     sidebar_labor_roi: '',
@@ -118,6 +118,19 @@
             }
         }
         return 'Factual profile description currently compiling. Evaluates starch/lipid interaction, gluten density ceiling, or thermal absorption properties relative to the active engine.';
+    },
+
+    getHoveredGrainEval() {
+        if (!this.hovered_element || !this.hovered_element.startsWith('grain_')) {
+            return null;
+        }
+        const key = this.hovered_element.toLowerCase().replace('grain_', '');
+        const berry = this.activeBerries.find(b => {
+            const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            return bNameSlug.includes(key) || key.includes(bNameSlug);
+        });
+        if (!berry) return null;
+        return this.grainEvaluations.find(e => e.grain_id === berry.id);
     },
     
     /* Auto-correction and warning computed on client side */
@@ -781,83 +794,6 @@
                     [ Recipe Target: <span x-text="presetName"></span> <span x-show="presetModified" style="color: var(--warning); font-size: 0.8rem; text-transform: uppercase; margin-left: 0.25rem;">(Modified)</span> ]
                 </div>
                 
-                <!-- Phase 2 Recommendations -->
-                <div x-show="current_phase === 2 && grain_mode === 'milled' && !hovered_element" x-transition>
-                    <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1.5rem;">
-                        <h3 style="color: var(--accent); margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
-                            🤖 AI Grain Advisory Details
-                        </h3>
-                        
-                        <!-- Loading State -->
-                        <div x-show="advisoryLoading" style="display: flex; align-items: center; gap: 0.75rem; justify-content: center; padding: 4rem 0;">
-                            <span class="spinner" style="width: 20px; height: 20px;"></span>
-                            <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;" x-text="advisoryLoadingMessage"></span>
-                        </div>
-                        
-                        <!-- Empty Placeholder -->
-                        <div x-show="!advisoryLoading && grainEvaluations.length === 0" style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; text-align: center; padding: 4rem 0;">
-                            Awaiting grain profile initialization...
-                        </div>
-                        
-                        <!-- 3-Tier Dynamic Advisory List in Sidebar -->
-                        <div x-show="!advisoryLoading && grainEvaluations.length > 0" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
-                            <!-- Recommended Card -->
-                            <div style="border: 1px solid #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); padding: 1rem; border-radius: var(--radius-sm); background: rgba(255, 215, 0, 0.01);">
-                                <span style="color: #ffc107; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.75rem;">
-                                    [ RECOMMENDED STOCK ]
-                                </span>
-                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <template x-for="eval in grainEvaluations.filter(e => e.tier === 'recommended')">
-                                        <div>
-                                            <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;" x-text="getGrainNameById(eval.grain_id)"></strong>
-                                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="eval.reasoning"></p>
-                                        </div>
-                                    </template>
-                                    <template x-if="grainEvaluations.filter(e => e.tier === 'recommended').length === 0">
-                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; font-style: italic;">No recommended grains in current inventory.</p>
-                                    </template>
-                                </div>
-                            </div>
-                            
-                            <!-- Sub-Optimal Card (Standard card styling, no gold/red glow borders) -->
-                            <div style="border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.01);">
-                                <span style="color: #9e9e9e; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.75rem;">
-                                    [ SUB-OPTIMAL STOCK ]
-                                </span>
-                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <template x-for="eval in grainEvaluations.filter(e => e.tier === 'sub-optimal')">
-                                        <div>
-                                            <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;" x-text="getGrainNameById(eval.grain_id)"></strong>
-                                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="eval.reasoning"></p>
-                                        </div>
-                                    </template>
-                                    <template x-if="grainEvaluations.filter(e => e.tier === 'sub-optimal').length === 0">
-                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; font-style: italic;">No sub-optimal grains in current inventory.</p>
-                                    </template>
-                                </div>
-                            </div>
-                            
-                            <!-- Not Recommended Card -->
-                            <div style="border: 1px solid rgba(220, 53, 69, 0.4); box-shadow: 0 0 8px rgba(220, 53, 69, 0.15); padding: 1rem; border-radius: var(--radius-sm); background: rgba(220, 53, 69, 0.01);">
-                                <span style="color: var(--danger); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.75rem;">
-                                    [ NOT RECOMMENDED STOCK ]
-                                </span>
-                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <template x-for="eval in grainEvaluations.filter(e => e.tier === 'not-recommended')">
-                                        <div>
-                                            <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;" x-text="getGrainNameById(eval.grain_id)"></strong>
-                                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="eval.reasoning"></p>
-                                        </div>
-                                    </template>
-                                    <template x-if="grainEvaluations.filter(e => e.tier === 'not-recommended').length === 0">
-                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; font-style: italic;">No high risk grains in current inventory.</p>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Contextual Sidebar Inspector (Active on Hover/Focus) -->
                 <div x-show="hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: 100%;">
                     
@@ -870,6 +806,37 @@
                             Element: <span x-text="hovered_element.replace('grain_', '').replace(/_/g, ' ')"></span>
                         </div>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="getFactualProfile()"></p>
+                        
+                        <!-- Dynamic Grain Advisory (only shown when hovering/focusing a grain and evaluation is present) -->
+                        <template x-if="getHoveredGrainEval()">
+                            <div style="margin-top: 1rem; padding: 1rem; border-radius: var(--radius-sm); border-width: 2px;"
+                                 :style="
+                                    getHoveredGrainEval().tier === 'recommended' 
+                                        ? 'border: 2px solid #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); background: rgba(255, 215, 0, 0.02);' 
+                                        : getHoveredGrainEval().tier === 'not-recommended'
+                                        ? 'border: 2px solid rgba(220, 53, 69, 0.4); box-shadow: 0 0 8px rgba(220, 53, 69, 0.15); background: rgba(220, 53, 69, 0.02);'
+                                        : 'border: 2px solid var(--border); background: rgba(255, 255, 255, 0.01);'
+                                 ">
+                                <span style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;"
+                                      :style="
+                                         getHoveredGrainEval().tier === 'recommended' 
+                                             ? 'color: #ffc107;' 
+                                             : getHoveredGrainEval().tier === 'not-recommended'
+                                             ? 'color: var(--danger);'
+                                             : 'color: #9e9e9e;'
+                                      "
+                                      x-text="
+                                         getHoveredGrainEval().tier === 'recommended'
+                                             ? '[ RECOMMENDED STOCK ]'
+                                             : getHoveredGrainEval().tier === 'not-recommended'
+                                             ? '[ NOT RECOMMENDED STOCK ]'
+                                             : '[ SUB-OPTIMAL STOCK ]'
+                                      ">
+                                </span>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" 
+                                   x-text="getHoveredGrainEval().reasoning"></p>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Panel B: Pragmatic Magic Layer (AIInsightCard) -->
