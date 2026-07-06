@@ -76,6 +76,11 @@
                 this.presetModified = false;
             }
         });
+        this.$watch('selected_master', value => {
+            if (value && value !== 'null') {
+                this.fetchAdvisory(this.presetSlug);
+            }
+        });
         this.$watch('grain_mode', value => {
             if (value === 'milled') {
                 this.selectIdealGrain();
@@ -84,7 +89,7 @@
         if (this.grain_mode === 'milled') {
             this.selectIdealGrain();
         }
-        if (this.presetSlug) {
+        if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
             this.fetchAdvisory(this.presetSlug);
         }
         document.body.addEventListener('htmx:afterSwap', (e) => {
@@ -100,7 +105,7 @@
     },
 
     fetchAdvisory(slug) {
-        if (!slug) {
+        if (!slug && (!this.selected_master || this.selected_master === 'null')) {
             this.resetAdvisory();
             return;
         }
@@ -124,7 +129,12 @@
             this.advisoryLoadingMessage = messages[idx];
         }, 750);
 
-        fetch('/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug))
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug || '');
+        if (this.selected_master && this.selected_master !== 'null') {
+            url += '&category_slug=' + encodeURIComponent(this.selected_master);
+        }
+
+        fetch(url)
             .then(res => res.json())
             .then(data => {
                 this.grainEvaluations = data.grain_evaluations || [];

@@ -411,7 +411,7 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     return None
 
 
-def get_grain_advisory_ai(preset_slug: str) -> dict | None:
+def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict | None:
     """
     Submits a prompt to Gemma asking for evaluation of available kitchen inventory.
     """
@@ -420,9 +420,8 @@ def get_grain_advisory_ai(preset_slug: str) -> dict | None:
         from grainlab.engines import router
         import json
         
-        preset = BreadPreset.objects.filter(slug=preset_slug).first()
-        category_slug = None
-        if preset and preset.dough_category:
+        preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
+        if not category_slug and preset and preset.dough_category:
             category_slug = preset.dough_category.slug
         engine = router.get_engine_for_preset(preset_slug, category_slug)
         
@@ -483,7 +482,7 @@ def get_grain_advisory_ai(preset_slug: str) -> dict | None:
     return None
 
 
-def get_local_grain_advisory(preset_slug: str) -> dict:
+def get_local_grain_advisory(preset_slug: str, category_slug: str = None) -> dict:
     """
     Local fallback logic performing programmatic evaluation of kitchen inventory 
     using the active sub-engine heuristics.
@@ -491,9 +490,8 @@ def get_local_grain_advisory(preset_slug: str) -> dict:
     from apps.core.models import WheatBerry, BreadPreset
     from grainlab.engines import router
 
-    preset = BreadPreset.objects.filter(slug=preset_slug).first()
-    category_slug = None
-    if preset and preset.dough_category:
+    preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
+    if not category_slug and preset and preset.dough_category:
         category_slug = preset.dough_category.slug
     engine = router.get_engine_for_preset(preset_slug, category_slug)
 

@@ -867,25 +867,27 @@ def task_status(request: HttpRequest, task_id: uuid.UUID) -> HttpResponse:
 
 def ai_grain_advisory(request):
     """
-    Returns dynamic recommendation and warning details for the requested preset.
+    Returns dynamic recommendation and warning details for the requested preset or category.
     """
     from django.http import JsonResponse
     from apps.core import gemma_client
     
     preset_slug = request.GET.get("preset_slug", "").strip()
-    if not preset_slug:
+    category_slug = request.GET.get("category_slug", "").strip()
+    
+    if not preset_slug and not category_slug:
         return JsonResponse({
             "grain_evaluations": []
         })
         
     advisory = None
     try:
-        advisory = gemma_client.get_grain_advisory_ai(preset_slug)
+        advisory = gemma_client.get_grain_advisory_ai(preset_slug, category_slug)
     except Exception as e:
         logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
         
     if not advisory:
-        advisory = gemma_client.get_local_grain_advisory(preset_slug)
+        advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug)
         
     return JsonResponse(advisory)
 
