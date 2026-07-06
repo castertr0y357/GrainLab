@@ -231,10 +231,10 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
             {% for category in categories %}
                 <div class="card" 
-                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 100px; transition: var(--transition); margin-bottom: 0;"
-                     :style="selected_master === '{{ category.slug }}' ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''"
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === '{{ category.slug }}' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === '{{ category.slug }}' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
                      @click="selected_master = '{{ category.slug }}';">
-                    <span style="font-size: 2rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
                         {% if category.slug == 'lean-crusty' %}🌾
                         {% elif category.slug == 'enriched-soft' %}🍞
                         {% elif category.slug == 'alkaline-bath' %}🥨
@@ -249,7 +249,7 @@
                         {% else %}🍞
                         {% endif %}
                     </span>
-                    <strong style="font-size: 1rem; color: var(--text-primary);">{{ category.name }}</strong>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">{{ category.name }}</strong>
                 </div>
             {% endfor %}
         </div>
