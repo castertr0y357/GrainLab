@@ -14,6 +14,7 @@ class HearthEngine(BaseEngine):
         "permissible_action_types": ["knead", "fold"],
         "environmental_rest_strategy": "gas_proofing",
     }
+    secondary_ingredients = {}
 
     permissible_form_factors = {
         "cast-iron-dutch-oven": {

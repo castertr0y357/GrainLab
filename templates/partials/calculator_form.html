@@ -17,6 +17,9 @@
           category_slug: '{{ selected_category.slug|default:"lean-crusty" }}',
           custom_mixer: 'static',
           mixing_method: 'stand_mixer',
+          secondary_lipid: 'unsalted_butter',
+          secondary_liquid: 'pure_water',
+          secondary_binder: 'none',
           proofing_environment: 'ambient',
           mill_type: 'stoneground',
           form_factor_val: '{{ selected_form_factor.slug|default:"standard-9x5-pan" }}',
@@ -129,7 +132,7 @@
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });
           $watch('editor_mode', value => { if (value === 'standard') { if (subOriginal === 'fat' && !['none', 'butter'].includes(subSubstitute)) { subSubstitute = 'none'; } } });
-           $watch('selected_master', val => {
+          $watch('selected_master', val => {
               category_slug = val;
               const keys = Object.keys(engines_ff[val]?.permissible_form_factors || {});
               if (keys.length > 0) {
@@ -138,6 +141,12 @@
                   portioned = engines_ff[val].permissible_form_factors[keys[0]].is_portioned;
               }
               yield_scale = 1.0;
+              
+              // Reset secondary ingredients based on new active engine defaults
+              const sec = engines_ff[val]?.secondary_ingredients || {};
+              secondary_lipid = sec.lipids?.default || 'unsalted_butter';
+              secondary_liquid = sec.liquids?.default || 'pure_water';
+              secondary_binder = sec.binders?.default || 'none';
               
               // Reset action & environment to defaults based on profile
               const profile = engines_ff[val]?.production_profile || {};
@@ -501,6 +510,71 @@
                         <p style="font-size: 0.85rem; margin: 0; color: var(--text-primary); line-height: 1.4;">
                             Minimal folding threshold active. Use zero-friction tools only (Manual Spatula & Bowl) to prevent accidental gluten development and preserve tender structures.
                         </p>
+                    </div>
+
+                    <!-- Secondary Ingredient Configuration Deck -->
+                    <div x-show="engines_ff[selected_master]?.secondary_ingredients && Object.keys(engines_ff[selected_master].secondary_ingredients).length > 0"
+                         style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                        <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Secondary Ingredient Configuration Deck</h4>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Lipids Selector -->
+                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.lipids" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
+                                <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
+                                <div class="pill-btn-group">
+                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || [])" :key="option">
+                                        <button type="button"
+                                                class="pill-btn"
+                                                :class="secondary_lipid === option ? 'active' : ''"
+                                                @click="secondary_lipid = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                                @mouseenter="setHoveredElement(option)"
+                                                @mouseleave="clearHoveredElement()"
+                                                @focusin="setHoveredElement(option)"
+                                                @focusout="clearHoveredElement()">
+                                            <span x-text="option.replace(/_/g, ' ')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Liquids Selector -->
+                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.liquids" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Liquid Medium Selection</label>
+                                <input type="hidden" name="secondary_liquid" :value="secondary_liquid">
+                                <div class="pill-btn-group">
+                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || [])" :key="option">
+                                        <button type="button"
+                                                class="pill-btn"
+                                                :class="secondary_liquid === option ? 'active' : ''"
+                                                @click="secondary_liquid = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                                @mouseenter="setHoveredElement(option)"
+                                                @mouseleave="clearHoveredElement()"
+                                                @focusin="setHoveredElement(option)"
+                                                @focusout="clearHoveredElement()">
+                                            <span x-text="option.replace(/_/g, ' ')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Binders Selector -->
+                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.binders" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Binder Selection</label>
+                                <input type="hidden" name="secondary_binder" :value="secondary_binder">
+                                <div class="pill-btn-group">
+                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || [])" :key="option">
+                                        <button type="button"
+                                                class="pill-btn"
+                                                :class="secondary_binder === option ? 'active' : ''"
+                                                @click="secondary_binder = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                                @mouseenter="setHoveredElement(option)"
+                                                @mouseleave="clearHoveredElement()"
+                                                @focusin="setHoveredElement(option)"
+                                                @focusout="clearHoveredElement()">
+                                            <span x-text="option.replace(/_/g, ' ')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Contextual Action deck -->

@@ -27,7 +27,8 @@ def get_engines_ff_json() -> str:
         # We need clean python dictionary to serialize
         engines_ff_data[cat_slug] = {
             "permissible_form_factors": getattr(engine, "permissible_form_factors", {}),
-            "production_profile": getattr(engine, "production_profile", {})
+            "production_profile": getattr(engine, "production_profile", {}),
+            "secondary_ingredients": getattr(engine, "secondary_ingredients", {})
         }
     return json.dumps(engines_ff_data)
 
@@ -310,6 +311,10 @@ def calculate_recipe_ajax(request):
                 fat_pct = max(0.0, fat_pct + offset.get("fat_offset_pct", 0.0))
                 sugar_pct = max(0.0, sugar_pct + offset.get("sugar_offset_pct", 0.0))
                 
+        secondary_lipid = request.POST.get("secondary_lipid") or None
+        secondary_liquid = request.POST.get("secondary_liquid") or None
+        secondary_binder = request.POST.get("secondary_binder") or None
+
         recipe = bakers_math.calculate_recipe(
             base_hydration=hydration_pct,
             base_fat=fat_pct,
@@ -330,7 +335,10 @@ def calculate_recipe_ajax(request):
             friction_override=friction_override,
             preset_slug=preset_slug,
             preset_name=preset_name,
-            category_slug=cat.slug
+            category_slug=cat.slug,
+            secondary_lipid=secondary_lipid,
+            secondary_liquid=secondary_liquid,
+            secondary_binder=secondary_binder
         )
         
         # Override AI explanations if AI offsets were loaded
@@ -1056,8 +1064,8 @@ def ai_sidebar_insight(request):
                 "last_10_percent_analysis": "Allows precise control over salt while providing dairy fats to tenderize the loaf crumb."
             },
             "salted_butter": {
-                "labor_roi": "Low Priority / Minor Textural Return",
-                "last_10_percent_analysis": "Salted butter adds dairy fats but introduces unmeasured salt, which can interfere with yeast activity or gluten tightening."
+                "labor_roi": "Seamless Math Adjustment",
+                "last_10_percent_analysis": "Salted butter detected. The engine has automatically reduced the standalone fine sea salt weight by 1.5% of the total butter mass to maintain perfect flavor balance and prevent over-seasoning your cookie crumb."
             },
             "olive_oil": {
                 "labor_roi": "High Priority / Worth the Extra Step",
@@ -1072,12 +1080,48 @@ def ai_sidebar_insight(request):
                 "last_10_percent_analysis": "Softens the crumb structure and extends shelf life by preventing retrogradation (staling)."
             },
             "whole_milk": {
-                "labor_roi": "High Priority / Worth the Extra Step",
-                "last_10_percent_analysis": "Milk sugars (lactose) and fats soften gluten networks, creating a highly tender sandwich slice with deep golden crust browning."
+                "labor_roi": "Sub-Optimal Crumb Shift",
+                "last_10_percent_analysis": "Swapping water for milk introduces lactose and dairy fats to a lean hearth dough. This will cause the crust to brown significantly faster in the oven and will soften the traditional crisp, open-cell artisan chew into a sandwich-style crumb."
             },
             "almond_milk": {
                 "labor_roi": "Low Priority / Minor Textural Return",
                 "last_10_percent_analysis": "Nut proteins and water substitute standard liquid. Lacks the tenderizing fats of dairy milk, yielding a slightly tougher bake."
+            },
+            "coconut_oil": {
+                "labor_roi": "Low Priority / Flavor Shift",
+                "last_10_percent_analysis": "Coconut oil provides a clean, plant-based solid lipid profile. It solidifies at cooler room temperatures, imparting a faint tropical aroma."
+            },
+            "avocado_oil": {
+                "labor_roi": "Low Priority / Effortless Texture Shift",
+                "last_10_percent_analysis": "Avocado oil is a neutral liquid lipid that remains fluid at room temperature. It coats gluten strands completely to produce an incredibly soft, moist, and long-lasting crumb."
+            },
+            "pure_water": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "Pure water provides clean, zero-interference hydration. It is the absolute optimal choice for lean hearth loaves to keep the crumb airy and the crust crispy."
+            },
+            "heavy_cream": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Heavy cream adds immense dairy fat richness (37% fat) and milk sugars. It tenderizes the crumb dramatically, yielding an ultra-soft slice at the cost of some oven rise."
+            },
+            "buttermilk": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Buttermilk introduces active lactic acidity. This chemically tenderizes the gluten matrix and triggers chemical leavening reactions, yielding an exceptionally tender crumb."
+            },
+            "none": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "No binder selected. The recipe relies purely on the gluten network and hydration matrix to establish structural integrity."
+            },
+            "whole_eggs": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Whole eggs contribute fat, moisture, and lecithin emulsifiers. They bind the structure together and promote rich browning and a soft, custard-like crumb."
+            },
+            "egg_whites": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Egg whites contribute pure albumin protein and hydration. They dry and solidify during baking, creating a taller, lighter, and crisper crust structure."
+            },
+            "aquafaba_vegan": {
+                "labor_roi": "Critical Structural Risk",
+                "last_10_percent_analysis": "Choux paste relies completely on the intense protein coagulation and water-binding capacity of whole egg lipids to hold its hollow balloon shape. Substituting a vegan binder here introduces a massive inflation failure risk; the shells will likely collapse into flat discs."
             }
         }
     elif group == "sweet_tender":
@@ -1211,8 +1255,8 @@ def ai_sidebar_insight(request):
                 "last_10_percent_analysis": "Unsalted solid butter allows precise control over salt while providing emulsified dairy fats for a tender crumb."
             },
             "salted_butter": {
-                "labor_roi": "Low Priority / Minor Textural Return",
-                "last_10_percent_analysis": "Adds fat and richness, but the unmeasured salt can affect delicate flavors or egg white stability."
+                "labor_roi": "Seamless Math Adjustment",
+                "last_10_percent_analysis": "Salted butter detected. The engine has automatically reduced the standalone fine sea salt weight by 1.5% of the total butter mass to maintain perfect flavor balance and prevent over-seasoning your cookie crumb."
             },
             "olive_oil": {
                 "labor_roi": "High Priority / Worth the Extra Step",
@@ -1233,6 +1277,42 @@ def ai_sidebar_insight(request):
             "almond_milk": {
                 "labor_roi": "Low Priority / Minor Textural Return",
                 "last_10_percent_analysis": "Acts as a dairy-free liquid substitute. Lacks milk fats, yielding a slightly drier and more open crumb."
+            },
+            "coconut_oil": {
+                "labor_roi": "Low Priority / Flavor Shift",
+                "last_10_percent_analysis": "Coconut oil provides a clean, plant-based solid lipid profile. It solidifies at cooler room temperatures, imparting a faint tropical aroma."
+            },
+            "avocado_oil": {
+                "labor_roi": "Low Priority / Effortless Texture Shift",
+                "last_10_percent_analysis": "Avocado oil is a neutral liquid lipid that remains fluid at room temperature. It coats gluten strands completely to produce an incredibly soft, moist, and long-lasting crumb."
+            },
+            "pure_water": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "Pure water provides clean, zero-interference hydration. It is the absolute optimal choice for lean hearth loaves to keep the crumb airy and the crust crispy."
+            },
+            "heavy_cream": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Heavy cream adds immense dairy fat richness (37% fat) and milk sugars. It tenderizes the crumb dramatically, yielding an ultra-soft slice at the cost of some oven rise."
+            },
+            "buttermilk": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Buttermilk introduces active lactic acidity. This chemically tenderizes the gluten matrix and triggers chemical leavening reactions, yielding an exceptionally tender crumb."
+            },
+            "none": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "No binder selected. The recipe relies purely on the gluten network and hydration matrix to establish structural integrity."
+            },
+            "whole_eggs": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Whole eggs contribute fat, moisture, and lecithin emulsifiers. They bind the structure together and promote rich browning and a soft, custard-like crumb."
+            },
+            "egg_whites": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Egg whites contribute pure albumin protein and hydration. They dry and solidify during baking, creating a taller, lighter, and crisper crust structure."
+            },
+            "aquafaba_vegan": {
+                "labor_roi": "Critical Structural Risk",
+                "last_10_percent_analysis": "Choux paste relies completely on the intense protein coagulation and water-binding capacity of whole egg lipids to hold its hollow balloon shape. Substituting a vegan binder here introduces a massive inflation failure risk; the shells will likely collapse into flat discs."
             }
         }
     elif group == "pasta":
@@ -1366,8 +1446,8 @@ def ai_sidebar_insight(request):
                 "last_10_percent_analysis": "Not a standard pasta component; fat is typically provided by egg yolks."
             },
             "salted_butter": {
-                "labor_roi": "Low Priority / Minor Textural Return",
-                "last_10_percent_analysis": "Not recommended; eggs and flour are standard."
+                "labor_roi": "Seamless Math Adjustment",
+                "last_10_percent_analysis": "Salted butter detected. The engine has automatically reduced the standalone fine sea salt weight by 1.5% of the total butter mass to maintain perfect flavor balance and prevent over-seasoning your cookie crumb."
             },
             "olive_oil": {
                 "labor_roi": "High Priority / Worth the Extra Step",
@@ -1388,6 +1468,42 @@ def ai_sidebar_insight(request):
             "almond_milk": {
                 "labor_roi": "Low Priority / Minor Textural Return",
                 "last_10_percent_analysis": "Not used."
+            },
+            "coconut_oil": {
+                "labor_roi": "Low Priority / Flavor Shift",
+                "last_10_percent_analysis": "Coconut oil provides a clean, plant-based solid lipid profile. It solidifies at cooler room temperatures, imparting a faint tropical aroma."
+            },
+            "avocado_oil": {
+                "labor_roi": "Low Priority / Effortless Texture Shift",
+                "last_10_percent_analysis": "Avocado oil is a neutral liquid lipid that remains fluid at room temperature. It coats gluten strands completely to produce an incredibly soft, moist, and long-lasting crumb."
+            },
+            "pure_water": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "Pure water provides clean, zero-interference hydration. It is the optimal choice for lean hearth loaves to keep the crumb airy and the crust crispy."
+            },
+            "heavy_cream": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Heavy cream adds immense dairy fat richness (37% fat) and milk sugars. It tenderizes the crumb dramatically, yielding an ultra-soft slice at the cost of some oven rise."
+            },
+            "buttermilk": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Buttermilk introduces active lactic acidity. This chemically tenderizes the gluten matrix and triggers chemical leavening reactions, yielding an exceptionally tender crumb."
+            },
+            "none": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "No binder selected. The recipe relies purely on the gluten network and hydration matrix to establish structural integrity."
+            },
+            "whole_eggs": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Whole eggs contribute fat, moisture, and lecithin emulsifiers. They bind the structure together and promote rich browning and a soft, custard-like crumb."
+            },
+            "egg_whites": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Egg whites contribute pure albumin protein and hydration. They dry and solidify during baking, creating a taller, lighter, and crisper crust structure."
+            },
+            "aquafaba_vegan": {
+                "labor_roi": "Critical Structural Risk",
+                "last_10_percent_analysis": "Choux paste relies completely on the intense protein coagulation and water-binding capacity of whole egg lipids to hold its hollow balloon shape. Substituting a vegan binder here introduces a massive inflation failure risk; the shells will likely collapse into flat discs."
             }
         }
     

@@ -14,6 +14,19 @@ class PastaEngine(BaseEngine):
         "permissible_action_types": ["knead", "sheet", "extrude"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
+    secondary_ingredients = {
+        "liquids": {
+            "default": "pure_water",
+            "options": ["pure_water", "whole_milk", "heavy_cream", "buttermilk"],
+            "math_modifiers": {
+                "buttermilk": { "trigger_chemical_leavening_acid_flag": True }
+            }
+        },
+        "binders": {
+            "default": "whole_eggs",
+            "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]
+        }
+    }
 
     permissible_form_factors = {
         "mechanical-sheeter": {

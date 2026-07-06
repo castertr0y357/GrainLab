@@ -103,6 +103,36 @@ class BakersMathTests(TestCase):
         self.assertLess(recipe["effective_sugar_pct"], 8.0)
         self.assertEqual(recipe["liquid_label"], "Whole Milk")
 
+    def test_secondary_ingredients_math(self):
+        """
+        Verify that secondary ingredients (salted butter, buttermilk, egg binders)
+        apply correct math modifiers to salt, fat, hydration, and binders.
+        """
+        # Test Salted Butter: should reduce salt weight by 1.5% of butter mass
+        recipe_salted = bakers_math.calculate_recipe(
+            base_hydration=0.50,
+            base_fat=0.20,
+            base_sugar=0.10,
+            target_mass=1000.0,
+            secondary_lipid="salted_butter",
+            preset_slug="cookies"
+        )
+        self.assertAlmostEqual(recipe_salted["added_butter"], 139.7, places=1)
+        self.assertAlmostEqual(recipe_salted["salt_weight"], 9.1, places=1)
+
+        # Test Buttermilk + whole eggs binder
+        recipe_buttermilk_egg = bakers_math.calculate_recipe(
+            base_hydration=0.60,
+            base_fat=0.10,
+            base_sugar=0.05,
+            target_mass=1000.0,
+            secondary_liquid="buttermilk",
+            secondary_binder="whole_eggs",
+            preset_slug="cookies"
+        )
+        self.assertTrue(recipe_buttermilk_egg["added_eggs"] > 0)
+        self.assertEqual(recipe_buttermilk_egg["liquid_label"], "Buttermilk")
+
 
 class ClassifierEngineTests(TestCase):
     """

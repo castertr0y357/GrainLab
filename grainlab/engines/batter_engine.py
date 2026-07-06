@@ -14,6 +14,26 @@ class BatterEngine(BaseEngine):
         "permissible_action_types": ["cream", "fold"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
+    secondary_ingredients = {
+        "lipids": {
+            "default": "unsalted_butter",
+            "options": ["unsalted_butter", "salted_butter", "coconut_oil", "avocado_oil"],
+            "math_modifiers": {
+                "salted_butter": { "target_target": "salt", "subtract_percentage": 0.015 }
+            }
+        },
+        "liquids": {
+            "default": "pure_water",
+            "options": ["pure_water", "whole_milk", "heavy_cream", "buttermilk"],
+            "math_modifiers": {
+                "buttermilk": { "trigger_chemical_leavening_acid_flag": True }
+            }
+        },
+        "binders": {
+            "default": "none",
+            "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]
+        }
+    }
 
     permissible_form_factors = {
         "straight-sided-round-tin": {

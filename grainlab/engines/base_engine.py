@@ -44,6 +44,7 @@ class BaseEngine:
         "permissible_action_types": ["knead"],
         "environmental_rest_strategy": "gas_proofing",
     }
+    secondary_ingredients = {}
 
     permissible_form_factors = {
         "standard-9x5-pan": {
@@ -275,42 +276,102 @@ class BaseEngine:
         effective_fat = base_fat
         effective_sugar = base_sugar
 
-        # 2. Deconstruct and Balance Substitutions
+        # 2. Deconstruct and Balance Secondary Ingredients & Substitutions
         sub_notes = []
-        sub_offsets = {"water": 0.0, "fat": 0.0, "sugar": 0.0}
         
-        if substitution:
-            original = substitution.get("original")
-            substitute = substitution.get("substitute")
-            
-            if original == "water" and substitute == "whole_milk":
-                sub_notes.append("Using Whole Milk instead of Water. Water and fat ratios adjusted to maintain equilibrium.")
-                milk_ratio = effective_hydration / 0.87
-                fat_excess = milk_ratio * 0.04
-                sugar_excess = milk_ratio * 0.05
-                effective_fat = max(0.0, effective_fat - fat_excess)
-                effective_sugar = max(0.0, effective_sugar - sugar_excess)
-                sub_offsets["milk_required"] = milk_ratio
+        sec_lipid = kwargs.get("secondary_lipid")
+        sec_liquid = kwargs.get("secondary_liquid")
+        sec_binder = kwargs.get("secondary_binder")
 
-            elif original == "water" and substitute == "almond_milk":
-                sub_notes.append("Using Almond Milk instead of Water. Slightly adjusted liquid ratio (+3%) to compensate for milk solids.")
-                almond_ratio = effective_hydration / 0.97
-                fat_excess = almond_ratio * 0.01
-                effective_fat = max(0.0, effective_fat - fat_excess)
-                sub_offsets["almond_milk_required"] = almond_ratio
+        # 2a. Binders Math Shifts
+        added_eggs = 0.0
+        added_egg_whites = 0.0
+        added_aquafaba = 0.0
+        binder_pct = 0.0
+        
+        if sec_binder == "whole_eggs":
+            binder_pct = 0.10
+            water_excess = 0.10 * 0.74
+            fat_excess = 0.10 * 0.12
+            effective_hydration = max(0.40, effective_hydration - water_excess)
+            effective_fat = max(0.0, effective_fat - fat_excess)
+            sub_notes.append("Whole eggs binder detected. Adjusted liquid and fat ratios to balance egg moisture/lipids.")
+        elif sec_binder == "egg_whites":
+            binder_pct = 0.10
+            water_excess = 0.10 * 0.88
+            effective_hydration = max(0.40, effective_hydration - water_excess)
+            sub_notes.append("Egg whites binder detected. Adjusted liquid ratio to balance egg white moisture.")
+        elif sec_binder == "aquafaba_vegan":
+            binder_pct = 0.10
+            water_excess = 0.10 * 0.95
+            effective_hydration = max(0.40, effective_hydration - water_excess)
+            sub_notes.append("Vegan aquafaba binder detected. Adjusted liquid ratio to balance aquafaba moisture.")
 
-            elif original == "fat" and substitute in ["butter", "salted_butter", "unsalted_butter"]:
-                sub_label = "Butter" if substitute == "butter" else ("Salted Butter" if substitute == "salted_butter" else "Unsalted Butter")
-                sub_notes.append(f"Using {sub_label} instead of pure Oil. Butter is 80% fat; increased butter weight by 25% and reduced added liquid.")
-                butter_ratio = effective_fat / 0.80
-                water_excess = butter_ratio * 0.18
-                effective_hydration = max(0.40, effective_hydration - water_excess)
-                sub_offsets["butter_required"] = butter_ratio
+        # 2b. Liquids Math Shifts
+        liquid_label = "Water"
+        
+        # Override with old substitution dropdown if present
+        if substitution and substitution.get("original") == "water":
+            sub_sub = substitution.get("substitute")
+            if sub_sub in ["whole_milk", "almond_milk"]:
+                sec_liquid = sub_sub
 
-            elif original == "fat" and substitute in ["olive_oil", "canola_oil", "vegetable_oil"]:
-                sub_label = "Olive Oil" if substitute == "olive_oil" else ("Canola Oil" if substitute == "canola_oil" else "Vegetable Oil")
-                sub_notes.append(f"Using {sub_label} instead of pure Oil. Direct 1:1 fat replacement applied.")
-                sub_offsets["oil_required"] = effective_fat
+        if sec_liquid == "whole_milk":
+            milk_ratio = effective_hydration / 0.87
+            fat_excess = milk_ratio * 0.04
+            sugar_excess = milk_ratio * 0.05
+            effective_fat = max(0.0, effective_fat - fat_excess)
+            effective_sugar = max(0.0, effective_sugar - sugar_excess)
+            liquid_label = "Whole Milk"
+            sub_notes.append("Whole Milk liquid medium detected. Water, fat, and sugar ratios balanced.")
+        elif sec_liquid == "heavy_cream":
+            cream_ratio = effective_hydration / 0.57
+            fat_excess = cream_ratio * 0.37
+            sugar_excess = cream_ratio * 0.03
+            effective_fat = max(0.0, effective_fat - fat_excess)
+            effective_sugar = max(0.0, effective_sugar - sugar_excess)
+            liquid_label = "Heavy Cream"
+            sub_notes.append("Heavy Cream liquid medium detected. Water, fat, and sugar ratios balanced.")
+        elif sec_liquid == "buttermilk":
+            buttermilk_ratio = effective_hydration / 0.90
+            fat_excess = buttermilk_ratio * 0.01
+            sugar_excess = buttermilk_ratio * 0.04
+            effective_fat = max(0.0, effective_fat - fat_excess)
+            effective_sugar = max(0.0, effective_sugar - sugar_excess)
+            liquid_label = "Buttermilk"
+            sub_notes.append("Buttermilk liquid medium detected. Chemical leavening acid flag triggered.")
+        elif sec_liquid == "almond_milk":
+            almond_ratio = effective_hydration / 0.97
+            fat_excess = almond_ratio * 0.01
+            effective_fat = max(0.0, effective_fat - fat_excess)
+            liquid_label = "Almond Milk"
+            sub_notes.append("Almond Milk liquid medium detected. Ratios balanced.")
+
+        # 2c. Lipids Math Shifts
+        added_butter = 0.0
+        added_oil = 0.0
+        fat_substitute_label = None
+
+        # Override with old substitution dropdown if present
+        if substitution and substitution.get("original") == "fat":
+            sub_sub = substitution.get("substitute")
+            if sub_sub in ["butter", "salted_butter", "unsalted_butter", "olive_oil", "canola_oil", "vegetable_oil"]:
+                sec_lipid = sub_sub
+                if sec_lipid == "butter":
+                    sec_lipid = "unsalted_butter"
+
+        if sec_lipid in ["unsalted_butter", "salted_butter"]:
+            butter_ratio = effective_fat / 0.80
+            water_excess = butter_ratio * 0.18
+            effective_hydration = max(0.40, effective_hydration - water_excess)
+            fat_substitute_label = "Salted Butter" if sec_lipid == "salted_butter" else "Unsalted Butter"
+            sub_notes.append(f"Using {fat_substitute_label} fat medium. Butter is 80% fat; increased fat weight by 25% and reduced added liquid.")
+        elif sec_lipid in ["coconut_oil", "avocado_oil"]:
+            fat_substitute_label = "Coconut Oil" if sec_lipid == "coconut_oil" else "Avocado Oil"
+            sub_notes.append(f"Using {fat_substitute_label} fat medium. Direct 1:1 fat replacement applied.")
+        elif sec_lipid in ["olive_oil", "canola_oil", "vegetable_oil"]:
+            fat_substitute_label = "Olive Oil" if sec_lipid == "olive_oil" else ("Canola Oil" if sec_lipid == "canola_oil" else "Vegetable Oil")
+            sub_notes.append(f"Using {fat_substitute_label} fat medium. Direct 1:1 fat replacement applied.")
 
         # Perform sub-class specific math hooks here if needed
         effective_hydration, effective_fat, effective_sugar = self.apply_sub_class_constraints(
@@ -318,7 +379,7 @@ class BaseEngine:
         )
 
         # 3. Calculate Baker's Math Scaling
-        total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct
+        total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct + binder_pct
         flour_weight = target_mass / total_ratios
         water_weight = flour_weight * effective_hydration
         fat_weight = flour_weight * effective_fat
@@ -338,32 +399,40 @@ class BaseEngine:
         else:
             yeast_weight = leaven_weight
 
-        liquid_label = "Water"
+        # Re-compute liquid weight based on selection
         liquid_weight = added_water
-        added_butter = 0.0
-        added_oil = fat_weight
-        fat_substitute_label = None
+        if sec_liquid == "whole_milk":
+            liquid_weight = flour_weight * (effective_hydration / 0.87)
+        elif sec_liquid == "heavy_cream":
+            liquid_weight = flour_weight * (effective_hydration / 0.57)
+        elif sec_liquid == "buttermilk":
+            liquid_weight = flour_weight * (effective_hydration / 0.90)
+        elif sec_liquid == "almond_milk":
+            liquid_weight = flour_weight * (effective_hydration / 0.97)
 
-        if substitution:
-            substitute = substitution.get("substitute")
-            if substitute == "whole_milk":
-                liquid_label = "Whole Milk"
-                liquid_weight = flour_weight * sub_offsets["milk_required"]
-                if leaven_type == "sourdough":
-                    liquid_weight -= (starter_weight / 2.0)
-            elif substitute == "almond_milk":
-                liquid_label = "Almond Milk"
-                liquid_weight = flour_weight * sub_offsets["almond_milk_required"]
-                if leaven_type == "sourdough":
-                    liquid_weight -= (starter_weight / 2.0)
-            elif substitute in ["butter", "salted_butter", "unsalted_butter"]:
-                added_butter = flour_weight * sub_offsets["butter_required"]
-                added_oil = 0.0
-                fat_substitute_label = "Butter" if substitute == "butter" else ("Salted Butter" if substitute == "salted_butter" else "Unsalted Butter")
-            elif substitute in ["olive_oil", "canola_oil", "vegetable_oil"]:
-                added_oil = flour_weight * sub_offsets["oil_required"]
-                added_butter = 0.0
-                fat_substitute_label = "Olive Oil" if substitute == "olive_oil" else ("Canola Oil" if substitute == "canola_oil" else "Vegetable Oil")
+        if leaven_type == "sourdough":
+            liquid_weight -= (starter_weight / 2.0)
+
+        # Re-compute lipids weight
+        if sec_lipid in ["unsalted_butter", "salted_butter"]:
+            added_butter = flour_weight * (effective_fat / 0.80)
+            added_oil = 0.0
+        else:
+            added_oil = fat_weight
+            added_butter = 0.0
+
+        # Re-compute binders weight
+        if sec_binder == "whole_eggs":
+            added_eggs = flour_weight * 0.10
+        elif sec_binder == "egg_whites":
+            added_egg_whites = flour_weight * 0.10
+        elif sec_binder == "aquafaba_vegan":
+            added_aquafaba = flour_weight * 0.10
+
+        # Salt reduction modifier for salted_butter
+        if sec_lipid == "salted_butter":
+            salt_reduction = added_butter * 0.015
+            salt_weight = max(0.0, salt_weight - salt_reduction)
 
         # 5. Desired Dough Temperature (DDT)
         ddt_target_f = 78.0
@@ -390,6 +459,12 @@ class BaseEngine:
             "starter_weight": round(starter_weight, 1),
             "added_butter": round(added_butter, 1),
             "added_oil": round(added_oil, 1),
+            "added_eggs": round(added_eggs, 1),
+            "added_egg_whites": round(added_egg_whites, 1),
+            "added_aquafaba": round(added_aquafaba, 1),
+            "secondary_lipid": sec_lipid,
+            "secondary_liquid": sec_liquid,
+            "secondary_binder": sec_binder,
             "thirst_modifier_applied": thirst_mod,
             "maturity_modifier_applied": maturity_mod,
             "required_water_temp_f": round(required_water_temp_f, 1),

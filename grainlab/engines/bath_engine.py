@@ -14,6 +14,7 @@ class BathEngine(BaseEngine):
         "permissible_action_types": ["knead"],
         "environmental_rest_strategy": "gas_proofing",
     }
+    secondary_ingredients = {}
 
     permissible_form_factors = {
         "perforated-baking-sheet": {

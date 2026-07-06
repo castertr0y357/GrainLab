@@ -14,6 +14,7 @@ class FlatEngine(BaseEngine):
         "permissible_action_types": ["knead", "sheet"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
+    secondary_ingredients = {}
 
     permissible_form_factors = {
         "heavy-cast-iron-skillet": {

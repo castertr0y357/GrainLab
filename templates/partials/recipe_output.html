@@ -129,6 +129,28 @@
                 </div>
             {% endif %}
             
+            <!-- Binders: Eggs / Aquafaba -->
+            {% if recipe.added_eggs > 0 or recipe.added_egg_whites > 0 or recipe.added_aquafaba > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">
+                        {% if recipe.added_eggs > 0 %}Whole Eggs (binder){% elif recipe.added_egg_whites > 0 %}Egg Whites (binder){% else %}Aquafaba (vegan binder){% endif %}
+                    </span>
+                    <span style="color: var(--text-primary); font-weight: 700;">
+                        {% if recipe.added_eggs > 0 %}{{ recipe.added_eggs }}{% elif recipe.added_egg_whites > 0 %}{{ recipe.added_egg_whites }}{% else %}{{ recipe.added_aquafaba }}{% endif %}g
+                    </span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">
+                            ↳ {% if recipe.added_eggs > 0 %}Whole Eggs{% elif recipe.added_egg_whites > 0 %}Egg Whites{% else %}Vegan Aquafaba{% endif %}
+                        </span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">
+                            {% if recipe.added_eggs > 0 %}{{ recipe.added_eggs }}{% elif recipe.added_egg_whites > 0 %}{{ recipe.added_egg_whites }}{% else %}{{ recipe.added_aquafaba }}{% endif %}g
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+            
             <!-- Salt Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Salt (2% ratio)</span>
