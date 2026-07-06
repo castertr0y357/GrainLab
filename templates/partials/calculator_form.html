@@ -42,6 +42,21 @@
                   const totalWeight = ff.unit_weight * totalCount;
                   return `Yield Matrix: Generates ${totalCount} total ${label} (Total dough weight: ~${totalWeight}g)`;
               }
+          },
+          getGrainStyle(berry) {
+              if (advisoryRecommendedName && berry.name === advisoryRecommendedName) {
+                  return berry.selected 
+                      ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.08);' 
+                      : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.02);';
+              } else if (advisoryHighRiskName && berry.name === advisoryHighRiskName) {
+                  return berry.selected 
+                      ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220, 53, 69, 0.6); background-color: rgba(220, 53, 69, 0.08);' 
+                      : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220, 53, 69, 0.3); background-color: rgba(220, 53, 69, 0.02);';
+              } else {
+                  return berry.selected 
+                      ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' 
+                      : '';
+              }
           }
       }"
       x-init="
@@ -287,7 +302,7 @@
                     <label class="card" 
                            x-show="editor_mode === 'advanced' || isIdealGrain(berry.name)"
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
-                           :style="berry.selected ? (isIdealGrain(berry.name) ? 'border-color: #ffd700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); background-color: rgba(255, 215, 0, 0.05);' : 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);') : ''">
+                           :style="getGrainStyle(berry)">
                         <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
                         <span style="font-size: 1.25rem;">🌾</span>
                         <div>
@@ -312,15 +327,15 @@
                 </div>
                 
                 <!-- Advisory Content -->
-                <div x-show="!advisoryLoading && (advisoryRecommendedName || advisoryRecommendedReason)" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
-                    <div>
-                        <span style="color: var(--accent); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">
+                <div x-show="!advisoryLoading && (advisoryRecommendedName || advisoryRecommendedReason)" x-transition style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <div style="border-left: 3px solid #ffd700; padding-left: 1rem;">
+                        <span style="color: #ffd700; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">
                             [ RECOMMENDED STOCK ]
                         </span>
                         <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;" x-text="advisoryRecommendedName"></strong>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="advisoryRecommendedReason"></p>
                     </div>
-                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    <div style="border-left: 3px solid var(--danger); padding-left: 1rem;">
                         <span style="color: var(--danger); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">
                             [ HIGH RISK STOCK ]
                         </span>
@@ -337,105 +352,108 @@
                 <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
             </div>
 
-            <!-- Relocated Dough Temperature Calibration Block -->
-            <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
-                <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="input-group">
-                        <label for="room_temp">Room Temp (°F)</label>
-                        <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+            <!-- Parameters Side-by-Side Grid (DDT + Milling Profile) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
+                <!-- Relocated Dough Temperature Calibration Block -->
+                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="input-group">
+                            <label for="room_temp">Room Temp (°F)</label>
+                            <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+                        </div>
+                        <div class="input-group">
+                            <label for="flour_temp">Flour Temp (°F)</label>
+                            <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label for="flour_temp">Flour Temp (°F)</label>
-                        <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="input-group">
-                        <label>Mixing Equipment</label>
-                        <input type="hidden" name="custom_mixer" :value="custom_mixer">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="custom_mixer === 'static' ? 'active' : ''"
-                                    @click="custom_mixer = 'static'; use_custom = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Standard Preset
-                            </button>
-                            {% for mixer in mixers %}
-                                <button type="button" class="pill-btn" :class="custom_mixer === '{{ mixer.id }}' ? 'active' : ''"
-                                        @click="custom_mixer = '{{ mixer.id }}'; use_custom = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    {{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="input-group">
+                            <label>Mixing Equipment</label>
+                            <input type="hidden" name="custom_mixer" :value="custom_mixer">
+                            <div class="pill-btn-group">
+                                <button type="button" class="pill-btn" :class="custom_mixer === 'static' ? 'active' : ''"
+                                        @click="custom_mixer = 'static'; use_custom = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Standard Preset
                                 </button>
-                            {% endfor %}
+                                {% for mixer in mixers %}
+                                    <button type="button" class="pill-btn" :class="custom_mixer === '{{ mixer.id }}' ? 'active' : ''"
+                                            @click="custom_mixer = '{{ mixer.id }}'; use_custom = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        {{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;" x-show="!use_custom">
+                        <div class="input-group">
+                            <label>Kneading Method</label>
+                            <input type="hidden" name="mixing_method" :value="mixing_method">
+                            <div class="pill-btn-group">
+                                <button type="button" class="pill-btn" :class="mixing_method === 'stand_mixer' ? 'active' : ''"
+                                        @click="mixing_method = 'stand_mixer'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Stand Mixer
+                                </button>
+                                <button type="button" class="pill-btn" :class="mixing_method === 'hand_knead' ? 'active' : ''"
+                                        @click="mixing_method = 'hand_knead'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Hand Knead
+                                </button>
+                                <button type="button" class="pill-btn" :class="mixing_method === 'bread_machine' ? 'active' : ''"
+                                        @click="mixing_method = 'bread_machine'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Bread Machine
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Proofing Environment</label>
+                            <input type="hidden" name="proofing_environment" :value="proofing_environment">
+                            <div class="pill-btn-group">
+                                <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
+                                        @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Ambient Room
+                                </button>
+                                <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
+                                        @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Open Proofing Mat
+                                </button>
+                                <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
+                                        @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Enclosed Proofing Box
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;" x-show="!use_custom">
-                    <div class="input-group">
-                        <label>Kneading Method</label>
-                        <input type="hidden" name="mixing_method" :value="mixing_method">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="mixing_method === 'stand_mixer' ? 'active' : ''"
-                                    @click="mixing_method = 'stand_mixer'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Stand Mixer
-                            </button>
-                            <button type="button" class="pill-btn" :class="mixing_method === 'hand_knead' ? 'active' : ''"
-                                    @click="mixing_method = 'hand_knead'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Hand Knead
-                            </button>
-                            <button type="button" class="pill-btn" :class="mixing_method === 'bread_machine' ? 'active' : ''"
-                                    @click="mixing_method = 'bread_machine'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Bread Machine
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
-                    <div class="input-group">
-                        <label>Proofing Environment</label>
-                        <input type="hidden" name="proofing_environment" :value="proofing_environment">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
-                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Ambient Room
-                            </button>
-                            <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
-                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Open Proofing Mat
-                            </button>
-                            <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
-                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Enclosed Proofing Box
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Milling Profile Parameters -->
-            <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
-                <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
-                    Milling Profile Parameters
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="input-group">
-                        <label>Mill Machinery Profile</label>
-                        <input type="hidden" name="mill_type" :value="mill_type">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="mill_type === 'stoneground' ? 'active' : ''"
-                                    @click="mill_type = 'stoneground'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Stoneground Mill
-                            </button>
-                            <button type="button" class="pill-btn" :class="mill_type === 'steel_roller' ? 'active' : ''"
-                                    @click="mill_type = 'steel_roller'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Steel Roller Mill
-                            </button>
-                        </div>
+                <!-- Milling Profile Parameters -->
+                <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;">
+                    <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
+                        Milling Profile Parameters
                     </div>
-                    <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; margin-bottom: 0;">
-                        <label for="flow_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
-                        <label class="switch">
-                            <input type="checkbox" name="is_sifted" id="flow_is_sifted">
-                            <span class="slider-round"></span>
-                        </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Mill Machinery Profile</label>
+                            <input type="hidden" name="mill_type" :value="mill_type">
+                            <div class="pill-btn-group">
+                                <button type="button" class="pill-btn" :class="mill_type === 'stoneground' ? 'active' : ''"
+                                        @click="mill_type = 'stoneground'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Stoneground Mill
+                                </button>
+                                <button type="button" class="pill-btn" :class="mill_type === 'steel_roller' ? 'active' : ''"
+                                        @click="mill_type = 'steel_roller'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Steel Roller Mill
+                                </button>
+                            </div>
+                        </div>
+                        <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; margin-bottom: 0;">
+                            <label for="flow_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
+                            <label class="switch">
+                                <input type="checkbox" name="is_sifted" id="flow_is_sifted">
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
