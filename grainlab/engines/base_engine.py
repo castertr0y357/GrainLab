@@ -39,6 +39,23 @@ class BaseEngine:
     flavor_affinity = "Standard flour profile"
     tannin_sensitive = False
 
+    permissible_form_factors = {
+        "standard-9x5-pan": {
+            "name": "Standard 9x5 Loaf Pan",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 900.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 375,
+            "bake_time_min": 45,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        }
+    }
+
     def calculate_wheat_berry_shares(self, active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None) -> tuple[dict[str, float], float, str | None]:
         if not active_berries:
             return {"House Blend": 1.0}, 1.0, None

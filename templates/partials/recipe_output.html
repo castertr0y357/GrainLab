@@ -1,3 +1,11 @@
+<div id="geometry-metadata" style="display: none;"
+     data-geometry-status="{{ geometry_evaluation.status|default:'recommended' }}"
+     data-geometry-advisory="{{ geometry_evaluation.advisory_label|default:'' }}"
+     data-geometry-temp-offset="{{ geometry_evaluation.profile_adjustments.oven_temp_offset_f|default:0 }}"
+     data-geometry-time-offset="{{ geometry_evaluation.profile_adjustments.bake_time_offset_m|default:0 }}"
+     data-geometry-steam-override="{{ geometry_evaluation.profile_adjustments.steam_override|default:'no-change' }}">
+</div>
+
 {% if recipe.structural_warning %}
 <div x-show="current_phase >= 3" x-transition
      style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
@@ -155,12 +163,43 @@
             </div>
             <div>
                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">
-                    {% if ff.steam_required %}Yes{% else %}No{% endif %}
+                    {% if steam_required %}Yes{% else %}No{% endif %}
                 </div>
                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Steam</div>
             </div>
         </div>
     </div>
+
+    <!-- GEOMETRY SUITABILITY ADVISORY -->
+    {% if geometry_evaluation %}
+        <div style="background-color: #1a1a1f; border-left: 4px solid {% if geometry_evaluation.status == 'sub-optimal' %}var(--warning){% else %}var(--success){% endif %}; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: {% if geometry_evaluation.status == 'sub-optimal' %}var(--warning){% else %}var(--success){% endif %}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <span>Geometry Advisory: {{ geometry_evaluation.status|title }}</span>
+                {% if geometry_evaluation.status == 'sub-optimal' %}
+                    <span style="font-size: 0.75rem; background: rgba(255, 159, 28, 0.15); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">Warning Glow Active</span>
+                {% endif %}
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
+                {{ geometry_evaluation.advisory_label }}
+            </p>
+            {% if geometry_evaluation.profile_adjustments.oven_temp_offset_f != 0 or geometry_evaluation.profile_adjustments.bake_time_offset_m != 0 or geometry_evaluation.profile_adjustments.steam_override != 'no-change' %}
+                <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.5rem; margin-top: 0.5rem;">
+                    <strong>AI Profile Adjustments Applied:</strong>
+                    <ul style="margin: 0.25rem 0 0 0; padding-left: 1.25rem; list-style-type: disc;">
+                        {% if geometry_evaluation.profile_adjustments.oven_temp_offset_f != 0 %}
+                            <li>Oven Temp Offset: {{ geometry_evaluation.profile_adjustments.oven_temp_offset_f }}°F</li>
+                        {% endif %}
+                        {% if geometry_evaluation.profile_adjustments.bake_time_offset_m != 0 %}
+                            <li>Bake Time Offset: {{ geometry_evaluation.profile_adjustments.bake_time_offset_m }}m</li>
+                        {% endif %}
+                        {% if geometry_evaluation.profile_adjustments.steam_override != 'no-change' %}
+                            <li>Steam Override: {{ geometry_evaluation.profile_adjustments.steam_override }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
 
     <!-- SUBSTITUTION ALERTS -->
     {% if recipe.substitution_notes %}
@@ -219,7 +258,7 @@
     <div id="countertop-data" 
          data-steps="{{ countertop_steps_json }}"
          data-bake-temp="{{ bake_temp_f }}"
-         data-bake-steam="{% if ff.steam_required %}Yes{% else %}No{% endif %}"
+         data-bake-steam="{% if steam_required %}Yes{% else %}No{% endif %}"
          data-doneness-temp="{{ doneness_temp_f }}"
          data-water-temp="{{ recipe.required_water_temp_f }}"
          style="display: none;">

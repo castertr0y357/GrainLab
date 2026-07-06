@@ -12,7 +12,6 @@
     /* Auto-correction and warning computed on client side */
     presetName: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     presetSlug: '{% if selected_preset %}{{ selected_preset.slug }}{% endif %}',
-    editor_mode: 'standard',
     presetModified: false,
     
     advisoryRecommendedName: '',
@@ -22,6 +21,13 @@
     advisoryLoading: false,
     advisoryLoadingMessage: '',
     grainEvaluations: [],
+    
+    // Geometry evaluation and profile adjustments
+    geometry_status: 'recommended',
+    geometry_advisory: '',
+    geometry_temp_offset: 0,
+    geometry_time_offset: 0,
+    geometry_steam_override: 'no-change',
     
     /* Grains inventory data mapped from django context */
     activeBerries: [
@@ -81,6 +87,16 @@
         if (this.presetSlug) {
             this.fetchAdvisory(this.presetSlug);
         }
+        document.body.addEventListener('htmx:afterSwap', (e) => {
+            const meta = document.getElementById('geometry-metadata');
+            if (meta) {
+                this.geometry_status = meta.getAttribute('data-geometry-status') || 'recommended';
+                this.geometry_advisory = meta.getAttribute('data-geometry-advisory') || '';
+                this.geometry_temp_offset = parseInt(meta.getAttribute('data-geometry-temp-offset') || '0', 10);
+                this.geometry_time_offset = parseInt(meta.getAttribute('data-geometry-time-offset') || '0', 10);
+                this.geometry_steam_override = meta.getAttribute('data-geometry-steam-override') || 'no-change';
+            }
+        });
     },
 
     fetchAdvisory(slug) {

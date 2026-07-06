@@ -9,6 +9,37 @@ class CookieEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Designed for toasted brown sugars and confections; whole-grain bitterness clashes aggressively."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "heavy-aluminum-sheet": {
+            "name": "Heavy Aluminum Cookie Sheet",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 40.0,
+            "base_count": 24,
+            "step_increment": 12,
+            "unit_label": "cookie",
+            "unit_label_plural": "cookies",
+            "bake_temp_f": 350,
+            "bake_time_min": 12,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        },
+        "continuous-bar-pan": {
+            "name": "Continuous Bar Pan / Single Layer",
+            "tier": "sub-optimal",
+            "is_portioned": False,
+            "unit_weight": 960.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "pan",
+            "unit_label_plural": "pans",
+            "bake_temp_f": 350,
+            "bake_time_min": 25,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Chewy Chocolate Chip Cookies", "Oatmeal Raisin Bakes", "Buttery Shortbread Wedges",
         "Italian Almond Biscotti", "Gingerbread People", "French Almond Macarons",

@@ -9,6 +9,37 @@ class PastaEngine(BaseEngine):
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes rich egg, nutty semolina, or distinctive alkaline noodle mineral complexities."
     tannin_sensitive = False
 
+    permissible_form_factors = {
+        "mechanical-sheeter": {
+            "name": "Mechanical Sheeter Sheets / Cutters",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 120.0,
+            "base_count": 4,
+            "step_increment": 2,
+            "unit_label": "serving",
+            "unit_label_plural": "servings",
+            "bake_temp_f": 0,
+            "bake_time_min": 0,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        },
+        "high-pressure-dies": {
+            "name": "High-Pressure Extrusion Dies",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 120.0,
+            "base_count": 4,
+            "step_increment": 2,
+            "unit_label": "serving",
+            "unit_label_plural": "servings",
+            "bake_temp_f": 0,
+            "bake_time_min": 0,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        }
+    }
+
     presets = [
         "Fresh Egg Tagliatelle", "Fettuccine Sheets", "Ravioli / Tortellini Dough",
         "Semolina Extruded Rigatoni", "Thick Hand-Cut Udon", "Alkaline Wheat Ramen Noodles",

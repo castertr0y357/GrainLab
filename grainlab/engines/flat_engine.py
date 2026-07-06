@@ -9,6 +9,37 @@ class FlatEngine(BaseEngine):
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Enhances toasted, nutty conduction-heat surface blistering."
     tannin_sensitive = False
 
+    permissible_form_factors = {
+        "heavy-cast-iron-skillet": {
+            "name": "Heavy Cast-Iron Skillet / Griddle",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 80.0,
+            "base_count": 8,
+            "step_increment": 4,
+            "unit_label": "disk",
+            "unit_label_plural": "disks",
+            "bake_temp_f": 500,
+            "bake_time_min": 2,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        },
+        "high-heat-oven-stone": {
+            "name": "High-Heat Oven Baking Stone",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 80.0,
+            "base_count": 8,
+            "step_increment": 4,
+            "unit_label": "disk",
+            "unit_label_plural": "disks",
+            "bake_temp_f": 500,
+            "bake_time_min": 3,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        }
+    }
+
     presets = [
         "Flour Tortillas", "Hand-Slapped Naan", "Pocked Pocket Pita",
         "Roti / Chapati", "Layered Paratha", "Flaky Scallion Pancakes",

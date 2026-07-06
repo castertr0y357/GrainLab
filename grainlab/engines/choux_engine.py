@@ -9,6 +9,23 @@ class ChouxEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires a neutral background to allow rich egg-custard components to dominate."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "extrusion-piping-sheet": {
+            "name": "Extrusion Piping Sheet / Silpat",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 45.0,
+            "base_count": 12,
+            "step_increment": 12,
+            "unit_label": "portion",
+            "unit_label_plural": "portions",
+            "bake_temp_f": 425,
+            "bake_time_min": 20,
+            "steam_required": True,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Chocolate Éclairs", "Cream Puffs (Profiteroles)", "Savory Cheese Gougères",
         "French Crullers", "Traditional Churros", "Paris-Brest Pastries"

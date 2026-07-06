@@ -16,6 +16,18 @@ executor = ThreadPoolExecutor(max_workers=2)
 
 logger = logging.getLogger("grainlab.views")
 
+def get_engines_ff_json() -> str:
+    from grainlab.engines.router import ENGINES
+    from apps.core.gemma_client import CATEGORY_TO_ENGINE
+    import json
+    
+    engines_ff_data = {}
+    for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():
+        engine = ENGINES[eng_name]
+        # We need clean python dictionary to serialize
+        engines_ff_data[cat_slug] = getattr(engine, "permissible_form_factors", {})
+    return json.dumps(engines_ff_data)
+
 def calculator(request):
     """
     Renders the primary calculator workspace.
@@ -50,8 +62,23 @@ def calculator(request):
         default_ff = FormFactor.objects.filter(slug=ff_slug).first()
     elif selected_preset:
         default_ff = selected_preset.form_factor
+        
+    from grainlab.engines.router import get_engine_for_preset
+    preset_slug_str = selected_preset.slug if selected_preset else None
+    cat_slug_str = default_cat.slug if default_cat else None
+    engine = get_engine_for_preset(preset_slug_str, cat_slug_str)
+    permissible_slugs = list(getattr(engine, "permissible_form_factors", {}).keys())
+    
+    if default_ff and default_ff.slug not in permissible_slugs and permissible_slugs:
+        first_perm_ff = FormFactor.objects.filter(slug=permissible_slugs[0]).first()
+        if first_perm_ff:
+            default_ff = first_perm_ff
+            
     if not default_ff:
-        default_ff = FormFactor.objects.filter(slug='loaf-pan').first() or form_factors.first()
+        if permissible_slugs:
+            default_ff = FormFactor.objects.filter(slug=permissible_slugs[0]).first()
+        if not default_ff:
+            default_ff = FormFactor.objects.filter(slug='loaf-pan').first() or form_factors.first()
         
     # Calculate slider defaults based on category base ratios
     if selected_preset:
@@ -93,6 +120,7 @@ def calculator(request):
         "default_flour_maturity": default_flour_maturity,
         "default_texture_score": default_texture_score,
         "default_crumb_score": default_crumb_score,
+        "engines_ff_json": get_engines_ff_json(),
     }
     return render(request, "calculator.html", context)
 
@@ -122,6 +150,14 @@ def load_preset(request, preset_id):
     cat = preset.dough_category
     ff = preset.form_factor
     
+    from grainlab.engines.router import get_engine_for_preset
+    engine = get_engine_for_preset(preset.slug, cat.slug)
+    permissible_slugs = list(getattr(engine, "permissible_form_factors", {}).keys())
+    if ff.slug not in permissible_slugs and permissible_slugs:
+        first_perm_ff = FormFactor.objects.filter(slug=permissible_slugs[0]).first()
+        if first_perm_ff:
+            ff = first_perm_ff
+    
     hydration = int((preset.hydration_override if preset.hydration_override is not None else cat.base_hydration) * 100)
     fat = int((preset.fat_override if preset.fat_override is not None else cat.base_fat) * 100)
     sugar = int((preset.sugar_override if preset.sugar_override is not None else cat.base_sugar) * 100)
@@ -145,6 +181,7 @@ def load_preset(request, preset_id):
         "default_flour_maturity": preset.flour_maturity_default,
         "default_texture_score": preset.classifier_texture,
         "default_crumb_score": preset.classifier_crumb,
+        "engines_ff_json": get_engines_ff_json(),
     }
     return render(request, "partials/calculator_form.html", context)
 
@@ -165,7 +202,28 @@ def calculate_recipe_ajax(request):
         current_phase = 1
     
     cat = get_object_or_404(DoughCategory, slug=cat_slug)
+    
+    # Resolve active sub-engine based on preset and category
+    preset_slug = request.POST.get("preset_slug")
+    from grainlab.engines.router import get_engine_for_preset
+    engine = get_engine_for_preset(preset_slug, cat.slug)
+    
+    # Validate ff_slug is permissible for active engine
+    permissible_slugs = list(getattr(engine, "permissible_form_factors", {}).keys())
+    if ff_slug not in permissible_slugs and permissible_slugs:
+        for slug in permissible_slugs:
+            if FormFactor.objects.filter(slug=slug).exists():
+                ff_slug = slug
+                break
+        
     ff = get_object_or_404(FormFactor, slug=ff_slug)
+    
+    # Resolve form factor baseline details from engine config
+    ff_config = getattr(engine, "permissible_form_factors", {}).get(ff.slug, {})
+    is_portioned = ff_config.get("is_portioned", ff.is_portioned)
+    base_unit_weight = ff_config.get("unit_weight", ff.unit_weight)
+    base_default_count = ff_config.get("base_count", ff.default_count)
+    base_weight = base_unit_weight * base_default_count
     
     texture_score = int(request.POST.get("texture_score", 50))
     crumb_score = int(request.POST.get("crumb_score", 50))
@@ -189,14 +247,13 @@ def calculate_recipe_ajax(request):
     mixing_method = request.POST.get("mixing_method", "stand_mixer")
     
     # Portioned handling
-    is_portioned = ff.is_portioned
-    unit_weight = float(request.POST.get("unit_weight", ff.unit_weight))
-    portion_count = int(request.POST.get("portion_count", ff.default_count))
+    unit_weight = float(request.POST.get("unit_weight", base_unit_weight))
+    portion_count = int(request.POST.get("portion_count", base_default_count))
     
     if is_portioned:
         target_mass = unit_weight * portion_count
     else:
-        target_mass = float(request.POST.get("target_weight", ff.target_weight))
+        target_mass = float(request.POST.get("target_weight", base_weight))
         
     # Salt and leaven percents
     salt_pct = 0.02
@@ -218,14 +275,13 @@ def calculate_recipe_ajax(request):
             friction_override = mixer.friction_heat_factor
         except (ValueError, Equipment.DoesNotExist):
             pass
-
+ 
     selected_grain_ids = request.POST.getlist("selected_grains")
     if selected_grain_ids:
         active_berries = list(WheatBerry.objects.filter(id__in=selected_grain_ids))
     else:
         active_berries = list(WheatBerry.objects.filter(is_active=True))
-
-    preset_slug = request.POST.get("preset_slug")
+ 
     preset_name = None
     if preset_slug:
         try:
@@ -233,7 +289,7 @@ def calculate_recipe_ajax(request):
             preset_name = preset_obj.name
         except BreadPreset.DoesNotExist:
             pass
-
+ 
     try:
         # If AI is active, we can fetch substitution offsets from AI first
         ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
@@ -284,7 +340,7 @@ def calculate_recipe_ajax(request):
             "<div class='warning-box'><h4>Mathematical Calculation Error</h4>"
             "<p>Please verify your inputs are positive values.</p></div>"
         )
-
+ 
     # 4. Classifier Engine: Euclidean distance match
     all_presets = BreadPreset.objects.select_related('dough_category', 'form_factor').all()
     classified_preset = None
@@ -298,7 +354,7 @@ def calculate_recipe_ajax(request):
         if dist < min_distance:
             min_distance = dist
             classified_preset = p
-
+ 
     # 5. Fetch AI Diagnostics (Sensory benchmark & pitfalls)
     eff_hyd = recipe["effective_hydration_pct"] / 100.0
     preset_slug_resolved = preset_slug or (classified_preset.slug if classified_preset else None)
@@ -307,24 +363,46 @@ def calculate_recipe_ajax(request):
     pitfalls = gemma_client.get_contextual_pitfalls(cat.slug, eff_hyd, grain_type, preset_slug_resolved)
     
     # 6. Core Thermal Doneness Temperature
-    doneness_temp_f = 190 if ff.is_enriched_profile else 205
+    doneness_temp_f = 190 if ff_config.get("is_enriched_profile", ff.is_enriched_profile) else 205
     doneness_temp_c = round((doneness_temp_f - 32) * 5 / 9, 1)
-
-    # 7. Algorithmically scale baking profile based on mass and form factor
-    base_temp = ff.bake_temp_f
-    base_time = ff.bake_time_min
-    base_weight = ff.target_weight if not ff.is_portioned else (ff.unit_weight * ff.default_count)
+ 
+    # 7. Resolve form factor baseline parameters from engine configuration
+    base_temp = ff_config.get("bake_temp_f", ff.bake_temp_f)
+    base_time = ff_config.get("bake_time_min", ff.bake_time_min)
+    base_steam = ff_config.get("steam_required", ff.steam_required)
     
-    mass_ratio = target_mass / base_weight if base_weight > 0 else 1.0
+    if is_portioned:
+        mass_ratio = 1.0
+    else:
+        mass_ratio = target_mass / base_weight if base_weight > 0 else 1.0
+        
     scaled_time = round(base_time * (mass_ratio ** 0.4))
-    
     scaled_temp = base_temp
-    if not ff.is_portioned:
+    if not is_portioned:
         if mass_ratio > 1.2:
             scaled_temp = base_temp - 10
         elif mass_ratio < 0.8:
             scaled_temp = base_temp + 10
-
+            
+    # 7b. Query geometry advisory and apply offsets
+    geom_advisory = gemma_client.get_geometry_advisory(preset_slug_resolved, preset_name, cat.slug, ff.slug)
+    geom_eval = geom_advisory.get("geometry_evaluation", {})
+    profile_adjustments = geom_eval.get("profile_adjustments", {})
+    
+    temp_offset = int(profile_adjustments.get("oven_temp_offset_f", 0))
+    time_offset = int(profile_adjustments.get("bake_time_offset_m", 0))
+    steam_override = profile_adjustments.get("steam_override", "no-change")
+    
+    scaled_time = max(1, scaled_time + time_offset)
+    scaled_temp = max(0, scaled_temp + temp_offset)
+    
+    if steam_override == "force-on":
+        adjusted_steam = True
+    elif steam_override == "force-off":
+        adjusted_steam = False
+    else:
+        adjusted_steam = base_steam
+ 
     # 8. Calculate dynamic countdown timelines for Countertop Mode
     estimated_bulk_hours = 1.5
     estimated_proof_hours = 1.0
@@ -349,7 +427,7 @@ def calculate_recipe_ajax(request):
         estimated_proof_hours *= 0.9
     elif proofing_env == "box":
         estimated_proof_hours *= 0.75
-
+ 
     estimated_bulk_minutes = int(estimated_bulk_hours * 60)
     estimated_proof_minutes = int(estimated_proof_hours * 60)
 
@@ -385,6 +463,8 @@ def calculate_recipe_ajax(request):
         "estimated_bulk_minutes": estimated_bulk_minutes,
         "estimated_proof_minutes": estimated_proof_minutes,
         "countertop_steps_json": countertop_steps_json,
+        "steam_required": adjusted_steam,
+        "geometry_evaluation": geom_eval,
     }
     return render(request, "partials/recipe_output.html", context)
 

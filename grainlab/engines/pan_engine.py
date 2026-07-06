@@ -9,6 +9,51 @@ class PanEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a clean, sweet, milky baseline; whole-grain bitterness is an active defect."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "standard-9x5-pan": {
+            "name": "Standard 9x5 Loaf Pan",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 900.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 375,
+            "bake_time_min": 45,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        },
+        "pullman-pan-lidded": {
+            "name": "Pullman Pan (Lidded)",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 900.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 375,
+            "bake_time_min": 45,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        },
+        "individual-portion-sheet": {
+            "name": "Individual Portion Sheet",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 90.0,
+            "base_count": 12,
+            "step_increment": 12,
+            "unit_label": "bun",
+            "unit_label_plural": "buns",
+            "bake_temp_f": 375,
+            "bake_time_min": 20,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Everyday White Sandwich Loaf", "Rich Brioche", "Traditional Challah",
         "Hokkaido Milk Bread", "Soft Burger Buns", "Dinner Rolls",

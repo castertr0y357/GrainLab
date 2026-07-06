@@ -9,6 +9,51 @@ class BatterEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a completely neutral grain baseline to host delicate vanilla, citrus, or fruit fats."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "straight-sided-round-tin": {
+            "name": "Straight-Sided Round Tin",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 500.0,
+            "base_count": 2,
+            "step_increment": 2,
+            "unit_label": "layer",
+            "unit_label_plural": "layers",
+            "bake_temp_f": 350,
+            "bake_time_min": 30,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        },
+        "high-border-sheet-pan": {
+            "name": "High-Border Sheet Cake Pan",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 1000.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "pan",
+            "unit_label_plural": "pans",
+            "bake_temp_f": 350,
+            "bake_time_min": 25,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        },
+        "cupcake-liner-matrix": {
+            "name": "Cupcake Liner Matrix",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 41.67,
+            "base_count": 24,
+            "step_increment": 24,
+            "unit_label": "cupcake",
+            "unit_label_plural": "cupcakes",
+            "bake_temp_f": 350,
+            "bake_time_min": 20,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Yellow Layer Cake", "Fudgy Chocolate Cake", "Victoria Sponge",
         "Chiffon Cake", "Angel Food Cake", "Traditional Pound Cake",

@@ -8,6 +8,51 @@ class HearthEngine(BaseEngine):
     gluten_behavior = "High Elasticity, maximum gas retention, capability to withstand long fermentation arcs."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes deep caramelization, complex bran expressions, and lactic/acetic sourness."
     tannin_sensitive = False
+
+    permissible_form_factors = {
+        "cast-iron-dutch-oven": {
+            "name": "Cast Iron Dutch Oven",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 750.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 450,
+            "bake_time_min": 40,
+            "steam_required": True,
+            "is_enriched_profile": False,
+        },
+        "open-baking-stone-steel": {
+            "name": "Open Baking Stone / Steel",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 750.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 450,
+            "bake_time_min": 35,
+            "steam_required": True,
+            "is_enriched_profile": False,
+        },
+        "standard-9x5-pan": {
+            "name": "Standard 9x5 Loaf Pan",
+            "tier": "sub-optimal",
+            "is_portioned": False,
+            "unit_weight": 750.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 375,
+            "bake_time_min": 45,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        }
+    }
     
     presets = [
         "Sourdough Boule", "Classic French Baguette", "Ciabatta", 

@@ -9,6 +9,51 @@ class QuickEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires clean, buttery fats to come forward without whole-grain astringency."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "standard-8x4-loaf-pan": {
+            "name": "Standard 8x4 Loaf Pan",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 800.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "loaf",
+            "unit_label_plural": "loaves",
+            "bake_temp_f": 350,
+            "bake_time_min": 50,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        },
+        "muffin-cupcake-tin": {
+            "name": "Muffin / Cupcake Tin",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 70.0,
+            "base_count": 12,
+            "step_increment": 12,
+            "unit_label": "muffin",
+            "unit_label_plural": "muffins",
+            "bake_temp_f": 375,
+            "bake_time_min": 20,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        },
+        "individual-wedge-sheet": {
+            "name": "Individual Wedge Sheet",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 70.0,
+            "base_count": 12,
+            "step_increment": 12,
+            "unit_label": "scone",
+            "unit_label_plural": "scones",
+            "bake_temp_f": 400,
+            "bake_time_min": 18,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Southern Buttermilk Biscuits", "Flaky Cream Scones", "Irish Soda Bread",
         "Classic Banana Bread", "Spiced Pumpkin Loaf", "Sweet Skillet Cornbread",

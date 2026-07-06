@@ -9,6 +9,37 @@ class BathEngine(BaseEngine):
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Designed to complement high Maillard browning, maltiness, and alkaline surface chemistry."
     tannin_sensitive = False
 
+    permissible_form_factors = {
+        "perforated-baking-sheet": {
+            "name": "Perforated Baking Sheet",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 110.0,
+            "base_count": 8,
+            "step_increment": 6,
+            "unit_label": "portion",
+            "unit_label_plural": "portions",
+            "bake_temp_f": 425,
+            "bake_time_min": 20,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        },
+        "standard-silicon-mat-sheet": {
+            "name": "Standard Silicon Mat Sheet",
+            "tier": "sub-optimal",
+            "is_portioned": True,
+            "unit_weight": 110.0,
+            "base_count": 8,
+            "step_increment": 6,
+            "unit_label": "portion",
+            "unit_label_plural": "portions",
+            "bake_temp_f": 425,
+            "bake_time_min": 25,
+            "steam_required": False,
+            "is_enriched_profile": False,
+        }
+    }
+
     presets = [
         "Soft Bavarian Pretzels", "Traditional Boiled New York Bagels", "Pretzel Buns",
         "Sesame Simit", "Chewy Montreal Bagels", "Bavarian Pretzel Bites"

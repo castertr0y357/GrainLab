@@ -9,6 +9,23 @@ class FryEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a warm, clean, light baseline suitable for immediate sugar/glaze applications."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "high-volume-oil-vat": {
+            "name": "High-Volume Cast Iron Oil Vat",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 65.0,
+            "base_count": 12,
+            "step_increment": 12,
+            "unit_label": "donut",
+            "unit_label_plural": "donuts",
+            "bake_temp_f": 375,
+            "bake_time_min": 5,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Yeast-Raised Donuts", "Fluffy New Orleans Beignets", "Puffed Sopapillas",
         "Traditional Native Frybread", "Cake Donuts", "Apple Fritters",

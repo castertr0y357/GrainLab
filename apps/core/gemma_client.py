@@ -568,3 +568,248 @@ def get_local_grain_advisory(preset_slug: str) -> dict:
     }
 
 
+CATEGORY_TO_ENGINE = {
+    "lean-crusty": "hearth",
+    "enriched-soft": "pan",
+    "alkaline-bath": "bath",
+    "flatbreads-griddles": "flat",
+    "quick-breads-scones": "quick",
+    "cakes-batters": "batter",
+    "pastry-lamination": "pastry",
+    "choux-paste": "choux",
+    "cookies-shortbread": "cookie",
+    "fried-doughs": "fry",
+    "fresh-pasta-noodles": "pasta",
+}
+
+ENGINE_GEOMETRIES = {
+    "hearth": {
+        "cast-iron-dutch-oven": {
+            "status": "recommended",
+            "advisory_label": "Direct conductive high-heat radiant envelope.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "open-baking-stone-steel": {
+            "status": "recommended",
+            "advisory_label": "Maximum surface expansion; requires ambient steam injection.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-on"}
+        },
+        "standard-9x5-pan": {
+            "status": "sub-optimal",
+            "advisory_label": "Restricts lateral expansion; forces a tight, non-traditional crumb format.",
+            "profile_adjustments": {"oven_temp_offset_f": -25, "bake_time_offset_m": 5, "steam_override": "force-off"}
+        }
+    },
+    "pan": {
+        "standard-9x5-pan": {
+            "status": "recommended",
+            "advisory_label": "Provides essential sidewall support for fragile, high-rising enriched crumbs.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "pullman-pan-lidded": {
+            "status": "recommended",
+            "advisory_label": "Restricts vertical expansion to create perfectly square slice structures.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 5, "steam_override": "force-off"}
+        },
+        "individual-portion-sheet": {
+            "status": "recommended",
+            "advisory_label": "Optimal surface airflow for uniform bun/roll stabilization.",
+            "profile_adjustments": {"oven_temp_offset_f": 15, "bake_time_offset_m": -10, "steam_override": "no-change"}
+        }
+    },
+    "bath": {
+        "perforated-baking-sheet": {
+            "status": "recommended",
+            "advisory_label": "Maximizes bottom crust airflow to flash-set the gelatinized alkaline skin.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "standard-silicon-mat-sheet": {
+            "status": "sub-optimal",
+            "advisory_label": "Prevents sticking, but traps bottom moisture, softening the lower crust boundary.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 5, "steam_override": "no-change"}
+        }
+    },
+    "flat": {
+        "heavy-cast-iron-skillet": {
+            "status": "recommended",
+            "advisory_label": "High conduction intense floor-heat for rapid vapor-pocket puffing.",
+            "profile_adjustments": {"oven_temp_offset_f": 25, "bake_time_offset_m": -5, "steam_override": "force-off"}
+        },
+        "high-heat-oven-stone": {
+            "status": "recommended",
+            "advisory_label": "Radiant flash-bake capability.",
+            "profile_adjustments": {"oven_temp_offset_f": 50, "bake_time_offset_m": -8, "steam_override": "no-change"}
+        }
+    },
+    "quick": {
+        "standard-8x4-loaf-pan": {
+            "status": "recommended",
+            "advisory_label": "Direct core heat conduction for thick, chemically leavened batters.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "muffin-cupcake-tin": {
+            "status": "recommended",
+            "advisory_label": "Rapid perimeter setting, maximizing crumb tenderness.",
+            "profile_adjustments": {"oven_temp_offset_f": 15, "bake_time_offset_m": -15, "steam_override": "no-change"}
+        },
+        "individual-wedge-sheet": {
+            "status": "recommended",
+            "advisory_label": "Maximizes exterior flaky edge crusting for scones.",
+            "profile_adjustments": {"oven_temp_offset_f": 10, "bake_time_offset_m": -10, "steam_override": "no-change"}
+        }
+    },
+    "batter": {
+        "straight-sided-round-tin": {
+            "status": "recommended",
+            "advisory_label": "Even structural expansion and predictable vertical scaling.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "high-border-sheet-pan": {
+            "status": "recommended",
+            "advisory_label": "Uniform surface volume distribution for sheet slicing.",
+            "profile_adjustments": {"oven_temp_offset_f": 10, "bake_time_offset_m": -10, "steam_override": "no-change"}
+        },
+        "cupcake-liner-matrix": {
+            "status": "recommended",
+            "advisory_label": "High surface area deployment for rapid protein coagulation.",
+            "profile_adjustments": {"oven_temp_offset_f": 20, "bake_time_offset_m": -18, "steam_override": "no-change"}
+        }
+    },
+    "pastry": {
+        "perforated-sheet-air-mat": {
+            "status": "recommended",
+            "advisory_label": "Instant heat transfer to flash-vaporize layered butter sheets before melting occurs.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "fluted-ring-tart-pan": {
+            "status": "recommended",
+            "advisory_label": "Structural wall support for short-crust fat distribution layouts.",
+            "profile_adjustments": {"oven_temp_offset_f": -10, "bake_time_offset_m": 5, "steam_override": "force-off"}
+        }
+    },
+    "choux": {
+        "extrusion-piping-sheet": {
+            "status": "recommended",
+            "advisory_label": "Perfect non-stick release baseline matching thermal steam-lift dynamics.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        }
+    },
+    "cookie": {
+        "heavy-aluminum-sheet": {
+            "status": "recommended",
+            "advisory_label": "Balanced heat absorption preventing bottom scorching while driving uniform horizontal fat spread.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
+        },
+        "continuous-bar-pan": {
+            "status": "sub-optimal",
+            "advisory_label": "Concentrates perimeter mass into a continuous sheet block. Requires reduced bake temperature and extended duration to ensure the core sets fully without burning the edges.",
+            "profile_adjustments": {"oven_temp_offset_f": -25, "bake_time_offset_m": 15, "steam_override": "force-off"}
+        }
+    },
+    "fry": {
+        "high-volume-oil-vat": {
+            "status": "recommended",
+            "advisory_label": "Extreme thermal mass retention keeping liquid fats stable during dough injection.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-off"}
+        }
+    },
+    "pasta": {
+        "mechanical-sheeter": {
+            "status": "recommended",
+            "advisory_label": "Gradual reduction tracking to thin structural pasta film specifications.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-off"}
+        },
+        "high-pressure-dies": {
+            "status": "recommended",
+            "advisory_label": "High compaction shaping matrix.",
+            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-off"}
+        }
+    }
+}
+
+def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str, form_factor_slug: str) -> dict:
+    """
+    Evaluates form factor suitability for the given recipe preset and category using Gemma.
+    Falls back to a local heuristic dict if offline, disabled, or API error.
+    """
+    engine_slug = CATEGORY_TO_ENGINE.get(category_slug, "base")
+    
+    fallback_data = ENGINE_GEOMETRIES.get(engine_slug, {}).get(form_factor_slug, {
+        "status": "recommended",
+        "advisory_label": f"Standard baking geometry for {preset_name or category_slug}.",
+        "profile_adjustments": {
+            "oven_temp_offset_f": 0,
+            "bake_time_offset_m": 0,
+            "steam_override": "no-change"
+        }
+    })
+    
+    if not _is_ai_enabled():
+        return {
+            "geometry_evaluation": fallback_data
+        }
+
+    system_prompt = (
+        "You are an expert baking science assistant. Evaluate the suitability of the selected baking geometry (form factor) "
+        "for the active recipe type and return a structured JSON response.\n"
+        "Your response MUST be pure JSON matching this schema exactly:\n"
+        "{\n"
+        "  \"geometry_evaluation\": {\n"
+        "    \"status\": \"recommended\" or \"sub-optimal\",\n"
+        "    \"advisory_label\": \"A clear 1-2 sentence structural justification explaining heat penetration, expansion, or steam mechanics.\",\n"
+        "    \"profile_adjustments\": {\n"
+        "      \"oven_temp_offset_f\": integer offset,\n"
+        "      \"bake_time_offset_m\": integer offset,\n"
+        "      \"steam_override\": \"no-change\" or \"force-on\" or \"force-off\"\n"
+        "    }\n"
+        "  }\n"
+        "}"
+    )
+    
+    user_prompt = (
+        f"Active Recipe Preset: {preset_name or preset_slug or 'Custom'}\n"
+        f"Active Recipe Category: {category_slug} (Sub-Engine: {engine_slug})\n"
+        f"Selected Form Factor (Geometry): {form_factor_slug}\n"
+        f"Generate the suitability status, a scientific advisory label, and the recommended oven temperature offset (°F), "
+        f"bake time offset (minutes), and steam override choice. The default baseline parameters for this form factor are: "
+        f"status = '{fallback_data['status']}', temp offset = {fallback_data['profile_adjustments']['oven_temp_offset_f']}°F, "
+        f"time offset = {fallback_data['profile_adjustments']['bake_time_offset_m']}m, steam override = '{fallback_data['profile_adjustments']['steam_override']}'. "
+        f"Output ONLY valid JSON."
+    )
+    
+    try:
+        response = call_gemma_api(system_prompt, user_prompt, expected_keys=["geometry_evaluation"])
+        if response and "geometry_evaluation" in response:
+            ge = response["geometry_evaluation"]
+            status = ge.get("status", fallback_data["status"])
+            if status not in ["recommended", "sub-optimal"]:
+                status = fallback_data["status"]
+            
+            advisory_label = ge.get("advisory_label", fallback_data["advisory_label"])
+            
+            adjustments = ge.get("profile_adjustments", {})
+            oven_temp_offset = int(adjustments.get("oven_temp_offset_f", fallback_data["profile_adjustments"]["oven_temp_offset_f"]))
+            bake_time_offset = int(adjustments.get("bake_time_offset_m", fallback_data["profile_adjustments"]["bake_time_offset_m"]))
+            steam_override = adjustments.get("steam_override", fallback_data["profile_adjustments"]["steam_override"])
+            if steam_override not in ["no-change", "force-on", "force-off"]:
+                steam_override = fallback_data["profile_adjustments"]["steam_override"]
+                
+            return {
+                "geometry_evaluation": {
+                    "status": status,
+                    "advisory_label": advisory_label,
+                    "profile_adjustments": {
+                        "oven_temp_offset_f": oven_temp_offset,
+                        "bake_time_offset_m": bake_time_offset,
+                        "steam_override": steam_override
+                    }
+                }
+            }
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling geometry advisory API: {str(e)}")
+        
+    return {
+        "geometry_evaluation": fallback_data
+    }
+
+

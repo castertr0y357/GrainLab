@@ -811,7 +811,24 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertEqual(hard_eval["tier"], "recommended")
 
 
-
-
-
-
+class GeometryEvaluationTests(TestCase):
+    """
+    Tests the engine permissible form factors, geometry advisory client,
+    and dynamic target mass calculations.
+    """
+    def test_hearth_engine_permissible_factors(self):
+        from grainlab.engines.hearth_engine import HearthEngine
+        engine = HearthEngine()
+        pffs = getattr(engine, "permissible_form_factors", {})
+        self.assertIn("cast-iron-dutch-oven", pffs)
+        self.assertIn("standard-9x5-pan", pffs)
+        
+    def test_gemma_client_fallback_advisory(self):
+        from apps.core.gemma_client import get_geometry_advisory
+        # Call with dry category 'lean-crusty' and form factor 'standard-9x5-pan'
+        res = get_geometry_advisory("custom", "Custom Sourdough", "lean-crusty", "standard-9x5-pan")
+        self.assertIn("geometry_evaluation", res)
+        ge = res["geometry_evaluation"]
+        self.assertEqual(ge["status"], "sub-optimal")
+        self.assertEqual(ge["profile_adjustments"]["oven_temp_offset_f"], -25)
+        self.assertEqual(ge["profile_adjustments"]["bake_time_offset_m"], 5)

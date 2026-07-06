@@ -9,6 +9,37 @@ class PastryEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires an ultra-clean, sweet backdrop to highlight intense layered butter fat distribution."
     tannin_sensitive = True
 
+    permissible_form_factors = {
+        "perforated-sheet-air-mat": {
+            "name": "Perforated Sheet + Air Mat",
+            "tier": "recommended",
+            "is_portioned": True,
+            "unit_weight": 90.0,
+            "base_count": 6,
+            "step_increment": 6,
+            "unit_label": "pastry",
+            "unit_label_plural": "pastries",
+            "bake_temp_f": 400,
+            "bake_time_min": 20,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        },
+        "fluted-ring-tart-pan": {
+            "name": "Fluted Ring Tart Pan",
+            "tier": "recommended",
+            "is_portioned": False,
+            "unit_weight": 400.0,
+            "base_count": 1,
+            "step_increment": 1,
+            "unit_label": "tart",
+            "unit_label_plural": "tarts",
+            "bake_temp_f": 375,
+            "bake_time_min": 25,
+            "steam_required": False,
+            "is_enriched_profile": True,
+        }
+    }
+
     presets = [
         "Classic Croissants", "Pain au Chocolat", "All-Butter Puff Pastry",
         "Danish Pastry Dough", "Flaky Pie Crust (Pâte Brisée)",

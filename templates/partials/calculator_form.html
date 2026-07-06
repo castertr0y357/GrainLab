@@ -21,26 +21,46 @@
           mill_type: 'stoneground',
           form_factor_val: '{{ selected_form_factor.slug|default:"standard-9x5-pan" }}',
           recommended_ff_slug: '{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}{{ selected_form_factor.slug }}{% endif %}',
-          yield_scale: 1,
+          yield_scale: 1.0,
+          engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}'),
           get formFactorBaseline() {
-              const mapping = {
-                  'standard-9x5-pan': { is_portioned: false, unit_weight: 900, base_count: 1, unit_label: 'loaf', unit_label_plural: 'loaves' },
-                  'freeform-loaf': { is_portioned: false, unit_weight: 750, base_count: 1, unit_label: 'boule', unit_label_plural: 'boules' },
-                  'portioned-buns-rolls': { is_portioned: true, unit_weight: 90, base_count: 12, unit_label: 'bun', unit_label_plural: 'buns' },
-                  'baguette-long-loaf': { is_portioned: true, unit_weight: 300, base_count: 3, unit_label: 'baguette', unit_label_plural: 'baguettes' },
-                  'sheet-pan': { is_portioned: false, unit_weight: 800, base_count: 1, unit_label: 'sheet', unit_label_plural: 'sheets' }
+              const activeEngineFFs = this.engines_ff[this.selected_master] || {};
+              return activeEngineFFs[this.form_factor_val] || { 
+                  name: 'Standard Loaf',
+                  is_portioned: false, 
+                  unit_weight: 900, 
+                  base_count: 1, 
+                  step_increment: 1,
+                  unit_label: 'loaf', 
+                  unit_label_plural: 'loaves',
+                  bake_temp_f: 375,
+                  bake_time_min: 45,
+                  steam_required: false,
+                  is_enriched_profile: false
               };
-              return mapping[this.form_factor_val] || { is_portioned: false, unit_weight: 900, base_count: 1, unit_label: 'loaf', unit_label_plural: 'loaves' };
           },
           get yieldHelperString() {
               const ff = this.formFactorBaseline;
-              const totalCount = ff.base_count * this.yield_scale;
+              const totalCount = Math.round(ff.base_count * this.yield_scale);
               const label = totalCount === 1 ? ff.unit_label : ff.unit_label_plural;
               if (ff.is_portioned) {
-                  return `Yield Matrix: Generates ${totalCount} total ${label} (Portion cleanly into uniform ~${ff.unit_weight}g pieces before proofing)`;
+                  return `Yield Matrix: Generates ${totalCount} total ${label} (Portion cleanly into uniform ~${Math.round(ff.unit_weight)}g pieces before proofing)`;
               } else {
-                  const totalWeight = ff.unit_weight * totalCount;
-                  return `Yield Matrix: Generates ${totalCount} total ${label} (Total dough weight: ~${totalWeight}g)`;
+                  const totalWeight = Math.round(ff.unit_weight * ff.base_count * this.yield_scale);
+                  const displayCount = (ff.base_count * this.yield_scale);
+                  const displayLabel = displayCount === 1 ? ff.unit_label : ff.unit_label_plural;
+                  return `Yield Matrix: Generates ${displayCount} total ${displayLabel} (Total dough weight: ~${totalWeight}g)`;
+              }
+          },
+          getFormFactorButtonStyle(ff_slug, ff_data) {
+              if (this.form_factor_val === ff_slug) {
+                  if (this.geometry_status === 'sub-optimal') {
+                      return 'background-color: var(--warning); color: #000; border-color: var(--warning); box-shadow: 0 0 15px var(--warning); font-weight: 800;';
+                  } else {
+                      return 'background-color: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 15px var(--accent); font-weight: 800;';
+                  }
+              } else {
+                  return 'background: transparent; color: var(--text-primary);';
               }
           },
           getGrainStyle(berry) {
@@ -78,9 +98,20 @@
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });
           $watch('editor_mode', value => { if (value === 'standard') { if (subOriginal === 'fat' && !['none', 'butter'].includes(subSubstitute)) { subSubstitute = 'none'; } } });
+          $watch('selected_master', val => {
+              category_slug = val;
+              const keys = Object.keys(engines_ff[val] || {});
+              if (keys.length > 0) {
+                  form_factor_val = keys[0];
+                  recommended_ff_slug = keys[0];
+                  portioned = engines_ff[val][keys[0]].is_portioned;
+              }
+              yield_scale = 1.0;
+              $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+          });
           $watch('form_factor_val', val => {
               portioned = formFactorBaseline.is_portioned;
-              yield_scale = 1;
+              yield_scale = 1.0;
               $nextTick(() => htmx.trigger('#calculator-form', 'change'));
           });
           $watch('yield_scale', val => {
@@ -118,31 +149,10 @@
         <input type="hidden" name="preset_slug" value="{{ selected_preset.slug }}">
     {% endif %}
     <input type="hidden" name="current_phase" :value="current_phase" value="{% if selected_preset %}3{% else %}1{% endif %}">
-    <input type="hidden" name="editor_mode" :value="editor_mode" value="standard">
     <input type="hidden" name="form_factor" :value="form_factor_val" value="{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}freeform-loaf{% endif %}">
     <input type="hidden" name="target_weight" :value="formFactorBaseline.unit_weight * formFactorBaseline.base_count * yield_scale">
     <input type="hidden" name="unit_weight" :value="formFactorBaseline.unit_weight">
-    <input type="hidden" name="portion_count" :value="formFactorBaseline.base_count * yield_scale">
-
-    <!-- Global Mode Control: Standard vs. Advanced Toggles -->
-    <div x-show="current_phase === 3" x-transition
-         style="display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
-        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Editor Mode</span>
-        <div style="display: flex; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: 9999px; padding: 0.25rem;">
-            <button type="button" 
-                    style="border: none; border-radius: 9999px; min-height: 48px; min-width: 120px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s;"
-                    :style="editor_mode === 'standard' ? 'background-color: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); font-weight: 800;' : 'background: transparent; color: var(--text-secondary);'"
-                    @click="editor_mode = 'standard'; selectIdealGrain(); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                Standard
-            </button>
-            <button type="button" 
-                    style="border: none; border-radius: 9999px; min-height: 48px; min-width: 120px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s;"
-                    :style="editor_mode === 'advanced' ? 'background-color: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); font-weight: 800;' : 'background: transparent; color: var(--text-secondary);'"
-                    @click="editor_mode = 'advanced'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                Advanced
-            </button>
-        </div>
-    </div>
+    <input type="hidden" name="portion_count" :value="Math.round(formFactorBaseline.base_count * yield_scale)">
 
     <!-- Hidden Dough Category and Form Factor selectors linked to HTMX -->
     <div style="display: none;">
@@ -314,7 +324,6 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                 <template x-for="berry in sortedBerries" :key="berry.id">
                     <label class="card" 
-                           x-show="editor_mode === 'advanced' || isIdealGrain(berry.name)"
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
                            :style="getGrainStyle(berry)">
                         <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
@@ -487,16 +496,16 @@
             <!-- Form Factor Pill Grid Selector -->
             <div style="margin-bottom: 1.5rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Baking Form Factor</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                    {% for ff in form_factors %}
+                <div class="pill-btn-group">
+                    <template x-for="(ff_data, ff_slug) in (engines_ff[selected_master] || {})" :key="ff_slug">
                         <button type="button"
-                                x-show="editor_mode === 'advanced' || '{{ ff.slug }}' === recommended_ff_slug"
-                                style="border: 2px solid var(--border); border-radius: 9999px; min-height: 48px; padding: 0.5rem 1.5rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center;"
-                                :style="form_factor_val === '{{ ff.slug }}' ? 'background-color: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 15px var(--accent); font-weight: 800;' : 'background: transparent; color: var(--text-primary);'"
-                                @click="form_factor_val = '{{ ff.slug }}';">
-                            {{ ff.name }}
+                                class="pill-btn"
+                                :class="{'active': form_factor_val === ff_slug}"
+                                :style="form_factor_val === ff_slug && ff_data.tier === 'sub-optimal' ? 'background-color: rgba(255, 159, 28, 0.1); border-color: var(--warning); color: var(--warning); box-shadow: 0 0 10px hsla(38, 92%, 50%, 0.4);' : ''"
+                                @click="form_factor_val = ff_slug;">
+                            <span x-text="ff_data.name + ' (' + (ff_data.tier === 'recommended' ? 'Recommended' : 'Sub-Optimal') + ')'"></span>
                         </button>
-                    {% endfor %}
+                    </template>
                 </div>
             </div>
 
@@ -506,15 +515,15 @@
                 <div style="display: inline-flex; align-items: center; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem;">
                     <button type="button" 
                             style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
-                            @click="if (yield_scale > 1) { yield_scale--; }"
-                            :disabled="yield_scale <= 1"
-                            :style="yield_scale <= 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''">
+                            @click="if (yield_scale > 0.5) { yield_scale = parseFloat((yield_scale - 0.5).toFixed(1)); }"
+                            :disabled="yield_scale <= 0.5"
+                            :style="yield_scale <= 0.5 ? 'opacity: 0.3; cursor: not-allowed;' : ''">
                         &minus;
                     </button>
-                    <span style="font-size: 1.25rem; font-weight: 800; min-width: 48px; text-align: center; color: var(--accent);" x-text="yield_scale"></span>
+                    <span style="font-size: 1.25rem; font-weight: 800; min-width: 48px; text-align: center; color: var(--accent);" x-text="yield_scale.toFixed(1)"></span>
                     <button type="button" 
                             style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
-                            @click="yield_scale++">
+                            @click="yield_scale = parseFloat((yield_scale + 0.5).toFixed(1))">
                         &plus;
                     </button>
                 </div>
@@ -674,48 +683,36 @@
 
                 <!-- If Fat selected -->
                 <div x-show="subOriginal === 'fat'">
-                    <!-- Standard Mode Fat Swaps -->
-                    <template x-if="editor_mode === 'standard'">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
-                                    @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                No Swap
-                            </button>
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'butter' ? 'active' : ''"
-                                    @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Butter
-                            </button>
-                        </div>
-                    </template>
-                    <!-- Advanced Mode Fat Swaps -->
-                    <template x-if="editor_mode === 'advanced'">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
-                                    @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                No Swap
-                            </button>
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
-                                    @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Olive Oil
-                            </button>
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
-                                    @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Canola Oil
-                            </button>
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
-                                    @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Vegetable Oil
-                            </button>
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
-                                    @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Salted Butter
-                            </button>
-                            <button type="button" class="pill-btn" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
-                                    @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Unsalted Butter
-                            </button>
-                        </div>
-                    </template>
+                    <div class="pill-btn-group">
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
+                                @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            No Swap
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'butter' ? 'active' : ''"
+                                @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            Butter
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
+                                @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            Unsalted Butter
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
+                                @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            Salted Butter
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
+                                @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            Olive Oil
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
+                                @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            Canola Oil
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
+                                @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            Vegetable Oil
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
