@@ -9,6 +9,64 @@
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
     
+    phase1_categories: {
+        'lean-crusty': {
+            title: "Lean & Crusty",
+            definition: "High-hydration dough systems relying entirely on flour, water, salt, and yeast. Focuses on long fermentation and intense thermal heat to gelatinize starches and form a thick, crisp crust.",
+            presets: ["Sourdough Boule", "Baguette", "Artisan Pizza", "Ciabatta"]
+        },
+        'enriched-soft': {
+            title: "Enriched & Soft",
+            definition: "Dough systems enriched with fats, dairy, or sugar to tenderize the crumb. Inhibits gluten development to yield soft, pillowy, highly extensible structures.",
+            presets: ["Everyday Sandwich", "Brioche", "Challah", "Burger Buns", "Cinnamon Rolls"]
+        },
+        'alkaline-bath': {
+            title: "Alkaline Bath",
+            definition: "Doughs that undergo a hot alkaline water dip (using lye or baking soda) before baking. This alters surface pH, accelerating the Maillard reaction for a shiny, deep-brown crust and a distinct chew.",
+            presets: ["Soft Pretzels", "Boiled Bagels"]
+        },
+        'flatbreads-griddles': {
+            title: "Flatbreads & Griddles",
+            definition: "Highly extensible dough systems, often cooked on hot stone or steel griddles. Emphasizes steam expansion or minimal rise for flexible, pocketed, or thin flatbreads.",
+            presets: ["Naan", "Flour Tortillas", "Pita Bread", "Crackers"]
+        },
+        'quick-breads-scones': {
+            title: "Quick Breads & Scones",
+            definition: "Chemically leavened doughs that rely on baking powder or baking soda rather than yeast. Features minimal mechanical mixing to prevent gluten strength and preserve crumbly, tender textures.",
+            presets: ["Southern Buttermilk Biscuits", "Scones", "Muffins", "Irish Soda Bread"]
+        },
+        'cakes-batters': {
+            title: "Cakes & Batters",
+            definition: "Fluid batter systems featuring highly aerated emulsions of fat, sugar, and eggs. Emphasizes low-protein flour to maximize tenderness, support structure, and control crumb cell size.",
+            presets: ["Yellow Layer Cake", "Pancakes", "Waffles", "Sponge Cake"]
+        },
+        'pastry-lamination': {
+            title: "Pastry & Lamination",
+            definition: "Dough systems that layer cold fat (typically butter) between dough sheets. The water inside the fat vaporizes during baking, pushing the layers apart to create hundreds of flaky, crisp leaves.",
+            presets: ["Classic Croissants", "Puff Pastry", "Flaky Pie Crust"]
+        },
+        'choux-paste': {
+            title: "Choux Paste",
+            definition: "A unique pre-cooked dough system where flour is cooked in boiling liquid to gelatinize starches before egg integration. Relies entirely on intense steam expansion to inflate into hollow, crisp-shelled pastries.",
+            presets: ["Chocolate Éclairs", "Cream Puffs", "Gougères", "Churros"]
+        },
+        'cookies-shortbread': {
+            title: "Cookies & Shortbread",
+            definition: "Low-moisture, high-fat confections engineered for controlled horizontal spread. Focuses on fat and sugar melting thresholds before the structural crumb sets in the oven.",
+            presets: ["Chocolate Chip Cookies", "Shortbread Wedges", "Biscotti", "Macarons"]
+        },
+        'fried-doughs': {
+            title: "Fried Doughs",
+            definition: "Yeast or chemically leavened doughs designed for rapid immersion frying. Relies on instant heat transfer to expand the leavened gas bubbles while cooking a thin, crisp, non-greasy crust.",
+            presets: ["Yeast-Raised Donuts", "Beignets", "Fritters"]
+        },
+        'fresh-pasta-noodles': {
+            title: "Fresh Pasta & Noodles",
+            definition: "Unfermented, dense flour and egg systems mixed under high compaction. Emphasizes protein alignment and gluten density for a resilient, firm bite (al dente) after boiling.",
+            presets: ["Fresh Egg Tagliatelle", "Ramen", "Lasagna Sheets"]
+        }
+    },
+    
     global_ai_enabled: {% if ai_enabled %}true{% else %}false{% endif %},
     hovered_element: null,
     sidebar_insight_loading: false,
@@ -864,7 +922,61 @@
                     </div>
                 </div>
                 
-                <div id="recipe-output-container" x-show="(current_phase === 1 || current_phase >= 3 || (current_phase === 2 && grain_mode !== 'milled')) && !hovered_element">
+                <!-- Phase 1 Sidebar Inspector -->
+                <div x-show="current_phase === 1 && !hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: 100%;">
+                    <!-- Idle State: No Category Selected -->
+                    <div x-show="!selected_master || selected_master === 'null'" 
+                         style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+                        <div>
+                            <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🎛️</span>
+                            Select a dough or confection category to initialize workspace...
+                        </div>
+                    </div>
+                    
+                    <!-- Active State: Category Selected -->
+                    <div x-show="selected_master && selected_master !== 'null'" 
+                         x-transition 
+                         style="display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; min-height: 350px;">
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <!-- Top Header -->
+                            <h3 style="color: var(--accent); margin: 0; font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;"
+                                x-text="phase1_categories[selected_master]?.title">
+                            </h3>
+                            
+                            <!-- The Science Profile Card -->
+                            <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                <span style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🔬 The Science Profile</span>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" 
+                                   x-text="phase1_categories[selected_master]?.definition"></p>
+                            </div>
+                            
+                            <!-- Included Targets Array -->
+                            <div>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">INCLUDED TARGETS:</span>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    <template x-for="preset in phase1_categories[selected_master]?.presets" :key="preset">
+                                        <span class="chip active" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); cursor: default; margin-bottom: 0;" x-text="preset"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Base Anchor (Proceed Button) -->
+                        <div style="margin-top: 2rem;">
+                            <button type="button" 
+                                    class="nav-btn primary"
+                                    style="width: 100%; height: 50px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #ff9800; border-radius: var(--radius-sm); background: rgba(255, 152, 0, 0.05); color: #ff9800; box-shadow: 0 0 10px rgba(255, 152, 0, 0.1); transition: var(--transition);"
+                                    onmouseover="this.style.background='#ff9800'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(255, 152, 0, 0.3)';"
+                                    onmouseout="this.style.background='rgba(255, 152, 0, 0.05)'; this.style.color='#ff9800'; this.style.boxShadow='0 0 10px rgba(255, 152, 0, 0.1)';"
+                                    @click="$refs.doughCategorySelect.value = selected_master; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
+                                INITIALIZE CATEGORY →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="recipe-output-container" x-show="(current_phase >= 3 || (current_phase === 2 && grain_mode !== 'milled')) && !hovered_element">
                     <!-- Swapped in dynamically by HTMX -->
                     <div style="text-align: center; padding: 6rem 1.5rem; color: var(--text-muted);">
                         <span class="spinner" style="width: 40px; height: 40px;"></span>

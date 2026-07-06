@@ -228,13 +228,13 @@
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
             Phase 1: Choose Dough Category
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
             {% for category in categories %}
                 <div class="card" 
-                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; border-width: 2px; min-height: 120px; transition: var(--transition); margin-bottom: 0;"
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 100px; transition: var(--transition); margin-bottom: 0;"
                      :style="selected_master === '{{ category.slug }}' ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' : ''"
-                     @click="selected_master = '{{ category.slug }}'; $refs.doughCategorySelect.value = '{{ category.slug }}'; $refs.doughCategorySelect.dispatchEvent(new Event('change')); current_phase = 2;">
-                    <span style="font-size: 2.25rem; margin-bottom: 0.5rem;">
+                     @click="selected_master = '{{ category.slug }}';">
+                    <span style="font-size: 2rem; margin-bottom: 0.5rem;">
                         {% if category.slug == 'lean-crusty' %}🌾
                         {% elif category.slug == 'enriched-soft' %}🍞
                         {% elif category.slug == 'alkaline-bath' %}🥨
@@ -249,21 +249,7 @@
                         {% else %}🍞
                         {% endif %}
                     </span>
-                    <strong style="font-size: 1.05rem;">{{ category.name }}</strong>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
-                        {% if category.slug == 'lean-crusty' %}Sourdough Boule, Baguette, Artisan Pizza
-                        {% elif category.slug == 'enriched-soft' %}Everyday Sandwich, Brioche, Challah
-                        {% elif category.slug == 'alkaline-bath' %}Soft Pretzels, Boiled Bagels
-                        {% elif category.slug == 'flatbreads-griddles' %}Naan, Tortillas, Pita, Crackers
-                        {% elif category.slug == 'quick-breads-scones' %}Southern Buttermilk Biscuits
-                        {% elif category.slug == 'cakes-batters' %}Yellow Layer Cake, Pancakes, Waffles
-                        {% elif category.slug == 'pastry-lamination' %}Classic Croissants, Puff Pastry, Pie Crust
-                        {% elif category.slug == 'choux-paste' %}Chocolate Éclairs, Profiteroles
-                        {% elif category.slug == 'cookies-shortbread' %}Chewy Chocolate Chip Cookies
-                        {% elif category.slug == 'fried-doughs' %}Yeast-Raised Donuts, Beignets
-                        {% elif category.slug == 'fresh-pasta-noodles' %}Fresh Egg Tagliatelle, Ramen
-                        {% endif %}
-                    </span>
+                    <strong style="font-size: 1rem; color: var(--text-primary);">{{ category.name }}</strong>
                 </div>
             {% endfor %}
         </div>
