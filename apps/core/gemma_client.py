@@ -413,64 +413,158 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
 
 def get_grain_advisory_ai(preset_slug: str) -> dict | None:
     """
-    Submits a prompt to Gemma asking for recommended and high risk stocks for the preset.
+    Submits a prompt to Gemma asking for evaluation of available kitchen inventory.
     """
     if _is_ai_enabled():
+        from apps.core.models import WheatBerry, BreadPreset
+        from grainlab.engines import router
+        import json
+        
+        preset = BreadPreset.objects.filter(slug=preset_slug).first()
+        category_slug = None
+        if preset and preset.dough_category:
+            category_slug = preset.dough_category.slug
+        engine = router.get_engine_for_preset(preset_slug, category_slug)
+        
+        active_berries = list(WheatBerry.objects.filter(is_active=True))
+        if not active_berries:
+            return {"grain_evaluations": []}
+            
         system_prompt = (
-            "You are a baking science expert. Analyze the given bread/pastry preset and identify the recommended stock and the high risk stock. "
-            "Return a JSON object containing the following keys:\n"
-            "- 'recommended_name': Name of the ideal grain variant (e.g., 'Soft White Wheat' or 'Hard Red Spring Wheat')\n"
-            "- 'recommended_reason': 1-2 sentence food science explanation of why it fits the crumb structure\n"
-            "- 'high_risk_name': Name of the high risk grain variant that will ruin the bake\n"
-            "- 'high_risk_reason': 1-2 sentence food science explanation of why it ruins the bake"
+            "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory. "
+            "Evaluate each grain using these universal heuristics:\n"
+            "1. TIER ASSIGNMENT (Structure/Protein):\n"
+            "   - 'recommended': Grains falling squarely within the target protein range that exhibit the required gluten behavior.\n"
+            "   - 'sub-optimal': Grains within +/-1.5% of the target protein range, or grains with correct protein but structural properties requiring workflow adjustment.\n"
+            "   - 'not-recommended': Grains completely violating structural thresholds, causing gas retention failure or severe structural toughening.\n"
+            "2. TIER PENALTY MODIFICATION (Flavor/Tannins):\n"
+            "   - If 'tannin_sensitive' is true, any grain with high bitterness or astringent tannins (such as red/rustic wheats, rye, spelt, einkorn) must be downgraded by exactly one tier (e.g., recommended drops to sub-optimal).\n"
+            "   - If 'tannin_sensitive' is false (Tannin Tolerant), flavor profiles do not penalize the tier.\n\n"
+            "Return a JSON object matching this schema:\n"
+            "{\n"
+            "  \"grain_evaluations\": [\n"
+            "    {\n"
+            "      \"grain_id\": \"string (UUID of the grain)\",\n"
+            "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+            "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain's protein percentage alters the requested texture, and how its bran/tannin profile impacts the target flavor profile.\"\n"
+            "    }\n"
+            "  ]\n"
+            "}"
         )
-        user_prompt = json.dumps({"preset_slug": preset_slug})
-        return call_gemma_api(system_prompt, user_prompt, expected_keys=[
-            "recommended_name", "recommended_reason", "high_risk_name", "high_risk_reason"
-        ])
+        
+        payload = {
+            "preset_slug": preset_slug,
+            "preset_name": preset.name if preset else preset_slug,
+            "engine_profile": {
+                "name": engine.name,
+                "target_protein_min": getattr(engine, "target_protein_min", 11.0),
+                "target_protein_max": getattr(engine, "target_protein_max", 13.0),
+                "gluten_behavior_required": getattr(engine, "gluten_behavior", ""),
+                "flavor_affinity": getattr(engine, "flavor_affinity", ""),
+                "tannin_sensitive": getattr(engine, "tannin_sensitive", False)
+            },
+            "inventory": [
+                {
+                    "id": str(wb.id),
+                    "name": wb.name,
+                    "protein": wb.protein_content,
+                    "hardness": wb.hardness,
+                    "notes": wb.notes
+                }
+                for wb in active_berries
+            ]
+        }
+        
+        user_prompt = json.dumps(payload)
+        res = call_gemma_api(system_prompt, user_prompt, expected_keys=["grain_evaluations"])
+        if res and isinstance(res, dict) and "grain_evaluations" in res:
+            return res
+            
     return None
 
 
 def get_local_grain_advisory(preset_slug: str) -> dict:
     """
-    Local fallback logic providing structured recommended and high risk stocks for presets.
+    Local fallback logic performing programmatic evaluation of kitchen inventory 
+    using the active sub-engine heuristics.
     """
-    slug = preset_slug.lower()
-    
-    if slug in ["cookies", "biscuits", "yellow-cake"]:
-        return {
-            "recommended_name": "Soft White Wheat",
-            "recommended_reason": "Low protein content preserves tenderness and maximizes spread control, ensuring a delicate crumb.",
-            "high_risk_name": "Hard Red Spring Wheat",
-            "high_risk_reason": "Excessive 14.5% protein matrix will develop rubbery, bread-like gluten and cause structural tightening."
-        }
-    elif slug in ["baguette", "sourdough-boule", "ciabatta", "artisan-pizza", "bagel", "eclairs"]:
-        return {
-            "recommended_name": "Hard Red Spring Wheat",
-            "recommended_reason": "High protein content (14.5%) developments a strong, elastic gluten network required to hold high hydration and support oven spring.",
-            "high_risk_name": "Soft White Wheat",
-            "high_risk_reason": "Insufficient gluten strength will lead to a slack, runny dough that collapses in the oven and lacks structure."
-        }
-    elif slug in ["everyday-sandwich", "challah", "cinnamon-rolls", "burger-buns", "naan", "donuts", "tagliatelle"]:
-        return {
-            "recommended_name": "Hard White Wheat",
-            "recommended_reason": "Provides a balanced 12.5% protein content that supports mild structure while retaining a tender, soft, and uniform crumb.",
-            "high_risk_name": "Soft White Wheat",
-            "high_risk_reason": "Will fail to hold shape during baking, causing flat rolls or weak sandwich loaves that tear easily."
-        }
-    elif slug in ["french-loaf", "brioche", "pretzel", "croissants"]:
-        return {
-            "recommended_name": "Hard Red Winter Wheat",
-            "recommended_reason": "Moderate 13.0% protein content develops clean, classic gluten structure suitable for rich enriched doughs and lamination.",
-            "high_risk_name": "Soft White Wheat",
-            "high_risk_reason": "Weaker protein structure will melt under high fat enrichment, yielding dense, oily, or unrisen products."
-        }
-    
+    from apps.core.models import WheatBerry, BreadPreset
+    from grainlab.engines import router
+
+    preset = BreadPreset.objects.filter(slug=preset_slug).first()
+    category_slug = None
+    if preset and preset.dough_category:
+        category_slug = preset.dough_category.slug
+    engine = router.get_engine_for_preset(preset_slug, category_slug)
+
+    active_berries = list(WheatBerry.objects.filter(is_active=True))
+    evaluations = []
+
+    # Map engine properties
+    p_min = getattr(engine, "target_protein_min", 11.0)
+    p_max = getattr(engine, "target_protein_max", 13.0)
+    g_behav = getattr(engine, "gluten_behavior", "standard")
+    flavor_affinity = getattr(engine, "flavor_affinity", "")
+    t_sens = getattr(engine, "tannin_sensitive", False)
+
+    for wb in active_berries:
+        name = wb.name
+        prot = wb.protein_content
+        hard = wb.hardness
+
+        # Heuristic 1: Structure/Protein Tier
+        is_in_range = p_min <= prot <= p_max
+        is_within_tolerance = (p_min - 1.5) <= prot <= (p_max + 1.5)
+        
+        # Hardness validation
+        hardness_ok = True
+        if p_min >= 11.5:  # Bread engines generally require hard/durum
+            if hard not in ["hard", "durum"]:
+                hardness_ok = False
+        elif p_max <= 10.5:  # Weak engines (cookies/cake/quick) generally require soft
+            if hard != "soft":
+                hardness_ok = False
+
+        if is_in_range and hardness_ok:
+            base_tier = "recommended"
+        elif is_within_tolerance:
+            base_tier = "sub-optimal"
+        else:
+            base_tier = "not-recommended"
+
+        # Heuristic 2: Tannin penalty
+        is_tannin_heavy = any(x in name.lower() for x in ["red", "rye", "spelt", "einkorn"])
+        final_tier = base_tier
+        penalty_applied = False
+        if t_sens and is_tannin_heavy:
+            penalty_applied = True
+            if base_tier == "recommended":
+                final_tier = "sub-optimal"
+            elif base_tier == "sub-optimal":
+                final_tier = "not-recommended"
+
+        # Analytical reasoning string construction
+        if final_tier == "recommended":
+            reasoning = f"At {prot}% protein content, {name} fits the {engine.name} target range ({p_min}%-{p_max}%) for optimal gluten behavior. Its sweet/neutral profile matches the recipe flavor."
+        elif final_tier == "sub-optimal":
+            if penalty_applied and is_in_range:
+                reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with this sweet/neutral recipe, dropping it to sub-optimal."
+            else:
+                reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {engine.name}, which will require minor hydration adjustments."
+        else:
+            if penalty_applied:
+                reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the sweet/neutral flavor profile."
+            else:
+                reasoning = f"At {prot}% protein, {name} completely violates the {engine.name} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
+
+        evaluations.append({
+            "grain_id": str(wb.id),
+            "tier": final_tier,
+            "reasoning": reasoning
+        })
+
     return {
-        "recommended_name": "Hard Red Winter Wheat",
-        "recommended_reason": "A versatile choice providing reliable gluten development and water absorption across standard profiles.",
-        "high_risk_name": "Soft White Wheat (for bread products)",
-        "high_risk_reason": "Too weak to support yeasted rising structures, leading to dense bakes or collapse."
+        "grain_evaluations": evaluations
     }
 
 

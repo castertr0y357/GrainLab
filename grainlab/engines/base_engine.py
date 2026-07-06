@@ -33,6 +33,11 @@ def _get_val(obj, key, default=None):
 class BaseEngine:
     name = "Base Engine"
     slug = "base"
+    target_protein_min = 11.0
+    target_protein_max = 13.0
+    gluten_behavior = "Standard gluten development"
+    flavor_affinity = "Standard flour profile"
+    tannin_sensitive = False
 
     def calculate_wheat_berry_shares(self, active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None) -> tuple[dict[str, float], float, str | None]:
         if not active_berries:

@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class BatterEngine(BaseEngine):
     name = "Cakes & Batters Engine"
     slug = "batter"
+    target_protein_min = 7.5
+    target_protein_max = 9.5
+    gluten_behavior = "Complete Absence of Gluten. High-ratio sugar and liquid dispersion requires structure built purely on starch gelatinization and egg protein coagulation."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a completely neutral grain baseline to host delicate vanilla, citrus, or fruit fats."
+    tannin_sensitive = True
 
     presets = [
         "Yellow Layer Cake", "Fudgy Chocolate Cake", "Victoria Sponge",

@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class FryEngine(BaseEngine):
     name = "Fried Doughs Engine"
     slug = "fry"
+    target_protein_min = 11.5
+    target_protein_max = 13.0
+    gluten_behavior = "Rapid Gas Expansion & Fat Resistance. Surface must expand immediately and seal against rapid convection liquid heat to lock out excess frying oil absorption."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a warm, clean, light baseline suitable for immediate sugar/glaze applications."
+    tannin_sensitive = True
 
     presets = [
         "Yeast-Raised Donuts", "Fluffy New Orleans Beignets", "Puffed Sopapillas",

@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class PastryEngine(BaseEngine):
     name = "Pastry & Lamination Engine"
     slug = "pastry"
+    target_protein_min = 11.0
+    target_protein_max = 12.5
+    gluten_behavior = "Exceptional Extensibility. Dough sheets must roll out into paper-thin layers wrapping alternating cold solid butter blocks without tearing or puncturing."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires an ultra-clean, sweet backdrop to highlight intense layered butter fat distribution."
+    tannin_sensitive = True
 
     presets = [
         "Classic Croissants", "Pain au Chocolat", "All-Butter Puff Pastry",

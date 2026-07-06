@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class PanEngine(BaseEngine):
     name = "Enriched & Soft Engine"
     slug = "pan"
+    target_protein_min = 11.5
+    target_protein_max = 13.0
+    gluten_behavior = "High Shreddability. Must possess enough structural lift to support heavy lipid loads (butter, sugar, milk, egg yolks) without collapsing."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a clean, sweet, milky baseline; whole-grain bitterness is an active defect."
+    tannin_sensitive = True
 
     presets = [
         "Everyday White Sandwich Loaf", "Rich Brioche", "Traditional Challah",

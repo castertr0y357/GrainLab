@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class CookieEngine(BaseEngine):
     name = "Cookies & Shortbread Engine"
     slug = "cookie"
+    target_protein_min = 8.5
+    target_protein_max = 10.5
+    gluten_behavior = "Minimal Gluten Interaction. Flour must allow melting fats and sugars to spread horizontally before the crumb structure sets in the oven."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Designed for toasted brown sugars and confections; whole-grain bitterness clashes aggressively."
+    tannin_sensitive = True
 
     presets = [
         "Chewy Chocolate Chip Cookies", "Oatmeal Raisin Bakes", "Buttery Shortbread Wedges",

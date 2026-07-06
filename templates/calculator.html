@@ -21,6 +21,7 @@
     advisoryHighRiskReason: '',
     advisoryLoading: false,
     advisoryLoadingMessage: '',
+    grainEvaluations: [],
     
     /* Grains inventory data mapped from django context */
     activeBerries: [
@@ -110,10 +111,13 @@
         fetch('/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug))
             .then(res => res.json())
             .then(data => {
-                this.advisoryRecommendedName = data.recommended_name;
-                this.advisoryRecommendedReason = data.recommended_reason;
-                this.advisoryHighRiskName = data.high_risk_name;
-                this.advisoryHighRiskReason = data.high_risk_reason;
+                this.grainEvaluations = data.grain_evaluations || [];
+                const rec = this.grainEvaluations.find(e => e.tier === 'recommended');
+                const risk = this.grainEvaluations.find(e => e.tier === 'not-recommended');
+                this.advisoryRecommendedName = rec ? this.getGrainNameById(rec.grain_id) : '';
+                this.advisoryRecommendedReason = rec ? rec.reasoning : '';
+                this.advisoryHighRiskName = risk ? this.getGrainNameById(risk.grain_id) : '';
+                this.advisoryHighRiskReason = risk ? risk.reasoning : '';
                 this.advisoryLoading = false;
             })
             .catch(err => {
@@ -127,6 +131,12 @@
         this.advisoryRecommendedReason = '';
         this.advisoryHighRiskName = '';
         this.advisoryHighRiskReason = '';
+        this.grainEvaluations = [];
+    },
+
+    getGrainNameById(id) {
+        const b = this.activeBerries.find(x => x.id === id);
+        return b ? b.name : 'Unknown Grain';
     },
 
     selectIdealGrain() {

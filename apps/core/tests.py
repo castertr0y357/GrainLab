@@ -771,34 +771,44 @@ class AIGrainAdvisoryTests(TestCase):
     """
     def setUp(self):
         self.client = Client()
+        from apps.core.models import WheatBerry
+        self.soft_white = WheatBerry.objects.create(name="Soft White Wheat", protein_content=9.5, hardness="soft", is_active=True)
+        self.hard_spring = WheatBerry.objects.create(name="Hard Red Spring Wheat", protein_content=14.5, hardness="hard", is_active=True)
 
     def test_advisory_empty_slug(self):
-        """If preset_slug is empty, returns empty string fields."""
+        """If preset_slug is empty, returns empty evaluations list."""
         response = self.client.get(reverse('ai_grain_advisory'))
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["recommended_name"], "")
-        self.assertEqual(data["recommended_reason"], "")
-        self.assertEqual(data["high_risk_name"], "")
-        self.assertEqual(data["high_risk_reason"], "")
+        self.assertIn("grain_evaluations", data)
+        self.assertEqual(len(data["grain_evaluations"]), 0)
 
     def test_advisory_cookies_preset(self):
-        """Cookies preset returns Soft White Wheat and Hard Red Spring warnings."""
+        """Cookies preset evaluates Soft White Wheat as recommended and Hard Red Spring as not recommended."""
         response = self.client.get(reverse('ai_grain_advisory') + '?preset_slug=cookies')
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["recommended_name"], "Soft White Wheat")
-        self.assertIn("protein", data["recommended_reason"].lower())
-        self.assertEqual(data["high_risk_name"], "Hard Red Spring Wheat")
-        self.assertIn("protein", data["high_risk_reason"].lower())
+        self.assertIn("grain_evaluations", data)
+        
+        evals = data["grain_evaluations"]
+        soft_eval = next(e for e in evals if e["grain_id"] == str(self.soft_white.id))
+        self.assertEqual(soft_eval["tier"], "recommended")
+        self.assertIn("protein", soft_eval["reasoning"].lower())
+
+        hard_eval = next(e for e in evals if e["grain_id"] == str(self.hard_spring.id))
+        self.assertEqual(hard_eval["tier"], "not-recommended")
+        self.assertIn("protein", hard_eval["reasoning"].lower())
 
     def test_advisory_baguette_preset(self):
-        """Baguette preset returns Hard Red Spring Wheat recommendations."""
+        """Baguette preset evaluates Hard Red Spring as recommended."""
         response = self.client.get(reverse('ai_grain_advisory') + '?preset_slug=baguette')
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["recommended_name"], "Hard Red Spring Wheat")
-        self.assertEqual(data["high_risk_name"], "Soft White Wheat")
+        self.assertIn("grain_evaluations", data)
+        
+        evals = data["grain_evaluations"]
+        hard_eval = next(e for e in evals if e["grain_id"] == str(self.hard_spring.id))
+        self.assertEqual(hard_eval["tier"], "recommended")
 
 
 

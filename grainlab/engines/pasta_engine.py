@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class PastaEngine(BaseEngine):
     name = "Fresh Pasta & Noodles Engine"
     slug = "pasta"
+    target_protein_min = 12.5
+    target_protein_max = 15.0
+    gluten_behavior = "High Plastic Deformation, Zero Leavening. Requires an ultra-dense, low-hydration network that maintains a firm, snap-resistant 'al dente' structural bite when boiled."
+    flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes rich egg, nutty semolina, or distinctive alkaline noodle mineral complexities."
+    tannin_sensitive = False
 
     presets = [
         "Fresh Egg Tagliatelle", "Fettuccine Sheets", "Ravioli / Tortellini Dough",

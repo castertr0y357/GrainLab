@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class HearthEngine(BaseEngine):
     name = "Lean & Crusty Engine"
     slug = "hearth"
+    target_protein_min = 12.0
+    target_protein_max = 14.5
+    gluten_behavior = "High Elasticity, maximum gas retention, capability to withstand long fermentation arcs."
+    flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes deep caramelization, complex bran expressions, and lactic/acetic sourness."
+    tannin_sensitive = False
     
     presets = [
         "Sourdough Boule", "Classic French Baguette", "Ciabatta", 

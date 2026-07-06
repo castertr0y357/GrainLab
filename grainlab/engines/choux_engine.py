@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class ChouxEngine(BaseEngine):
     name = "Choux Paste Engine"
     slug = "choux"
+    target_protein_min = 12.0
+    target_protein_max = 13.5
+    gluten_behavior = "High Starch Gelatinization & High Elasticity. Matrix must actively bind massive egg moisture volumes, expanding violently into a hollow, self-supporting structural shell via steam inflation."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires a neutral background to allow rich egg-custard components to dominate."
+    tannin_sensitive = True
 
     presets = [
         "Chocolate Éclairs", "Cream Puffs (Profiteroles)", "Savory Cheese Gougères",

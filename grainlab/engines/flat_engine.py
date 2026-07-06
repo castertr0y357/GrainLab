@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class FlatEngine(BaseEngine):
     name = "Flatbreads & Griddles Engine"
     slug = "flat"
+    target_protein_min = 10.5
+    target_protein_max = 12.0
+    gluten_behavior = "High Extensibility, Low Elasticity. Dough must roll to millimeter thickness without tearing or snapping back violently."
+    flavor_affinity = "Tannin Tolerant (Rustic/Savory). Enhances toasted, nutty conduction-heat surface blistering."
+    tannin_sensitive = False
 
     presets = [
         "Flour Tortillas", "Hand-Slapped Naan", "Pocked Pocket Pita",

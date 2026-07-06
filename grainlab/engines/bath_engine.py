@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class BathEngine(BaseEngine):
     name = "Alkaline Bath Engine"
     slug = "bath"
+    target_protein_min = 12.0
+    target_protein_max = 14.0
+    gluten_behavior = "Tight interior structure. Matrix must withstand a pre-bake boiling step without dissolving or losing shape."
+    flavor_affinity = "Tannin Tolerant (Rustic/Savory). Designed to complement high Maillard browning, maltiness, and alkaline surface chemistry."
+    tannin_sensitive = False
 
     presets = [
         "Soft Bavarian Pretzels", "Traditional Boiled New York Bagels", "Pretzel Buns",

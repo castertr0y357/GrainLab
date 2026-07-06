@@ -3,6 +3,11 @@ from grainlab.engines.base_engine import BaseEngine
 class QuickEngine(BaseEngine):
     name = "Quick Breads & Scones Engine"
     slug = "quick"
+    target_protein_min = 8.5
+    target_protein_max = 10.5
+    gluten_behavior = "Zero Gluten Development. Mechanical kneading is banned; structure relies entirely on chemical leavening reactions to yield a tender, crumbly interior."
+    flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires clean, buttery fats to come forward without whole-grain astringency."
+    tannin_sensitive = True
 
     presets = [
         "Southern Buttermilk Biscuits", "Flaky Cream Scones", "Irish Soda Bread",

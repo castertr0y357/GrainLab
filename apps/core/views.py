@@ -795,10 +795,7 @@ def ai_grain_advisory(request):
     preset_slug = request.GET.get("preset_slug", "").strip()
     if not preset_slug:
         return JsonResponse({
-            "recommended_name": "",
-            "recommended_reason": "",
-            "high_risk_name": "",
-            "high_risk_reason": ""
+            "grain_evaluations": []
         })
         
     advisory = None
