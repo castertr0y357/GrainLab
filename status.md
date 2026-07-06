@@ -65,6 +65,7 @@
 - [x] Limit grain advisory visibility in Phase 2 strictly to Fresh-Milled Whole Grain mode, hiding it for refined flour
 - [x] Disable auto-advancing when clicking Store Refined Flour, displaying the Proceed to Recipe Configuration button instead
 - [x] Implement Fully Parametric, Heuristic-Driven Production Context Engines across all 11 sub-engines and dynamic workspace input decks
+- [x] Implement Global AI Toggle and Split-Pane Contextual Sidebar Inspector with Gemma E4B models and local dictionary fallbacks
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
