@@ -8,6 +8,12 @@ class ChouxEngine(BaseEngine):
     gluten_behavior = "High Starch Gelatinization & High Elasticity. Matrix must actively bind massive egg moisture volumes, expanding violently into a hollow, self-supporting structural shell via steam inflation."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires a neutral background to allow rich egg-custard components to dominate."
     tannin_sensitive = True
+    production_profile = {
+        "thermodynamic_focus": "hydration_binding_shock",
+        "mechanical_energy_threshold": "moderate_shearing",
+        "permissible_action_types": ["knead", "cream"],
+        "environmental_rest_strategy": "gluten_relaxation",
+    }
 
     permissible_form_factors = {
         "extrusion-piping-sheet": {

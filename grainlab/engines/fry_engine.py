@@ -8,6 +8,12 @@ class FryEngine(BaseEngine):
     gluten_behavior = "Rapid Gas Expansion & Fat Resistance. Surface must expand immediately and seal against rapid convection liquid heat to lock out excess frying oil absorption."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a warm, clean, light baseline suitable for immediate sugar/glaze applications."
     tannin_sensitive = True
+    production_profile = {
+        "thermodynamic_focus": "biological_yeast_activity",
+        "mechanical_energy_threshold": "high_kneading",
+        "permissible_action_types": ["knead"],
+        "environmental_rest_strategy": "gas_proofing",
+    }
 
     permissible_form_factors = {
         "high-volume-oil-vat": {

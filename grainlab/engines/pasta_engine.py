@@ -8,6 +8,12 @@ class PastaEngine(BaseEngine):
     gluten_behavior = "High Plastic Deformation, Zero Leavening. Requires an ultra-dense, low-hydration network that maintains a firm, snap-resistant 'al dente' structural bite when boiled."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes rich egg, nutty semolina, or distinctive alkaline noodle mineral complexities."
     tannin_sensitive = False
+    production_profile = {
+        "thermodynamic_focus": "hydration_binding_shock",
+        "mechanical_energy_threshold": "mechanical_compaction",
+        "permissible_action_types": ["knead", "sheet", "extrude"],
+        "environmental_rest_strategy": "gluten_relaxation",
+    }
 
     permissible_form_factors = {
         "mechanical-sheeter": {

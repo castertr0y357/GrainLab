@@ -8,6 +8,12 @@ class QuickEngine(BaseEngine):
     gluten_behavior = "Zero Gluten Development. Mechanical kneading is banned; structure relies entirely on chemical leavening reactions to yield a tender, crumbly interior."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires clean, buttery fats to come forward without whole-grain astringency."
     tannin_sensitive = True
+    production_profile = {
+        "thermodynamic_focus": "crystalline_fat_preservation",
+        "mechanical_energy_threshold": "minimal_folding",
+        "permissible_action_types": ["cut_in", "fold"],
+        "environmental_rest_strategy": "gluten_relaxation",
+    }
 
     permissible_form_factors = {
         "standard-8x4-loaf-pan": {

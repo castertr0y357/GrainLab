@@ -38,6 +38,12 @@ class BaseEngine:
     gluten_behavior = "Standard gluten development"
     flavor_affinity = "Standard flour profile"
     tannin_sensitive = False
+    production_profile = {
+        "thermodynamic_focus": "biological_yeast_activity",
+        "mechanical_energy_threshold": "high_kneading",
+        "permissible_action_types": ["knead"],
+        "environmental_rest_strategy": "gas_proofing",
+    }
 
     permissible_form_factors = {
         "standard-9x5-pan": {

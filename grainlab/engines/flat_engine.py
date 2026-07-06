@@ -8,6 +8,12 @@ class FlatEngine(BaseEngine):
     gluten_behavior = "High Extensibility, Low Elasticity. Dough must roll to millimeter thickness without tearing or snapping back violently."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Enhances toasted, nutty conduction-heat surface blistering."
     tannin_sensitive = False
+    production_profile = {
+        "thermodynamic_focus": "hydration_binding_shock",
+        "mechanical_energy_threshold": "moderate_shearing",
+        "permissible_action_types": ["knead", "sheet"],
+        "environmental_rest_strategy": "gluten_relaxation",
+    }
 
     permissible_form_factors = {
         "heavy-cast-iron-skillet": {

@@ -25,7 +25,10 @@ def get_engines_ff_json() -> str:
     for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():
         engine = ENGINES[eng_name]
         # We need clean python dictionary to serialize
-        engines_ff_data[cat_slug] = getattr(engine, "permissible_form_factors", {})
+        engines_ff_data[cat_slug] = {
+            "permissible_form_factors": getattr(engine, "permissible_form_factors", {}),
+            "production_profile": getattr(engine, "production_profile", {})
+        }
     return json.dumps(engines_ff_data)
 
 def calculator(request):

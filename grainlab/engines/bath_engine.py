@@ -8,6 +8,12 @@ class BathEngine(BaseEngine):
     gluten_behavior = "Tight interior structure. Matrix must withstand a pre-bake boiling step without dissolving or losing shape."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Designed to complement high Maillard browning, maltiness, and alkaline surface chemistry."
     tannin_sensitive = False
+    production_profile = {
+        "thermodynamic_focus": "biological_yeast_activity",
+        "mechanical_energy_threshold": "high_kneading",
+        "permissible_action_types": ["knead"],
+        "environmental_rest_strategy": "gas_proofing",
+    }
 
     permissible_form_factors = {
         "perforated-baking-sheet": {

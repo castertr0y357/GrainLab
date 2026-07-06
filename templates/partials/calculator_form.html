@@ -22,9 +22,40 @@
           form_factor_val: '{{ selected_form_factor.slug|default:"standard-9x5-pan" }}',
           recommended_ff_slug: '{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}{{ selected_form_factor.slug }}{% endif %}',
           yield_scale: 1.0,
+          fat_starting_temp: 'room_temp',
+          workspace_temp: 65,
+          liquid_temp: 40,
+          active_action: 'knead',
+          hardware_registry: [
+              { id: 'stand_mixer', name: 'Stand Mixer', category: 'high_torque' },
+              { id: 'bread_machine', name: 'Bread Machine', category: 'high_torque' },
+              { id: 'food_processor', name: 'Food Processor', category: 'high_torque' },
+              { id: 'hand_beaters', name: 'Hand Beaters', category: 'whipping_whisk' },
+              { id: 'whisk', name: 'Hand Whisk', category: 'whipping_whisk' },
+              { id: 'spatula_bowl', name: 'Manual Spatula & Bowl', category: 'zero_friction' }
+          ],
+          get activeProductionProfile() {
+              return this.engines_ff[this.selected_master]?.production_profile || {
+                  thermodynamic_focus: 'biological_yeast_activity',
+                  mechanical_energy_threshold: 'high_kneading',
+                  permissible_action_types: ['knead'],
+                  environmental_rest_strategy: 'gas_proofing'
+              };
+          },
+          get filteredTools() {
+              const threshold = this.activeProductionProfile.mechanical_energy_threshold;
+              if (threshold === 'high_kneading' || threshold === 'moderate_shearing' || threshold === 'mechanical_compaction') {
+                  return this.hardware_registry.filter(t => t.category === 'high_torque' || t.category === 'zero_friction');
+              } else if (threshold === 'low_emulsifying') {
+                  return this.hardware_registry.filter(t => t.category === 'whipping_whisk' || t.category === 'zero_friction');
+              } else if (threshold === 'minimal_folding') {
+                  return this.hardware_registry.filter(t => t.category === 'zero_friction');
+              }
+              return this.hardware_registry;
+          },
           engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}'),
           get formFactorBaseline() {
-              const activeEngineFFs = this.engines_ff[this.selected_master] || {};
+              const activeEngineFFs = this.engines_ff[this.selected_master]?.permissible_form_factors || {};
               return activeEngineFFs[this.form_factor_val] || { 
                   name: 'Standard Loaf',
                   is_portioned: false, 
@@ -98,16 +129,39 @@
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });
           $watch('editor_mode', value => { if (value === 'standard') { if (subOriginal === 'fat' && !['none', 'butter'].includes(subSubstitute)) { subSubstitute = 'none'; } } });
-          $watch('selected_master', val => {
+           $watch('selected_master', val => {
               category_slug = val;
-              const keys = Object.keys(engines_ff[val] || {});
+              const keys = Object.keys(engines_ff[val]?.permissible_form_factors || {});
               if (keys.length > 0) {
                   form_factor_val = keys[0];
                   recommended_ff_slug = keys[0];
-                  portioned = engines_ff[val][keys[0]].is_portioned;
+                  portioned = engines_ff[val].permissible_form_factors[keys[0]].is_portioned;
               }
               yield_scale = 1.0;
+              
+              // Reset action & environment to defaults based on profile
+              const profile = engines_ff[val]?.production_profile || {};
+              if (profile.permissible_action_types && profile.permissible_action_types.length > 0) {
+                  active_action = profile.permissible_action_types[0];
+              } else {
+                  active_action = 'knead';
+              }
+              if (profile.environmental_rest_strategy === 'gas_proofing') {
+                  proofing_environment = 'ambient';
+              } else if (profile.environmental_rest_strategy === 'structural_retardation' || profile.environmental_rest_strategy === 'fat_solidification') {
+                  proofing_environment = 'refrigerator';
+              } else if (profile.environmental_rest_strategy === 'gluten_relaxation') {
+                  proofing_environment = 'bench_rest';
+              }
               $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+          });
+          $watch('filteredTools', val => {
+              if (val && val.length > 0) {
+                  const currentValid = val.find(t => t.id === mixing_method);
+                  if (!currentValid) {
+                      mixing_method = val[0].id;
+                  }
+              }
           });
           $watch('form_factor_val', val => {
               portioned = formFactorBaseline.is_portioned;
@@ -314,16 +368,6 @@
             <input type="hidden" name="grain_type" :value="grain">
         </div>
 
-        <!-- Proceed button for refined mode -->
-        <div x-show="grain_mode === 'refined'" x-transition style="margin-top: 1.5rem;">
-            <button type="button" 
-                    class="nav-btn primary"
-                    style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
-                    @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                PROCEED TO RECIPE CONFIGURATION →
-            </button>
-        </div>
-
         <!-- Dynamic Grain Bin Optimizer Checkboxes -->
         <div x-show="grain_mode === 'milled'" x-transition style="margin-top: 1.5rem;">
             <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
@@ -345,91 +389,161 @@
                 </template>
             </div>
 
-            
             <!-- Soft-Locking Warning Alert -->
             <div class="warning-box" x-show="showStructuralWarning()" x-transition 
                  style="background-color: hsla(0, 72%, 50%, 0.1); border-color: var(--danger); border-left-width: 4px; padding: 0.75rem; margin-bottom: 1.5rem;">
                 <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">❌ Structural Safety Warning</h4>
                 <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
             </div>
+        </div>
 
-            <!-- Parameters Side-by-Side Grid (DDT + Milling Profile) -->
+        <!-- Base of Phase 2 inputs (Visible for both refined and milled) -->
+        <div x-show="grain_mode === 'refined' || grain_mode === 'milled'" x-transition style="margin-top: 1.5rem;">
+            <input type="hidden" name="custom_mixer" value="static">
+            
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
-                <!-- Relocated Dough Temperature Calibration Block -->
+                
+                <!-- Component 1: Dynamic Temperature Calibration Node -->
                 <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
-                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div class="input-group">
-                            <label for="room_temp">Room Temp (°F)</label>
-                            <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
-                        </div>
-                        <div class="input-group">
-                            <label for="flour_temp">Flour Temp (°F)</label>
-                            <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div class="input-group">
-                            <label>Mixing Equipment</label>
-                            <input type="hidden" name="custom_mixer" :value="custom_mixer">
-                            <div class="pill-btn-group">
-                                <button type="button" class="pill-btn" :class="custom_mixer === 'static' ? 'active' : ''"
-                                        @click="custom_mixer = 'static'; use_custom = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Standard Preset
-                                </button>
-                                {% for mixer in mixers %}
-                                    <button type="button" class="pill-btn" :class="custom_mixer === '{{ mixer.id }}' ? 'active' : ''"
-                                            @click="custom_mixer = '{{ mixer.id }}'; use_custom = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                        {{ mixer.name }} (+{{ mixer.friction_heat_factor }}°F)
-                                    </button>
-                                {% endfor %}
+                    <!-- Case A: biological_yeast_activity -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="room_temp">Room Temp (°F)</label>
+                                <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+                            </div>
+                            <div class="input-group">
+                                <label for="flour_temp">Flour Temp (°F)</label>
+                                <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
                             </div>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;" x-show="!use_custom">
-                        <div class="input-group">
-                            <label>Kneading Method</label>
-                            <input type="hidden" name="mixing_method" :value="mixing_method">
-                            <div class="pill-btn-group">
-                                <button type="button" class="pill-btn" :class="mixing_method === 'stand_mixer' ? 'active' : ''"
-                                        @click="mixing_method = 'stand_mixer'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Stand Mixer
-                                </button>
-                                <button type="button" class="pill-btn" :class="mixing_method === 'hand_knead' ? 'active' : ''"
-                                        @click="mixing_method = 'hand_knead'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Hand Knead
-                                </button>
-                                <button type="button" class="pill-btn" :class="mixing_method === 'bread_machine' ? 'active' : ''"
-                                        @click="mixing_method = 'bread_machine'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Bread Machine
-                                </button>
-                            </div>
+
+                    <!-- Case B: lipid_emulsification -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'lipid_emulsification'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Fat Starting Temperature Target</h4>
+                        <input type="hidden" name="fat_starting_temp" :value="fat_starting_temp">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'room_temp' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'room_temp'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Room Temperature (Creaming)
+                            </button>
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'melted' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'melted'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Melted / Liquid State
+                            </button>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+
+                    <!-- Case C: crystalline_fat_preservation -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Workspace Temperature Target</h4>
                         <div class="input-group">
-                            <label>Proofing Environment</label>
-                            <input type="hidden" name="proofing_environment" :value="proofing_environment">
-                            <div class="pill-btn-group">
-                                <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
-                                        @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Ambient Room
-                                </button>
-                                <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
-                                        @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Open Proofing Mat
-                                </button>
-                                <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
-                                        @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                    Enclosed Proofing Box
-                                </button>
-                            </div>
+                            <label for="workspace_temp">Enforced Ambient Limit (°F)</label>
+                            <input type="number" name="workspace_temp" id="workspace_temp" class="num-input" x-model.number="workspace_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        </div>
+                    </div>
+
+                    <!-- Case D: hydration_binding_shock -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Liquid Medium Temperature Target</h4>
+                        <div class="input-group">
+                            <label for="liquid_temp">Target Liquid Temp (°F)</label>
+                            <input type="number" name="liquid_temp" id="liquid_temp" class="num-input" x-model.number="liquid_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                         </div>
                     </div>
                 </div>
 
-                <!-- Milling Profile Parameters -->
-                <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;">
+                <!-- Component 2: Semantic Appliance Filtering & Contextual Actions -->
+                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <!-- Appliance selection deck -->
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Hardware &amp; Appliance Selector</h4>
+                    <input type="hidden" name="mixing_method" :value="mixing_method">
+                    <div class="pill-btn-group">
+                        <template x-for="tool in filteredTools" :key="tool.id">
+                            <button type="button" 
+                                    class="pill-btn" 
+                                    :class="mixing_method === tool.id ? 'active' : ''"
+                                    @click="mixing_method = tool.id; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                <span x-text="tool.name"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Gluten prevention warning banner -->
+                    <div class="warning-box" x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding'" x-transition
+                         style="background-color: hsla(38, 92%, 50%, 0.1); border-color: var(--warning); border-left-width: 4px; padding: 0.75rem; margin-top: 1rem;">
+                        <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">⚠️ Gluten Prevention Alert</h4>
+                        <p style="font-size: 0.85rem; margin: 0; color: var(--text-primary); line-height: 1.4;">
+                            Minimal folding threshold active. Use zero-friction tools only (Manual Spatula & Bowl) to prevent accidental gluten development and preserve tender structures.
+                        </p>
+                    </div>
+
+                    <!-- Contextual Action deck -->
+                    <h4 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Required Mechanical Action</h4>
+                    <input type="hidden" name="primary_action" :value="active_action">
+                    <div class="pill-btn-group">
+                        <template x-for="action in activeProductionProfile.permissible_action_types" :key="action">
+                            <button type="button" 
+                                    class="pill-btn" 
+                                    :class="active_action === action ? 'active' : ''"
+                                    @click="active_action = action; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                <span x-text="action.toUpperCase().replace('_', ' ')"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Component 3: Adaptive Environment Mapping -->
+                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Rest &amp; Environment Strategy</h4>
+                    
+                    <!-- Case A: gas_proofing strategy -->
+                    <div x-show="activeProductionProfile.environmental_rest_strategy === 'gas_proofing'">
+                        <input type="hidden" name="proofing_environment" :value="proofing_environment">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
+                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Ambient Room
+                            </button>
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
+                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Open Proofing Mat
+                            </button>
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
+                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Enclosed Proofing Box
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Case B: structural_retardation / fat_solidification -->
+                    <div x-show="['structural_retardation', 'fat_solidification'].includes(activeProductionProfile.environmental_rest_strategy)">
+                        <input type="hidden" name="proofing_environment" value="refrigerator">
+                        <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                            <span style="font-weight: 700; color: var(--accent); display: block; margin-bottom: 0.25rem;">[ FORCED REFRIGERATION REST ]</span>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                                A cold retardation cycle is required for this engine strategy to stabilize fat dispersion and control whole-grain cellular hydration rates.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Case C: gluten_relaxation -->
+                    <div x-show="activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation'">
+                        <input type="hidden" name="proofing_environment" value="bench_rest">
+                        <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                            <span style="font-weight: 700; color: var(--accent); display: block; margin-bottom: 0.25rem;">[ DAMP-COVERED BENCH REST ]</span>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                                An ambient bench rest under a damp cloth is enforced to allow the gluten sheet matrix to relax, preventing elasticity snap-back during subsequent shaping or extrusion operations.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Component 4: Milling Profile Parameters (Smoothly hides if refined flour is active) -->
+                <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;"
+                     x-show="grain_mode === 'milled'" x-transition>
                     <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                         Milling Profile Parameters
                     </div>
@@ -457,9 +571,10 @@
                         </div>
                     </div>
                 </div>
+
             </div>
-            
-            <!-- Proceed button -->
+
+            <!-- Proceed button inside the main container, shown for both modes! -->
             <button type="button" 
                     class="nav-btn primary"
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
@@ -506,7 +621,7 @@
             <div style="margin-bottom: 1.5rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Baking Form Factor</label>
                 <div class="pill-btn-group">
-                    <template x-for="(ff_data, ff_slug) in (engines_ff[selected_master] || {})" :key="ff_slug">
+                    <template x-for="(ff_data, ff_slug) in (engines_ff[selected_master]?.permissible_form_factors || {})" :key="ff_slug">
                         <button type="button"
                                 class="pill-btn"
                                 :class="{'active': form_factor_val === ff_slug}"

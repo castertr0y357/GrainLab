@@ -8,6 +8,12 @@ class PanEngine(BaseEngine):
     gluten_behavior = "High Shreddability. Must possess enough structural lift to support heavy lipid loads (butter, sugar, milk, egg yolks) without collapsing."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a clean, sweet, milky baseline; whole-grain bitterness is an active defect."
     tannin_sensitive = True
+    production_profile = {
+        "thermodynamic_focus": "biological_yeast_activity",
+        "mechanical_energy_threshold": "high_kneading",
+        "permissible_action_types": ["knead"],
+        "environmental_rest_strategy": "gas_proofing",
+    }
 
     permissible_form_factors = {
         "standard-9x5-pan": {
