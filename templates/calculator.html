@@ -139,6 +139,34 @@
         return b ? b.name : 'Unknown Grain';
     },
 
+    get sortedBerries() {
+        if (!this.grainEvaluations || this.grainEvaluations.length === 0) {
+            return this.activeBerries;
+        }
+        return [...this.activeBerries].sort((a, b) => {
+            const evalA = this.grainEvaluations.find(e => e.grain_id === a.id);
+            const evalB = this.grainEvaluations.find(e => e.grain_id === b.id);
+            
+            const tierA = evalA ? evalA.tier : 'indifferent';
+            const tierB = evalB ? evalB.tier : 'indifferent';
+            
+            const score = {
+                'recommended': 1,
+                'sub-optimal': 2,
+                'indifferent': 3,
+                'not-recommended': 4
+            };
+            
+            const scoreA = score[tierA] || 3;
+            const scoreB = score[tierB] || 3;
+            
+            if (scoreA !== scoreB) {
+                return scoreA - scoreB;
+            }
+            return a.name.localeCompare(b.name);
+        });
+    },
+
     selectIdealGrain() {
         let idealName = 'Hard Red Winter Wheat';
         if (this.presetSlug) {

@@ -316,7 +316,7 @@
             </div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
-                <template x-for="berry in activeBerries" :key="berry.id">
+                <template x-for="berry in sortedBerries" :key="berry.id">
                     <label class="card" 
                            x-show="editor_mode === 'advanced' || isIdealGrain(berry.name)"
                            style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
