@@ -59,6 +59,9 @@
 - [x] Add comprehensive unit tests verifying the 11 sub-engine calculations, ceilings, and step generators
 - [x] Fix Alpine.js `x-data` syntax error in `templates/calculator.html` by converting inline comments to block comments and double quotes to single quotes
 - [x] Implement dynamic 11-category grid in Phase 1 matching the 11 math engines and align subcategory presets dynamically using category slugs
+- [x] Remove confusing standard/advanced editor modes, displaying all active stocks and permissible form factors cleanly
+- [x] Style form factor selection buttons to match the substitution pills exactly, with dynamic status tags and active warning/accent glows
+- [x] Support intuitive fractional batch scaling (steps of 0.5, minimum scale of 0.5) using the direct multiplier formula
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
