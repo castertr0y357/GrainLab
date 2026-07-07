@@ -526,8 +526,37 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
         }
         
         user_prompt = json.dumps(payload)
+        import re
         res = call_gemma_api(system_prompt, user_prompt, expected_keys=["grain_evaluations"])
         if res and isinstance(res, dict) and "grain_evaluations" in res:
+            evaluations = res["grain_evaluations"]
+            if isinstance(evaluations, list):
+                for evaluation in evaluations:
+                    if not isinstance(evaluation, dict):
+                        continue
+                    matched_wb = None
+                    # 1. Exact match on grain_id
+                    for wb in active_berries:
+                        if str(wb.id) == str(evaluation.get("grain_id", "")).strip():
+                            matched_wb = wb
+                            break
+                    # 2. Case-insensitive name match or slug match on grain_id
+                    if not matched_wb:
+                        for wb in active_berries:
+                            wb_slug = re.sub(r'[^a-z0-9]', '', wb.name.lower())
+                            id_slug = re.sub(r'[^a-z0-9]', '', str(evaluation.get("grain_id", "")).lower())
+                            if wb_slug == id_slug or wb_slug in id_slug or id_slug in wb_slug:
+                                matched_wb = wb
+                                break
+                    # 3. Matching via grain name inside reasoning
+                    if not matched_wb:
+                        reasoning_lower = evaluation.get("reasoning", "").lower()
+                        for wb in active_berries:
+                            if wb.name.lower() in reasoning_lower:
+                                matched_wb = wb
+                                break
+                    if matched_wb:
+                        evaluation["grain_id"] = str(matched_wb.id)
             return res
             
     return None

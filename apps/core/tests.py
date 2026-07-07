@@ -865,6 +865,38 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertIn("[CRITICAL RULE: CULINARY SOVEREIGNTY]", system_prompt)
         self.assertNotIn("engine_profile", user_prompt)
 
+    @patch('apps.core.gemma_client.call_gemma_api')
+    @patch('apps.core.gemma_client._is_ai_enabled', return_value=True)
+    def test_grain_advisory_robust_id_mapping(self, mock_ai_enabled, mock_call_gemma):
+        from apps.core.gemma_client import get_grain_advisory_ai
+        
+        # Mock LLM returning mixed IDs, name slugs, and reasoning text
+        mock_call_gemma.return_value = {
+            "grain_evaluations": [
+                {
+                    "grain_id": "soft-white-wheat",  # name slug match
+                    "tier": "recommended",
+                    "reasoning": "This is ideal."
+                },
+                {
+                    "grain_id": "hallucinated-uuid-xyz",  # needs reasoning name match
+                    "tier": "not-recommended",
+                    "reasoning": "Since Hard Red Spring Wheat has very high protein, it will toughen cookies."
+                }
+            ]
+        }
+        
+        res = get_grain_advisory_ai("cookies", "cookies-shortbread")
+        evals = res["grain_evaluations"]
+        
+        # Verify first grain (soft-white-wheat) maps to self.soft_white.id
+        soft_eval = next(e for e in evals if e["tier"] == "recommended")
+        self.assertEqual(soft_eval["grain_id"], str(self.soft_white.id))
+        
+        # Verify second grain (hallucinated-uuid-xyz) maps to self.hard_spring.id via reasoning check
+        hard_eval = next(e for e in evals if e["tier"] == "not-recommended")
+        self.assertEqual(hard_eval["grain_id"], str(self.hard_spring.id))
+
 
 
 class GeometryEvaluationTests(TestCase):

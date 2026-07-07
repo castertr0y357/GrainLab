@@ -96,35 +96,6 @@
               } else {
                   return 'background: transparent; color: var(--text-primary);';
               }
-          },
-          getGrainStyle(berry) {
-              if (this.grainEvaluations && this.grainEvaluations.length > 0) {
-                  const evaluation = this.grainEvaluations.find(e => e.grain_id === berry.id);
-                  if (evaluation) {
-                      if (evaluation.tier === 'recommended') {
-                          return berry.selected 
-                              ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.08);' 
-                              : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.02);';
-                      } else if (evaluation.tier === 'not-recommended') {
-                          return berry.selected 
-                              ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220, 53, 69, 0.6); background-color: rgba(220, 53, 69, 0.08);' 
-                              : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220, 53, 69, 0.3); background-color: rgba(220, 53, 69, 0.02);';
-                      }
-                  }
-              }
-              if (advisoryRecommendedName && berry.name === advisoryRecommendedName) {
-                  return berry.selected 
-                      ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.08);' 
-                      : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.02);';
-              } else if (advisoryHighRiskName && berry.name === advisoryHighRiskName) {
-                  return berry.selected 
-                      ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220, 53, 69, 0.6); background-color: rgba(220, 53, 69, 0.08);' 
-                      : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220, 53, 69, 0.3); background-color: rgba(220, 53, 69, 0.02);';
-              } else {
-                  return berry.selected 
-                      ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' 
-                      : '';
-              }
           }
       }"
       x-init="
