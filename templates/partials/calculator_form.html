@@ -2,7 +2,6 @@
       hx-post="{% url 'calculate_recipe_ajax' %}"
       hx-trigger="change, keyup delay:300ms, load"
       hx-target="#recipe-output-container"
-      @grain-advisory-updated.window="localGrainEvals = $event.detail.grain_evaluations || []"
       x-data="{
           texture: {{ default_texture_score|default:50 }},
           crumb: {{ default_crumb_score|default:50 }},
@@ -98,14 +97,13 @@
                   return 'background: transparent; color: var(--text-primary);';
               }
           },
-          /* ---- Grain advisory: local copy synced via window event ---- */
-          localGrainEvals: [],
           sortedBerriesFor(berries) {
-              if (!this.localGrainEvals || this.localGrainEvals.length === 0) return berries || [];
+              const evs = grainEvaluations || [];
+              if (!evs || evs.length === 0) return berries || [];
               const score = { 'recommended': 1, 'sub-optimal': 2, 'indifferent': 3, 'not-recommended': 4 };
               return [...(berries || [])].sort((a, b) => {
-                  const eA = this.localGrainEvals.find(e => e.grain_id === a.id);
-                  const eB = this.localGrainEvals.find(e => e.grain_id === b.id);
+                  const eA = evs.find(e => e.grain_id === a.id);
+                  const eB = evs.find(e => e.grain_id === b.id);
                   const sA = score[eA ? eA.tier : 'indifferent'] || 3;
                   const sB = score[eB ? eB.tier : 'indifferent'] || 3;
                   if (sA !== sB) return sA - sB;
@@ -113,8 +111,9 @@
               });
           },
           getGrainStyle(berry) {
-              if (this.localGrainEvals && this.localGrainEvals.length > 0) {
-                  const ev = this.localGrainEvals.find(e => e.grain_id === berry.id);
+              const evs = grainEvaluations || [];
+              if (evs && evs.length > 0) {
+                  const ev = evs.find(e => e.grain_id === berry.id);
                   if (ev) {
                       if (ev.tier === 'recommended') {
                           return berry.selected
@@ -137,7 +136,6 @@
           }
       }"
       x-init="
-          localGrainEvals = [...(grainEvaluations || [])];
           $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });

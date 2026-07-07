@@ -202,7 +202,11 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                 "reasoning": reasoning
             })
             
-        return {"grain_evaluations": evaluations}
+        elevate_recipe = "To deepen the flavor profile while maintaining tenderness, mix in 15% Einkorn flour and brown butter instead of regular butter." if is_cookie else "For a deeper caramelization and open crumb structure, introduce a 20% poolish pre-ferment and increase hydration by 3%."
+        return {
+            "grain_evaluations": evaluations,
+            "elevate_recipe": elevate_recipe
+        }
 
     elif expected_keys and "pitfalls" in expected_keys:
         return {
@@ -721,7 +725,8 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
             "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
             "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
             "    }\n"
-            "  ]\n"
+            "  ],\n"
+            "  \"elevate_recipe\": \"A 1-2 sentence recommendation suggesting a specific grain mix, secondary ingredient swap, or method to achieve greater results for this bake.\"\n"
             "}"
         )
         
@@ -743,7 +748,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
         
         user_prompt = json.dumps(payload)
         import re
-        res = call_gemma_api(system_prompt, user_prompt, expected_keys=["grain_evaluations"])
+        res = call_gemma_api(system_prompt, user_prompt, expected_keys=["grain_evaluations", "elevate_recipe"])
         if res and isinstance(res, dict) and "grain_evaluations" in res:
             evaluations = res["grain_evaluations"]
             if isinstance(evaluations, list):

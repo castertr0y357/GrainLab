@@ -70,8 +70,12 @@
 - [x] Split AI and Algorithmic system operations, hide Factual Science Profile when AI is enabled, and add Ways to Elevate recipe suggestions
 - [x] Fix Alpine.js cross-scope reactivity for grain card highlighting/sorting and resolve htmx:targetError by swapping outerHTML to innerHTML for calculator-form-container
 - [x] Implement offline mock mode schema-compliant payloads for call_gemma_api when MOCK_MODE is enabled to ensure robust local development testing
-
-
+- [x] Optimize Gemma LLM pipeline by querying all grains at once and caching responses in memory using MD5 hashed query key
+- [x] Fix child component state loss after HTMX swaps by initializing localGrainEvals directly from parent grainEvaluations
+- [x] Fix grain card sorting/borders by directly referencing parent reactive grainEvaluations array from the child component
+- [x] Hide Labor ROI Matrix block for grains since labor matrix is reserved for methods and secondary ingredients
+- [x] Separate Ways to Elevate from individual grains, returning a single global recommendation per recipe preset/category and caching it on load
+- [x] Optimize hover sidebar inspector to look up grain details locally from the cached advisory list without invoking network LLM calls on mouseover
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)

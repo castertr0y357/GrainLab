@@ -146,7 +146,29 @@
         this.sidebar_labor_roi = '';
         this.sidebar_analysis = '';
         this.sidebar_tier = '';
-        this.sidebar_elevate = '';
+        
+        if (key.startsWith('grain_')) {
+            const key_clean = key.toLowerCase().replace('grain_', '');
+            const berry = this.activeBerries.find(b => {
+                const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                return bNameSlug.includes(key_clean) || key_clean.includes(bNameSlug);
+            });
+            if (berry) {
+                const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+                if (ev) {
+                    this.sidebar_tier = ev.tier;
+                    this.sidebar_analysis = ev.reasoning;
+                    this.sidebar_labor_roi = ''; // Grains do not show labor ROI
+                    this.sidebar_insight_loading = false;
+                    return;
+                }
+            }
+            // Fallback if not found in parent array
+            this.sidebar_tier = 'recommended';
+            this.sidebar_analysis = this.getFactualProfile();
+            this.sidebar_insight_loading = false;
+            return;
+        }
         
         let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
         fetch(url)
@@ -156,7 +178,6 @@
                     this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
                     this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
                     this.sidebar_tier = data.recommendation_tier || '';
-                    this.sidebar_elevate = data.elevate_recipe || '';
                     this.sidebar_insight_loading = false;
                 }
             })
@@ -173,7 +194,6 @@
         this.sidebar_labor_roi = '';
         this.sidebar_analysis = '';
         this.sidebar_tier = '';
-        this.sidebar_elevate = '';
         this.sidebar_insight_loading = false;
     },
 
@@ -218,6 +238,7 @@
     advisoryLoading: false,
     advisoryLoadingMessage: '',
     grainEvaluations: [],
+    globalElevateRecipe: '',
     
     // Geometry evaluation and profile adjustments
     geometry_status: 'recommended',
@@ -335,6 +356,7 @@
             .then(res => res.json())
             .then(data => {
                 this.grainEvaluations = data.grain_evaluations || [];
+                this.globalElevateRecipe = data.elevate_recipe || '';
                 const rec = this.grainEvaluations.find(e => e.tier === 'recommended');
                 const risk = this.grainEvaluations.find(e => e.tier === 'not-recommended');
                 this.advisoryRecommendedName = rec ? this.getGrainNameById(rec.grain_id) : '';
@@ -359,6 +381,7 @@
         this.advisoryHighRiskName = '';
         this.advisoryHighRiskReason = '';
         this.grainEvaluations = [];
+        this.globalElevateRecipe = '';
     },
 
     getGrainNameById(id) {
@@ -898,7 +921,7 @@
         </div>
 
         <!-- Right: Compiled Recipe Outputs & AI Recommendations -->
-        <div style="position: sticky; top: 90px; align-self: start;">
+        <div style="position: sticky; top: 90px; align-self: start; display: flex; flex-direction: column; gap: 1rem;">
             <div class="card" style="margin-bottom: 0; min-height: 380px; height: auto;">
                 <!-- Header Injection -->
                 <div x-show="current_phase >= 3 && presetName" x-transition
@@ -977,7 +1000,7 @@
                                              : 'SUB-OPTIMAL'
                                       "></span>
                             </div>
-                            <div style="margin-bottom: 0.75rem;">
+                            <div style="margin-bottom: 0.75rem;" x-show="hovered_element && !hovered_element.startsWith('grain_')">
                                 <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Labor ROI Matrix</span>
                                 <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
                                       x-text="sidebar_labor_roi"></span>
@@ -985,10 +1008,6 @@
                             <div style="margin-bottom: 0.75rem;">
                                 <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">AI Critique &amp; Reasoning</span>
                                 <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis"></p>
-                            </div>
-                            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255, 136, 0, 0.15);" x-show="sidebar_elevate">
-                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">✨ Ways to Elevate</span>
-                                <p style="font-size: 0.85rem; color: #ffb74d; margin: 0; line-height: 1.45;" x-text="sidebar_elevate"></p>
                             </div>
                         </div>
                     </div>
@@ -1055,6 +1074,14 @@
                         <p style="margin-top: 1rem;">Compiling baking matrix...</p>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Global Persistent Ways to Elevate Card -->
+            <div class="card" x-show="global_ai_enabled && globalElevateRecipe" x-transition style="margin-top: 0; background-color: rgba(255, 136, 0, 0.03); border-top: 4px solid var(--accent); padding: 1.25rem;">
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <span>✨ Ways to Elevate the Bake</span>
+                </h4>
+                <p style="font-size: 0.85rem; color: #ffb74d; margin: 0; line-height: 1.45;" x-text="globalElevateRecipe"></p>
             </div>
         </div>
     </div>

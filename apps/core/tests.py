@@ -854,10 +854,12 @@ class AIGrainAdvisoryTests(TestCase):
                     "tier": "recommended",
                     "reasoning": "Rye overrides static parameters."
                 }
-            ]
+            ],
+            "elevate_recipe": "Add some malt."
         }
         
-        get_grain_advisory_ai("cookies", "cookies-shortbread")
+        res = get_grain_advisory_ai("cookies", "cookies-shortbread")
+        self.assertEqual(res.get("elevate_recipe"), "Add some malt.")
         
         self.assertTrue(mock_call_gemma.called)
         system_prompt = mock_call_gemma.call_args[0][0]
