@@ -67,6 +67,7 @@
 - [x] Implement Fully Parametric, Heuristic-Driven Production Context Engines across all 11 sub-engines and dynamic workspace input decks
 - [x] Implement Global AI Toggle and Split-Pane Contextual Sidebar Inspector with Gemma E4B models and local dictionary fallbacks
 - [x] Implement Culinary Sovereignty override clause and dynamic Parametric/Factual profiles in the local AI inference pipeline
+- [x] Split AI and Algorithmic system operations, hide Factual Science Profile when AI is enabled, and add Ways to Elevate recipe suggestions
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
@@ -80,3 +81,4 @@
 - Switched deletion queries to soft deletes via custom SoftDeleteQuerySet and AllObjectsManager to prevent accidental data loss.
 - Injected Correlation IDs in logging formats and response headers (`X-Correlation-ID`) for request-response trace correlation.
 - Split monolithic math timeline module into 11 isolated domain-specific sub-engines with custom boundaries, structural grain ceilings, and dynamic step cards inheriting from `BaseEngine`.
+- Separated AI operations from local algorithmic rules: when AI is enabled, the backend bypasses all programmatic heuristics, hides the factual science profiles, and displays LLM-sourced recommendations and Ways to Elevate suggestions.
