@@ -6,10 +6,26 @@ This file defines the template structure for local workspace rules and skills.
 You **MUST** run the project verification command after every code change to guarantee stability and prevent regressions.
 
 ### Rebuild and Verify Command
-Run the following command from the workspace root:
+1. Run local Django unit and integration tests:
 ```bash
 python manage.py test
 ```
+
+2. **Docker Rebuild & Active Environment Log Verification**:
+   To catch runtime boot issues, template syntax errors, or JavaScript compilation warnings, rebuild and verify the container environment:
+   - Rebuild the stack from scratch:
+     ```bash
+     docker compose down
+     docker compose up -d --build
+     ```
+   - Run a programmatic health check request against the server:
+     ```bash
+     curl -I http://localhost:8005/
+     ```
+   - Review server logs to ensure no active exceptions occurred on boot or during the check:
+     ```bash
+     docker compose logs web
+     ```
 
 > [!IMPORTANT]
 > 1. Never skip verification before committing. The verification step **MUST** execute all unit and integration test suites.
@@ -106,7 +122,7 @@ To ensure that projects are robust enough to share with others, you must establi
 *   **Authentication & Session Security**: Enforce rate-limiting on all authentication, password reset, and registration endpoints. Session IDs must be regenerated upon user login to prevent session fixation. Enforce absolute session expiration timeouts, and ensure session invalidation occurs both locally and server-side upon logout or password updates. Generate any temporary verification or reset tokens using cryptographically secure pseudo-random number generators (CSPRNG). Additionally, support integration with external self-hosted identity and single sign-on (SSO) providers (like Authelia or Authentik) by validating and trusting reverse-proxy forwarded identity headers (e.g., `X-Forwarded-User`, `Remote-User`, or `Tailscale-User-Login`) when configured behind a secure local proxy.
 *   **Object-Level Access Control & IDOR Protection**: Every resource request (GET, POST, DELETE, etc.) must perform object-level authorization by verifying that the currently authenticated session owns or is authorized to access the specific database ID requested, rather than blindly trusting user-supplied resource IDs. Prefer non-predictable UUIDs for all public-facing URLs and API routes instead of sequential/incremental integer IDs to prevent scanning. When referencing nested resources (e.g., a task belonging to a project), explicitly verify that the child resource belongs to the authorized parent resource before processing.
 *   **AI Integration Security (Function-Based Access)**: AI models must never have direct, unmitigated access to database structures or query interfaces. AI integrations must retrieve and write data exclusively through read-only, audited wrapper functions that enforce pagination, strict input filtering, and session-level authorization check boundaries before data is fed into or processed by the AI model.
-*   **Secure File Upload & SVG Handling**: All user-uploaded files must be validated using magic bytes (file signature check) rather than relying on file extensions or user-supplied MIME types. Rename files to random UUIDs upon upload and store them outside the web root to prevent path traversal or direct execution. SVG uploads must be run through an XML-sanitizing parser to scrub `<script>` tags, inline event handlers, and external entity references to prevent stored Cross-Site Scripting (XSS).
+*   **Secure File Setup & SVG Handling**: All user-uploaded files must be validated using magic bytes (file signature check) rather than relying on file extensions or user-supplied MIME types. Rename files to random UUIDs upon upload and store them outside the web root to prevent path traversal or direct execution. SVG uploads must be run through an XML-sanitizing parser to scrub `<script>` tags, inline event handlers, and external entity references to prevent stored Cross-Site Scripting (XSS).
 *   **Server-Side Request Forgery (SSRF) Defenses**: If the application fetches URLs provided by the user (e.g., for webhooks, custom avatars, or media scraping), the outgoing request mechanism must validate the destination host. Incoming URLs must resolve to public IP addresses only; block any private, loopback, or cloud-metadata network ranges (e.g., `127.0.0.1`, `localhost`, `10.0.0.0/8`, `192.168.0.0/16`, `169.254.169.254`).
 *   **Strict Input Parameterization**: All database interactions must use parameterized queries or prepared statements via ORMs to separate code from inputs. Never use raw string concatenation for SQL statements or shell command arguments.
 *   **Graceful API Degradation**: The failure of a third-party API must never crash the application or prevent other page elements from loading. Implement timeouts, catch exceptions, and show fallback/placeholder states.
@@ -116,8 +132,6 @@ To ensure that projects are robust enough to share with others, you must establi
 *   **Coolify Deployments & Production Volume Mounts**: When deploying to Coolify or similar containerized orchestration platforms, keep all local development volume mounts (such as mounting the source code `- .:/app`) exclusively in `docker-compose.override.yml`. The main `docker-compose.yml` file must never contain runtime volume mounts that map local host files into the container. Under Coolify, the host repository's file structure is not mounted automatically; hence a volume mount in `docker-compose.yml` will overwrite the container's baked-in code with stale, empty, or missing directories from the host, causing silent or diagnostic-less deployment failures.
 *   **CSRF & SSL Termination behind Reverse Proxies**: When applications are deployed behind reverse proxies (like Coolify's default Traefik router or Nginx reverse proxies), CSRF origin verification can fail if the proxy terminates SSL and forwards requests to the application server over HTTP (causing an HTTPS/HTTP origin scheme mismatch). Always ensure:
     - `CSRF_TRUSTED_ORIGINS` is parameterized via environment variables and includes both `http://` and `https://` schemas for the production domain.
-    - A custom CSRF middleware or setting (like matching the request host header against the origin hostname) is configured to handle reverse-proxy setups correctly without exposing the app to security vulnerabilities.
-*   - `CSRF_TRUSTED_ORIGINS` is parameterized via environment variables and includes both `http://` and `https://` schemas for the production domain.
     - A custom CSRF middleware or setting (like matching the request host header against the origin hostname) is configured to handle reverse-proxy setups correctly without exposing the app to security vulnerabilities.
 *   **CSRF & Secure Cookie Flags behind Reverse Proxies**: When running behind a reverse proxy terminating SSL, CSRF validation and secure session flags (`Secure`, `HttpOnly`, `SameSite=Lax`) must remain active. Configure application middleware to trust proxy headers (like `X-Forwarded-Proto` and `X-Forwarded-Host`) and verify that production domain schemas are listed in trusted origins to prevent session hijacking.
 *   **Maintain Git Exclusion Policies (.gitignore)**: Actively maintain the `.gitignore` file to ensure that local database files (e.g. `db.sqlite3` or local data directories), local logs, runtime caches, and sensitive environment config files (like `.env`) are strictly excluded from the repository. Review `.gitignore` whenever introducing new persistent files, logs directories, or local configuration files to prevent untracked local state or secret keys from being committed.

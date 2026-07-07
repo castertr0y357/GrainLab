@@ -8,6 +8,56 @@ from apps.core.bakers_math import (
     get_local_contextual_pitfalls,
 )
 
+FACTUAL_DICTIONARY = {
+    'refined': 'Store refined commercial flour. High shelf stability and consistent protein levels, but stripped of bran and germ.',
+    'milled': 'Freshly milled whole grain. Retains 100% of germ and bran oils. High enzyme activity and complex rustic flavor profile.',
+    'grain_hard_red_spring': 'High-protein hard wheat. Strong, elastic gluten structure suitable for high-rise hearth loaves.',
+    'grain_hard_red_winter': 'Moderate-high protein wheat. Balanced gluten elasticity and extensibility, highly versatile.',
+    'grain_soft_white': 'Low-protein soft wheat. Weak, tender gluten structure ideal for tender pastries, cakes, and cookies.',
+    'grain_hard_white': 'Mild, light-colored hard wheat. Provides structural strength without the bitter red wheat tannins.',
+    'grain_spelt': 'Ancient hulled wheat species. Very extensible but weak gluten strength; highly water-absorbent.',
+    'grain_kamut': 'Ancient Khorasan wheat. Rich, sweet flavor, high protein, but lower elasticity; absorbs water slowly.',
+    'grain_rye': 'Ancient rye grass grain. High pentosans and weak gluten. Produces sticky, dense, complex savory doughs.',
+    'stand_mixer': 'Planetary stand mixer. Delivers intensive mechanical shearing, building fast gluten structures but adding heat.',
+    'bread_machine': 'Automated high-torque chamber mixer. Fully enclosed, creating high friction heat and rapid development.',
+    'food_processor': 'High-velocity steel blade shearing. Forces hydration and gluten alignment rapidly but risks blade damage.',
+    'hand_beaters': 'Light whipping beaters. Aerates liquid and fat emulsions without building strong gluten networks.',
+    'whisk': 'Manual aerating whisk. Incorporates gas bubbles into fluid batters to support leavening lift.',
+    'spatula_bowl': 'Zero-friction manual mixing. Minimal mechanical energy transfer to prevent any accidental gluten formation.',
+    'knead': 'Mechanical folding and stretching of dough to align glutenin and gliadin proteins into a structural matrix.',
+    'cream': 'Aeration of solid fat and sugar. Traps micro-bubbles to form the foundation of crumb leavening.',
+    'fold': 'Gentle folding layers the dough and develops structure without degassing. Crucial for retaining large, irregular open crumb cells.',
+    'cut_in': 'Distribution of cold fat pieces into dry flour. Forms flat fat pockets for flaky pastry lamination.',
+    'sheet': 'Compressing dough through rollers to achieve a uniform thin sheet, aligning starch and gluten strands.',
+    'extrude': 'Forcing dense dough through a shaped die to form structured shapes under high compaction pressure.',
+    'ambient': 'Countertop proofing. Relies on local ambient room temperature (70-75°F) for steady biological activity.',
+    'mat': 'Open heated proofing mat. Warms the bottom of the vessel to accelerate yeast and lactic acid production.',
+    'box': 'Warm, humid enclosed proofing chamber. Maximizes biological activity while preventing surface skin drying.',
+    'refrigerator': 'Cold retardation (34-40°F). Solidifies fats and slows yeast while enzymes continue developing complex sugars.',
+    'bench_rest': 'Relaxation rest under a damp cloth. Releases elastic tension in the gluten matrix to allow final shaping.',
+    'cast-iron-dutch-oven': 'Heavy cast iron pot. Retains heat and traps steam released from the dough. Ensures optimal starch gelatinization and maximum oven spring.',
+    'open-baking-stone-steel': 'High-conduction hearth surface. Transports heat immediately into the base of the loaf for maximum oven spring.',
+    'standard-9x5-pan': 'Metal loaf pan. Restricts lateral movement, forcing the rising dough vertically into a uniform sandwich shape.',
+    'perforated-baking-sheet': 'Airflow baking tray. Promotes dry skin dehydration on all sides, crucial for crispy pretzels or bagels.',
+    'butter': 'Emulsified fat containing 80% fat, 18% water, and milk solids. Adds rich dairy flavor and tender crumb structures.',
+    'unsalted_butter': 'Pure unsalted cream butter. Allows precise salt control while introducing emulsified dairy fats.',
+    'salted_butter': 'Salted cream butter. Contributes dairy fats and adds a baseline salinity to the dough mixture.',
+    'olive_oil': '100% monounsaturated plant fat. Highly fluid liquid state, coats gluten strands for a moist, extensible crumb.',
+    'canola_oil': 'Neutral plant seed oil. Provides 100% pure fat coating to tenderize structures without clashing flavors.',
+    'vegetable_oil': 'Clean liquid plant fat. Retains moisture in baked goods by keeping fat phase fluid at room temperature.',
+    'whole_milk': 'Milky liquid containing 87% water, fat, sugar, and proteins. Enhances caramelization and softens crumb structures.',
+    'almond_milk': 'Nut-based dairy substitute. Adds water and micro-solids, requiring slight liquid adjustments due to lack of animal fats.',
+    'coconut_oil': 'Plant-based solid lipid. Solidifies at cooler room temperatures, imparting a faint tropical aroma and a melt-in-the-mouth crumb.',
+    'avocado_oil': 'Neutral liquid lipid that remains fluid at room temperature. Coats gluten strands completely for a soft and long-lasting crumb.',
+    'pure_water': 'Clean, zero-interference hydration. The absolute optimal choice for lean hearth loaves to keep the crumb airy and the crust crispy.',
+    'heavy_cream': 'Immense dairy fat richness (37% fat) and milk sugars. Tenderizes the crumb dramatically, yielding an ultra-soft slice.',
+    'buttermilk': 'Acidic dairy medium. Tenderizes gluten chemically and reacts with chemical leaveners for a flaky, tender structure.',
+    'none': 'No binder. Relies purely on the gluten network and hydration matrix to establish structural integrity.',
+    'whole_eggs': 'Rich binder contributing fat, moisture, and lecithin. Promotes rich browning and a soft, custard-like crumb.',
+    'egg_whites': 'Pure albumin protein and hydration. Dries and solidifies during baking to create a taller, lighter, and crisper crust.',
+    'aquafaba_vegan': 'Vegan binder made from legume starch liquid. Mimics the foam stability of egg whites but lacks animal protein fats.'
+}
+
 logger = logging.getLogger("grainlab.gemma")
 
 def _get_val(obj, key, default=None):
@@ -833,7 +883,9 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     Queries Gemma to generate a custom labor ROI tag, recommendation tier, and 'Last 10%' critique/reasoning.
     """
     import json
+    import re
     from apps.core.models import BreadPreset, WheatBerry
+    from grainlab.engines import router
     
     preset = BreadPreset.objects.filter(slug=preset_slug).first()
     preset_name = preset.name if preset else (preset_slug.replace("-", " ").title() if preset_slug else "Custom / Manual Blend")
@@ -842,12 +894,58 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     inactive_grains = list(WheatBerry.all_objects.filter(is_active=False, deleted_at__isnull=True))
     inactive_grain_names = [g.name for g in inactive_grains]
     
+    # Fetch active engine's parametric profile details
+    try:
+        engine = router.get_engine_for_preset(preset_slug, category_slug)
+    except Exception:
+        # Default or fallback engine-like attributes
+        class MockEngine:
+            name = "Default Hearth Engine"
+            target_protein_min = 11.0
+            target_protein_max = 13.0
+            gluten_behavior = "standard"
+            flavor_affinity = ""
+            tannin_sensitive = False
+        engine = MockEngine()
+
+    # Find the wheat berry matching element if hovered element is a grain
+    wb = None
+    if element.startswith("grain_"):
+        key_part = element.lower().replace("grain_", "")
+        for b in WheatBerry.all_objects.filter(deleted_at__isnull=True):
+            b_name_slug = re.sub(r'[^a-z0-9]', '_', b.name.lower())
+            if key_part in b_name_slug or b_name_slug in key_part:
+                wb = b
+                break
+
+    # Retrieve factual description
+    factual_desc = FACTUAL_DICTIONARY.get(element.lower(), '')
+    if not factual_desc:
+        for k, v in FACTUAL_DICTIONARY.items():
+            if element.lower() in k or k in element.lower():
+                factual_desc = v
+                break
+
+    # Compute programmatic evaluation if it's a wheat berry
+    programmatic_eval = None
+    if wb:
+        programmatic_eval = evaluate_single_grain(wb, engine)
+    
     system_prompt = (
         "You are an expert, highly practical food scientist who values human time and forearm fatigue. "
         "The tone must be conversational, insightful, and focused entirely on the sensory experience of eating and the physical reality of cooking. "
         "Analyze the provided hovered workspace setting relative to the active baking category and preset. "
         "You MUST tailor your critique specifically to the active baking category and preset. "
         "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast or proofing for cookies/cakes, and do not mention cookie spread or creaming for sourdough/pizza. "
+        "\n"
+        "[CRITICAL RULE: CULINARY SOVEREIGNTY & EXCEPTION HANDLING]\n"
+        "You are provided with a static 'Parametric Profile' outlining the standard protein ranges and tannin sensitivities for the active baking engine.\n"
+        "\n"
+        "1. Treat these parameters as baseline guardrails for STANDARD HARD AND SOFT WHEATS ONLY.\n"
+        "2. Do NOT blindly apply standard wheat constraints to non-standard or ancient grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts real-world artisan baking physics.\n"
+        "3. If a grain violates the standard wheat parameters but possesses unique chemical properties that create an exceptional specialty bake (such as Rye's high pentosans blocking gluten to maximize cookie tenderness), you are REQUIRED to override the static classification.\n"
+        "4. In your response, elevate the 'tier' to 'recommended' or 'sub-optimal' based on your culinary database, explicitly contradict the static profile's warning, and explain the real-world chemistry of the exception.\n"
+        "5. Absolute Prohibition: Never copy, parrot, or re-use the wording from the Factual Science Profile payload. Your analysis must be entirely independent.\n"
         "\n"
         "🚨 CRITICAL RULES:\n"
         "1. Banned Terminology: You are strictly prohibited from using these words or variants in your generated JSON response: "
@@ -893,7 +991,18 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "recipe_target_name": preset_name,
         "category_slug": category_slug,
         "preset_slug": preset_slug,
-        "inactive_grains_not_on_hand": inactive_grain_names
+        "inactive_grains_not_on_hand": inactive_grain_names,
+        "parametric_profile": {
+            "target_protein_min": getattr(engine, "target_protein_min", 11.0),
+            "target_protein_max": getattr(engine, "target_protein_max", 13.0),
+            "tannin_sensitive": getattr(engine, "tannin_sensitive", False),
+            "gluten_behavior_required": getattr(engine, "gluten_behavior", ""),
+            "flavor_affinity": getattr(engine, "flavor_affinity", "")
+        },
+        "factual_science_profile": {
+            "description": factual_desc,
+            "programmatic_evaluation": programmatic_eval
+        }
     })
     
     try:
