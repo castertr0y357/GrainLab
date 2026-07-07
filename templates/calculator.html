@@ -777,7 +777,7 @@
                     </div>
                     
                     <!-- Relocated Navigation Buttons -->
-                    <div style="display: flex; gap: 0.5rem;" x-show="current_phase > 1" x-transition>
+                    <div style="display: flex; gap: 0.5rem;" x-show="current_phase > 1">
                         <button type="button" 
                                 class="nav-btn" 
                                 style="height: 36px; padding: 0 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center;"
@@ -860,7 +860,6 @@
 
                      <!-- Preheat Alert during Proof Step under 45 minutes -->
                      <div x-show="steps[currentStepIndex].is_proof && stepTimeRemaining <= 2700" 
-                          x-transition
                           style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-top: 1rem;">
                          <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 700; font-size: 0.95rem;">🔥 OVEN PREHEAT TRIGGER WARNING</h4>
                          <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
@@ -968,7 +967,7 @@
                     </div>
 
                     <!-- Panel B: Pragmatic Magic Layer (AIInsightCard) -->
-                    <div x-show="global_ai_enabled" x-transition style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                    <div x-show="global_ai_enabled" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
                         <h3 style="color: #ff9800; margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 136, 0, 0.1); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             🤖 Pragmatic Magic Layer
                         </h3>
@@ -1026,7 +1025,6 @@
                     
                     <!-- Active State: Category Selected -->
                     <div x-show="selected_master && selected_master !== 'null'" 
-                         x-transition 
                          style="display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; min-height: 350px;">
                         
                         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
