@@ -96,13 +96,50 @@
               } else {
                   return 'background: transparent; color: var(--text-primary);';
               }
+          },
+          /* ---- Grain advisory: local copy synced via window event ---- */
+          localGrainEvals: [],
+          sortedBerriesFor(berries) {
+              if (!this.localGrainEvals || this.localGrainEvals.length === 0) return berries || [];
+              const score = { 'recommended': 1, 'sub-optimal': 2, 'indifferent': 3, 'not-recommended': 4 };
+              return [...(berries || [])].sort((a, b) => {
+                  const eA = this.localGrainEvals.find(e => e.grain_id === a.id);
+                  const eB = this.localGrainEvals.find(e => e.grain_id === b.id);
+                  const sA = score[eA ? eA.tier : 'indifferent'] || 3;
+                  const sB = score[eB ? eB.tier : 'indifferent'] || 3;
+                  if (sA !== sB) return sA - sB;
+                  return a.name.localeCompare(b.name);
+              });
+          },
+          getGrainStyle(berry) {
+              if (this.localGrainEvals && this.localGrainEvals.length > 0) {
+                  const ev = this.localGrainEvals.find(e => e.grain_id === berry.id);
+                  if (ev) {
+                      if (ev.tier === 'recommended') {
+                          return berry.selected
+                              ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255,215,0,0.6); background-color: rgba(255,215,0,0.08);'
+                              : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.3); background-color: rgba(255,215,0,0.02);';
+                      } else if (ev.tier === 'sub-optimal') {
+                          return berry.selected
+                              ? 'border-color: var(--warning); box-shadow: 0 0 12px rgba(255,193,7,0.6); background-color: rgba(255,193,7,0.08);'
+                              : 'border-color: var(--warning); box-shadow: 0 0 8px rgba(255,193,7,0.3); background-color: rgba(255,193,7,0.02);';
+                      } else if (ev.tier === 'not-recommended') {
+                          return berry.selected
+                              ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220,53,69,0.6); background-color: rgba(220,53,69,0.08);'
+                              : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220,53,69,0.3); background-color: rgba(220,53,69,0.02);';
+                      }
+                  }
+              }
+              return berry.selected
+                  ? 'border-color: var(--accent); background-color: rgba(255,136,0,0.05);'
+                  : '';
           }
       }"
       x-init="
           $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });
-          $watch('editor_mode', value => { if (value === 'standard') { if (subOriginal === 'fat' && !['none', 'butter'].includes(subSubstitute)) { subSubstitute = 'none'; } } });
+          /* editor_mode watcher removed — variable no longer exists */
           $watch('selected_master', val => {
               category_slug = val;
               const keys = Object.keys(engines_ff[val]?.permissible_form_factors || {});
@@ -177,6 +214,9 @@
           mixing_method = 'stand_mixer';
           proofing_environment = 'ambient';
           {% endif %}
+          /* Sync grain evaluations from parent fetchAdvisory via window event */
+          const _grainAdvisoryHandler = (e) => { localGrainEvals = e.detail.grain_evaluations || []; };
+          window.addEventListener('grain-advisory-updated', _grainAdvisoryHandler);
       ">
 
     {% if selected_preset %}
@@ -353,7 +393,7 @@
             </div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
-                <template x-for="berry in sortedBerries" :key="berry.id">
+                <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
                     <label class="card" 
                            @mouseenter="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
                            @mouseleave="clearHoveredElement()"

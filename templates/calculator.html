@@ -342,6 +342,10 @@
                 this.advisoryHighRiskName = risk ? this.getGrainNameById(risk.grain_id) : '';
                 this.advisoryHighRiskReason = risk ? risk.reasoning : '';
                 this.advisoryLoading = false;
+                /* Broadcast to child <form x-data> scope for cross-boundary reactivity */
+                window.dispatchEvent(new CustomEvent('grain-advisory-updated', {
+                    detail: { grain_evaluations: this.grainEvaluations }
+                }));
             })
             .catch(err => {
                 console.error('Failed fetching advisory:', err);
@@ -911,7 +915,7 @@
                             🔬 Factual Science Profile
                         </h3>
                         <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500; margin-bottom: 0.5rem; text-transform: capitalize;">
-                            Element: <span x-text="hovered_element.replace('grain_', '').replace(/_/g, ' ')"></span>
+                            Element: <span x-text="(hovered_element || '').replace('grain_', '').replace(/_/g, ' ')"></span>
                         </div>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="getFactualProfile()"></p>
                         
