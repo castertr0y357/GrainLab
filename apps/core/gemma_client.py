@@ -202,7 +202,29 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                 "reasoning": reasoning
             })
             
-        elevate_recipe = "To deepen the flavor profile while maintaining tenderness, mix in 15% Einkorn flour and brown butter instead of regular butter." if is_cookie else "For a deeper caramelization and open crumb structure, introduce a 20% poolish pre-ferment and increase hydration by 3%."
+        selected_names = user_data.get("selected_grains") or []
+        selected_names_lower = [n.lower() for n in selected_names]
+        
+        elevate_recipe = []
+        if is_cookie:
+            elevate_recipe.append("Substitute 1/3 of the flour blend with Soft White Wheat to maximize tenderness and ensure a melt-in-your-mouth quality.")
+            if "rye" in "".join(selected_names_lower):
+                elevate_recipe.append("Rye selection detected: Brown the butter during the creaming stage to pair nuttiness with Rye's deep flavor notes.")
+                elevate_recipe.append("Add a pinch of dark brown sugar to balance the earthy rye profile with rich molasses tones.")
+            else:
+                elevate_recipe.append("To introduce complex nuttiness without heavy gluten, substitute 15% of the flour blend with Spelt or Rye (Ancient).")
+                elevate_recipe.append("Chill the cookie dough for at least 24 hours before baking to allow starch hydration and concentrate flavors.")
+            elevate_recipe.append("Use a low-gluten mixing method to keep the cookie spread wide and prevent a tough, cakey texture.")
+        else:
+            elevate_recipe.append("Introduce a 20% poolish pre-ferment to enhance crumb extensibility and promote a golden, caramelized crust.")
+            if "hard red spring" in "".join(selected_names_lower):
+                elevate_recipe.append("Hard Red Spring Wheat active: increase hydration by 3-5% to accommodate its high protein absorption rate.")
+                elevate_recipe.append("Perform 3 rounds of stretch-and-folds during bulk fermentation to build robust gluten structure.")
+            else:
+                elevate_recipe.append("To elevate extensibility, incorporate 10% Spelt or Kamut (Ancient) into your active grain blend.")
+                elevate_recipe.append("Ensure you preheat your baking stone or steel at 450°F (230°C) for at least 45 minutes prior to bake.")
+            elevate_recipe.append("Extend the final proofing time by 20% if using freshly milled whole grains to allow natural enzymes to mellow.")
+
         return {
             "grain_evaluations": evaluations,
             "elevate_recipe": elevate_recipe
@@ -688,7 +710,7 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     return None
 
 
-def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict | None:
+def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None) -> dict | None:
     """
     Submits a prompt to Gemma asking for evaluation of available kitchen inventory.
     """
@@ -704,8 +726,12 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
         
         active_berries = list(WheatBerry.objects.filter(is_active=True))
         if not active_berries:
-            return {"grain_evaluations": []}
+            return {"grain_evaluations": [], "elevate_recipe": []}
             
+        selected_ids = [s.strip() for s in selected_grains.split(",") if s.strip()] if selected_grains else []
+        selected_berries = [wb for wb in active_berries if str(wb.id) in selected_ids]
+        selected_names = [wb.name for wb in selected_berries]
+
         system_prompt = (
             "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
             "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
@@ -726,7 +752,11 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
             "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
             "    }\n"
             "  ],\n"
-            "  \"elevate_recipe\": \"A 1-2 sentence recommendation suggesting a specific grain mix, secondary ingredient swap, or method to achieve greater results for this bake.\"\n"
+            "  \"elevate_recipe\": [\n"
+            "    \"string suggestion 1\",\n"
+            "    \"string suggestion 2\",\n"
+            "    \"string suggestion 3 (provide 3 to 5 distinct ways to enhance the outcome, specifically tailored to build upon the user's active grain selections)\"\n"
+            "  ]\n"
             "}"
         )
         
@@ -734,6 +764,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
             "preset_slug": preset_slug,
             "preset_name": preset.name if preset else preset_slug,
             "category_slug": category_slug,
+            "selected_grains": selected_names,
             "inventory": [
                 {
                     "id": str(wb.id),

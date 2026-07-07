@@ -297,7 +297,6 @@
                 <div id="search-suggestions-flow" 
                      class="search-results" 
                      x-show="searchOpen" 
-                     x-transition
                      style="display: none;">
                 </div>
             </div>
@@ -384,7 +383,7 @@
         </div>
 
         <!-- Dynamic Grain Bin Optimizer Checkboxes -->
-        <div x-show="grain_mode === 'milled'" x-transition style="margin-top: 1.5rem;">
+        <div x-show="grain_mode === 'milled'" style="margin-top: 1.5rem;">
             <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
                 Grain Bin Optimizer (Stock Selection)
             </div>
@@ -417,7 +416,7 @@
                 </div>
 
                 <!-- Soft-Locking Warning Alert -->
-                <div class="warning-box" x-show="showStructuralWarning()" x-transition 
+                <div class="warning-box" x-show="showStructuralWarning()" 
                      style="background-color: hsla(0, 72%, 50%, 0.1); border-color: var(--danger); border-left-width: 4px; padding: 0.75rem; margin-bottom: 1.5rem;">
                     <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">❌ Structural Safety Warning</h4>
                     <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
@@ -426,7 +425,7 @@
         </div>
 
         <!-- Base of Phase 2 inputs (Visible for both refined and milled) -->
-        <div x-show="grain_mode === 'refined' || grain_mode === 'milled'" x-transition style="margin-top: 1.5rem;">
+        <div x-show="grain_mode === 'refined' || grain_mode === 'milled'" style="margin-top: 1.5rem;">
             <input type="hidden" name="custom_mixer" value="static">
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
@@ -520,7 +519,7 @@
                     </div>
 
                     <!-- Gluten prevention warning banner -->
-                    <div class="warning-box" x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding'" x-transition
+                    <div class="warning-box" x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding'"
                          style="background-color: hsla(38, 92%, 50%, 0.1); border-color: var(--warning); border-left-width: 4px; padding: 0.75rem; margin-top: 1rem;">
                         <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">⚠️ Gluten Prevention Alert</h4>
                         <p style="font-size: 0.85rem; margin: 0; color: var(--text-primary); line-height: 1.4;">
@@ -689,7 +688,7 @@
                      @focusout="clearHoveredElement()"
                      tabindex="0"
                      style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;"
-                     x-show="grain_mode === 'milled'" x-transition>
+                     x-show="grain_mode === 'milled'">
                     <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                         Milling Profile Parameters
                     </div>
@@ -724,7 +723,6 @@
             <button type="button" 
                     class="nav-btn primary"
                     x-show="grain_mode === 'refined' || grain_mode === 'milled'"
-                    x-transition
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
                     @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 PROCEED TO RECIPE CONFIGURATION →
@@ -855,7 +853,7 @@
             </div>
         </div>
 
-        <div class="slider-group" x-show="leavening_type === 'sourdough'" x-transition style="margin-bottom: 2rem;">
+        <div class="slider-group" x-show="leavening_type === 'sourdough'" style="margin-bottom: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                 <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Sourdough Starter Percentage</span>
                 <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="starter + '%'"></span>
@@ -879,7 +877,7 @@
         </div>
 
         <!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
-        <div x-show="leavening_type === 'sourdough'" x-transition
+        <div x-show="leavening_type === 'sourdough'"
              style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
             <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                 Sourdough Starter Diagnostics

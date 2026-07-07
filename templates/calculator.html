@@ -245,6 +245,17 @@
     advisoryLoadingMessage: '',
     grainEvaluations: [],
     globalElevateRecipe: '',
+    advisoryTimeout: null,
+    advisoryAbortController: null,
+    get elevateWays() {
+        if (Array.isArray(this.globalElevateRecipe)) {
+            return this.globalElevateRecipe;
+        }
+        if (typeof this.globalElevateRecipe === 'string' && this.globalElevateRecipe.trim()) {
+            return [this.globalElevateRecipe];
+        }
+        return [];
+    },
     
     // Geometry evaluation and profile adjustments
     geometry_status: 'recommended',
@@ -308,8 +319,14 @@
         this.$watch('grain_mode', value => {
             if (value === 'milled') {
                 this.selectIdealGrain();
+                this.fetchAdvisory(this.presetSlug);
             }
         });
+        this.$watch('activeBerries', () => {
+            if (this.grain_mode === 'milled') {
+                this.fetchAdvisory(this.presetSlug);
+            }
+        }, { deep: true });
         if (this.grain_mode === 'milled') {
             this.selectIdealGrain();
         }
@@ -329,10 +346,32 @@
     },
 
     fetchAdvisory(slug) {
+        // Clear any existing debounce timeout
+        if (this.advisoryTimeout) {
+            clearTimeout(this.advisoryTimeout);
+        }
+        
+        // Debounce for 750ms
+        this.advisoryTimeout = setTimeout(() => {
+            this.executeFetchAdvisory(slug);
+        }, 750);
+    },
+
+    executeFetchAdvisory(slug) {
         if (!slug && (!this.selected_master || this.selected_master === 'null')) {
             this.resetAdvisory();
             return;
         }
+
+        // Abort active HTTP request if there is one
+        if (this.advisoryAbortController) {
+            this.advisoryAbortController.abort();
+        }
+
+        // Create a new controller for this request
+        this.advisoryAbortController = new AbortController();
+        const signal = this.advisoryAbortController.signal;
+
         this.advisoryLoading = true;
         if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
             this.sidebar_insight_loading = true;
@@ -358,12 +397,18 @@
             this.advisoryLoadingMessage = messages[idx];
         }, 750);
 
-        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug || '');
+        // Build url with selected grains
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug || '') + '&selected_grains=' + encodeURIComponent(selectedGrains);
         if (this.selected_master && this.selected_master !== 'null') {
             url += '&category_slug=' + encodeURIComponent(this.selected_master);
         }
 
-        fetch(url)
+        fetch(url, { signal })
             .then(res => res.json())
             .then(data => {
                 this.grainEvaluations = data.grain_evaluations || [];
@@ -375,6 +420,7 @@
                 this.advisoryHighRiskName = risk ? this.getGrainNameById(risk.grain_id) : '';
                 this.advisoryHighRiskReason = risk ? risk.reasoning : '';
                 this.advisoryLoading = false;
+                this.advisoryAbortController = null;
                 
                 // Update hovered grain details dynamically once advisory resolves
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
@@ -399,8 +445,13 @@
                 }));
             })
             .catch(err => {
+                if (err.name === 'AbortError') {
+                    console.log('Advisory fetch aborted.');
+                    return;
+                }
                 console.error('Failed fetching advisory:', err);
                 this.advisoryLoading = false;
+                this.advisoryAbortController = null;
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     this.sidebar_insight_loading = false;
                 }
@@ -1107,11 +1158,15 @@
             </div>
             
             <!-- Global Persistent Ways to Elevate Card -->
-            <div class="card" x-show="global_ai_enabled && globalElevateRecipe" x-transition style="margin-top: 0; background-color: rgba(255, 136, 0, 0.03); border-top: 4px solid var(--accent); padding: 1.25rem;">
+            <div class="card" x-show="global_ai_enabled && elevateWays.length > 0" x-transition style="margin-top: 0; background-color: rgba(255, 136, 0, 0.03); border-top: 4px solid var(--accent); padding: 1.25rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
                     <span>✨ Ways to Elevate the Bake</span>
                 </h4>
-                <p style="font-size: 0.85rem; color: #ffb74d; margin: 0; line-height: 1.45;" x-text="globalElevateRecipe"></p>
+                <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem; font-size: 0.85rem; color: #ffb74d; line-height: 1.55;">
+                    <template x-for="way in elevateWays" :key="way">
+                        <li style="margin-bottom: 0.5rem;" x-text="way"></li>
+                    </template>
+                </ul>
             </div>
         </div>
     </div>

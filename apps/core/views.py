@@ -888,24 +888,26 @@ def ai_grain_advisory(request):
     
     preset_slug = request.GET.get("preset_slug", "").strip()
     category_slug = request.GET.get("category_slug", "").strip()
+    selected_grains = request.GET.get("selected_grains", "").strip()
     
     if not preset_slug and not category_slug:
         return JsonResponse({
-            "grain_evaluations": []
+            "grain_evaluations": [],
+            "elevate_recipe": []
         })
         
     ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
     advisory = None
     if ai_enabled:
         try:
-            advisory = gemma_client.get_grain_advisory_ai(preset_slug, category_slug)
+            advisory = gemma_client.get_grain_advisory_ai(preset_slug, category_slug, selected_grains=selected_grains)
         except Exception as e:
             logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
-            advisory = {"grain_evaluations": []}
+            advisory = {"grain_evaluations": [], "elevate_recipe": []}
     else:
         advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug)
         
-    return JsonResponse(advisory or {"grain_evaluations": []})
+    return JsonResponse(advisory or {"grain_evaluations": [], "elevate_recipe": []})
 
 def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None) -> list[dict]:
     """

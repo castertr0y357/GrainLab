@@ -855,11 +855,11 @@ class AIGrainAdvisoryTests(TestCase):
                     "reasoning": "Rye overrides static parameters."
                 }
             ],
-            "elevate_recipe": "Add some malt."
+            "elevate_recipe": ["Add some malt."]
         }
         
         res = get_grain_advisory_ai("cookies", "cookies-shortbread")
-        self.assertEqual(res.get("elevate_recipe"), "Add some malt.")
+        self.assertEqual(res.get("elevate_recipe"), ["Add some malt."])
         
         self.assertTrue(mock_call_gemma.called)
         system_prompt = mock_call_gemma.call_args[0][0]
@@ -898,6 +898,28 @@ class AIGrainAdvisoryTests(TestCase):
         # Verify second grain (hallucinated-uuid-xyz) maps to self.hard_spring.id via reasoning check
         hard_eval = next(e for e in evals if e["tier"] == "not-recommended")
         self.assertEqual(hard_eval["grain_id"], str(self.hard_spring.id))
+
+    @patch('apps.core.gemma_client.call_gemma_api')
+    @patch('apps.core.gemma_client._is_ai_enabled', return_value=True)
+    def test_grain_advisory_selected_grains_tailored(self, mock_ai_enabled, mock_call_gemma):
+        from apps.core.gemma_client import get_grain_advisory_ai
+        import json
+        
+        mock_call_gemma.return_value = {
+            "grain_evaluations": [],
+            "elevate_recipe": ["Suggestions tailored to selected grains."]
+        }
+        
+        # Pass soft_white ID as the selected grain
+        selected_param = str(self.soft_white.id)
+        res = get_grain_advisory_ai("cookies", "cookies-shortbread", selected_grains=selected_param)
+        
+        self.assertTrue(mock_call_gemma.called)
+        user_prompt = json.loads(mock_call_gemma.call_args[0][1])
+        
+        # Verify selected grain names are passed inside user prompt
+        self.assertEqual(user_prompt.get("selected_grains"), [self.soft_white.name])
+        self.assertEqual(res.get("elevate_recipe"), ["Suggestions tailored to selected grains."])
 
 
 
