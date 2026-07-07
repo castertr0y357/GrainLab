@@ -1518,10 +1518,17 @@ def ai_sidebar_insight(request):
             
     if not insight:
         # Fall back to our clean recipe-aware local dictionary mapping
-        insight = fallbacks.get(element, {
-            "labor_roi": "Low Priority / Minor Textural Return",
-            "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
-        })
+        insight = fallbacks.get(element)
+        if not insight and element and element.startswith("grain_"):
+            for k, val in fallbacks.items():
+                if k.startswith("grain_") and (k in element or element in k):
+                    insight = val
+                    break
+        if not insight:
+            insight = {
+                "labor_roi": "Low Priority / Minor Textural Return",
+                "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
+            }
         
     return JsonResponse(insight)
 

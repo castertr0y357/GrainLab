@@ -894,3 +894,10 @@ class SidebarInsightTests(TestCase):
         self.assertEqual(data["labor_roi"], "Low Priority / Minor Textural Return")
         self.assertIn("an objective workspace configuration parameter", data["last_10_percent_analysis"].lower())
 
+    def test_sidebar_insight_fuzzy_grain_matching(self):
+        response = self.client.get(reverse('ai_sidebar_insight') + '?element=grain_soft_white_wheat&category_slug=lean-crusty')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["labor_roi"], "Low Priority / Dangerous Structural Choice")
+        self.assertIn("soft white wheat lacks", data["last_10_percent_analysis"].lower())
+
