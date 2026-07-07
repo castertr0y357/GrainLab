@@ -861,7 +861,9 @@ class AIGrainAdvisoryTests(TestCase):
         
         self.assertTrue(mock_call_gemma.called)
         system_prompt = mock_call_gemma.call_args[0][0]
-        self.assertIn("[CRITICAL RULE: CULINARY SOVEREIGNTY & EXCEPTION HANDLING]", system_prompt)
+        user_prompt = json.loads(mock_call_gemma.call_args[0][1])
+        self.assertIn("[CRITICAL RULE: CULINARY SOVEREIGNTY]", system_prompt)
+        self.assertNotIn("engine_profile", user_prompt)
 
 
 
@@ -958,7 +960,8 @@ class SidebarInsightTests(TestCase):
         mock_call_gemma.return_value = {
             "recommendation_tier": "sub-optimal",
             "labor_roi_rating": "High Priority",
-            "last_10_percent_analysis": "Rye has high pentosans which block gluten."
+            "last_10_percent_analysis": "Rye has high pentosans which block gluten.",
+            "elevate_recipe": "Blend with 10% rye for gooey cookies."
         }
         
         # Create a test wheat berry in db
@@ -973,27 +976,13 @@ class SidebarInsightTests(TestCase):
             user_prompt = json.loads(mock_call_gemma.call_args[0][1])
             
             # Verify system prompt has the sovereignty override rule
-            self.assertIn("[CRITICAL RULE: CULINARY SOVEREIGNTY & EXCEPTION HANDLING]", system_prompt)
+            self.assertIn("[CRITICAL RULE: CULINARY SOVEREIGNTY]", system_prompt)
             
-            # Verify user prompt contains parametric and factual science profiles
-            self.assertIn("parametric_profile", user_prompt)
-            self.assertIn("factual_science_profile", user_prompt)
+            # Verify user prompt does NOT contain parametric and factual science profiles
+            self.assertNotIn("parametric_profile", user_prompt)
+            self.assertNotIn("factual_science_profile", user_prompt)
             
-            # Verify parametric profile has expected keys
-            p_profile = user_prompt["parametric_profile"]
-            self.assertIn("target_protein_min", p_profile)
-            self.assertIn("target_protein_max", p_profile)
-            
-            # Verify factual profile has rye description and programmatic evaluation
-            f_profile = user_prompt["factual_science_profile"]
-            self.assertIn("description", f_profile)
-            self.assertIn("programmatic_evaluation", f_profile)
-            
-            # Rye is in FACTUAL_DICTIONARY, verify it was matched
-            self.assertIn("Ancient rye grass grain", f_profile["description"])
-            
-            # Programmatic evaluation for Rye on lean-crusty (bread engine, min protein 11%) should be sub-optimal or not-recommended
-            self.assertEqual(f_profile["programmatic_evaluation"]["tier"], "not-recommended")
+            self.assertEqual(res["elevate_recipe"], "Blend with 10% rye for gooey cookies.")
             
         finally:
             rye.delete()

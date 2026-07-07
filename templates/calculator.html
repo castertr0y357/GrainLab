@@ -73,6 +73,7 @@
     sidebar_labor_roi: '',
     sidebar_analysis: '',
     sidebar_tier: '',
+    sidebar_elevate: '',
     
     // Factual science profiles
     factual_dictionary: {
@@ -145,6 +146,7 @@
         this.sidebar_labor_roi = '';
         this.sidebar_analysis = '';
         this.sidebar_tier = '';
+        this.sidebar_elevate = '';
         
         let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
         fetch(url)
@@ -154,6 +156,7 @@
                     this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
                     this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
                     this.sidebar_tier = data.recommendation_tier || '';
+                    this.sidebar_elevate = data.elevate_recipe || '';
                     this.sidebar_insight_loading = false;
                 }
             })
@@ -170,6 +173,7 @@
         this.sidebar_labor_roi = '';
         this.sidebar_analysis = '';
         this.sidebar_tier = '';
+        this.sidebar_elevate = '';
         this.sidebar_insight_loading = false;
     },
 
@@ -872,7 +876,7 @@
                 <div x-show="hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
                     
                     <!-- Panel A: Factual Science Profile (StaticInspectorCard) -->
-                    <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                    <div x-show="!global_ai_enabled" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
                         <h3 style="color: var(--accent); margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             🔬 Factual Science Profile
                         </h3>
@@ -944,9 +948,13 @@
                                 <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
                                       x-text="sidebar_labor_roi"></span>
                             </div>
-                            <div>
+                            <div style="margin-bottom: 0.75rem;">
                                 <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">AI Critique &amp; Reasoning</span>
                                 <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis"></p>
+                            </div>
+                            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255, 136, 0, 0.15);" x-show="sidebar_elevate">
+                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">✨ Ways to Elevate</span>
+                                <p style="font-size: 0.85rem; color: #ffb74d; margin: 0; line-height: 1.45;" x-text="sidebar_elevate"></p>
                             </div>
                         </div>
                     </div>

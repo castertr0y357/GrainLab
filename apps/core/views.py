@@ -882,6 +882,7 @@ def ai_grain_advisory(request):
     """
     from django.http import JsonResponse
     from apps.core import gemma_client
+    from apps.core.models import SystemSetting
     
     preset_slug = request.GET.get("preset_slug", "").strip()
     category_slug = request.GET.get("category_slug", "").strip()
@@ -891,16 +892,18 @@ def ai_grain_advisory(request):
             "grain_evaluations": []
         })
         
+    ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
     advisory = None
-    try:
-        advisory = gemma_client.get_grain_advisory_ai(preset_slug, category_slug)
-    except Exception as e:
-        logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
-        
-    if not advisory:
+    if ai_enabled:
+        try:
+            advisory = gemma_client.get_grain_advisory_ai(preset_slug, category_slug)
+        except Exception as e:
+            logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
+            advisory = {"grain_evaluations": []}
+    else:
         advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug)
         
-    return JsonResponse(advisory)
+    return JsonResponse(advisory or {"grain_evaluations": []})
 
 def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None) -> list[dict]:
     """
@@ -1549,8 +1552,8 @@ def ai_sidebar_insight(request):
             
     if not insight:
         # Fall back to our clean recipe-aware local dictionary mapping
-        # 1. First, check if it's a grain
-        if element.startswith("grain_"):
+        # 1. First, check if it's a grain (only if AI is NOT enabled, to prevent applying algorithmic rules)
+        if not ai_enabled and element.startswith("grain_"):
             from apps.core.models import WheatBerry, BreadPreset
             from grainlab.engines import router
             from apps.core.gemma_client import evaluate_single_grain
@@ -1614,17 +1617,21 @@ def ai_sidebar_insight(request):
                     "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
                 }
                 
-        # 3. Dynamic out-of-stock grain suggestion
-        inactive_recs = get_inactive_grain_recommendations(preset_slug, category_slug)
-        if inactive_recs:
-            # Avoid duplicate recommendations if the hovered element itself is that out-of-stock grain
-            rec = inactive_recs[0]
-            hovered_clean = element.replace("grain_", "").replace("_", " ").lower()
-            if rec["name"].lower() not in hovered_clean:
-                suggestion = f" Since {rec['name']} is currently out of stock, consider acquiring some; its {rec['protein']}% protein profile will enhance flavor and allow for superior texture."
-                analysis = insight.get("last_10_percent_analysis", "")
-                if suggestion not in analysis:
-                    insight["last_10_percent_analysis"] = analysis.rstrip() + suggestion
+        # 3. Dynamic out-of-stock grain suggestion (only when AI is NOT enabled)
+        if not ai_enabled:
+            inactive_recs = get_inactive_grain_recommendations(preset_slug, category_slug)
+            if inactive_recs:
+                # Avoid duplicate recommendations if the hovered element itself is that out-of-stock grain
+                rec = inactive_recs[0]
+                hovered_clean = element.replace("grain_", "").replace("_", " ").lower()
+                if rec["name"].lower() not in hovered_clean:
+                    suggestion = f" Since {rec['name']} is currently out of stock, consider acquiring some; its {rec['protein']}% protein profile will enhance flavor and allow for superior texture."
+                    analysis = insight.get("last_10_percent_analysis", "")
+                    if suggestion not in analysis:
+                        insight["last_10_percent_analysis"] = analysis.rstrip() + suggestion
+        
+    if insight and "elevate_recipe" not in insight:
+        insight["elevate_recipe"] = ""
         
     return JsonResponse(insight)
 

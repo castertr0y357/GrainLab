@@ -487,23 +487,15 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
             return {"grain_evaluations": []}
             
         system_prompt = (
-            "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory. "
-            "Evaluate each grain using these universal heuristics:\n"
-            "1. TIER ASSIGNMENT (Structure/Protein):\n"
-            "   - 'recommended': Grains falling squarely within the target protein range that exhibit the required gluten behavior.\n"
-            "   - 'sub-optimal': Grains within +/-1.5% of the target protein range, or grains with correct protein but structural properties requiring workflow adjustment.\n"
-            "   - 'not-recommended': Grains completely violating structural thresholds, causing gas retention failure or severe structural toughening.\n"
-            "2. TIER PENALTY MODIFICATION (Flavor/Tannins):\n"
-            "   - If 'tannin_sensitive' is true, any grain with high bitterness or astringent tannins (such as red/rustic wheats, rye, spelt, einkorn) must be downgraded by exactly one tier (e.g., recommended drops to sub-optimal).\n"
-            "   - If 'tannin_sensitive' is false (Tannin Tolerant), flavor profiles do not penalize the tier.\n\n"
-            "[CRITICAL RULE: CULINARY SOVEREIGNTY & EXCEPTION HANDLING]\n"
-            "You are provided with a static 'Parametric Profile' outlining the standard protein ranges and tannin sensitivities for the active baking engine (via 'engine_profile').\n"
-            "\n"
-            "1. Treat these parameters as baseline guardrails for STANDARD HARD AND SOFT WHEATS ONLY.\n"
-            "2. Do NOT blindly apply standard wheat constraints to non-standard or ancient grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts real-world artisan baking physics.\n"
-            "3. If a grain violates the standard wheat parameters but possesses unique chemical properties that create an exceptional specialty bake (such as Rye's high pentosans blocking gluten to maximize cookie tenderness), you are REQUIRED to override the static classification.\n"
-            "4. In your response, elevate the 'tier' to 'recommended' or 'sub-optimal' based on your culinary database, explicitly contradict the static profile's warning, and explain the real-world chemistry of the exception.\n"
-            "5. Absolute Prohibition: Never copy, parrot, or re-use the wording from the Factual Science Profile payload. Your analysis must be entirely independent.\n"
+            "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
+            "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+            "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+            "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
+            "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
+            "Evaluate each grain and assign:\n"
+            "- 'recommended': Grains that are ideal for the preset.\n"
+            "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
+            "- 'not-recommended': Grains that are inappropriate for the preset's required gluten structure, texture, or flavor characteristics.\n"
             "\n"
             "Return a JSON object matching this schema:\n"
             "{\n"
@@ -511,7 +503,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
             "    {\n"
             "      \"grain_id\": \"string (UUID of the grain)\",\n"
             "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-            "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain's protein percentage alters the requested texture, and how its bran/tannin profile impacts the target flavor profile.\"\n"
+            "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
             "    }\n"
             "  ]\n"
             "}"
@@ -520,14 +512,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
         payload = {
             "preset_slug": preset_slug,
             "preset_name": preset.name if preset else preset_slug,
-            "engine_profile": {
-                "name": engine.name,
-                "target_protein_min": getattr(engine, "target_protein_min", 11.0),
-                "target_protein_max": getattr(engine, "target_protein_max", 13.0),
-                "gluten_behavior_required": getattr(engine, "gluten_behavior", ""),
-                "flavor_affinity": getattr(engine, "flavor_affinity", ""),
-                "tannin_sensitive": getattr(engine, "tannin_sensitive", False)
-            },
+            "category_slug": category_slug,
             "inventory": [
                 {
                     "id": str(wb.id),
@@ -935,11 +920,6 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
                 factual_desc = v
                 break
 
-    # Compute programmatic evaluation if it's a wheat berry
-    programmatic_eval = None
-    if wb:
-        programmatic_eval = evaluate_single_grain(wb, engine)
-    
     system_prompt = (
         "You are an expert, highly practical food scientist who values human time and forearm fatigue. "
         "The tone must be conversational, insightful, and focused entirely on the sensory experience of eating and the physical reality of cooking. "
@@ -947,14 +927,11 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "You MUST tailor your critique specifically to the active baking category and preset. "
         "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast or proofing for cookies/cakes, and do not mention cookie spread or creaming for sourdough/pizza. "
         "\n"
-        "[CRITICAL RULE: CULINARY SOVEREIGNTY & EXCEPTION HANDLING]\n"
-        "You are provided with a static 'Parametric Profile' outlining the standard protein ranges and tannin sensitivities for the active baking engine.\n"
-        "\n"
-        "1. Treat these parameters as baseline guardrails for STANDARD HARD AND SOFT WHEATS ONLY.\n"
-        "2. Do NOT blindly apply standard wheat constraints to non-standard or ancient grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts real-world artisan baking physics.\n"
-        "3. If a grain violates the standard wheat parameters but possesses unique chemical properties that create an exceptional specialty bake (such as Rye's high pentosans blocking gluten to maximize cookie tenderness), you are REQUIRED to override the static classification.\n"
-        "4. In your response, elevate the 'tier' to 'recommended' or 'sub-optimal' based on your culinary database, explicitly contradict the static profile's warning, and explain the real-world chemistry of the exception.\n"
-        "5. Absolute Prohibition: Never copy, parrot, or re-use the wording from the Factual Science Profile payload. Your analysis must be entirely independent.\n"
+        "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+        "You must rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+        "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
+        "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
+        "Evaluate the hovered element purely based on real-world baking physics for the active preset.\n"
         "\n"
         "🚨 CRITICAL RULES:\n"
         "1. Banned Terminology: You are strictly prohibited from using these words or variants in your generated JSON response: "
@@ -962,33 +939,37 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "2. Strict Context Anchoring: The 'last_10_percent_analysis' field must explicitly synthesize the hovered element name directly with the active recipe target name (e.g. 'Soft White Wheat' + 'Chewy Chocolate Chip Cookies'). It cannot output generic definitions.\n"
         "3. TRULY INSIGHTFUL ANALYSIS & OUT-OF-STOCK ALTERNATIVES:\n"
         f"   - If the hovered element is sub-optimal or can be elevated, look at the following wheat grains that are currently NOT on hand (out of stock/inactive in the user's inventory): {inactive_grain_names}.\n"
-        "   - Suggest acquiring or activating a specific grain from this out-of-stock list if it would significantly enhance the flavor or yield a superior texture for the target preset. Give a clear explanation of its impact (e.g. 'Since Spelt Wheat is currently out of stock, consider acquiring some to blend at 15% for a nutty flavor and more relaxed crumb in your biscuits').\n"
+        "   - Suggest acquiring or activating a specific grain from this out-of-stock list if it would significantly enhance the flavor or yield a superior texture for the target preset. Give a clear explanation of its impact.\n"
         "\n"
         "Return a JSON object containing:\n"
         "- 'recommendation_tier': a string of 'recommended', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
         "- 'labor_roi_rating': a string tag representing ranking (e.g., 'High Priority / Worth the Extra Step', 'Low Priority / Minor Textural Return', 'High Priority / Absolute Requirement')\n"
-        "- 'last_10_percent_analysis': a tight 2-sentence conversational critique (which acts as the explanation/reason for your recommendation and provides insights or grain suggestions).\n"
+        "- 'last_10_percent_analysis': a tight 2-sentence conversational critique.\n"
+        "- 'elevate_recipe': a 1-2 sentence recommendation on a potential way to elevate this recipe, suggesting a specific grain to mix in (regardless of inventory), a particular secondary ingredient (like a fat/liquid swap), or a specific method (like autolyse, cold proofing) to achieve greater results.\n"
         "\n"
         "EXAMPLES:\n"
         "Example A (Hovering 'Soft White Wheat' on 'Chewy Chocolate Chip Cookies'):\n"
         "{\n"
         "  \"recommendation_tier\": \"recommended\",\n"
         "  \"labor_roi_rating\": \"High Priority / Worth the Extra Step\",\n"
-        "  \"last_10_percent_analysis\": \"Using Soft White Wheat here ensures your cookies melt into a perfectly tender, uniform pool instead of puffing up into cakey domes. To unlock the real magic, give this fresh-milled dough a 12-hour rest in the fridge before baking so the bran has time to fully absorb the butter fat.\"\n"
+        "  \"last_10_percent_analysis\": \"Using Soft White Wheat here ensures your cookies melt into a perfectly tender, uniform pool instead of puffing up into cakey domes. To unlock the real magic, give this fresh-milled dough a 12-hour rest in the fridge before baking so the bran has time to fully absorb the butter fat.\",\n"
+        "  \"elevate_recipe\": \"For an even richer flavor profile, substitute 20% of the soft white wheat with fresh-milled Rye (regardless of inventory) to introduce pentosans that keep the cookie center exceptionally gooey.\"\n"
         "}\n"
         "\n"
         "Example B (Hovering 'Manual Spatula' on 'Chewy Chocolate Chip Cookies'):\n"
         "{\n"
         "  \"recommendation_tier\": \"sub-optimal\",\n"
         "  \"labor_roi_rating\": \"Low Priority / Minor Textural Return\",\n"
-        "  \"last_10_percent_analysis\": \"There is zero reason to wear out your forearm hand-mixing a massive batch of cookie dough. Throw it in the stand mixer with the paddle attachment on low speed; you will get the exact same tender crumb without the manual exhaustion.\"\n"
+        "  \"last_10_percent_analysis\": \"There is zero reason to wear out your forearm hand-mixing a massive batch of cookie dough. Throw it in the stand mixer with the paddle attachment on low speed; you will get the exact same tender crumb without the manual exhaustion.\",\n"
+        "  \"elevate_recipe\": \"Using a paddle attachment on a stand mixer develops uniform sugar hydration without building unwanted gluten toughness.\"\n"
         "}\n"
         "\n"
         "Example C (Hovering 'Manual Spatula' on 'Buttermilk Biscuits'):\n"
         "{\n"
         "  \"recommendation_tier\": \"recommended\",\n"
         "  \"labor_roi_rating\": \"High Priority / Absolute Requirement\",\n"
-        "  \"last_10_percent_analysis\": \"Put the electric mixers away. Hand-folding your wet ingredients with a spatula is the exact threshold where biscuit magic lives; a machine will activate the gluten webs in seconds, turning a flaky, layered biscuit into a tough hockey puck.\"\n"
+        "  \"last_10_percent_analysis\": \"Put the electric mixers away. Hand-folding your wet ingredients with a spatula is the exact threshold where biscuit magic lives; a machine will activate the gluten webs in seconds, turning a flaky, layered biscuit into a tough hockey puck.\",\n"
+        "  \"elevate_recipe\": \"Incorporate cold lard instead of butter to create distinct fat barriers for maximum flaky lamination rise.\"\n"
         "}"
     )
     
@@ -1000,27 +981,17 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "recipe_target_name": preset_name,
         "category_slug": category_slug,
         "preset_slug": preset_slug,
-        "inactive_grains_not_on_hand": inactive_grain_names,
-        "parametric_profile": {
-            "target_protein_min": getattr(engine, "target_protein_min", 11.0),
-            "target_protein_max": getattr(engine, "target_protein_max", 13.0),
-            "tannin_sensitive": getattr(engine, "tannin_sensitive", False),
-            "gluten_behavior_required": getattr(engine, "gluten_behavior", ""),
-            "flavor_affinity": getattr(engine, "flavor_affinity", "")
-        },
-        "factual_science_profile": {
-            "description": factual_desc,
-            "programmatic_evaluation": programmatic_eval
-        }
+        "inactive_grains_not_on_hand": inactive_grain_names
     })
     
     try:
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["recommendation_tier", "labor_roi_rating", "last_10_percent_analysis"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["recommendation_tier", "labor_roi_rating", "last_10_percent_analysis", "elevate_recipe"])
         if result and "labor_roi_rating" in result and "last_10_percent_analysis" in result:
             return {
                 "recommendation_tier": result.get("recommendation_tier", "recommended"),
                 "labor_roi": result["labor_roi_rating"],
-                "last_10_percent_analysis": result["last_10_percent_analysis"]
+                "last_10_percent_analysis": result["last_10_percent_analysis"],
+                "elevate_recipe": result.get("elevate_recipe", "")
             }
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling sidebar insight API: {str(e)}")
