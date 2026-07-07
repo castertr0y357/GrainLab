@@ -66,6 +66,7 @@
 - [x] Disable auto-advancing when clicking Store Refined Flour, displaying the Proceed to Recipe Configuration button instead
 - [x] Implement Fully Parametric, Heuristic-Driven Production Context Engines across all 11 sub-engines and dynamic workspace input decks
 - [x] Implement Global AI Toggle and Split-Pane Contextual Sidebar Inspector with Gemma E4B models and local dictionary fallbacks
+- [x] Implement Culinary Sovereignty override clause and dynamic Parametric/Factual profiles in the local AI inference pipeline
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
