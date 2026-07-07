@@ -330,8 +330,8 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     }
 
     try:
-        # Enforce a strict 3-second timeout for responsive HTTP cycles
-        response = requests.post(url, headers=headers, json=payload, timeout=3.0)
+        # Enforce a 30-second timeout to allow the model sufficient time to load and generate responses
+        response = requests.post(url, headers=headers, json=payload, timeout=30.0)
         if response.status_code == 200:
             data = response.json()
             content_str = data["choices"][0]["message"]["content"].strip()
