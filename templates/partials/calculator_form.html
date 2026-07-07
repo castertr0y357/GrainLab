@@ -389,31 +389,39 @@
                 Grain Bin Optimizer (Stock Selection)
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
-                <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
-                    <label class="card" 
-                           @mouseenter="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
-                           @mouseleave="clearHoveredElement()"
-                           @focusin="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
-                           @focusout="clearHoveredElement()"
-                           tabindex="0"
-                           style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
-                           :style="getGrainStyle(berry)">
-                        <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
-                        <span style="font-size: 1.25rem;">🌾</span>
-                        <div>
-                            <strong x-text="berry.name" style="font-size: 0.9rem; display: block; color: var(--text-primary);"></strong>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="berry.protein + '% Prot | ' + Math.round((berry.absorption - 1.0)*100) + '% Abs'"></span>
-                        </div>
-                    </label>
-                </template>
+            <!-- Loading State Spinner -->
+            <div x-show="advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+                <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);" x-text="advisoryLoadingMessage || 'Consulting Local Gemma model for grain advisory and stock optimization...'"></p>
             </div>
 
-            <!-- Soft-Locking Warning Alert -->
-            <div class="warning-box" x-show="showStructuralWarning()" x-transition 
-                 style="background-color: hsla(0, 72%, 50%, 0.1); border-color: var(--danger); border-left-width: 4px; padding: 0.75rem; margin-bottom: 1.5rem;">
-                <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">❌ Structural Safety Warning</h4>
-                <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
+            <div x-show="!advisoryLoading">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
+                        <label class="card" 
+                               @mouseenter="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
+                               @mouseleave="clearHoveredElement()"
+                               @focusin="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
+                               @focusout="clearHoveredElement()"
+                               tabindex="0"
+                               style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
+                               :style="getGrainStyle(berry)">
+                            <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
+                            <span style="font-size: 1.25rem;">🌾</span>
+                            <div>
+                                <strong x-text="berry.name" style="font-size: 0.9rem; display: block; color: var(--text-primary);"></strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="berry.protein + '% Prot | ' + Math.round((berry.absorption - 1.0)*100) + '% Abs'"></span>
+                            </div>
+                        </label>
+                    </template>
+                </div>
+
+                <!-- Soft-Locking Warning Alert -->
+                <div class="warning-box" x-show="showStructuralWarning()" x-transition 
+                     style="background-color: hsla(0, 72%, 50%, 0.1); border-color: var(--danger); border-left-width: 4px; padding: 0.75rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">❌ Structural Safety Warning</h4>
+                    <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
+                </div>
             </div>
         </div>
 

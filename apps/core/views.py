@@ -168,10 +168,12 @@ def load_preset(request, preset_id):
     starter = int((preset.starter_override if preset.starter_override is not None else cat.base_starter) * 100)
     
     active_berries = list(WheatBerry.objects.filter(is_active=True))
+    presets = BreadPreset.objects.all().order_by('name')
     
     context = {
         "categories": categories,
         "form_factors": form_factors,
+        "presets": presets,
         "mixers": mixers,
         "active_berries": active_berries,
         "selected_preset": preset,
