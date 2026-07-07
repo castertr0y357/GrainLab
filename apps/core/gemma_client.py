@@ -70,10 +70,8 @@ def _get_val(obj, key, default=None):
 
 def _is_ai_enabled() -> bool:
     """Checks if AI integration is active."""
-    # Check both environment variables and database settings
-    db_enabled = SystemSetting.get_val("ai_enabled", "False").lower() in ("true", "1", "t")
-    env_mock = getattr(settings, "MOCK_MODE", True)
-    return db_enabled and not env_mock
+    # Check database settings to see if AI is active
+    return SystemSetting.get_val("ai_enabled", "False").lower() in ("true", "1", "t")
 
 
 def _get_api_config() -> tuple[str, str]:
@@ -86,6 +84,203 @@ def _get_api_config() -> tuple[str, str]:
     return url, model
 
 
+def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
+    """
+    Generates realistic, schema-compliant mock responses for offline testing/development.
+    """
+    import json
+    try:
+        user_data = json.loads(user_prompt)
+    except Exception:
+        user_data = {}
+
+    if expected_keys and "shares" in expected_keys:
+        # Mock optimize_grain_blend
+        preset_slug = user_data.get("preset_slug", "")
+        preset_name = user_data.get("preset_name", "")
+        berries = user_data.get("active_berries", [])
+        
+        shares = {}
+        warning = None
+        if not berries:
+            return {"shares": {}, "structural_warning": None}
+            
+        # Determine if high-rise
+        is_high_rise = preset_slug in ["sourdough-boule", "baguette", "ciabatta", "artisan-pizza", "bagel", "french-loaf"]
+        has_hard = any("hard" in b.get("name", "").lower() for b in berries)
+        
+        if is_high_rise and not has_hard:
+            warning = f"❌ Structural Hazard: Selected grain blend lacks the gluten strength required for a {preset_name}. Adjusting blend to include 70% Hard Red Spring Wheat for safety."
+            
+        # Simple default distribution favoring soft & rye for cookies
+        if "cookie" in preset_slug or "cookie" in preset_name.lower():
+            soft_berry = next((b for b in berries if "soft" in b.get("name", "").lower()), None)
+            rye_berry = next((b for b in berries if "rye" in b.get("name", "").lower()), None)
+            if soft_berry and rye_berry:
+                shares[soft_berry["name"]] = 0.8
+                shares[rye_berry["name"]] = 0.2
+            elif soft_berry:
+                shares[soft_berry["name"]] = 1.0
+            elif rye_berry:
+                shares[rye_berry["name"]] = 1.0
+            else:
+                shares[berries[0]["name"]] = 1.0
+        else:
+            hard_berry = next((b for b in berries if "hard red spring" in b.get("name", "").lower()), None)
+            if not hard_berry:
+                hard_berry = next((b for b in berries if "hard" in b.get("name", "").lower()), None)
+            if hard_berry:
+                shares[hard_berry["name"]] = 1.0
+            else:
+                shares[berries[0]["name"]] = 1.0
+                
+        # Fill in 0.0 for others
+        for b in berries:
+            if b["name"] not in shares:
+                shares[b["name"]] = 0.0
+                
+        return {"shares": shares, "structural_warning": warning}
+
+    elif expected_keys and "grain_evaluations" in expected_keys:
+        # Mock get_grain_advisory_ai
+        preset_slug = user_data.get("preset_slug", "")
+        category_slug = user_data.get("category_slug", "")
+        inventory = user_data.get("inventory", [])
+        
+        evaluations = []
+        is_cookie = "cookie" in preset_slug or "cookie" in (category_slug or "").lower()
+        
+        for b in inventory:
+            name_lower = b.get("name", "").lower()
+            b_id = b.get("id", "")
+            prot = b.get("protein", 12.0)
+            
+            if is_cookie:
+                # Sovereignty rules override for cookies: Rye and Soft are recommended, Hard is sub-optimal or not-recommended
+                if "soft" in name_lower:
+                    tier = "recommended"
+                    reasoning = f"At {prot}% protein, Soft White Wheat provides tender, delicate structures perfect for cookies, avoiding any gluten toughness."
+                elif "rye" in name_lower:
+                    tier = "recommended"
+                    reasoning = "Rye is highly recommended for cookies due to pentosans blocking gluten development, maximizing tenderness and moisture retention."
+                elif "hard red spring" in name_lower:
+                    tier = "not-recommended"
+                    reasoning = f"High protein content ({prot}%) creates excessive gluten elasticity, causing the cookies to bake into tough, cakey domes."
+                elif "hard red winter" in name_lower:
+                    tier = "sub-optimal"
+                    reasoning = f"Moderate protein content ({prot}%) creates slightly too much gluten structure, leading to a somewhat tough cookie spread."
+                elif "hard white" in name_lower:
+                    tier = "sub-optimal"
+                    reasoning = f"Ideal neutral flavor, but the {prot}% protein content is too high for optimal cookie tenderness."
+                elif "spelt" in name_lower:
+                    tier = "sub-optimal"
+                    reasoning = "Extensible but weak gluten provides decent tenderness, but the nutty flavor may overpower delicate recipe notes."
+                else:
+                    tier = "sub-optimal"
+                    reasoning = f"At {prot}% protein, this grain is slightly too strong for optimal cookie tenderness."
+            else:
+                # Standard bread rules
+                if "hard red spring" in name_lower or "hard red winter" in name_lower or "hard white" in name_lower:
+                    tier = "recommended"
+                    reasoning = f"High protein content ({prot}%) provides the optimal gluten strength and elasticity needed for a tall, open-crumb rise."
+                elif "soft" in name_lower:
+                    tier = "not-recommended"
+                    reasoning = f"Low protein ({prot}%) and weak gluten structure will fail to retain gas, resulting in a flat, dense, and gummy loaf."
+                elif "rye" in name_lower:
+                    tier = "sub-optimal"
+                    reasoning = "Savory flavor matches hearth profiles, but high pentosans and low gluten elasticity will produce a denser, stickier crumb."
+                elif "spelt" in name_lower:
+                    tier = "sub-optimal"
+                    reasoning = "Highly extensible but weak gluten structure requires careful hydration management to avoid structural collapse."
+                else:
+                    tier = "sub-optimal"
+                    reasoning = f"Provides pleasant flavor and {prot}% protein, but low elasticity results in reduced oven spring."
+                    
+            evaluations.append({
+                "grain_id": b_id,
+                "tier": tier,
+                "reasoning": reasoning
+            })
+            
+        return {"grain_evaluations": evaluations}
+
+    elif expected_keys and "pitfalls" in expected_keys:
+        return {
+            "pitfalls": [
+                {
+                    "title": "High Hydration Sticky Zone",
+                    "message": "The formula hydration is high relative to your grain blend. Ensure you use stretch-and-fold techniques rather than intensive mechanical kneading to maintain structure without tearing the gluten sheets."
+                }
+            ]
+        }
+
+    elif expected_keys and "sensory_description" in expected_keys:
+        return {
+            "sensory_description": "The dough should feel smooth, highly extensible, and slightly tacky but not sticky. It should hold its shape when rounded and show early signs of gas bubbles forming under the surface skin."
+        }
+
+    elif expected_keys and "geometry_evaluation" in expected_keys:
+        return {
+            "geometry_evaluation": {
+                "status": "recommended",
+                "advisory_label": "Excellent heat transfer properties and moisture retention, allowing the dough to expand fully before the crust sets.",
+                "profile_adjustments": {
+                    "oven_temp_offset_f": 0,
+                    "bake_time_offset_m": 0,
+                    "steam_override": "no-change"
+                }
+            }
+        }
+
+    elif expected_keys and "recommendation_tier" in expected_keys:
+        # Mock get_sidebar_insight_ai
+        hovered = user_data.get("hovered_element", "").lower()
+        preset = user_data.get("preset_slug", "")
+        category = user_data.get("category_slug", "")
+        
+        is_cookie = "cookie" in preset or "cookie" in (category or "").lower()
+        
+        if "soft white" in hovered:
+            if is_cookie:
+                return {
+                    "recommendation_tier": "recommended",
+                    "labor_roi_rating": "High Priority / Worth the Extra Step",
+                    "last_10_percent_analysis": "Soft White Wheat provides an exceptionally tender crumb for Chewy Chocolate Chip Cookies by avoiding gluten toughness, which is critical for achieving a perfect melting spread.",
+                    "elevate_recipe": "Substitute 10% of the soft white wheat with fresh-milled Rye to introduce pentosans that keep the cookie center chewy and gooey."
+                }
+            else:
+                return {
+                    "recommendation_tier": "not-recommended",
+                    "labor_roi_rating": "Low Priority / Dangerous Structural Choice",
+                    "last_10_percent_analysis": "Soft White Wheat completely lacks the gluten strength and elasticity required to support the rise of this bread, causing structural collapse.",
+                    "elevate_recipe": "Use a high-protein hard wheat instead to ensure gas retention and optimal oven spring."
+                }
+        elif "rye" in hovered:
+            if is_cookie:
+                return {
+                    "recommendation_tier": "recommended",
+                    "labor_roi_rating": "High Priority / Worth the Extra Step",
+                    "last_10_percent_analysis": "Rye is highly recommended for Chewy Chocolate Chip Cookies due to pentosans blocking gluten to maximize cookie tenderness and moisture retention.",
+                    "elevate_recipe": "Mix in 20% fresh-milled Rye with Soft White Wheat to create a unique flavor profile with caramelized notes."
+                }
+            else:
+                return {
+                    "recommendation_tier": "sub-optimal",
+                    "labor_roi_rating": "Low Priority / Minor Textural Return",
+                    "last_10_percent_analysis": "Rye adds excellent complex, savory notes but its low gluten elasticity will produce a denser, stickier crumb structure.",
+                    "elevate_recipe": "Blend 80% Hard Red Spring Wheat with 20% Rye to retain structural loft while capturing Rye's complex rustic flavor."
+                }
+        else:
+            return {
+                "recommendation_tier": "recommended",
+                "labor_roi_rating": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": f"Using {hovered.title()} matches the target recipe requirements, contributing to optimal crumb texture and flavor balance.",
+                "elevate_recipe": "Ensure high-quality fresh ingredients are used and maintain precise hydration levels."
+            }
+
+    return None
+
+
 def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
     """
     Submits a structured prompt to local Gemma and parses the JSON response.
@@ -93,6 +288,10 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     """
     if not _is_ai_enabled():
         return None
+
+    # Check if offline mock mode is active
+    if getattr(settings, "MOCK_MODE", True):
+        return get_mock_gemma_response(system_prompt, user_prompt, expected_keys)
 
     url, model = _get_api_config()
     headers = {
