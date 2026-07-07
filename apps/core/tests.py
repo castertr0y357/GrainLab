@@ -841,6 +841,29 @@ class AIGrainAdvisoryTests(TestCase):
         hard_eval = next(e for e in evals if e["grain_id"] == str(self.hard_spring.id))
         self.assertEqual(hard_eval["tier"], "recommended")
 
+    @patch('apps.core.gemma_client.call_gemma_api')
+    @patch('apps.core.gemma_client._is_ai_enabled', return_value=True)
+    def test_grain_advisory_sovereignty_override(self, mock_ai_enabled, mock_call_gemma):
+        import json
+        from apps.core.gemma_client import get_grain_advisory_ai
+        
+        mock_call_gemma.return_value = {
+            "grain_evaluations": [
+                {
+                    "grain_id": str(self.soft_white.id),
+                    "tier": "recommended",
+                    "reasoning": "Rye overrides static parameters."
+                }
+            ]
+        }
+        
+        get_grain_advisory_ai("cookies", "cookies-shortbread")
+        
+        self.assertTrue(mock_call_gemma.called)
+        system_prompt = mock_call_gemma.call_args[0][0]
+        self.assertIn("[CRITICAL RULE: CULINARY SOVEREIGNTY & EXCEPTION HANDLING]", system_prompt)
+
+
 
 class GeometryEvaluationTests(TestCase):
     """
