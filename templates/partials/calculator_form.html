@@ -137,6 +137,7 @@
           }
       }"
       x-init="
+          localGrainEvals = [...(grainEvaluations || [])];
           $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
           $watch('crumbMin', val => { if (crumb < val) crumb = val; });
           $watch('crumbMax', val => { if (crumb > val) crumb = val; });

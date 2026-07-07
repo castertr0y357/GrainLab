@@ -281,17 +281,33 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
     return None
 
 
+_gemma_cache = {}
+
+
 def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
     """
     Submits a structured prompt to local Gemma and parses the JSON response.
+    Caches results in memory using a hash of the prompts.
     Returns None if any step fails.
     """
     if not _is_ai_enabled():
         return None
 
+    import hashlib
+    # Compute MD5 hash of prompts as cache key
+    raw_key = f"{system_prompt}|||{user_prompt}"
+    cache_key = hashlib.md5(raw_key.encode("utf-8")).hexdigest()
+
+    if cache_key in _gemma_cache:
+        logger.info(f"[AI] - Cache Hit - Key: {cache_key}")
+        return _gemma_cache[cache_key]
+
     # Check if offline mock mode is active
     if getattr(settings, "MOCK_MODE", True):
-        return get_mock_gemma_response(system_prompt, user_prompt, expected_keys)
+        res = get_mock_gemma_response(system_prompt, user_prompt, expected_keys)
+        if res:
+            _gemma_cache[cache_key] = res
+        return res
 
     url, model = _get_api_config()
     headers = {
@@ -329,7 +345,8 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
                 if not all(k in parsed_json for k in expected_keys):
                     logger.warning(f"[AI] - Parsing - Response missing expected keys {expected_keys}")
                     return None
-                    
+            
+            _gemma_cache[cache_key] = parsed_json
             return parsed_json
         else:
             logger.error(f"[AI] - HTTP Error - Endpoint returned status {response.status_code}")

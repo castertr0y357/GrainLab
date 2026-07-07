@@ -69,6 +69,8 @@
 - [x] Implement Culinary Sovereignty override clause and dynamic Parametric/Factual profiles in the local AI inference pipeline
 - [x] Split AI and Algorithmic system operations, hide Factual Science Profile when AI is enabled, and add Ways to Elevate recipe suggestions
 - [x] Fix Alpine.js cross-scope reactivity for grain card highlighting/sorting and resolve htmx:targetError by swapping outerHTML to innerHTML for calculator-form-container
+- [x] Implement offline mock mode schema-compliant payloads for call_gemma_api when MOCK_MODE is enabled to ensure robust local development testing
+
 
 
 ## 🚀 Active Feature Tasks
