@@ -2,6 +2,7 @@
       hx-post="{% url 'calculate_recipe_ajax' %}"
       hx-trigger="change, keyup delay:300ms, load"
       hx-target="#recipe-output-container"
+      @grain-advisory-updated.window="localGrainEvals = $event.detail.grain_evaluations || []"
       x-data="{
           texture: {{ default_texture_score|default:50 }},
           crumb: {{ default_crumb_score|default:50 }},
@@ -214,9 +215,6 @@
           mixing_method = 'stand_mixer';
           proofing_environment = 'ambient';
           {% endif %}
-          /* Sync grain evaluations from parent fetchAdvisory via window event */
-          const _grainAdvisoryHandler = (e) => { localGrainEvals = e.detail.grain_evaluations || []; };
-          window.addEventListener('grain-advisory-updated', _grainAdvisoryHandler);
       ">
 
     {% if selected_preset %}
@@ -234,7 +232,7 @@
                 hx-get="{% url 'calculator' %}" 
                 hx-target="#calculator-form-container"
                 hx-select="#calculator-form"
-                hx-swap="outerHTML">
+                hx-swap="innerHTML">
             {% for category in categories %}
                 <option value="{{ category.slug }}" {% if category.slug == selected_category.slug %}selected{% endif %}>
                     {{ category.name }}
@@ -342,7 +340,7 @@
                       hx-get="{% url 'load_preset' p.id %}"
                       hx-target="#calculator-form-container"
                       hx-select="#calculator-form"
-                      hx-swap="outerHTML"
+                      hx-swap="innerHTML"
                       hx-push-url="?preset={{ p.slug }}"
                       @click="
                           presetName = '{{ p.name|escapejs }}';

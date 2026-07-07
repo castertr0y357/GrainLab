@@ -768,7 +768,7 @@
                                 hx-get="{% url 'calculator' %}" 
                                 hx-target="#calculator-form-container" 
                                 hx-select="#calculator-form" 
-                                hx-swap="outerHTML" 
+                                hx-swap="innerHTML" 
                                 hx-push-url="/"
                                 @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                             🗑️ HARD RESET
