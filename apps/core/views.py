@@ -902,6 +902,37 @@ def ai_grain_advisory(request):
         
     return JsonResponse(advisory)
 
+def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None) -> list[dict]:
+    """
+    Evaluates all inactive grains and returns those that are 'recommended' for the current preset/engine.
+    """
+    from apps.core.models import WheatBerry, BreadPreset
+    from grainlab.engines import router
+    from apps.core.gemma_client import evaluate_single_grain
+
+    preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
+    if not category_slug and preset and preset.dough_category:
+        category_slug = preset.dough_category.slug
+    
+    try:
+        engine = router.get_engine_for_preset(preset_slug, category_slug)
+    except Exception:
+        return []
+
+    inactive_berries = list(WheatBerry.all_objects.filter(is_active=False, deleted_at__isnull=True))
+    recommended_inactive = []
+
+    for wb in inactive_berries:
+        res = evaluate_single_grain(wb, engine)
+        if res["tier"] == "recommended":
+            recommended_inactive.append({
+                "name": wb.name,
+                "protein": wb.protein_content,
+                "benefit": getattr(wb, "notes", "") or "enhances flavor and structure"
+            })
+            
+    return recommended_inactive
+
 
 def ai_sidebar_insight(request):
     """
@@ -1518,17 +1549,82 @@ def ai_sidebar_insight(request):
             
     if not insight:
         # Fall back to our clean recipe-aware local dictionary mapping
-        insight = fallbacks.get(element)
-        if not insight and element and element.startswith("grain_"):
-            for k, val in fallbacks.items():
-                if k.startswith("grain_") and (k in element or element in k):
-                    insight = val
-                    break
+        # 1. First, check if it's a grain
+        if element.startswith("grain_"):
+            from apps.core.models import WheatBerry, BreadPreset
+            from grainlab.engines import router
+            from apps.core.gemma_client import evaluate_single_grain
+
+            preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
+            category_slug = category_slug or (preset.dough_category.slug if preset and preset.dough_category else None)
+            
+            try:
+                engine = router.get_engine_for_preset(preset_slug, category_slug)
+            except Exception:
+                engine = None
+                
+            if engine:
+                # Find the hovered grain in DB (active or inactive)
+                grain_obj = None
+                for wb in WheatBerry.all_objects.filter(deleted_at__isnull=True):
+                    import re
+                    wb_slug = "grain_" + re.sub(r'[^a-z0-9]', '_', wb.name.lower())
+                    if wb_slug == element or element in wb_slug or wb_slug in element:
+                        grain_obj = wb
+                        break
+                        
+                if grain_obj:
+                    res = evaluate_single_grain(grain_obj, engine)
+                    # Determine labor_roi based on tier
+                    if res["tier"] == "recommended":
+                        roi = "High Priority / Flavor Enhancement Opportunity"
+                    elif res["tier"] == "sub-optimal":
+                        roi = "Low Priority / Minor Textural Return"
+                    else:
+                        roi = "Low Priority / Dangerous Structural Choice"
+                        
+                    insight = {
+                        "recommendation_tier": res["tier"],
+                        "labor_roi": roi,
+                        "last_10_percent_analysis": res["reasoning"]
+                    }
+                    
+        # 2. If not a grain, or not resolved, look up in the static fallbacks
         if not insight:
-            insight = {
-                "labor_roi": "Low Priority / Minor Textural Return",
-                "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
-            }
+            insight = fallbacks.get(element)
+            if not insight and element.startswith("grain_"):
+                # fallback for matching similar keys
+                for k, val in fallbacks.items():
+                    if k.startswith("grain_") and (k in element or element in k):
+                        insight = val
+                        break
+            if insight:
+                # Copy fallback to customize
+                insight = dict(insight)
+                # Map dynamic recommendation_tier based on labor_roi
+                roi_lower = insight.get("labor_roi", "").lower()
+                if "dangerous" in roi_lower or "sub-optimal" in roi_lower or "critical" in roi_lower:
+                    insight["recommendation_tier"] = "not-recommended" if "dangerous" in roi_lower or "critical" in roi_lower else "sub-optimal"
+                else:
+                    insight["recommendation_tier"] = "recommended"
+            else:
+                insight = {
+                    "recommendation_tier": "recommended",
+                    "labor_roi": "Low Priority / Minor Textural Return",
+                    "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
+                }
+                
+        # 3. Dynamic out-of-stock grain suggestion
+        inactive_recs = get_inactive_grain_recommendations(preset_slug, category_slug)
+        if inactive_recs:
+            # Avoid duplicate recommendations if the hovered element itself is that out-of-stock grain
+            rec = inactive_recs[0]
+            hovered_clean = element.replace("grain_", "").replace("_", " ").lower()
+            if rec["name"].lower() not in hovered_clean:
+                suggestion = f" Since {rec['name']} is currently out of stock, consider acquiring some; its {rec['protein']}% protein profile will enhance flavor and allow for superior texture."
+                analysis = insight.get("last_10_percent_analysis", "")
+                if suggestion not in analysis:
+                    insight["last_10_percent_analysis"] = analysis.rstrip() + suggestion
         
     return JsonResponse(insight)
 

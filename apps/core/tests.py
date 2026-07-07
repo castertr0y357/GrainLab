@@ -901,3 +901,25 @@ class SidebarInsightTests(TestCase):
         self.assertEqual(data["labor_roi"], "Low Priority / Dangerous Structural Choice")
         self.assertIn("soft white wheat lacks", data["last_10_percent_analysis"].lower())
 
+    def test_sidebar_insight_out_of_stock_grain_suggestion(self):
+        from apps.core.models import WheatBerry, DoughCategory
+        # Create categories and grains
+        category, _ = DoughCategory.objects.get_or_create(
+            slug="cookies-shortbread",
+            defaults={
+                "name": "Cookies & Shortbread",
+                "base_hydration": 0.20,
+                "base_fat": 0.35,
+                "base_sugar": 0.40
+            }
+        )
+        soft_white = WheatBerry.objects.create(name="Soft White Wheat", protein_content=9.5, hardness="soft", is_active=False)
+        try:
+            response = self.client.get(reverse('ai_sidebar_insight') + '?element=stand_mixer&category_slug=cookies-shortbread')
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data["recommendation_tier"], "recommended")
+            self.assertIn("soft white wheat is currently out of stock", data["last_10_percent_analysis"].lower())
+        finally:
+            soft_white.delete()
+

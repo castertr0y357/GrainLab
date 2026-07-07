@@ -72,6 +72,7 @@
     sidebar_insight_loading: false,
     sidebar_labor_roi: '',
     sidebar_analysis: '',
+    sidebar_tier: '',
     
     // Factual science profiles
     factual_dictionary: {
@@ -140,34 +141,35 @@
         if (!key) return;
         this.hovered_element = key;
         
-        if (this.global_ai_enabled) {
-            this.sidebar_insight_loading = true;
-            this.sidebar_labor_roi = '';
-            this.sidebar_analysis = '';
-            
-            let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (this.hovered_element === key) {
-                        this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
-                        this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
-                        this.sidebar_insight_loading = false;
-                    }
-                })
-                .catch(err => {
-                    console.error('Failed fetching sidebar insight:', err);
-                    if (this.hovered_element === key) {
-                        this.sidebar_insight_loading = false;
-                    }
-                });
-        }
+        this.sidebar_insight_loading = true;
+        this.sidebar_labor_roi = '';
+        this.sidebar_analysis = '';
+        this.sidebar_tier = '';
+        
+        let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (this.hovered_element === key) {
+                    this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
+                    this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
+                    this.sidebar_tier = data.recommendation_tier || '';
+                    this.sidebar_insight_loading = false;
+                }
+            })
+            .catch(err => {
+                console.error('Failed fetching sidebar insight:', err);
+                if (this.hovered_element === key) {
+                    this.sidebar_insight_loading = false;
+                }
+            });
     },
 
     clearHoveredElement() {
         this.hovered_element = null;
         this.sidebar_labor_roi = '';
         this.sidebar_analysis = '';
+        this.sidebar_tier = '';
         this.sidebar_insight_loading = false;
     },
 
@@ -918,13 +920,32 @@
                         
                         <!-- Insight Content -->
                         <div x-show="!sidebar_insight_loading">
+                            <!-- Recommendation Tier -->
+                            <div style="margin-bottom: 0.75rem;" x-show="sidebar_tier">
+                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Recommendation Tier</span>
+                                <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;"
+                                      :style="
+                                         sidebar_tier === 'recommended' 
+                                             ? 'background-color: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2);' 
+                                             : sidebar_tier === 'not-recommended'
+                                             ? 'background-color: rgba(244, 67, 54, 0.1); color: var(--danger); border: 1px solid rgba(244, 67, 54, 0.2);'
+                                             : 'background-color: rgba(158, 158, 158, 0.1); color: #9e9e9e; border: 1px solid rgba(158, 158, 158, 0.2);'
+                                      "
+                                      x-text="
+                                         sidebar_tier === 'recommended'
+                                             ? 'RECOMMENDED'
+                                             : sidebar_tier === 'not-recommended'
+                                             ? 'NOT RECOMMENDED'
+                                             : 'SUB-OPTIMAL'
+                                      "></span>
+                            </div>
                             <div style="margin-bottom: 0.75rem;">
                                 <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Labor ROI Matrix</span>
                                 <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
                                       x-text="sidebar_labor_roi"></span>
                             </div>
                             <div>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">The Last 10% Analysis</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">AI Critique &amp; Reasoning</span>
                                 <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis"></p>
                             </div>
                         </div>

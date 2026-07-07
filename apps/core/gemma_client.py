@@ -489,6 +489,71 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None) -> dict |
     return None
 
 
+def evaluate_single_grain(wb, engine) -> dict:
+    """
+    Evaluates a single grain against the engine's protein and tannin rules.
+    """
+    p_min = getattr(engine, "target_protein_min", 11.0)
+    p_max = getattr(engine, "target_protein_max", 13.0)
+    g_behav = getattr(engine, "gluten_behavior", "standard")
+    flavor_affinity = getattr(engine, "flavor_affinity", "")
+    t_sens = getattr(engine, "tannin_sensitive", False)
+
+    name = wb.name
+    prot = wb.protein_content
+    hard = wb.hardness
+
+    # Heuristic 1: Structure/Protein Tier
+    is_in_range = p_min <= prot <= p_max
+    is_within_tolerance = (p_min - 1.5) <= prot <= (p_max + 1.5)
+    
+    # Hardness validation
+    hardness_ok = True
+    if p_min >= 11.5:  # Bread engines generally require hard/durum
+        if hard not in ["hard", "durum"]:
+            hardness_ok = False
+    elif p_max <= 10.5:  # Weak engines (cookies/cake/quick) generally require soft
+        if hard != "soft":
+            hardness_ok = False
+
+    if is_in_range and hardness_ok:
+        base_tier = "recommended"
+    elif is_within_tolerance:
+        base_tier = "sub-optimal"
+    else:
+        base_tier = "not-recommended"
+
+    # Heuristic 2: Tannin penalty
+    is_tannin_heavy = any(x in name.lower() for x in ["red", "rye", "spelt", "einkorn"])
+    final_tier = base_tier
+    penalty_applied = False
+    if t_sens and is_tannin_heavy:
+        penalty_applied = True
+        if base_tier == "recommended":
+            final_tier = "sub-optimal"
+        elif base_tier == "sub-optimal":
+            final_tier = "not-recommended"
+
+    # Analytical reasoning string construction
+    if final_tier == "recommended":
+        reasoning = f"At {prot}% protein content, {name} fits the {engine.name} target range ({p_min}%-{p_max}%) for optimal gluten behavior. Its sweet/neutral profile matches the recipe flavor."
+    elif final_tier == "sub-optimal":
+        if penalty_applied and is_in_range:
+            reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with this sweet/neutral recipe, dropping it to sub-optimal."
+        else:
+            reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {engine.name}, which will require minor hydration adjustments."
+    else:
+        if penalty_applied:
+            reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the sweet/neutral flavor profile."
+        else:
+            reasoning = f"At {prot}% protein, {name} completely violates the {engine.name} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
+
+    return {
+        "tier": final_tier,
+        "reasoning": reasoning
+    }
+
+
 def get_local_grain_advisory(preset_slug: str, category_slug: str = None) -> dict:
     """
     Local fallback logic performing programmatic evaluation of kitchen inventory 
@@ -505,67 +570,12 @@ def get_local_grain_advisory(preset_slug: str, category_slug: str = None) -> dic
     active_berries = list(WheatBerry.objects.filter(is_active=True))
     evaluations = []
 
-    # Map engine properties
-    p_min = getattr(engine, "target_protein_min", 11.0)
-    p_max = getattr(engine, "target_protein_max", 13.0)
-    g_behav = getattr(engine, "gluten_behavior", "standard")
-    flavor_affinity = getattr(engine, "flavor_affinity", "")
-    t_sens = getattr(engine, "tannin_sensitive", False)
-
     for wb in active_berries:
-        name = wb.name
-        prot = wb.protein_content
-        hard = wb.hardness
-
-        # Heuristic 1: Structure/Protein Tier
-        is_in_range = p_min <= prot <= p_max
-        is_within_tolerance = (p_min - 1.5) <= prot <= (p_max + 1.5)
-        
-        # Hardness validation
-        hardness_ok = True
-        if p_min >= 11.5:  # Bread engines generally require hard/durum
-            if hard not in ["hard", "durum"]:
-                hardness_ok = False
-        elif p_max <= 10.5:  # Weak engines (cookies/cake/quick) generally require soft
-            if hard != "soft":
-                hardness_ok = False
-
-        if is_in_range and hardness_ok:
-            base_tier = "recommended"
-        elif is_within_tolerance:
-            base_tier = "sub-optimal"
-        else:
-            base_tier = "not-recommended"
-
-        # Heuristic 2: Tannin penalty
-        is_tannin_heavy = any(x in name.lower() for x in ["red", "rye", "spelt", "einkorn"])
-        final_tier = base_tier
-        penalty_applied = False
-        if t_sens and is_tannin_heavy:
-            penalty_applied = True
-            if base_tier == "recommended":
-                final_tier = "sub-optimal"
-            elif base_tier == "sub-optimal":
-                final_tier = "not-recommended"
-
-        # Analytical reasoning string construction
-        if final_tier == "recommended":
-            reasoning = f"At {prot}% protein content, {name} fits the {engine.name} target range ({p_min}%-{p_max}%) for optimal gluten behavior. Its sweet/neutral profile matches the recipe flavor."
-        elif final_tier == "sub-optimal":
-            if penalty_applied and is_in_range:
-                reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with this sweet/neutral recipe, dropping it to sub-optimal."
-            else:
-                reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {engine.name}, which will require minor hydration adjustments."
-        else:
-            if penalty_applied:
-                reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the sweet/neutral flavor profile."
-            else:
-                reasoning = f"At {prot}% protein, {name} completely violates the {engine.name} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
-
+        res = evaluate_single_grain(wb, engine)
         evaluations.append({
             "grain_id": str(wb.id),
-            "tier": final_tier,
-            "reasoning": reasoning
+            "tier": res["tier"],
+            "reasoning": res["reasoning"]
         })
 
     return {
@@ -820,13 +830,17 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
 
 def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -> dict | None:
     """
-    Queries Gemma to generate a custom labor ROI tag and 'Last 10%' critique analysis.
+    Queries Gemma to generate a custom labor ROI tag, recommendation tier, and 'Last 10%' critique/reasoning.
     """
     import json
-    from apps.core.models import BreadPreset
+    from apps.core.models import BreadPreset, WheatBerry
     
     preset = BreadPreset.objects.filter(slug=preset_slug).first()
     preset_name = preset.name if preset else (preset_slug.replace("-", " ").title() if preset_slug else "Custom / Manual Blend")
+    
+    # Query inactive wheat berries (not on hand) to pass to the AI
+    inactive_grains = list(WheatBerry.all_objects.filter(is_active=False, deleted_at__isnull=True))
+    inactive_grain_names = [g.name for g in inactive_grains]
     
     system_prompt = (
         "You are an expert, highly practical food scientist who values human time and forearm fatigue. "
@@ -839,26 +853,33 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "1. Banned Terminology: You are strictly prohibited from using these words or variants in your generated JSON response: "
         "anomalies, parameter, workspace, matrix, objective, configuration, optimization, performance, detected, asset, baseline.\n"
         "2. Strict Context Anchoring: The 'last_10_percent_analysis' field must explicitly synthesize the hovered element name directly with the active recipe target name (e.g. 'Soft White Wheat' + 'Chewy Chocolate Chip Cookies'). It cannot output generic definitions.\n"
+        "3. TRULY INSIGHTFUL ANALYSIS & OUT-OF-STOCK ALTERNATIVES:\n"
+        f"   - If the hovered element is sub-optimal or can be elevated, look at the following wheat grains that are currently NOT on hand (out of stock/inactive in the user's inventory): {inactive_grain_names}.\n"
+        "   - Suggest acquiring or activating a specific grain from this out-of-stock list if it would significantly enhance the flavor or yield a superior texture for the target preset. Give a clear explanation of its impact (e.g. 'Since Spelt Wheat is currently out of stock, consider acquiring some to blend at 15% for a nutty flavor and more relaxed crumb in your biscuits').\n"
         "\n"
         "Return a JSON object containing:\n"
+        "- 'recommendation_tier': a string of 'recommended', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
         "- 'labor_roi_rating': a string tag representing ranking (e.g., 'High Priority / Worth the Extra Step', 'Low Priority / Minor Textural Return', 'High Priority / Absolute Requirement')\n"
-        "- 'last_10_percent_analysis': a tight 2-sentence conversational critique.\n"
+        "- 'last_10_percent_analysis': a tight 2-sentence conversational critique (which acts as the explanation/reason for your recommendation and provides insights or grain suggestions).\n"
         "\n"
         "EXAMPLES:\n"
         "Example A (Hovering 'Soft White Wheat' on 'Chewy Chocolate Chip Cookies'):\n"
         "{\n"
+        "  \"recommendation_tier\": \"recommended\",\n"
         "  \"labor_roi_rating\": \"High Priority / Worth the Extra Step\",\n"
         "  \"last_10_percent_analysis\": \"Using Soft White Wheat here ensures your cookies melt into a perfectly tender, uniform pool instead of puffing up into cakey domes. To unlock the real magic, give this fresh-milled dough a 12-hour rest in the fridge before baking so the bran has time to fully absorb the butter fat.\"\n"
         "}\n"
         "\n"
         "Example B (Hovering 'Manual Spatula' on 'Chewy Chocolate Chip Cookies'):\n"
         "{\n"
+        "  \"recommendation_tier\": \"sub-optimal\",\n"
         "  \"labor_roi_rating\": \"Low Priority / Minor Textural Return\",\n"
         "  \"last_10_percent_analysis\": \"There is zero reason to wear out your forearm hand-mixing a massive batch of cookie dough. Throw it in the stand mixer with the paddle attachment on low speed; you will get the exact same tender crumb without the manual exhaustion.\"\n"
         "}\n"
         "\n"
         "Example C (Hovering 'Manual Spatula' on 'Buttermilk Biscuits'):\n"
         "{\n"
+        "  \"recommendation_tier\": \"recommended\",\n"
         "  \"labor_roi_rating\": \"High Priority / Absolute Requirement\",\n"
         "  \"last_10_percent_analysis\": \"Put the electric mixers away. Hand-folding your wet ingredients with a spatula is the exact threshold where biscuit magic lives; a machine will activate the gluten webs in seconds, turning a flaky, layered biscuit into a tough hockey puck.\"\n"
         "}"
@@ -871,13 +892,15 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "hovered_element": element_clean,
         "recipe_target_name": preset_name,
         "category_slug": category_slug,
-        "preset_slug": preset_slug
+        "preset_slug": preset_slug,
+        "inactive_grains_not_on_hand": inactive_grain_names
     })
     
     try:
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["labor_roi_rating", "last_10_percent_analysis"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["recommendation_tier", "labor_roi_rating", "last_10_percent_analysis"])
         if result and "labor_roi_rating" in result and "last_10_percent_analysis" in result:
             return {
+                "recommendation_tier": result.get("recommendation_tier", "recommended"),
                 "labor_roi": result["labor_roi_rating"],
                 "last_10_percent_analysis": result["last_10_percent_analysis"]
             }
