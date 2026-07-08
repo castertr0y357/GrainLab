@@ -230,6 +230,92 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
             "elevate_recipe": elevate_recipe
         }
 
+    elif expected_keys and "generated_variants" in expected_keys:
+        # Mock generate_recipe_variants
+        engine_id = user_data.get("engine_id", "hearth")
+        archetype_id = user_data.get("active_archetype_id", "")
+
+        # Build grain name slug list from inventory for recommended_grain_ids
+        inventory = user_data.get("inventory", [])
+        hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
+        soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
+        any_grain = inventory[:1]
+
+        def grain_slug(g):
+            return g.get("name", "").lower().replace(" ", "_").replace("/", "").replace("-", "_")
+
+        # Determine recommended grain slugs based on archetype grain_affinity
+        # Look up archetype grain_affinity from engine
+        from grainlab.engines.router import ENGINES
+        engine = ENGINES.get(engine_id)
+        archetype_data = getattr(engine, "archetypes", {}).get(archetype_id, {})
+        affinity = archetype_data.get("grain_affinity", "high_protein")
+
+        if affinity == "high_protein":
+            preferred = hard_grains or inventory
+        elif affinity == "medium_protein":
+            preferred = hard_grains or inventory
+        else:
+            preferred = soft_grains or inventory
+
+        preferred_slugs = [grain_slug(g) for g in preferred[:2]] or ["hard_red_spring_wheat"]
+
+        archetype_label = archetype_data.get("label", archetype_id.replace("_", " ").title())
+
+        variants = [
+            {
+                "variant_id": f"{archetype_id}_v1_classic",
+                "variant_name": f"Classic {archetype_label}",
+                "recommended_grain_ids": preferred_slugs[:1],
+                "sidebar_science_profile": (
+                    f"The Classic {archetype_label} formula follows traditional baker's percentages with a conservative hydration ceiling. "
+                    f"High-protein grain stocks in the recommended tier supply the gluten elasticity ceiling required for oven spring."
+                ),
+                "sidebar_ai_insight": {
+                    "labor_roi": "High Priority / Absolute Foundation",
+                    "last_10_percent_magic": (
+                        f"Focus on a 30-minute bench rest after shaping to relax the gluten sheets before the final bake. "
+                        f"This single step transforms a good {archetype_label} into an exceptional one."
+                    )
+                }
+            },
+            {
+                "variant_id": f"{archetype_id}_v2_high_hydration",
+                "variant_name": f"High-Hydration {archetype_label}",
+                "recommended_grain_ids": preferred_slugs,
+                "sidebar_science_profile": (
+                    f"An elevated hydration profile pushes starch gelatinization beyond the baseline threshold. "
+                    f"Open crumb development accelerates but gluten must compensate with additional folding cycles. "
+                    f"Grain selection is critical — only high-absorption stocks can carry the extra water without structural collapse."
+                ),
+                "sidebar_ai_insight": {
+                    "labor_roi": "Medium Priority / High-Skill Payoff",
+                    "last_10_percent_magic": (
+                        f"Incorporate 3 sets of stretch-and-fold during the first 90 minutes of bulk fermentation. "
+                        f"This aligns gluten sheets without mechanical kneading, preserving the open crumb structure."
+                    )
+                }
+            },
+            {
+                "variant_id": f"{archetype_id}_v3_heritage_blend",
+                "variant_name": f"Heritage Grain {archetype_label}",
+                "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else preferred_slugs,
+                "sidebar_science_profile": (
+                    f"A multi-grain heritage blend introduces pentosan content and varied protein profiles. "
+                    f"The blend complexity adds depth of flavor and subtle textural contrast, but demands careful water absorption calibration."
+                ),
+                "sidebar_ai_insight": {
+                    "labor_roi": "High Priority / Flavor Differentiation",
+                    "last_10_percent_magic": (
+                        f"Pre-soak ancient or soft grain portions in 20% of the formula water for 30 minutes before mixing. "
+                        f"This equalizes hydration rates across the diverse grain matrix and prevents gummy pockets."
+                    )
+                }
+            }
+        ]
+
+        return {"generated_variants": variants}
+
     elif expected_keys and "pitfalls" in expected_keys:
         return {
             "pitfalls": [
@@ -1279,4 +1365,50 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     return None
 
 
+def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list) -> dict | None:
+    """
+    Given the active engine slug, selected archetype ID, and inventory grain list,
+    asks the LLM to generate a list of recipe variants with sidebar science profiles,
+    AI insights, and recommended_grain_ids for golden highlight ring binding.
+    Returns: { 'generated_variants': [ {...}, ... ] } or None on failure.
+    """
+    import json
 
+    system_prompt = (
+        "You are a baking science variant generator. Given an engine type and structural archetype, "
+        "generate 3 distinct recipe variants optimized for fresh-milled whole grains. "
+        "Each variant must match this JSON schema:\n"
+        "{\n"
+        "  \"generated_variants\": [\n"
+        "    {\n"
+        "      \"variant_id\": \"unique_slug\",\n"
+        "      \"variant_name\": \"Human readable variant label\",\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile for this variant\",\n"
+        "      \"sidebar_ai_insight\": {\n"
+        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
+        "        \"last_10_percent_magic\": \"Specific craft tip to elevate from good to exceptional\"\n"
+        "      }\n"
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "IMPORTANT: recommended_grain_ids must be lowercase name slugs matching grains from the provided inventory. "
+        "Return ONLY raw JSON with no markdown fences."
+    )
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "inventory": inventory,
+    })
+
+    try:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["generated_variants"])
+        if result and isinstance(result.get("generated_variants"), list):
+            return result
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_variants: {str(e)}")
+
+    # Fall back to mock in all cases when AI is not active or fails
+    mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
+    return mock

@@ -72,6 +72,33 @@ class PastryEngine(BaseEngine):
         "Sweet Tart Dough (Pâte Sucrée)", "Palmiers", "Vol-au-vents"
     ]
 
+    archetypes = {
+        "laminated_croissant": {
+            "label": "Laminated Croissant",
+            "icon": "🥐",
+            "description": "Yeast-leavened dough with a butter block folded in. Laminar fat layers must stay cold to create distinct, shatteringly crisp layers.",
+            "grain_affinity": "medium_protein",
+        },
+        "puff_pastry": {
+            "label": "Puff Pastry",
+            "icon": "🍥",
+            "description": "Unleavened, all-butter laminated dough. Steam-driven lift from water in butter creates hundreds of crisp, flaky layers.",
+            "grain_affinity": "medium_protein",
+        },
+        "pie_tart_crust": {
+            "label": "Pie / Tart Shell",
+            "icon": "🥧",
+            "description": "Short, crumbly pastry worked cold to minimize gluten development. Fat particles coat flour to create a tender, sandy texture.",
+            "grain_affinity": "low_protein",
+        },
+        "danish": {
+            "label": "Danish Pastry",
+            "icon": "🌸",
+            "description": "Enriched laminated dough with egg and milk. Slightly richer and softer than croissant, allowing more filling absorption.",
+            "grain_affinity": "medium_protein",
+        },
+    }
+
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
         

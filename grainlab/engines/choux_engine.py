@@ -57,6 +57,33 @@ class ChouxEngine(BaseEngine):
         "French Crullers", "Traditional Churros", "Paris-Brest Pastries"
     ]
 
+    archetypes = {
+        "eclair_log": {
+            "label": "Éclair / Log",
+            "icon": "🍫",
+            "description": "Piped oblong tube. Steam from the high-water paste creates a hollow interior for cream filling. Precise piping width controls surface expansion.",
+            "grain_affinity": "low_protein",
+        },
+        "puff_sphere": {
+            "label": "Cream Puff / Sphere",
+            "icon": "🧁",
+            "description": "Piped round mound. Convex dome created by uniform steam expansion. Hollow center sized by paste stiffness and egg ratio.",
+            "grain_affinity": "low_protein",
+        },
+        "savory_gougere": {
+            "label": "Savory Gougère",
+            "icon": "🧀",
+            "description": "Cheese-enriched choux sphere. Cheese adds fat that reduces steam drive slightly, requiring slightly stiffer paste consistency.",
+            "grain_affinity": "low_protein",
+        },
+        "piped_churro": {
+            "label": "Piped / Extruded (Churro)",
+            "icon": "🌀",
+            "description": "Star-piped log for direct frying or baking. Must be stiff enough to hold its star shape during extrusion.",
+            "grain_affinity": "low_protein",
+        },
+    }
+
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
         

@@ -72,6 +72,33 @@ class CookieEngine(BaseEngine):
         "Snickerdoodles", "Classic Sugar Cookies"
     ]
 
+    archetypes = {
+        "drop_cookie": {
+            "label": "Drop Cookie",
+            "icon": "🍪",
+            "description": "Portioned dough balls spread horizontally under heat. Fat-to-protein ratio drives crisp edge / soft center dichotomy.",
+            "grain_affinity": "low_protein",
+        },
+        "bar_cookie": {
+            "label": "Bar / Slab",
+            "icon": "🍫",
+            "description": "Single-layer baked slab, portioned after cooling. Dense, fudgy crumb structure requires high-fat binding and minimal gluten.",
+            "grain_affinity": "low_protein",
+        },
+        "slice_bake": {
+            "label": "Slice & Bake",
+            "icon": "🔪",
+            "description": "Dough formed into a log, chilled, then sliced into uniform rounds. Cold fat retention is critical for sharp edges.",
+            "grain_affinity": "low_protein",
+        },
+        "rolled_cutout": {
+            "label": "Rolled Cutout",
+            "icon": "⭐",
+            "description": "Sheet-rolled dough stamped with forms. Must retain shape without spreading. Gluten structure slightly elevated for edge definition.",
+            "grain_affinity": "medium_protein",
+        },
+    }
+
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
         

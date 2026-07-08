@@ -57,6 +57,7 @@
               return this.hardware_registry;
           },
           engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}'),
+          enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}'),
           get formFactorBaseline() {
               const activeEngineFFs = this.engines_ff[this.selected_master]?.permissible_form_factors || {};
               return activeEngineFFs[this.form_factor_val] || { 
@@ -200,13 +201,6 @@
           recommended_ff_slug = '{{ selected_preset.form_factor.slug|escapejs }}';
           portioned = {% if selected_preset.form_factor.is_portioned %}true{% else %}false{% endif %};
           
-          if (presetSlug === 'cookies') {
-              grain_mode = 'milled';
-          } else {
-              grain_mode = '{% if selected_preset.flour_type_default == 'all_purpose' %}refined{% else %}milled{% endif %}';
-          }
-          presetModified = false;
-          selectIdealGrain();
           
           // Reset mixing equipment to standard values
           custom_mixer = 'static';
@@ -311,83 +305,96 @@
 
 
 
-        <!-- Top Panel (Preset Macro Deck) -->
-        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-            Preset Macro Deck
+
+        <!-- TIER 1: Generic Archetype Deck -->
+        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🧬</span> Select Recipe Archetype
         </div>
-        <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <!-- Custom / Manual Blend Pill -->
-            <span class="chip" 
-                  :class="!presetSlug ? 'active' : ''"
-                  @click="
-                      presetName = 'Custom / Manual Blend';
-                      presetSlug = '';
-                      query = '';
-                      presetModified = false;
-                      $nextTick(() => htmx.trigger('#calculator-form', 'change'));
-                  "
-                  style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
-                Custom / Manual Blend
-            </span>
-            
-            <!-- Operational Presets Loop -->
-            {% for p in presets %}
-                <span class="chip" 
-                      x-show="selected_master === '{{ p.dough_category.slug }}'"
-                      :class="presetSlug === '{{ p.slug }}' ? 'active' : ''"
-                      hx-get="{% url 'load_preset' p.id %}"
-                      hx-target="#calculator-form-container"
-                      hx-select="#calculator-form"
-                      hx-swap="innerHTML"
-                      hx-push-url="?preset={{ p.slug }}"
-                      @click="
-                          presetName = '{{ p.name|escapejs }}';
-                          presetSlug = '{{ p.slug|escapejs }}';
-                          query = '{{ p.name|escapejs }}';
-                          selected_master = '{{ p.dough_category.slug }}';
-                      "
-                      style="height: 48px; min-width: 100px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; padding: 0 1.5rem; border-radius: var(--radius-md);">
-                    {{ p.name }}
-                </span>
-            {% endfor %}
+        <div id="archetype-deck"
+             style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+            <template x-if="selected_master && enginesArchetypes[selected_master] && Object.keys(enginesArchetypes[selected_master]).length > 0">
+                <div style="display: contents;">
+                    <template x-for="[archetype_id, arch_data] in Object.entries(enginesArchetypes[selected_master] || {})" :key="archetype_id">
+                        <button type="button"
+                                class="chip"
+                                :class="active_archetype_id === archetype_id ? 'active' : ''"
+                                @click="selectArchetype(archetype_id, selected_master)"
+                                @mouseenter="setHoveredElement('archetype_' + archetype_id)"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('archetype_' + archetype_id)"
+                                @focusout="clearHoveredElement()"
+                                tabindex="0"
+                                style="height: 48px; min-width: 120px; padding: 0 1.25rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; letter-spacing: 0.03em; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); border: none;">
+                            <span x-text="arch_data.icon || '🧬'"></span>
+                            <span x-text="arch_data.label || archetype_id.replace(/_/g, ' ')"></span>
+                        </button>
+                    </template>
+                </div>
+            </template>
+            <template x-if="!selected_master || !enginesArchetypes[selected_master] || Object.keys(enginesArchetypes[selected_master] || {}).length === 0">
+                <p style="font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px dashed var(--border); border-radius: var(--radius-md); margin: 0;">Select a dough category in Phase 1 to reveal available archetypes.</p>
+            </template>
         </div>
 
-        <!-- Middle Panel (Flour Medium & Grain Optimizer) -->
-        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-            Flour Medium Selection
-        </div>
-        
-        <!-- Segmented Toggle -->
-        <div class="chip-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
-            <span class="chip" :class="grain_mode === 'refined' ? 'active' : ''" 
-                  @click="grain_mode = 'refined'; grain = 'all_purpose'; presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                  @mouseenter="setHoveredElement('refined')"
-                  @mouseleave="clearHoveredElement()"
-                  @focusin="setHoveredElement('refined')"
-                  @focusout="clearHoveredElement()"
-                  tabindex="0"
-                  style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
-                Store Refined Flour
-            </span>
-            <span class="chip" :class="grain_mode === 'milled' ? 'active' : ''" 
-                  @click="grain_mode = 'milled'; presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                  @mouseenter="setHoveredElement('milled')"
-                  @mouseleave="clearHoveredElement()"
-                  @focusin="setHoveredElement('milled')"
-                  @focusout="clearHoveredElement()"
-                  tabindex="0"
-                  style="height: 52px; flex: 1; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; letter-spacing: 0.05em; border-radius: var(--radius-md);">
-                Fresh-Milled Whole Grain
-            </span>
-            <input type="hidden" name="grain_type" :value="grain">
-        </div>
+        <!-- TIER 2: Dynamic Variant Row (DynamicVariantRow) -->
+        <div id="DynamicVariantRow"
+             x-show="active_archetype_id"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 transform -translate-y-2"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             style="margin-bottom: 1.5rem;">
 
-        <!-- Dynamic Grain Bin Optimizer Checkboxes -->
-        <div x-show="grain_mode === 'milled'" style="margin-top: 1.5rem;">
-            <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                Grain Bin Optimizer (Stock Selection)
+            <!-- Loading state -->
+            <div x-show="variant_loading"
+                 style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; text-align: center; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem;">
+                <span class="spinner" style="width: 28px; height: 28px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                <p style="margin-top: 0.75rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Generating recipe variants...</p>
             </div>
-            
+
+            <!-- Variant cards row -->
+            <div x-show="!variant_loading && generated_variants.length > 0">
+                <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">⚗️ Generated Variants — Click to bind grain recommendations</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem;">
+                    <template x-for="variant in generated_variants" :key="variant.variant_id">
+                        <div class="card"
+                             :class="hovered_variant === variant.variant_id ? 'hovered' : ''"
+                             @mouseenter="onVariantHover(variant)"
+                             @focusin="onVariantHover(variant)"
+                             @mouseleave="clearHoveredElement()"
+                             @focusout="clearHoveredElement()"
+                             @click="onVariantSelect(variant)"
+                             tabindex="0"
+                             style="padding: 1rem; cursor: pointer; border-width: 2px; transition: var(--transition); margin-bottom: 0; user-select: none;"
+                             :style="hovered_variant === variant.variant_id ? 'border-color: var(--accent); background: rgba(255,136,0,0.06); box-shadow: 0 0 14px rgba(255,136,0,0.3);' : recommended_grain_ids.length > 0 && variant.recommended_grain_ids && variant.recommended_grain_ids.some(rid => recommended_grain_ids.includes(rid)) ? 'border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.4);' : ''">
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem;" x-text="variant.variant_name"></div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" x-text="variant.sidebar_science_profile"></div>
+                            <div x-show="variant.recommended_grain_ids && variant.recommended_grain_ids.length > 0"
+                                 style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                                <template x-for="gid in (variant.recommended_grain_ids || [])" :key="gid">
+                                    <span style="font-size: 0.65rem; padding: 0.15rem 0.4rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 999px; font-weight: 600;" x-text="gid.replace(/_/g, ' ')"></span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div x-show="!variant_loading && generated_variants.length === 0 && active_archetype_id"
+                 style="font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: var(--radius-md);">
+                No variants generated yet. Waiting for engine response...
+            </div>
+        </div>
+
+        <!-- Grain Bin Optimizer (always visible — system hardlocked to fresh-milled whole grain) -->
+        <div style="margin-top: 1.5rem;">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;"
+                 @mouseenter="setHoveredElement('milled')" @mouseleave="clearHoveredElement()">
+                🌾 Grain Bin Optimizer (Stock Selection)
+            </div>
+            <!-- Hidden input for hardlocked milled grain type -->
+            <input type="hidden" name="grain_type" value="milled">
+
             <!-- Loading State Spinner -->
             <div x-show="advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
                 <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
@@ -422,10 +429,7 @@
                     <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
                 </div>
             </div>
-        </div>
 
-        <!-- Base of Phase 2 inputs (Visible for both refined and milled) -->
-        <div x-show="grain_mode === 'refined' || grain_mode === 'milled'" style="margin-top: 1.5rem;">
             <input type="hidden" name="custom_mixer" value="static">
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
@@ -681,14 +685,13 @@
                     </div>
                 </div>
 
-                <!-- Component 4: Milling Profile Parameters (Smoothly hides if refined flour is active) -->
+                <!-- Component 4: Milling Profile Parameters (always visible — hardlocked to fresh-milled whole grain) -->
                 <div @mouseenter="setHoveredElement('milled')"
                      @mouseleave="clearHoveredElement()"
                      @focusin="setHoveredElement('milled')"
                      @focusout="clearHoveredElement()"
                      tabindex="0"
-                     style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;"
-                     x-show="grain_mode === 'milled'">
+                     style="background-color: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;">
                     <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                         Milling Profile Parameters
                     </div>
@@ -719,10 +722,9 @@
 
             </div>
 
-            <!-- Proceed button inside the main container, shown for both modes! -->
+            <!-- Proceed button inside the main container -->
             <button type="button" 
                     class="nav-btn primary"
-                    x-show="grain_mode === 'refined' || grain_mode === 'milled'"
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
                     @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 PROCEED TO RECIPE CONFIGURATION →
@@ -741,7 +743,7 @@
             <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Real-Time Formula Estimates</div>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center;">
                 <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="(grain_mode === 'milled' ? Math.round(45 + (crumb/100)*40) : Math.round(45 + (crumb/100)*40)) + '%'"></div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round(45 + (crumb/100)*40) + '%'"></div>
                     <div style="font-size: 0.7rem; color: var(--text-muted);">Hydration</div>
                 </div>
                 <div style="border-right: 1px solid var(--border);">
@@ -832,7 +834,7 @@
                 <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
                 <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Open (' + crumb + '%)'"></span>
             </div>
-            <template x-if="grain_mode === 'milled' && (weightedAbsorption() - 1.0) >= 0.05">
+            <template x-if="(weightedAbsorption() - 1.0) >= 0.05">
                 <div style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4;">
                     ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
                 </div>

@@ -312,8 +312,11 @@ class DynamicRouteScannerTests(TestCase):
 
             url = reverse(name, args=args)
             
-            # Perform GET check
-            response = client.get(url)
+            # Perform GET check. For generate_variants, pass required query params.
+            if name == 'generate_variants':
+                response = client.get(url + '?engine_id=lean-crusty&active_archetype_id=classic_sourdough')
+            else:
+                response = client.get(url)
             
             # If route requires POST (e.g. calculate or settings save), GET might return 405.
             # 200, 204, 302, and 405 are all successful routing states (no 500 Internal Server Errors).
@@ -1044,3 +1047,91 @@ class SidebarInsightTests(TestCase):
             rye.delete()
 
 
+class GenerateVariantsTests(TestCase):
+    """
+    Tests the polymorphic generate_variants view and its data contract.
+    Verifies both valid requests (returns structured generated_variants JSON)
+    and invalid requests (400 with error message).
+    """
+
+    def setUp(self) -> None:
+        self.client = Client()
+        self.wb1 = WheatBerry.objects.create(
+            name="Hard Red Spring",
+            protein_content=14.5,
+            hardness="hard",
+            is_active=True,
+            moisture_absorption_coef=1.08,
+        )
+        self.wb2 = WheatBerry.objects.create(
+            name="Soft White",
+            protein_content=10.0,
+            hardness="soft",
+            is_active=True,
+            moisture_absorption_coef=1.02,
+        )
+
+    def tearDown(self) -> None:
+        WheatBerry.objects.filter(name__in=["Hard Red Spring", "Soft White"]).delete()
+
+    def test_generate_variants_missing_params_returns_400(self) -> None:
+        """Missing engine_id and active_archetype_id must return 400."""
+        response = self.client.get("/generate-variants/")
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn("error", data)
+
+    def test_generate_variants_missing_archetype_returns_400(self) -> None:
+        """Missing active_archetype_id alone must return 400."""
+        response = self.client.get("/generate-variants/?engine_id=lean-crusty")
+        self.assertEqual(response.status_code, 400)
+
+    def test_generate_variants_valid_request_returns_200(self) -> None:
+        """Valid request returns 200 with generated_variants list."""
+        url = (
+            f"/generate-variants/"
+            f"?engine_id=lean-crusty"
+            f"&active_archetype_id=classic_sourdough"
+            f"&inventory_ids={self.wb1.id},{self.wb2.id}"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("generated_variants", data)
+        self.assertIsInstance(data["generated_variants"], list)
+
+    def test_generate_variants_data_contract(self) -> None:
+        """Each variant must include required polymorphic schema keys."""
+        url = (
+            f"/generate-variants/"
+            f"?engine_id=lean-crusty"
+            f"&active_archetype_id=classic_sourdough"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        variants = data.get("generated_variants", [])
+        self.assertGreater(len(variants), 0, "Must return at least 1 variant")
+
+        for variant in variants:
+            self.assertIn("variant_id", variant, "Missing variant_id key")
+            self.assertIn("variant_name", variant, "Missing variant_name key")
+            self.assertIn("recommended_grain_ids", variant, "Missing recommended_grain_ids key")
+            self.assertIn("sidebar_science_profile", variant, "Missing sidebar_science_profile key")
+            self.assertIn("sidebar_ai_insight", variant, "Missing sidebar_ai_insight key")
+            self.assertIsInstance(variant["recommended_grain_ids"], list)
+            ai_insight = variant["sidebar_ai_insight"]
+            self.assertIn("labor_roi", ai_insight)
+            self.assertIn("last_10_percent_magic", ai_insight)
+
+    def test_generate_variants_cookie_engine(self) -> None:
+        """Cookie engine archetypes must produce valid variants."""
+        url = (
+            f"/generate-variants/"
+            f"?engine_id=cookies-pastries"
+            f"&active_archetype_id=drop_cookie"
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("generated_variants", data)

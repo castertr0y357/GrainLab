@@ -4,7 +4,7 @@
 {% block content %}
 <div x-data="{
     current_phase: {% if selected_preset %}3{% else %}1{% endif %},
-    grain_mode: {% if selected_preset %}'{% if selected_preset.flour_type_default == "all_purpose" %}refined{% else %}milled{% endif %}'{% else %}null{% endif %},
+    grain_mode: 'milled',
     selected_master: '{% if selected_preset %}{{ selected_preset.dough_category.slug }}{% else %}null{% endif %}',
     searchOpen: false,
     query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
@@ -263,7 +263,65 @@
     geometry_temp_offset: 0,
     geometry_time_offset: 0,
     geometry_steam_override: 'no-change',
-    
+
+    /* === POLYMORPHIC RECIPE GENERATION STATE === */
+    active_archetype_id: null,
+    generated_variants: [],
+    recommended_grain_ids: [],
+    variant_loading: false,
+    hovered_variant: null,
+    /* Engine archetypes map keyed by category slug */
+    enginesArchetypes: {{ engines_archetypes_json|safe }},
+
+    /* Select a Tier 1 archetype — fires the variant LLM request */
+    selectArchetype(archetype_id, engine_id) {
+        if (this.active_archetype_id === archetype_id) {
+            /* Deselect if tapping the same archetype */
+            this.active_archetype_id = null;
+            this.generated_variants = [];
+            this.recommended_grain_ids = [];
+            this.hovered_variant = null;
+            return;
+        }
+        this.active_archetype_id = archetype_id;
+        this.generated_variants = [];
+        this.recommended_grain_ids = [];
+        this.hovered_variant = null;
+        this.variant_loading = true;
+
+        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(engine_id)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (this.active_archetype_id === archetype_id) {
+                    this.generated_variants = data.generated_variants || [];
+                }
+                this.variant_loading = false;
+            })
+            .catch(err => {
+                console.error('[GrainLab] Failed fetching recipe variants:', err);
+                this.variant_loading = false;
+            });
+    },
+
+    /* Hover a Tier 2 variant card — populate sidebar inspector */
+    onVariantHover(variant) {
+        if (!variant) return;
+        this.hovered_variant = variant.variant_id;
+        this.sidebar_tier = 'recommended';
+        this.sidebar_analysis = variant.sidebar_science_profile || '';
+        this.sidebar_labor_roi = (variant.sidebar_ai_insight && variant.sidebar_ai_insight.labor_roi) || '';
+        this.sidebar_insight_loading = false;
+    },
+
+    /* Click a Tier 2 variant card — lock in recommended_grain_ids for golden rings */
+    onVariantSelect(variant) {
+        if (!variant) return;
+        this.recommended_grain_ids = variant.recommended_grain_ids || [];
+    },
+
     /* Grains inventory data mapped from django context */
     activeBerries: [
         {% for wb in active_berries %}
@@ -317,19 +375,14 @@
             }
         });
         this.$watch('grain_mode', value => {
-            if (value === 'milled') {
-                this.selectIdealGrain();
-                this.fetchAdvisory(this.presetSlug);
-            }
+            /* grain_mode is hardlocked to 'milled'. Watcher retained for compatibility. */
+            this.selectIdealGrain();
+            this.fetchAdvisory(this.presetSlug);
         });
         this.$watch('activeBerries', () => {
-            if (this.grain_mode === 'milled') {
-                this.fetchAdvisory(this.presetSlug);
-            }
+            this.fetchAdvisory(this.presetSlug);
         }, { deep: true });
-        if (this.grain_mode === 'milled') {
-            this.selectIdealGrain();
-        }
+        this.selectIdealGrain();
         if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
             this.fetchAdvisory(this.presetSlug);
         }
@@ -473,6 +526,18 @@
     },
 
     getGrainStyle(berry) {
+        /* === Tier 2 variant recommended_grain_ids golden ring check === */
+        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
+            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
+                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+            );
+            if (isVariantRecommended) {
+                return berry.selected
+                    ? 'border-color: #ffd700; box-shadow: 0 0 18px rgba(255, 215, 0, 0.9); background-color: rgba(255, 215, 0, 0.12); outline: 2px solid rgba(255, 215, 0, 0.6);'
+                    : 'border-color: #ffd700; box-shadow: 0 0 14px rgba(255, 215, 0, 0.7); background-color: rgba(255, 215, 0, 0.06); outline: 1px solid rgba(255, 215, 0, 0.4);';
+            }
+        }
         if (this.grainEvaluations && this.grainEvaluations.length > 0) {
             const evaluation = this.grainEvaluations.find(e => e.grain_id === berry.id);
             if (evaluation) {
@@ -876,7 +941,7 @@
                                 hx-select="#calculator-form" 
                                 hx-swap="innerHTML" 
                                 hx-push-url="/"
-                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = null; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = 'milled'; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; active_archetype_id = null; generated_variants = []; recommended_grain_ids = []; hovered_variant = null; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                             🗑️ HARD RESET
                         </button>
                     </div>
@@ -1148,7 +1213,7 @@
                     </div>
                 </div>
                 
-                <div id="recipe-output-container" x-show="(current_phase >= 3 || (current_phase === 2 && grain_mode !== 'milled')) && !hovered_element">
+                <div id="recipe-output-container" x-show="current_phase >= 3 && !hovered_element">
                     <!-- Swapped in dynamically by HTMX -->
                     <div style="text-align: center; padding: 6rem 1.5rem; color: var(--text-muted);">
                         <span class="spinner" style="width: 40px; height: 40px;"></span>

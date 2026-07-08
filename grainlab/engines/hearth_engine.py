@@ -67,6 +67,33 @@ class HearthEngine(BaseEngine):
         "Calzone Dough", "Focaccia Barese", "Pane di Altamura"
     ]
 
+    archetypes = {
+        "crusty_boule": {
+            "label": "Crusty Boule",
+            "icon": "🫓",
+            "description": "Spherical hearth loaf baked in a covered vessel. Steam injection drives maximum oven spring and a crackling crust.",
+            "grain_affinity": "high_protein",
+        },
+        "baguette": {
+            "label": "Baguette / Batard",
+            "icon": "🥖",
+            "description": "Long, thin format demanding maximum gluten extensibility and precise scoring for ear development.",
+            "grain_affinity": "high_protein",
+        },
+        "ciabatta": {
+            "label": "Open Crumb Ciabatta",
+            "icon": "🍞",
+            "description": "High-hydration flat loaf. Extremely open crumb with large irregular holes. No mechanical kneading — stretch-and-fold only.",
+            "grain_affinity": "high_protein",
+        },
+        "pizza_crust": {
+            "label": "Pizza / Flatbread Hearth",
+            "icon": "🍕",
+            "description": "Thin, extensible disc baked on high-heat stone or steel. Gluten must stretch without tearing.",
+            "grain_affinity": "high_protein",
+        },
+    }
+
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         # Desired Dough Temp (DDT) factoring friction is processed in water temp calculations.
         # Hearth bread uses extended autolyse, stretch-and-folds, and dual-phase baking (steam vs dry).

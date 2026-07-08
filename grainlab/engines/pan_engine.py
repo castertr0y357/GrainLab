@@ -86,8 +86,35 @@ class PanEngine(BaseEngine):
         "Cinnamon Rolls", "Chocolate Babka", "Monkey Bread"
     ]
 
+    archetypes = {
+        "sandwich_loaf": {
+            "label": "Sandwich Loaf",
+            "icon": "🍞",
+            "description": "Pan-risen, even-crumbed enriched loaf. Moderate fat/sugar load builds tender, shreddable slices with a thin, caramelized crust.",
+            "grain_affinity": "medium_protein",
+        },
+        "brioche": {
+            "label": "Brioche / Babka",
+            "icon": "🐞",
+            "description": "Ultra-high fat and egg enrichment creates an extremely tender, laminar crumb. Gluten must support extreme lipid loading without structural collapse.",
+            "grain_affinity": "medium_protein",
+        },
+        "portioned_bun": {
+            "label": "Portioned Bun / Roll",
+            "icon": "🍞",
+            "description": "Individual bun portioned before final proof. High surface-area-to-mass ratio demands faster proof cycles and slightly elevated hydration.",
+            "grain_affinity": "medium_protein",
+        },
+        "spiral_swirl": {
+            "label": "Spiral / Swirl Fill",
+            "icon": "🌊",
+            "description": "Sheeted dough rolled with laminar filling (cinnamon, chocolate). Requires a tight but extensible dough that does not tear during roll-up.",
+            "grain_affinity": "medium_protein",
+        },
+    }
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
+
         
         # Calculate Cumulative Lipid Enrichment Coefficient (fat + sugar + milk/egg adjustments)
         fat_pct = recipe["effective_fat_pct"] / 100.0

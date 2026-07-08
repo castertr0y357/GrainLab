@@ -65,6 +65,33 @@ class PastaEngine(BaseEngine):
         "Gyoza / Dumpling Wrappers"
     ]
 
+    archetypes = {
+        "fresh_egg_sheet": {
+            "label": "Fresh Egg Sheet",
+            "icon": "🍝",
+            "description": "Egg-enriched pasta sheeted thin. High egg protein creates a tender but silky structure with minimal water needed.",
+            "grain_affinity": "high_protein",
+        },
+        "extruded_tube": {
+            "label": "Extruded Tube / Die-Cut",
+            "icon": "🔩",
+            "description": "Semolina dough forced through bronze dies. High semolina protein and very low hydration creates a rough surface that holds sauce.",
+            "grain_affinity": "high_protein",
+        },
+        "dumpling_wrapper": {
+            "label": "Dumpling / Wrapper",
+            "icon": "🥟",
+            "description": "Thin, hand-cut rounds for stuffed dumplings. Must be strong enough to seal and steam without tearing under filling pressure.",
+            "grain_affinity": "medium_protein",
+        },
+        "alkaline_noodle": {
+            "label": "Alkaline Noodle (Ramen)",
+            "icon": "🍜",
+            "description": "Lye-water treatment (kansui) creates a yellow pigment and bouncy, springy texture unique to ramen and many Asian noodles.",
+            "grain_affinity": "high_protein",
+        },
+    }
+
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
         # Egg-to-semolina hydration boundary limits restricted to strict 35% to 40% metrics
         pasta_hyd = max(0.35, min(0.40, hydration))

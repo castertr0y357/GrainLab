@@ -58,6 +58,33 @@ class FryEngine(BaseEngine):
         "Crullers (Fried Execution)"
     ]
 
+    archetypes = {
+        "yeast_donut": {
+            "label": "Yeast-Raised Donut",
+            "icon": "🍩",
+            "description": "Enriched, yeast-leavened ring proofed then deep-fried. Light, airy, pillow-soft crumb. Fat absorption is minimized by proper proofing.",
+            "grain_affinity": "medium_protein",
+        },
+        "cake_donut": {
+            "label": "Cake Donut",
+            "icon": "🍩",
+            "description": "Chemically leavened, denser donut extruded directly into hot oil. No proof time required. Crisp exterior, cakey interior.",
+            "grain_affinity": "low_protein",
+        },
+        "beignet_puff": {
+            "label": "Beignet / Puff",
+            "icon": "☁️",
+            "description": "High-hydration dough dropped into oil, steam-puffing into an irregular hollow. Powdered sugar dusted finish.",
+            "grain_affinity": "low_protein",
+        },
+        "frybread": {
+            "label": "Frybread / Flatbread Fry",
+            "icon": "🫓",
+            "description": "Flat dough hand-pressed or rolled then fried until puffed and golden. Extensible gluten and medium hydration.",
+            "grain_affinity": "medium_protein",
+        },
+    }
+
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
         

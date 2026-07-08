@@ -87,6 +87,33 @@ class BatterEngine(BaseEngine):
         "Belgian Waffles"
     ]
 
+    archetypes = {
+        "layer_cake": {
+            "label": "Layer Cake",
+            "icon": "🎂",
+            "description": "High-ratio batter enriched with fat and sugar exceeding flour weight. Emulsification is the critical structural force.",
+            "grain_affinity": "low_protein",
+        },
+        "sponge_chiffon": {
+            "label": "Sponge / Chiffon",
+            "icon": "🍰",
+            "description": "Aerated batter relying on whipped egg foam for structure. Fat content deliberately minimized to preserve foam lift.",
+            "grain_affinity": "low_protein",
+        },
+        "griddle_batter": {
+            "label": "Griddle Batter",
+            "icon": "🥞",
+            "description": "Poured batter cooked on a flat griddle. Very high hydration, minimal gluten development. Steam venting creates an open crumb.",
+            "grain_affinity": "low_protein",
+        },
+        "pound_cake": {
+            "label": "Pound Cake / Dense Loaf",
+            "icon": "🍫",
+            "description": "Equal-weight flour, fat, sugar, and eggs. Creaming method drives emulsification for a dense, fine crumb with a tight structure.",
+            "grain_affinity": "low_protein",
+        },
+    }
+
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
         # High-ratio cake batters allow sugar and fat to scale independently and exceed 100% of flour weight
         # Thus, no downward ceilings are applied here.

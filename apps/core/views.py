@@ -32,6 +32,21 @@ def get_engines_ff_json() -> str:
         }
     return json.dumps(engines_ff_data)
 
+
+def get_engines_archetypes_json() -> str:
+    """
+    Serializes each engine's archetypes dict keyed by category slug for Alpine.js consumption.
+    """
+    from grainlab.engines.router import ENGINES
+    from apps.core.gemma_client import CATEGORY_TO_ENGINE
+    import json
+
+    archetypes_data = {}
+    for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():
+        engine = ENGINES[eng_name]
+        archetypes_data[cat_slug] = getattr(engine, "archetypes", {})
+    return json.dumps(archetypes_data)
+
 def calculator(request):
     """
     Renders the primary calculator workspace.
@@ -125,6 +140,7 @@ def calculator(request):
         "default_texture_score": default_texture_score,
         "default_crumb_score": default_crumb_score,
         "engines_ff_json": get_engines_ff_json(),
+        "engines_archetypes_json": get_engines_archetypes_json(),
     }
     return render(request, "calculator.html", context)
 
@@ -188,6 +204,7 @@ def load_preset(request, preset_id):
         "default_texture_score": preset.classifier_texture,
         "default_crumb_score": preset.classifier_crumb,
         "engines_ff_json": get_engines_ff_json(),
+        "engines_archetypes_json": get_engines_archetypes_json(),
     }
     return render(request, "partials/calculator_form.html", context)
 
@@ -1640,4 +1657,46 @@ def ai_sidebar_insight(request):
     return JsonResponse(insight)
 
 
+def generate_variants(request):
+    """
+    Polymorphic Tier 2 variant generator.
+    Accepts: GET ?engine_id=<slug>&active_archetype_id=<slug>&inventory_ids=<comma-separated-uuids>
+    Returns: JSON { generated_variants: [...] }
+    """
+    engine_id = request.GET.get("engine_id", "").strip()
+    active_archetype_id = request.GET.get("active_archetype_id", "").strip()
+    inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
 
+    if not engine_id or not active_archetype_id:
+        return JsonResponse({"error": "engine_id and active_archetype_id are required."}, status=400)
+
+    # Resolve inventory grains
+    inventory = []
+    if inventory_ids_raw:
+        id_list = [iid.strip() for iid in inventory_ids_raw.split(",") if iid.strip()]
+        grains = WheatBerry.objects.filter(id__in=id_list, is_active=True)
+        for g in grains:
+            inventory.append({
+                "id": str(g.id),
+                "name": g.name,
+                "hardness": g.hardness,
+                "protein": float(g.protein_content),
+                "absorption": float(g.moisture_absorption_coef),
+            })
+    else:
+        # Fall back to all active grains
+        grains = WheatBerry.objects.filter(is_active=True)
+        for g in grains:
+            inventory.append({
+                "id": str(g.id),
+                "name": g.name,
+                "hardness": g.hardness,
+                "protein": float(g.protein_content),
+                "absorption": float(g.moisture_absorption_coef),
+            })
+
+    result = gemma_client.generate_recipe_variants(engine_id, active_archetype_id, inventory)
+    if result is None:
+        return JsonResponse({"generated_variants": []}, status=200)
+
+    return JsonResponse(result, status=200)

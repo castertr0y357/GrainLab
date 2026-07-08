@@ -53,6 +53,27 @@ class FlatEngine(BaseEngine):
         "Lavash Crisp", "Matzo", "Artisan Seed Crackers"
     ]
 
+    archetypes = {
+        "griddle_disk": {
+            "label": "Griddle Disk",
+            "icon": "🫓",
+            "description": "Thin, round flatbread cooked on a dry cast-iron or tawa. Must roll to 1-2mm without elastic snap-back.",
+            "grain_affinity": "medium_protein",
+        },
+        "leavened_pocket": {
+            "label": "Leavened Pocket",
+            "icon": "🫔",
+            "description": "Pita or naan, slightly thicker with steam-pocket formation. Requires brief high-heat exposure for interior steam blast.",
+            "grain_affinity": "medium_protein",
+        },
+        "crisp_sheet": {
+            "label": "Crisp / Cracker Sheet",
+            "icon": "🍘",
+            "description": "Ultra-thin sheet baked until fully dehydrated and crisp. Zero gluten elasticity snap-back is critical for even thickness.",
+            "grain_affinity": "low_protein",
+        },
+    }
+
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
         

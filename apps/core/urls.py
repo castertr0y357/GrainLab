@@ -24,4 +24,5 @@ urlpatterns = [
     path('tasks/status/<uuid:task_id>/', views.task_status, name='task_status'),
     path('ai-grain-advisory/', views.ai_grain_advisory, name='ai_grain_advisory'),
     path('ai-sidebar-insight/', views.ai_sidebar_insight, name='ai_sidebar_insight'),
+    path('generate-variants/', views.generate_variants, name='generate_variants'),
 ]

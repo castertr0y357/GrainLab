@@ -52,6 +52,27 @@ class BathEngine(BaseEngine):
         "Sesame Simit", "Chewy Montreal Bagels", "Bavarian Pretzel Bites"
     ]
 
+    archetypes = {
+        "pretzel_twist": {
+            "label": "Pretzel Twist",
+            "icon": "🥨",
+            "description": "Shaped twist bathed in alkaline lye solution (3%). The Maillard browning is driven by the alkaline surface chemistry rather than sugar.",
+            "grain_affinity": "high_protein",
+        },
+        "boiled_bagel": {
+            "label": "Boiled Bagel",
+            "icon": "🥯",
+            "description": "Malt syrup boiling bath gelatinizes the dough surface and creates the signature chewy crust before oven finish.",
+            "grain_affinity": "high_protein",
+        },
+        "pretzel_bun": {
+            "label": "Pretzel Bun / Bite",
+            "icon": "🍔",
+            "description": "Portioned bun format alkaline-bathed for deep Maillard browning and a pronounced chewy exterior shell.",
+            "grain_affinity": "high_protein",
+        },
+    }
+
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
         # Stiff dough structural constraints with strict low-hydration boundary ceilings (50% to 55%)
         stiff_hyd = max(0.50, min(0.55, hydration))

@@ -76,6 +76,13 @@
 - [x] Hide Labor ROI Matrix block for grains since labor matrix is reserved for methods and secondary ingredients
 - [x] Separate Ways to Elevate from individual grains, returning a single global recommendation per recipe preset/category and caching it on load
 - [x] Optimize hover sidebar inspector to look up grain details locally from the cached advisory list without invoking network LLM calls on mouseover
+- [x] Implement 2-Tier Polymorphic Recipe Generation Row: Tier 1 Archetype Deck (x-for loop over enginesArchetypes) + Tier 2 DynamicVariantRow (LLM-generated clickable variant sub-cards)
+- [x] Hard-lock system to fresh-milled whole grain mode: removed Store Refined Flour vs Fresh-Milled toggle, made grain_mode permanently 'milled', Milling Profile Parameters card always visible with accent border
+- [x] Wire Tier 2 variant cards to sidebar inspector: @mouseenter/@focusin populate StaticInspectorCard and AIInsightCard; @click applies golden highlight ring to recommended grain bins via recommended_grain_ids
+- [x] Implement universal polymorphic naming convention: active_archetype_id, generated_variants, recommended_grain_ids, hovered_variant across all Alpine.js state and backend views
+- [x] Add /generate-variants/ JSON endpoint with polymorphic data contract (variant_id, variant_name, recommended_grain_ids, sidebar_science_profile, sidebar_ai_insight)
+- [x] Add GenerateVariantsTests test class (5 tests) verifying 400 on missing params, 200 on valid params, and full data contract schema compliance
+- [x] Fix route scanner test to pass required query params for generate_variants endpoint
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)

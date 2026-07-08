@@ -86,6 +86,33 @@ class QuickEngine(BaseEngine):
         "Blueberry Muffins", "Zucchini Bread"
     ]
 
+    archetypes = {
+        "drop_biscuit": {
+            "label": "Drop Biscuit / Scone",
+            "icon": "🧁",
+            "description": "Chemically leavened, fat-laminated portable bite. Steam-driven flaky layers require cold fat and minimal mixing.",
+            "grain_affinity": "low_protein",
+        },
+        "quick_loaf": {
+            "label": "Quick Loaf",
+            "icon": "🍞",
+            "description": "Pan-baked loaf with no yeast. Chemical leavening provides lift. Banana, pumpkin, or zucchini act as hydration medium.",
+            "grain_affinity": "low_protein",
+        },
+        "muffin": {
+            "label": "Muffin / Cupcake",
+            "icon": "🧁",
+            "description": "Portioned chemically-leavened cups. The 'muffin method' prevents gluten development for a tender, domed crumb.",
+            "grain_affinity": "low_protein",
+        },
+        "cornbread": {
+            "label": "Cornbread / Skillet Cake",
+            "icon": "🌽",
+            "description": "Skillet or pan-baked with coarse grain inclusion. Buttermilk acid activates baking soda for lift and a crumbly, golden crumb.",
+            "grain_affinity": "low_protein",
+        },
+    }
+
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
         
