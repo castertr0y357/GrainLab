@@ -83,6 +83,7 @@
 - [x] Add /generate-variants/ JSON endpoint with polymorphic data contract (variant_id, variant_name, recommended_grain_ids, sidebar_science_profile, sidebar_ai_insight)
 - [x] Add GenerateVariantsTests test class (5 tests) verifying 400 on missing params, 200 on valid params, and full data contract schema compliance
 - [x] Fix route scanner test to pass required query params for generate_variants endpoint
+- [x] Fix Alpine.js initialization error by using `escapejs` and `JSON.parse` for injecting `enginesArchetypes` JSON in `calculator.html`
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)

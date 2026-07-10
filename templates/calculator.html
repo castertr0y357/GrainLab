@@ -271,7 +271,7 @@
     variant_loading: false,
     hovered_variant: null,
     /* Engine archetypes map keyed by category slug */
-    enginesArchetypes: {{ engines_archetypes_json|safe }},
+    enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}'),
 
     /* Select a Tier 1 archetype — fires the variant LLM request */
     selectArchetype(archetype_id, engine_id) {
