@@ -92,6 +92,8 @@
 - [x] Implement on-demand lazy loading details endpoint `/ai-recipe-details/` to fetch recipe-specific science profile and ways to elevate only when a recipe is actively selected
 - [x] Implement dynamic progressive loading checklist UI for recipe generation and recipe details compilation
 - [x] Add automated unit tests validating the 10-recipe list schema, lazy loading endpoint parameters, and dynamic route scanner check
+- [x] Fix double quote premature termination of x-data attribute inside calculator_form.html to resolve browser-side Alpine.js ReferenceErrors
+
 
 
 ## 🚀 Active Feature Tasks
