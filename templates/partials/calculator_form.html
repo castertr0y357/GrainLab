@@ -99,7 +99,7 @@
               }
           },
           sortedBerriesFor(berries) {
-              const evs = grainEvaluations || [];
+              const evs = this.grainEvaluations || [];
               if (!evs || evs.length === 0) return berries || [];
               const score = { 'recommended': 1, 'sub-optimal': 2, 'indifferent': 3, 'not-recommended': 4 };
               return [...(berries || [])].sort((a, b) => {
@@ -112,7 +112,7 @@
               });
           },
           getGrainStyle(berry) {
-              const evs = grainEvaluations || [];
+              const evs = this.grainEvaluations || [];
               if (evs && evs.length > 0) {
                   const ev = evs.find(e => e.grain_id === berry.id);
                   if (ev) {
@@ -137,53 +137,53 @@
           }
       }"
       x-init="
-          $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
-          $watch('crumbMin', val => { if (crumb < val) crumb = val; });
-          $watch('crumbMax', val => { if (crumb > val) crumb = val; });
+          $watch('leaven', value => { if (value === 'yeast') { this.starter = 0; } else if (this.starter === 0) { this.starter = 20; } });
+          $watch('crumbMin', val => { if (this.crumb < val) this.crumb = val; });
+          $watch('crumbMax', val => { if (this.crumb > val) this.crumb = val; });
           /* editor_mode watcher removed — variable no longer exists */
           $watch('selected_master', val => {
-              category_slug = val;
-              const keys = Object.keys(engines_ff[val]?.permissible_form_factors || {});
+              this.category_slug = val;
+              const keys = Object.keys(this.engines_ff[val]?.permissible_form_factors || {});
               if (keys.length > 0) {
-                  form_factor_val = keys[0];
-                  recommended_ff_slug = keys[0];
-                  portioned = engines_ff[val].permissible_form_factors[keys[0]].is_portioned;
+                  this.form_factor_val = keys[0];
+                  this.recommended_ff_slug = keys[0];
+                  this.portioned = this.engines_ff[val].permissible_form_factors[keys[0]].is_portioned;
               }
-              yield_scale = 1.0;
+              this.yield_scale = 1.0;
               
               // Reset secondary ingredients based on new active engine defaults
-              const sec = engines_ff[val]?.secondary_ingredients || {};
-              secondary_lipid = sec.lipids?.default || 'unsalted_butter';
-              secondary_liquid = sec.liquids?.default || 'pure_water';
-              secondary_binder = sec.binders?.default || 'none';
+              const sec = this.engines_ff[val]?.secondary_ingredients || {};
+              this.secondary_lipid = sec.lipids?.default || 'unsalted_butter';
+              this.secondary_liquid = sec.liquids?.default || 'pure_water';
+              this.secondary_binder = sec.binders?.default || 'none';
               
               // Reset action & environment to defaults based on profile
-              const profile = engines_ff[val]?.production_profile || {};
+              const profile = this.engines_ff[val]?.production_profile || {};
               if (profile.permissible_action_types && profile.permissible_action_types.length > 0) {
-                  active_action = profile.permissible_action_types[0];
+                  this.active_action = profile.permissible_action_types[0];
               } else {
-                  active_action = 'knead';
+                  this.active_action = 'knead';
               }
               if (profile.environmental_rest_strategy === 'gas_proofing') {
-                  proofing_environment = 'ambient';
+                  this.proofing_environment = 'ambient';
               } else if (profile.environmental_rest_strategy === 'structural_retardation' || profile.environmental_rest_strategy === 'fat_solidification') {
-                  proofing_environment = 'refrigerator';
+                  this.proofing_environment = 'refrigerator';
               } else if (profile.environmental_rest_strategy === 'gluten_relaxation') {
-                  proofing_environment = 'bench_rest';
+                  this.proofing_environment = 'bench_rest';
               }
               $nextTick(() => htmx.trigger('#calculator-form', 'change'));
           });
           $watch('filteredTools', val => {
               if (val && val.length > 0) {
-                  const currentValid = val.find(t => t.id === mixing_method);
+                  const currentValid = val.find(t => t.id === this.mixing_method);
                   if (!currentValid) {
-                      mixing_method = val[0].id;
+                      this.mixing_method = val[0].id;
                   }
               }
           });
           $watch('form_factor_val', val => {
-              portioned = formFactorBaseline.is_portioned;
-              yield_scale = 1.0;
+              this.portioned = this.formFactorBaseline.is_portioned;
+              this.yield_scale = 1.0;
               $nextTick(() => htmx.trigger('#calculator-form', 'change'));
           });
           $watch('yield_scale', val => {

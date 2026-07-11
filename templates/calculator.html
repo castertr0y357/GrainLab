@@ -175,7 +175,7 @@
                 }
             }
             // Fallback if not found in parent array
-            this.sidebar_tier = 'recommended';
+            this.sidebar_tier = '';
             this.sidebar_analysis = this.getFactualProfile();
             this.sidebar_insight_loading = false;
             return;
@@ -412,8 +412,8 @@
             this.selectIdealGrain();
         }
 
-        // Trigger advisory call to fetch recommended/sub-optimal classifications
-        this.fetchAdvisory(recipe_name);
+        // Trigger advisory call to fetch recommended/sub-optimal classifications (handled via presetSlug watcher)
+        // Redundant direct fetchAdvisory call removed to prevent race conditions and invalid presetSlug requests.
     },
 
     getClassificationLabel(berry) {

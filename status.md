@@ -84,6 +84,10 @@
 - [x] Add GenerateVariantsTests test class (5 tests) verifying 400 on missing params, 200 on valid params, and full data contract schema compliance
 - [x] Fix route scanner test to pass required query params for generate_variants endpoint
 - [x] Fix Alpine.js initialization error by using `escapejs` and `JSON.parse` for injecting `enginesArchetypes` JSON in `calculator.html`
+- [x] Fix Alpine.js `x-data` double quote comment truncation bug that broke HTML attribute parsing and caused widespread ReferenceErrors
+- [x] Fix grain card sorting/borders by prefixing `this.` to parent property references in child helper functions (`sortedBerriesFor`, `getGrainStyle`)
+- [x] Fix grain hover evaluation matching and duplicate AJAX calls by removing redundant/invalid `fetchAdvisory(recipe_name)` call from `selectRecipe`
+- [x] Implement system prompt directives and `reasoning_effort` payload forwarding in `call_gemma_api` to ensure local LLM honors the user's AI thinking mode preferences
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)

@@ -661,6 +661,16 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         "Content-Type": "application/json"
     }
     
+    # Retrieve thinking mode settings
+    ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
+    ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
+
+    # Inject directives into system prompt
+    if ai_thinking_enabled:
+        system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
+    else:
+        system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
+
     # Force JSON format if supported
     payload = {
         "model": model,
@@ -671,6 +681,10 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         "temperature": 0.1,
         "response_format": {"type": "json_object"}
     }
+    
+    # Pass reasoning_effort if supported by target endpoint (e.g. OpenAI/Ollama compatible)
+    if ai_thinking_enabled:
+        payload["reasoning_effort"] = ai_thinking_effort
 
     try:
         # Enforce a 30-second timeout to allow the model sufficient time to load and generate responses
