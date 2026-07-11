@@ -249,50 +249,116 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         recipes = []
         arch_title = active_archetype_id.replace("_", " ").title()
 
-        # Level 1 recipes (5 items)
-        for i in range(1, 6):
-            recipes.append({
-                "recipe_id": f"{active_archetype_id}_level1_{i}",
-                "recipe_name": f"Classic {arch_title} - Profile {i}",
-                "creativity_level": 1,
-                "description": f"Standard reliable version {i} for {arch_title}. Optimized for consistent crumb structure and pure grain expression.",
-                "recommended_grain_ids": pref_slugs,
-                "sidebar_science_profile": f"Traditional hydration levels and steady, predictable yeast activity for {arch_title}.",
-                "sidebar_ai_insight": {
-                    "labor_roi": "Low Effort / High Reliability",
-                    "last_10_percent_magic": f"Keep water temperature at {74 + i}°F to foster stable fermentation."
-                }
-            })
+        # Premium Predefined Recipe DB for select archetypes
+        db = {
+            "drop_cookie": {
+                1: [
+                    {"name": "Brown Butter Chocolate Chip", "desc": "A baseline standard cookie prioritizing partial butter browning for a rich nutty aroma and consistent horizontal spread.", "science": "Traditional drop cookie matrix where partially browned lipids emulsify with sugars, preventing premature crystallization.", "roi": "Low Effort / Immediate Aromatics Payoff", "tip": "Chill the dough for exactly 4 hours to consolidate solid fats before portioning."},
+                    {"name": "Golden Sugar Cookie", "desc": "Standard soft-baked cookie with a balanced white and brown sugar ratio for a crisp edge and chewy center.", "science": "Balanced sucrose and fructose levels dictate moderate caramelization rate and crust humidity threshold.", "roi": "Absolute Baseline / 100% Reliable", "tip": "Dust lightly with fine caster sugar before baking for a sparkling finish."},
+                    {"name": "Traditional Oatmeal Raisin", "desc": "Reliable rolled oats base bound by unsalted butter and whole eggs, generating a chewy, fibrous structure.", "science": "Oat beta-glucans absorb ambient moisture, buffering gluten starches from building excessive elasticity.", "roi": "High Fiber / Stable Structure", "tip": "Soak oats in warm water for 5 minutes if they appear excessively dry."},
+                    {"name": "Spiced Ginger Snaps", "desc": "Standard molasses-sweetened drop cookie with high crispness and regular surface cracks.", "science": "Acidic molasses triggers chemical leaveners, releasing carbon dioxide rapidly during the initial thermal phase.", "roi": "Low Effort / High Spice Expression", "tip": "Roll in coarse turbinado sugar for a premium crunch."},
+                    {"name": "Old-Fashioned Peanut Butter", "desc": "A dense, rich drop cookie using nut fats to shorten gluten strands, marked with traditional fork cross-hatching.", "science": "High lipid content from peanut paste coats proteins, limiting water absorption and gluten network formation.", "roi": "Low Effort / Rich Protein Bite", "tip": "Bake immediately after scoring to preserve the distinct structural fork ridges."}
+                ],
+                2: [
+                    {"name": "Triple-Valrhona Malted Cookie", "desc": "Advanced recipe utilizing malted milk powder and three varieties of dark chocolate chunk inclusions.", "science": "Diastatic malt flour modifies starches into simple sugars, accelerating Maillard browning and crumb softness.", "roi": "High Ingredient Cost / Premium Quality Payoff", "tip": "Incorporate chocolate chunks by hand folding to prevent melting into the dough."},
+                    {"name": "Lactic-Fermented Cookie", "desc": "Modern profile incorporating cultured buttermilk powder for a faint lactic tang and tender center.", "science": "Lactic acid weakens gluten networks chemically, keeping the horizontal spread highly uniform and soft.", "roi": "Skill Intensive / Unique Tangy Profile", "tip": "Rest dough in the refrigerator for 24 hours to maximize lactic acid hydration."},
+                    {"name": "Espresso-Infused Brown Butter", "desc": "Advanced drop cookie with dehydrated espresso micro-crystals dispersed throughout the lipid phase.", "science": "Hydrophobic fat phase encapsulates espresso particles, releasing intense roasted flavor during heat dissipation.", "roi": "Moderate Effort / Complex Dessert Flavor", "tip": "Sift espresso powder with dry ingredients to ensure a streak-free distribution."},
+                    {"name": "Salted Toffee Pecan drop cookie", "desc": "Advanced cookie containing homemade toasted pecan brittle and butter toffee shards.", "science": "Toffee shards melt locally during baking, creating localized caramel pockets with higher sugar concentration.", "roi": "Preparation Intensive / Premium Textural Contrast", "tip": "Use silpat mats rather than parchment to prevent sticky caramel leaks."},
+                    {"name": "Chilled Honey-Lavender Cookie", "desc": "Modern floral cookie sweetened with wildflower honey and infused with lavender-infused butter.", "science": "Hygroscopic honey retains moisture after cooling, ensuring long-term softness and slow starch retrogradation.", "roi": "Moderate Return / Sophisticated Botanical Aroma", "tip": "Do not over-bake, as honey-rich doughs brown rapidly and can burn easily."}
+                ],
+                3: [
+                    {"name": "Ancient Spelt & Miso Fudge", "desc": "Savory, umami-rich cookie combining ancient spelt flour and dark red miso paste for a deep savory chew.", "science": "Spelt's high extensibility coupled with miso's high salinity creates a soft, hyper-hydrated, dense structure.", "roi": "High Risk & Skill / Deep Savory Complexity", "tip": "Cream miso paste thoroughly with butter before sugar introduction to prevent lumps."},
+                    {"name": "Sourdough Discard Chocolate Chunk", "desc": "Experimental drop cookie utilizing wild yeast discard to ferment starches and add complex organic acids.", "science": "Acidity from sourdough discard lowers pH, optimizing enzymatic activity and reducing starch viscosity.", "roi": "Resource Optimization / Complex Crust Aesthetics", "tip": "Use cold discard straight from the fridge to prevent butter fat melting."},
+                    {"name": "Buckwheat Hazelnut drop cookie", "desc": "Experimental buckwheat cookie with toasted hazelnut oil adjustments.", "science": "Buckwheat's lack of gluten proteins results in zero elasticity, requiring egg lecithin to bind the cookie matrix.", "roi": "Dietary Friendly / Intense Earthy Nutty Profile", "tip": "Shape into tight domes before baking, as buckwheat dough lacks elasticity."},
+                    {"name": "Smoked Malt & Rye Cookie", "desc": "Experimental cookie utilizing dark rye flour and cherrywood smoked barley malt.", "science": "Rye pentosans absorb immense water, yielding a dense, fudgy, bread-like center with high structural integrity.", "roi": "Experimental / Heavy Smoked Aromatics", "tip": "Slightly flatten the portioned dough balls to encourage spreading."},
+                    {"name": "Einkorn Bourbon Toffee", "desc": "Experimental profile with ancient einkorn flour, bourbon-soaked vanilla bean, and charred sugar shards.", "science": "Einkorn's weak gluten structure and high carotenoids produce a tender, bright yellow crumb with high meltability.", "roi": "Artisanal / Sophisticated Cocktail Profile", "tip": "Bake at a slightly lower temperature (325F) to preserve einkorn's fragile starches."}
+                ]
+            },
+            "classic_sourdough": {
+                1: [
+                    {"name": "Baseline Country Sourdough", "desc": "Standard reliable sourdough boule with 70% hydration and straightforward bulk fermentation.", "science": "Traditional yeast and lactic fermentation producing a uniform wild crumb and crisp crust.", "roi": "Low Effort / 100% Reliable", "tip": "Maintain dough temperature at 75-78F throughout bulk fermentation."},
+                    {"name": "Classic San Francisco Hearth", "desc": "Standard sour loaf with an extended cold retardation phase to highlight acetic acid notes.", "science": "Extended cold rest allows heterofermentative bacteria to produce high ratios of acetic acid.", "roi": "Patience Required / Intense Sour Tang", "tip": "Use a mature, slightly acidic starter to kickstart the cold souring."},
+                    {"name": "Everyday Sourdough Boule", "desc": "Standard no-knead sourdough utilizing simple stretch-and-folds for steady gluten strength.", "science": "Autolytic hydration activates protease enzymes, naturally relaxing the gluten matrix.", "roi": "Hands-off / High Volume return", "tip": "Do three sets of coil folds spaced 45 minutes apart during bulk fermentation."},
+                    {"name": "Rustic Sourdough Batard", "desc": "Standard oval loaf utilizing a small addition of whole rye flour for fermentation activity.", "science": "Rye minerals act as biological stimulants, accelerating wild yeast multiplication rates.", "roi": "Low Effort / Reliable Yeast Activity", "tip": "Score with a single deep slash at a 45-degree angle for an optimal ear."},
+                    {"name": "Simple Whole Wheat Sourdough", "desc": "Standard loaf with 20% fresh-milled whole wheat for rustic color and balanced gluten strength.", "science": "Bran particles cut gluten sheets slightly, which is balanced by high-protein white wheat.", "roi": "Low Effort / Balanced Nutty Crumb", "tip": "Sift out large bran flakes if you want a taller, lighter loaf."}
+                ],
+                2: [
+                    {"name": "High-Hydration Open Crumb batard", "desc": "Advanced modern sourdough with 82% hydration and intensive lamination folds.", "science": "High hydration levels create steam expansion channels, producing a glossy, open alveolar structure.", "roi": "Skill Intensive / Exceptional Glossy Crumb", "tip": "Perform a lamination stretch on a wet bench to build early structural memory."},
+                    {"name": "Polenta & Toasted Seed Sourdough", "desc": "Advanced loaf with cooked heirloom corn polenta and toasted sesame and flax seed inclusions.", "science": "Gelatinized polenta starches hold moisture, while toasted seed lipids add crunch.", "roi": "Preparation Intensive / Superior Moisture Retention", "tip": "Let polenta cool completely to room temperature before folding it into the dough."},
+                    {"name": "Porridge-Infused Sourdough", "desc": "Advanced modern loaf featuring a cooked oat porridge gel folded in during lamination.", "science": "Cooked oats lock water inside gelatinized starch matrices, preventing crumb staling.", "roi": "Skill Intensive / Extremely Soft Custard Crumb", "tip": "Adjust bulk fermentation time down, as warm porridge can speed up yeast activity."},
+                    {"name": "Purple Barley & Sesame loaf", "desc": "Advanced recipe utilizing fresh-milled purple barley flour and black sesame seeds.", "science": "Barley anthocyanins react with acidity, turning the crumb a gorgeous violet shade.", "roi": "Artisanal / Unique Visual Appeal", "tip": "Toast sesame seeds to release oils before incorporating them."},
+                    {"name": "Double-Fermented Sourdough", "desc": "Advanced loaf incorporating a yeast liquid ferment (levain) alongside a mature lactic starter.", "science": "Symbiotic yeast and lactic bacterial balances maximize gas production and flavor depth.", "roi": "Time Intensive / Maximum Oven Spring", "tip": "Ensure the liquid ferment is active and bubbly before mixing."}
+                ],
+                3: [
+                    {"name": "Ancient Einkorn & Wild Honey Sourdough", "desc": "Experimental loaf combining ancient einkorn flour with raw wildflower honey and elderberry ferment.", "science": "Einkorn's weak gluten proteins and sticky starch require precise low hydration and quick baking.", "roi": "High Risk / Historic Ancestral Flavor Profile", "tip": "Dust generously with flour and bake in a hot preheated dutch oven to hold shape."},
+                    {"name": "Spiced Emmer & Fig Sourdough", "desc": "Experimental recipe utilizing fresh-milled ancient emmer wheat and dry black mission figs.", "science": "Emmer's high gluten strength is balanced by enzymatic activity from dried fruit sugar.", "roi": "Artisanal / Complex Sweet & Savory Profile", "tip": "Chop figs finely to prevent large gas pocket voids around fruit zones."},
+                    {"name": "Smoked Water & Spelt Sourdough", "desc": "Experimental loaf using wood-smoked water and fresh-milled spelt grains.", "science": "Spelt's high extensibility allows massive gas bubbles, while smoke phenols preserve the crumb.", "roi": "High Effort / Heavy Campfire Aromatics", "tip": "Bake in a cast iron pot to capture the escaping aromatic smoke oils."},
+                    {"name": "Spontaneous Wild Berry Ferment", "desc": "Experimental sourdough using a starter cultivated from wild juniper and blackberry skins.", "science": "Wild yeasts present on berry skins add unique ester profiles and ester-based aromas.", "roi": "High Risk / Hyper-Local Botanical Profile", "tip": "Keep ambient room warm (78F) to encourage wild microbes."},
+                    {"name": "Khorasan & Kamut Hearth Loaf", "desc": "Experimental high-hydration ancient Khorasan loaf featuring a golden crumb and sweet flavor.", "science": "Khorasan starches are highly soluble, creating a rich cream-colored custard interior.", "roi": "High Skill / Rich Creamy Crumb Structure", "tip": "Use cold water for mixing to maintain dough structure during folding."}
+                ]
+            }
+        }
 
-        # Level 2 recipes (5 items)
-        for i in range(1, 6):
-            recipes.append({
-                "recipe_id": f"{active_archetype_id}_level2_{i}",
-                "recipe_name": f"Modern Advanced {arch_title} - Profile {i}",
-                "creativity_level": 2,
-                "description": f"An advanced modern variation {i} of {arch_title} featuring optimized hydration ratios and pre-ferments to enhance texture.",
-                "recommended_grain_ids": pref_slugs,
-                "sidebar_science_profile": f"Pushes the hydration boundaries of {arch_title} to achieve a more open, modern crumb structure.",
-                "sidebar_ai_insight": {
-                    "labor_roi": "High Return / Texture & Volume Payoff",
-                    "last_10_percent_magic": f"Incorporate a {20 + i * 5}-minute autolyse phase before adding salt or leaven."
-                }
-            })
+        # Check if active archetype is in the predefined database
+        if active_archetype_id in db:
+            for lvl in [1, 2, 3]:
+                for idx, item in enumerate(db[active_archetype_id][lvl]):
+                    recipes.append({
+                        "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
+                        "recipe_name": item["name"],
+                        "creativity_level": lvl,
+                        "description": item["desc"],
+                        "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if lvl == 3 and len(inventory) >= 2 else pref_slugs,
+                        "sidebar_science_profile": item["science"],
+                        "sidebar_ai_insight": {
+                            "labor_roi": item["roi"],
+                            "last_10_percent_magic": item["tip"]
+                        }
+                    })
+        else:
+            # High quality fallback generator using rich descriptors to avoid placeholders
+            fallbacks = {
+                1: [
+                    {"suffix": "Traditional Base", "desc": "A traditional, highly reliable base recipe prioritizing pure grain expression and standard, steady fermentation cycles.", "science": "Relies on standard hydration and predictable microbial activity for stable, consistent gluten sheet development.", "roi": "Low Effort / 100% Reliable", "tip": "Keep mixing times brief to avoid building excessive elastic memory in the gluten chains."},
+                    {"suffix": "Daily Standard", "desc": "An optimized daily formula designed for consistent, high-yield crumb structure under standard kitchen conditions.", "science": "Utilizes simple ambient proof cycles to match moderate, stable moisture conditions.", "roi": "High Volume / Safe Daily Return", "tip": "Cover the vessel with a damp lint-free cloth to prevent dry flour skinning."},
+                    {"suffix": "Farmhouse Homestead", "desc": "A rustic farmhouse recipe incorporating a small percentage of whole-grain flour to enhance mineral complexity.", "science": "Bran minerals act as biological stimulants, accelerating yeast activity and cell wall expansion.", "roi": "Low Effort / Balanced Crust Flavor", "tip": "Slash the loaf with a quick, assertive blade motion at 45 degrees to optimize oven spring."},
+                    {"suffix": "Heritage Country Style", "desc": "Traditional country style formula featuring clean yeast activity and balanced hydration.", "science": "Focuses on steady CO2 release to form regular, medium-sized cell distributions.", "roi": "Minimal Supervision / Classic Crumb", "tip": "Sprinkle fine semolina flour on the loader to prevent sticking during high-heat transfers."},
+                    {"suffix": "Simple Hearth Formula", "desc": "A baseline, no-fuss formulation designed for beginner bakers using standard home ovens.", "science": "Relies on extended autolytic hydration to naturally relax gluten sheets without machine kneading.", "roi": "Hands-off / High Success Rate", "tip": "Place a preheated cast-iron skillet on the bottom rack to act as a heat buffer."}
+                ],
+                2: [
+                    {"name_addon": "High-Hydration Modernist", "desc": "An advanced variation with optimized hydration ratios and pre-ferments to create a glossy, open alveolar crumb.", "science": "Pushes water saturation to the starch ceiling, maximizing steam expansion channels during bake.", "roi": "High Return / Open Glossy Structure", "tip": "Perform a lamination stretch on a wet work surface to build early structural memory."},
+                    {"name_addon": "Cultured Lactic Infusion", "desc": "A modern profile incorporating cultured dairy or preferments to achieve a subtle lactic tang and soft center.", "science": "Lactic acids weaken the gluten matrix chemically, rendering the crumb highly uniform and tender.", "roi": "Skill Intensive / Tangy Aromatics", "tip": "Extend bulk fermentation by 30 minutes to maximize lactic acid buildup."},
+                    {"name_addon": "Double-Preferment Blend", "desc": "A multi-stage build using both poolish and biga preferments for complex organic flavor profile.", "science": "Dual ferment dynamics yield high enzyme variety, breaking down complex starches into simple sugars.", "roi": "Patience Required / Deep Flavor Profile", "tip": "Mix the preferments at least 12 hours ahead at a cool 65°F environment."},
+                    {"name_addon": "Enzymatic Malt Boosted", "desc": "An advanced recipe utilizing diastatic malt adjustments to accelerate starch modification and crust coloration.", "science": "Amylase enzymes break down starches into fermentable maltose, boosting yeast activity and Maillard browning.", "roi": "Moderate Effort / Deep Amber Crust", "tip": "Do not exceed 0.5% malt concentration to prevent a sticky, gummy crumb structure."},
+                    {"name_addon": "Autolysed Honey Glazed", "desc": "Modern formulation utilizing an extended autolyse phase and wildflower honey hydration.", "science": "Hygroscopic honey molecules retain moisture post-bake, extending crumb softness and freshness.", "roi": "Moderate Return / Soft Custard Interior", "tip": "Keep the oven steam high for the first 10 minutes to prevent the honey sugars from caramelizing too quickly."}
+                ],
+                3: [
+                    {"name_addon": "Ancient Emmer & Fig", "desc": "An experimental profile utilizing ancient emmer wheat flour and dried organic fruit inclusions.", "science": "Emmer's dense protein content is balanced by fruit enzymes, creating a rich savory-sweet contrast.", "roi": "Artisanal / Unique Sweet & Savory Complexity", "tip": "Add dried fruit only during the final folding sequence to prevent tearing the gluten sheet."},
+                    {"name_addon": "Spelt & Charred Oak Smoke", "desc": "Experimental recipe using wood-smoked water hydration and high-extensibility ancient spelt flour.", "science": "Weak spelt gluten is supported by high-absorption starch matrices, yielding a dense, rich savory bite.", "roi": "High Risk & Skill / Smoky Complex Aromatics", "tip": "Use a preheated heavy dutch oven to hold the steam and capture the smoky aromatic oils."},
+                    {"name_addon": "Spontaneous Berry Ferment", "desc": "An experimental recipe relying on a wild ferment cultivated directly from wild berry skins.", "science": "Wild yeasts present on botanical skins introduce unique ester profiles and floral aromas.", "roi": "High Risk / Hyper-Local Botanical Expression", "tip": "Maintain a warm 78°F proofing box to sustain the delicate wild microbes."},
+                    {"name_addon": "Savory Dark Rye & Stout", "desc": "Experimental formulation replacing water with local dark stout beer and using dark rye flour.", "science": "High pentosan content in rye starch binds water tightly, creating a sticky, fudgy, highly savory structure.", "roi": "High Skill / Heavy Roasted Malt Savory Bite", "tip": "Dust the proofing basket generously with rice flour to prevent sticky rye from clinging."},
+                    {"name_addon": "Heirloom Einkorn & Bourbon", "desc": "An experimental profile with weak-gluten ancient einkorn and bourbon-soaked vanilla bean.", "science": "Einkorn's high carotenoid content produces a beautiful yellow crumb with high melt-in-the-mouth tenderness.", "roi": "Artisanal / Complex Dessert Aromatics", "tip": "Bake at a slightly lower temperature (325°F) to avoid scorching the fragile ancient starches."}
+                ]
+            }
 
-        # Level 3 recipes (5 items)
-        for i in range(1, 6):
-            recipes.append({
-                "recipe_id": f"{active_archetype_id}_level3_{i}",
-                "recipe_name": f"Experimental Heritage {arch_title} - Profile {i}",
-                "creativity_level": 3,
-                "description": f"Experimental rustic {arch_title} profile {i} utilizing complex ancient grains and high-hydration structures.",
-                "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else pref_slugs,
-                "sidebar_science_profile": f"Integrates ancient grains with varying enzymatic activity, demanding precision water calibration.",
-                "sidebar_ai_insight": {
-                    "labor_roi": "High Risk & Skill / Distinct Flavor Profile",
-                    "last_10_percent_magic": f"Pre-hydrate ancient grain portions at {75 + i}% water for 45 minutes."
-                }
-            })
+            for lvl in [1, 2, 3]:
+                for idx, fallback_item in enumerate(fallbacks[lvl]):
+                    if lvl == 1:
+                        name = f"{arch_title} - {fallback_item['suffix']}"
+                    else:
+                        name = f"{fallback_item['name_addon']} {arch_title}"
+                    recipes.append({
+                        "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
+                        "recipe_name": name,
+                        "creativity_level": lvl,
+                        "description": fallback_item["desc"],
+                        "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if lvl == 3 and len(inventory) >= 2 else pref_slugs,
+                        "sidebar_science_profile": fallback_item["science"],
+                        "sidebar_ai_insight": {
+                            "labor_roi": fallback_item["roi"],
+                            "last_10_percent_magic": fallback_item["tip"]
+                        }
+                    })
 
         return {"recipes": recipes}
 
