@@ -26,4 +26,5 @@ urlpatterns = [
     path('ai-sidebar-insight/', views.ai_sidebar_insight, name='ai_sidebar_insight'),
     path('generate-variants/', views.generate_variants, name='generate_variants'),
     path('generate-creativity-recipes/', views.generate_creativity_recipes, name='generate_creativity_recipes'),
+    path('ai-recipe-details/', views.ai_recipe_details, name='ai_recipe_details'),
 ]

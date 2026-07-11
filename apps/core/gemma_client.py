@@ -292,56 +292,53 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                 3: [
                     {"name": "Ancient Einkorn & Wild Honey Sourdough", "desc": "Experimental loaf combining ancient einkorn flour with raw wildflower honey and elderberry ferment.", "science": "Einkorn's weak gluten proteins and sticky starch require precise low hydration and quick baking.", "roi": "High Risk / Historic Ancestral Flavor Profile", "tip": "Dust generously with flour and bake in a hot preheated dutch oven to hold shape."},
                     {"name": "Spiced Emmer & Fig Sourdough", "desc": "Experimental recipe utilizing fresh-milled ancient emmer wheat and dry black mission figs.", "science": "Emmer's high gluten strength is balanced by enzymatic activity from dried fruit sugar.", "roi": "Artisanal / Complex Sweet & Savory Profile", "tip": "Chop figs finely to prevent large gas pocket voids around fruit zones."},
-                    {"name": "Smoked Water & Spelt Sourdough", "desc": "Experimental loaf using wood-smoked water and fresh-milled spelt grains.", "science": "Spelt's high extensibility allows massive gas bubbles, while smoke phenols preserve the crumb.", "roi": "High Effort / Heavy Campfire Aromatics", "tip": "Bake in a cast iron pot to capture the escaping aromatic smoke oils."},
-                    {"name": "Spontaneous Wild Berry Ferment", "desc": "Experimental sourdough using a starter cultivated from wild juniper and blackberry skins.", "science": "Wild yeasts present on berry skins add unique ester profiles and ester-based aromas.", "roi": "High Risk / Hyper-Local Botanical Profile", "tip": "Keep ambient room warm (78F) to encourage wild microbes."},
-                    {"name": "Khorasan & Kamut Hearth Loaf", "desc": "Experimental high-hydration ancient Khorasan loaf featuring a golden crumb and sweet flavor.", "science": "Khorasan starches are highly soluble, creating a rich cream-colored custard interior.", "roi": "High Skill / Rich Creamy Crumb Structure", "tip": "Use cold water for mixing to maintain dough structure during folding."}
+                    {"name": "Baseline Country Sourdough", "desc": "Standard reliable sourdough boule with 70% hydration and straightforward bulk fermentation."},
+                    {"name": "Classic San Francisco Hearth", "desc": "Standard sour loaf with an extended cold retardation phase to highlight acetic acid notes."},
+                    {"name": "Everyday Sourdough Boule", "desc": "Standard no-knead sourdough utilizing simple stretch-and-folds for steady gluten strength."},
+                    {"name": "Rustic Sourdough Batard", "desc": "Standard oval loaf utilizing a small addition of whole rye flour for fermentation activity."},
+                    {"name": "Simple Whole Wheat Sourdough", "desc": "Standard loaf with 20% fresh-milled whole wheat for rustic color and balanced gluten strength."}
+                ],
+                2: [
+                    {"name": "High-Hydration Open Crumb batard", "desc": "Advanced modern sourdough with 82% hydration and intensive lamination folds."},
+                    {"name": "Polenta & Toasted Seed Sourdough", "desc": "Advanced loaf with cooked heirloom corn polenta and toasted sesame and flax seed inclusions."},
+                    {"name": "Porridge-Infused Sourdough", "desc": "Advanced modern loaf featuring a cooked oat porridge gel folded in during lamination."},
+                    {"name": "Purple Barley & Sesame loaf", "desc": "Advanced recipe utilizing fresh-milled purple barley flour and black sesame seeds."},
+                    {"name": "Double-Fermented Sourdough", "desc": "Advanced loaf incorporating a yeast liquid ferment (levain) alongside a mature lactic starter."}
                 ]
             }
         }
 
         # Check if active archetype is in the predefined database
         if active_archetype_id in db:
-            for lvl in [1, 2, 3]:
-                for idx, item in enumerate(db[active_archetype_id][lvl]):
+            for lvl in [1, 2]:
+                for idx, item in enumerate(db[active_archetype_id].get(lvl, [])):
                     recipes.append({
                         "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
                         "recipe_name": item["name"],
                         "creativity_level": lvl,
                         "description": item["desc"],
-                        "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if lvl == 3 and len(inventory) >= 2 else pref_slugs,
-                        "sidebar_science_profile": item["science"],
-                        "sidebar_ai_insight": {
-                            "labor_roi": item["roi"],
-                            "last_10_percent_magic": item["tip"]
-                        }
+                        "recommended_grain_ids": pref_slugs,
                     })
         else:
             # High quality fallback generator using rich descriptors to avoid placeholders
             fallbacks = {
                 1: [
-                    {"suffix": "Traditional Base", "desc": "A traditional, highly reliable base recipe prioritizing pure grain expression and standard, steady fermentation cycles.", "science": "Relies on standard hydration and predictable microbial activity for stable, consistent gluten sheet development.", "roi": "Low Effort / 100% Reliable", "tip": "Keep mixing times brief to avoid building excessive elastic memory in the gluten chains."},
-                    {"suffix": "Daily Standard", "desc": "An optimized daily formula designed for consistent, high-yield crumb structure under standard kitchen conditions.", "science": "Utilizes simple ambient proof cycles to match moderate, stable moisture conditions.", "roi": "High Volume / Safe Daily Return", "tip": "Cover the vessel with a damp lint-free cloth to prevent dry flour skinning."},
-                    {"suffix": "Farmhouse Homestead", "desc": "A rustic farmhouse recipe incorporating a small percentage of whole-grain flour to enhance mineral complexity.", "science": "Bran minerals act as biological stimulants, accelerating yeast activity and cell wall expansion.", "roi": "Low Effort / Balanced Crust Flavor", "tip": "Slash the loaf with a quick, assertive blade motion at 45 degrees to optimize oven spring."},
-                    {"suffix": "Heritage Country Style", "desc": "Traditional country style formula featuring clean yeast activity and balanced hydration.", "science": "Focuses on steady CO2 release to form regular, medium-sized cell distributions.", "roi": "Minimal Supervision / Classic Crumb", "tip": "Sprinkle fine semolina flour on the loader to prevent sticking during high-heat transfers."},
-                    {"suffix": "Simple Hearth Formula", "desc": "A baseline, no-fuss formulation designed for beginner bakers using standard home ovens.", "science": "Relies on extended autolytic hydration to naturally relax gluten sheets without machine kneading.", "roi": "Hands-off / High Success Rate", "tip": "Place a preheated cast-iron skillet on the bottom rack to act as a heat buffer."}
+                    {"suffix": "Traditional Base", "desc": "A traditional, highly reliable base recipe prioritizing pure grain expression and standard, steady fermentation cycles."},
+                    {"suffix": "Daily Standard", "desc": "An optimized daily formula designed for consistent, high-yield crumb structure under standard kitchen conditions."},
+                    {"suffix": "Farmhouse Homestead", "desc": "A rustic farmhouse recipe incorporating a small percentage of whole-grain flour to enhance mineral complexity."},
+                    {"suffix": "Heritage Country Style", "desc": "Traditional country style formula featuring clean yeast activity and balanced hydration."},
+                    {"suffix": "Simple Hearth Formula", "desc": "A baseline, no-fuss formulation designed for beginner bakers using standard home ovens."}
                 ],
                 2: [
-                    {"name_addon": "High-Hydration Modernist", "desc": "An advanced variation with optimized hydration ratios and pre-ferments to create a glossy, open alveolar crumb.", "science": "Pushes water saturation to the starch ceiling, maximizing steam expansion channels during bake.", "roi": "High Return / Open Glossy Structure", "tip": "Perform a lamination stretch on a wet work surface to build early structural memory."},
-                    {"name_addon": "Cultured Lactic Infusion", "desc": "A modern profile incorporating cultured dairy or preferments to achieve a subtle lactic tang and soft center.", "science": "Lactic acids weaken the gluten matrix chemically, rendering the crumb highly uniform and tender.", "roi": "Skill Intensive / Tangy Aromatics", "tip": "Extend bulk fermentation by 30 minutes to maximize lactic acid buildup."},
-                    {"name_addon": "Double-Preferment Blend", "desc": "A multi-stage build using both poolish and biga preferments for complex organic flavor profile.", "science": "Dual ferment dynamics yield high enzyme variety, breaking down complex starches into simple sugars.", "roi": "Patience Required / Deep Flavor Profile", "tip": "Mix the preferments at least 12 hours ahead at a cool 65°F environment."},
-                    {"name_addon": "Enzymatic Malt Boosted", "desc": "An advanced recipe utilizing diastatic malt adjustments to accelerate starch modification and crust coloration.", "science": "Amylase enzymes break down starches into fermentable maltose, boosting yeast activity and Maillard browning.", "roi": "Moderate Effort / Deep Amber Crust", "tip": "Do not exceed 0.5% malt concentration to prevent a sticky, gummy crumb structure."},
-                    {"name_addon": "Autolysed Honey Glazed", "desc": "Modern formulation utilizing an extended autolyse phase and wildflower honey hydration.", "science": "Hygroscopic honey molecules retain moisture post-bake, extending crumb softness and freshness.", "roi": "Moderate Return / Soft Custard Interior", "tip": "Keep the oven steam high for the first 10 minutes to prevent the honey sugars from caramelizing too quickly."}
-                ],
-                3: [
-                    {"name_addon": "Ancient Emmer & Fig", "desc": "An experimental profile utilizing ancient emmer wheat flour and dried organic fruit inclusions.", "science": "Emmer's dense protein content is balanced by fruit enzymes, creating a rich savory-sweet contrast.", "roi": "Artisanal / Unique Sweet & Savory Complexity", "tip": "Add dried fruit only during the final folding sequence to prevent tearing the gluten sheet."},
-                    {"name_addon": "Spelt & Charred Oak Smoke", "desc": "Experimental recipe using wood-smoked water hydration and high-extensibility ancient spelt flour.", "science": "Weak spelt gluten is supported by high-absorption starch matrices, yielding a dense, rich savory bite.", "roi": "High Risk & Skill / Smoky Complex Aromatics", "tip": "Use a preheated heavy dutch oven to hold the steam and capture the smoky aromatic oils."},
-                    {"name_addon": "Spontaneous Berry Ferment", "desc": "An experimental recipe relying on a wild ferment cultivated directly from wild berry skins.", "science": "Wild yeasts present on botanical skins introduce unique ester profiles and floral aromas.", "roi": "High Risk / Hyper-Local Botanical Expression", "tip": "Maintain a warm 78°F proofing box to sustain the delicate wild microbes."},
-                    {"name_addon": "Savory Dark Rye & Stout", "desc": "Experimental formulation replacing water with local dark stout beer and using dark rye flour.", "science": "High pentosan content in rye starch binds water tightly, creating a sticky, fudgy, highly savory structure.", "roi": "High Skill / Heavy Roasted Malt Savory Bite", "tip": "Dust the proofing basket generously with rice flour to prevent sticky rye from clinging."},
-                    {"name_addon": "Heirloom Einkorn & Bourbon", "desc": "An experimental profile with weak-gluten ancient einkorn and bourbon-soaked vanilla bean.", "science": "Einkorn's high carotenoid content produces a beautiful yellow crumb with high melt-in-the-mouth tenderness.", "roi": "Artisanal / Complex Dessert Aromatics", "tip": "Bake at a slightly lower temperature (325°F) to avoid scorching the fragile ancient starches."}
+                    {"name_addon": "High-Hydration Modernist", "desc": "An advanced variation with optimized hydration ratios and pre-ferments to create a glossy, open alveolar crumb."},
+                    {"name_addon": "Cultured Lactic Infusion", "desc": "A modern profile incorporating cultured dairy or preferments to achieve a subtle lactic tang and soft center."},
+                    {"name_addon": "Double-Preferment Blend", "desc": "A multi-stage build using both poolish and biga preferments for complex organic flavor profile."},
+                    {"name_addon": "Enzymatic Malt Boosted", "desc": "An advanced recipe utilizing diastatic malt adjustments to accelerate starch modification and crust coloration."},
+                    {"name_addon": "Autolysed Honey Glazed", "desc": "Modern formulation utilizing an extended autolyse phase and wildflower honey hydration."}
                 ]
             }
 
-            for lvl in [1, 2, 3]:
+            for lvl in [1, 2]:
                 for idx, fallback_item in enumerate(fallbacks[lvl]):
                     if lvl == 1:
                         name = f"{arch_title} - {fallback_item['suffix']}"
@@ -352,12 +349,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                         "recipe_name": name,
                         "creativity_level": lvl,
                         "description": fallback_item["desc"],
-                        "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if lvl == 3 and len(inventory) >= 2 else pref_slugs,
-                        "sidebar_science_profile": fallback_item["science"],
-                        "sidebar_ai_insight": {
-                            "labor_roi": fallback_item["roi"],
-                            "last_10_percent_magic": fallback_item["tip"]
-                        }
+                        "recommended_grain_ids": pref_slugs,
                     })
 
         return {"recipes": recipes}
@@ -387,97 +379,34 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                         "variant_id": f"{archetype_id}_l1_alt1",
                         "variant_name": f"Traditional Country {engine_id.title()}",
                         "recommended_grain_ids": pref_slugs[:1],
-                        "sidebar_science_profile": "Traditional low-hydration approach focusing on structural strength and regular hole distribution.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "Low Effort / High Reliability",
-                            "last_10_percent_magic": "Extend bulk fermentation by 20 minutes if room temperature drops below 70°F."
-                        }
                     },
                     {
                         "variant_id": f"{archetype_id}_l1_alt2",
                         "variant_name": f"Rustic Farmhouse {engine_id.title()}",
                         "recommended_grain_ids": pref_slugs[:2] if len(pref_slugs) >= 2 else pref_slugs,
-                        "sidebar_science_profile": "Baseline standard with a small whole-wheat addition for increased tannin and ash content.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "Low Effort / Balanced Flavor",
-                            "last_10_percent_magic": "Use a light dusting of rye flour on the proofing basket to enhance crust crispiness."
-                        }
                     },
                     {
                         "variant_id": f"{archetype_id}_l1_alt3",
                         "variant_name": f"Quick-Rise {engine_id.title()}",
                         "recommended_grain_ids": pref_slugs[:1],
-                        "sidebar_science_profile": "Adjusted yeast percentage to accelerate bulk fermentation without collapsing gluten walls.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "Fast Turnaround / Commercial Standard",
-                            "last_10_percent_magic": "Add 0.5% malt powder to promote yeast activity and speed up browning."
-                        }
-                    }
-                ]
-            elif c_lvl == 2:
-                variants = [
-                    {
-                        "variant_id": f"{archetype_id}_l2_alt1",
-                        "variant_name": f"High-Hydration Modern {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs,
-                        "sidebar_science_profile": "Elevated hydration profile demanding double-hydration mixing techniques to trap maximum water.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "High Effort / Maximum Extensibility",
-                            "last_10_percent_magic": "Add the final 5% of formula water slowly at the end of the mixing cycle to avoid breaking gluten bonds."
-                        }
-                    },
-                    {
-                        "variant_id": f"{archetype_id}_l2_alt2",
-                        "variant_name": f"Long-Cold Ferment {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs,
-                        "sidebar_science_profile": "Starch conversion optimization through a 24-hour cold retardation, developing organic acids.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "Medium Effort / Premium Flavor Complex",
-                            "last_10_percent_magic": "Bake immediately from the refrigerator to maximize oven spring contrast."
-                        }
-                    },
-                    {
-                        "variant_id": f"{archetype_id}_l2_alt3",
-                        "variant_name": f"Autolysed Modern {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs,
-                        "sidebar_science_profile": "Enzymatic flour self-development stage before yeast addition, maximizing extensibility.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "Low Active Effort / Great Yield",
-                            "last_10_percent_magic": "Perform a 60-minute autolyse at room temperature before adding starter or yeast."
-                        }
                     }
                 ]
             else:
                 variants = [
                     {
-                        "variant_id": f"{archetype_id}_l3_alt1",
-                        "variant_name": f"Spontaneous Ancient {engine_id.title()}",
-                        "recommended_grain_ids": [grain_slug(g) for g in soft_grains] or pref_slugs,
-                        "sidebar_science_profile": "Highly experimental formula using 100% Spelt or ancient grains for a soft, weak gluten profile.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "Delicate Handling / Unique Crumb Texture",
-                            "last_10_percent_magic": "Reduce final proofing time by 30% to prevent over-acidification from weakening the weak ancient gluten."
-                        }
+                        "variant_id": f"{archetype_id}_l2_alt1",
+                        "variant_name": f"High-Hydration Modern {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs,
                     },
                     {
-                        "variant_id": f"{archetype_id}_l3_alt2",
-                        "variant_name": f"Wild Inclusion {engine_id.title()}",
+                        "variant_id": f"{archetype_id}_l2_alt2",
+                        "variant_name": f"Long-Cold Ferment {engine_id.title()}",
                         "recommended_grain_ids": pref_slugs,
-                        "sidebar_science_profile": "Incorporation of secondary solids at 20% baker's weight. Gluten network must sustain the weight of inclusion particles.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "High Effort / Premium Culinary Value",
-                            "last_10_percent_magic": "Fold inclusions in during the second stretch-and-fold cycle to distribute them evenly without tearing gluten sheets."
-                        }
                     },
                     {
-                        "variant_id": f"{archetype_id}_l3_alt3",
-                        "variant_name": f"Extreme Hydration Porridge {engine_id.title()}",
+                        "variant_id": f"{archetype_id}_l2_alt3",
+                        "variant_name": f"Autolysed Modern {engine_id.title()}",
                         "recommended_grain_ids": pref_slugs,
-                        "sidebar_science_profile": "Gelatinized flour porridge addition (tangzhong method) to carry water up to 90% baker's math equivalent.",
-                        "sidebar_ai_insight": {
-                            "labor_roi": "High Effort / Ultra-Soft Custardy Crumb",
-                            "last_10_percent_magic": "Cook the porridge portion to exactly 150°F (65°C) and let it cool completely before mixing."
-                        }
                     }
                 ]
         else:
@@ -502,50 +431,11 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                     "variant_id": f"{archetype_id}_v1_classic",
                     "variant_name": f"Classic {archetype_label}",
                     "recommended_grain_ids": preferred_slugs[:1],
-                    "sidebar_science_profile": (
-                        f"The Classic {archetype_label} formula follows traditional baker's percentages with a conservative hydration ceiling. "
-                        f"High-protein grain stocks in the recommended tier supply the gluten elasticity ceiling required for oven spring."
-                    ),
-                    "sidebar_ai_insight": {
-                        "labor_roi": "High Priority / Absolute Foundation",
-                        "last_10_percent_magic": (
-                            f"Focus on a 30-minute bench rest after shaping to relax the gluten sheets before the final bake. "
-                            f"This single step transforms a good {archetype_label} into an exceptional one."
-                        )
-                    }
                 },
                 {
                     "variant_id": f"{archetype_id}_v2_high_hydration",
                     "variant_name": f"High-Hydration {archetype_label}",
                     "recommended_grain_ids": preferred_slugs,
-                    "sidebar_science_profile": (
-                        f"An elevated hydration profile pushes starch gelatinization beyond the baseline threshold. "
-                        f"Open crumb development accelerates but gluten must compensate with additional folding cycles. "
-                        f"Grain selection is critical — only high-absorption stocks can carry the extra water without structural collapse."
-                    ),
-                    "sidebar_ai_insight": {
-                        "labor_roi": "Medium Priority / High-Skill Payoff",
-                        "last_10_percent_magic": (
-                            f"Incorporate 3 sets of stretch-and-fold during the first 90 minutes of bulk fermentation. "
-                            f"This aligns gluten sheets without mechanical kneading, preserving the open crumb structure."
-                        )
-                    }
-                },
-                {
-                    "variant_id": f"{archetype_id}_v3_heritage_blend",
-                    "variant_name": f"Heritage Grain {archetype_label}",
-                    "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else preferred_slugs,
-                    "sidebar_science_profile": (
-                        f"A multi-grain heritage blend introduces pentosan content and varied protein profiles. "
-                        f"The blend complexity adds depth of flavor and subtle textural contrast, but demands careful water absorption calibration."
-                    ),
-                    "sidebar_ai_insight": {
-                        "labor_roi": "High Priority / Flavor Differentiation",
-                        "last_10_percent_magic": (
-                            f"Pre-soak ancient or soft grain portions in 20% of the formula water for 30 minutes before mixing. "
-                            f"This equalizes hydration rates across the diverse grain matrix and prevents gummy pockets."
-                        )
-                    }
                 }
             ]
 
@@ -1710,18 +1600,17 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
 def generate_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list) -> dict | None:
     """
     Given the engine slug, selected archetype ID, and inventory grain list, asks the LLM to generate
-    exactly 15 recipe profiles (5 per Creativity Level: 1, 2, and 3).
+    exactly 10 recipe profiles (5 per Creativity Level: 1 and 2).
     """
     import json
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, and inventory grain list, "
-        "generate exactly 15 distinct recipe profiles matching these three Creativity Levels (exactly 5 recipes per level):\n"
-        f"CRITICAL: All 15 generated recipe profiles must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
+        "generate exactly 10 distinct recipe profiles matching these two Creativity Levels (exactly 5 recipes per level):\n"
+        f"CRITICAL: All 10 generated recipe profiles must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profiles).\n"
         "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
-        "- Creativity Level 3: Experimental/Complex Profiles. (Unusual grain blends, high hydration, complex preferments, or inclusions).\n"
         "\n"
         "Each recipe must match this JSON schema:\n"
         "{\n"
@@ -1729,14 +1618,9 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
         "    {\n"
         "      \"recipe_id\": \"unique_slug\",\n"
         "      \"recipe_name\": \"Human readable title\",\n"
-        "      \"creativity_level\": 1,  // must be 1, 2, or 3\n"
+        "      \"creativity_level\": 1,  // must be 1 or 2\n"
         "      \"description\": \"1-2 sentence description explaining the recipe structure\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
-        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
-        "      \"sidebar_ai_insight\": {\n"
-        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
-        "        \"last_10_percent_magic\": \"Specific craft tip to elevate the bake\"\n"
-        "      }\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
         "    }\n"
         "  ]\n"
         "}\n"
@@ -1781,12 +1665,7 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
         "    {\n"
         "      \"variant_id\": \"unique_slug\",\n"
         "      \"variant_name\": \"Human readable variant label\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
-        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile for this variant\",\n"
-        "      \"sidebar_ai_insight\": {\n"
-        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
-        "        \"last_10_percent_magic\": \"Specific craft tip to elevate from good to exceptional\"\n"
-        "      }\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
         "    }\n"
         "  ]\n"
         "}\n"
@@ -1811,4 +1690,119 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
     # Fall back to mock
     mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
     return mock
+
+
+def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, selected_grains: str, category_slug: str) -> dict | None:
+    """
+    Asks the LLM to generate the detailed science profile and ways to elevate (last_10_percent_magic)
+    for a specific selected recipe.
+    """
+    import json
+    
+    # Retrieve thinking mode settings
+    ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
+    ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
+
+    system_prompt = (
+        "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
+        "and a list of active selected grains, generate the technical science profile and a list of craft tips to elevate the bake.\n"
+        "Each response must match this JSON schema:\n"
+        "{\n"
+        "  \"sidebar_science_profile\": \"1-2 sentence technical science analysis of the crumb, starch-lipid structure, or hydration of this specific recipe.\",\n"
+        "  \"elevate_recipe\": [\n"
+        "    \"Specific tip 1 (e.g. autolyse time, temperature tweaks, or folding technique relative to this recipe).\",\n"
+        "    \"Specific tip 2 (e.g. hydration adaptation, or mixing speed adjustment relative to the selected grains).\",\n"
+        "    \"Specific craft tip (incorporating the last 10 percent magic tip for this recipe).\"\n"
+        "  ]\n"
+        "}\n"
+        "Return ONLY raw JSON with no markdown fences."
+    )
+    if ai_thinking_enabled:
+        system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
+    else:
+        system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "recipe_slug": recipe_slug,
+        "selected_grains": selected_grains,
+        "category_slug": category_slug
+    })
+
+    try:
+        # Check if offline mock mode is active
+        if getattr(settings, "MOCK_MODE", True):
+            return get_local_recipe_details(recipe_slug, engine_id, active_archetype_id, selected_grains)
+
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["sidebar_science_profile", "elevate_recipe"])
+        if result and isinstance(result, dict) and "sidebar_science_profile" in result:
+            return result
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_details: {str(e)}")
+
+    # Fall back to local mock
+    return get_local_recipe_details(recipe_slug, engine_id, active_archetype_id, selected_grains)
+
+
+def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_id: str, selected_grains: str) -> dict:
+    """
+    Returns realistic local fallback recipe details (science profile & elevate tips).
+    """
+    db = {
+        "drop_cookie": {
+            "classic": {
+                "science": "Standard lipid-starch coat limit. Gluten development is mechanically minimized to produce a crumb that is highly uniform, tender, and soft.",
+                "tips": [
+                    "Cream butter and sugar until light and fluffy to incorporate micro-air pockets.",
+                    "Chill the portioned cookie dough balls for 2 hours before baking to control the spread.",
+                    "Use a lower shelf in the oven to ensure even bottom browning without burning the sugars."
+                ]
+            },
+            "modern": {
+                "science": "Double-hydration lipid emulsion focus. Pushes hydration to the starch ceiling, optimizing starch gelatinization for maximum softness.",
+                "tips": [
+                    "Substitute 10% of the flour with toasted hazelnut or almond meal to weaken gluten.",
+                    "Incorporate a 60-minute room temperature autolyse phase to pre-saturate starch molecules.",
+                    "Add the final portion of liquid slowly at the end of mixing to prevent emulsion breakage."
+                ]
+            }
+        },
+        "hearth_bread": {
+            "classic": {
+                "science": "Traditional Hearth Boule structure. Relies on moderate hydration (65-68%) and standard bulk fermentation to develop a strong, elastic gluten network.",
+                "tips": [
+                    "Perform 3 sets of stretch-and-folds during the first 2 hours of bulk fermentation.",
+                    "Preheat a heavy Dutch oven at 450°F for at least 45 minutes to capture maximum radiant heat.",
+                    "Score the dough sharply at a 45-degree angle to create a beautiful, classic ear."
+                ]
+            },
+            "modern": {
+                "science": "Advanced high-hydration (75-80%) modern Batard. Pushes water saturation to the limits, creating a glossy, highly open, and gelatinized crumb structure.",
+                "tips": [
+                    "Carry out a 1-hour autolyse (flour and water only) before adding the starter and salt.",
+                    "Use coil folds instead of stretch-and-folds to build structure gently in high-hydration dough.",
+                    "Retard the shaped batard in a banner cloth at 38°F for 16 hours to optimize enzyme browning."
+                ]
+            }
+        }
+    }
+    
+    # Simple heuristics to classify recipe_slug
+    is_modern = "l2" in recipe_slug or "modern" in recipe_slug or "high_hydration" in recipe_slug or "v2" in recipe_slug or "level2" in recipe_slug
+    key_type = "drop_cookie" if engine_id in ["cookies-shortbread", "cakes-batters"] else "hearth_bread"
+    sub_key = "modern" if is_modern else "classic"
+    
+    data = db.get(key_type, db["hearth_bread"])[sub_key]
+    
+    # Customize tips slightly based on selected grains
+    custom_tips = list(data["tips"])
+    if selected_grains:
+        first_grain = selected_grains.split(",")[0].strip().replace("_", " ").title()
+        custom_tips.insert(1, f"Accommodate the high absorption rate of fresh {first_grain} by adding 2% extra water if dough feels stiff.")
+
+    return {
+        "sidebar_science_profile": data["science"],
+        "elevate_recipe": custom_tips[:3]
+    }
 

@@ -1806,3 +1806,44 @@ def generate_creativity_recipes(request):
         return JsonResponse({"recipes": []}, status=200)
 
     return JsonResponse(result, status=200)
+
+
+def ai_recipe_details(request):
+    """
+    Returns AI-generated detailed science profile and elevate recipe tips for a selected recipe.
+    Accepts: GET ?recipe_slug=<slug>&engine_id=<slug>&active_archetype_id=<slug>&selected_grains=<comma-separated>&category_slug=<slug>
+    Returns: JSON { sidebar_science_profile: "...", elevate_recipe: [...] }
+    """
+    from django.http import JsonResponse
+    from apps.core import gemma_client
+
+    recipe_slug = request.GET.get("recipe_slug", "").strip()
+    engine_id = request.GET.get("engine_id", "").strip()
+    active_archetype_id = request.GET.get("active_archetype_id", "").strip()
+    selected_grains = request.GET.get("selected_grains", "").strip()
+    category_slug = request.GET.get("category_slug", "").strip()
+
+    if not recipe_slug:
+        return JsonResponse({"error": "recipe_slug is required."}, status=400)
+
+    # Sanitize archetype ID if it contains suffixes
+    if active_archetype_id:
+        for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
+            if suffix in active_archetype_id:
+                active_archetype_id = active_archetype_id.split(suffix)[0]
+
+    result = gemma_client.generate_recipe_details(
+        engine_id=engine_id,
+        active_archetype_id=active_archetype_id,
+        recipe_slug=recipe_slug,
+        selected_grains=selected_grains,
+        category_slug=category_slug
+    )
+
+    if result is None:
+        return JsonResponse({
+            "sidebar_science_profile": "No technical profile compiled.",
+            "elevate_recipe": []
+        }, status=200)
+
+    return JsonResponse(result, status=200)

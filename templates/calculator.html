@@ -284,6 +284,22 @@
     alternative_variants: [],
     selected_recipe_id: null,
     recipe_selected: {% if selected_preset %}true{% else %}false{% endif %},
+    recipe_details_loading: false,
+    recipe_gen_interval: null,
+    recipe_details_interval: null,
+    recipe_generation_steps: [
+        { text: "Initializing workspace sub-engines...", active: false, completed: false },
+        { text: "Analyzing active whole grain profiles...", active: false, completed: false },
+        { text: "Computing thermodynamic heat margins...", active: false, completed: false },
+        { text: "Calibrating water temperature target...", active: false, completed: false },
+        { text: "Synthesizing custom baker's formulas...", active: false, completed: false },
+        { text: "Drafting artisan recipe variants...", active: false, completed: false }
+    ],
+    recipe_details_steps: [
+        { text: "Deconstructing grain protein specs...", active: false, completed: false },
+        { text: "Simulating starch-lipid hydration...", active: false, completed: false },
+        { text: "Formulating artisanal baking tips...", active: false, completed: false }
+    ],
 
     selectArchetype(archetype_id, engine_id) {
         if (this.active_archetype_id === archetype_id) {
@@ -319,6 +335,7 @@
         this.alternative_variants = [];
         this.grainEvaluations = [];
         this.resetAdvisory();
+        this.startRecipeGenerationProgress();
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
         const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
@@ -329,10 +346,112 @@
                     this.creativity_recipes = data.recipes || [];
                 }
                 this.creativity_loading = false;
+                if (this.recipe_gen_interval) clearInterval(this.recipe_gen_interval);
+                this.recipe_generation_steps.forEach(s => { s.completed = true; s.active = false; });
             })
             .catch(err => {
                 console.error('[GrainLab] Failed fetching creativity recipes:', err);
                 this.creativity_loading = false;
+                if (this.recipe_gen_interval) clearInterval(this.recipe_gen_interval);
+            });
+    },
+
+    startRecipeGenerationProgress() {
+        if (this.recipe_gen_interval) clearInterval(this.recipe_gen_interval);
+        
+        // Reset steps
+        this.recipe_generation_steps.forEach(s => {
+            s.active = false;
+            s.completed = false;
+        });
+        
+        // Set first step active
+        this.recipe_generation_steps[0].active = true;
+        let stepIdx = 0;
+        
+        this.recipe_gen_interval = setInterval(() => {
+            if (!this.creativity_loading) {
+                clearInterval(this.recipe_gen_interval);
+                return;
+            }
+            if (stepIdx < this.recipe_generation_steps.length - 1) {
+                this.recipe_generation_steps[stepIdx].active = false;
+                this.recipe_generation_steps[stepIdx].completed = true;
+                stepIdx++;
+                this.recipe_generation_steps[stepIdx].active = true;
+            } else {
+                this.recipe_generation_steps[stepIdx].active = false;
+                this.recipe_generation_steps[stepIdx].completed = true;
+                clearInterval(this.recipe_gen_interval);
+            }
+        }, 3000);
+    },
+
+    startRecipeDetailsProgress() {
+        if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
+        
+        // Reset steps
+        this.recipe_details_steps.forEach(s => {
+            s.active = false;
+            s.completed = false;
+        });
+        
+        // Set first step active
+        this.recipe_details_steps[0].active = true;
+        let stepIdx = 0;
+        
+        this.recipe_details_interval = setInterval(() => {
+            if (!this.recipe_details_loading) {
+                clearInterval(this.recipe_details_interval);
+                return;
+            }
+            if (stepIdx < this.recipe_details_steps.length - 1) {
+                this.recipe_details_steps[stepIdx].active = false;
+                this.recipe_details_steps[stepIdx].completed = true;
+                stepIdx++;
+                this.recipe_details_steps[stepIdx].active = true;
+            } else {
+                this.recipe_details_steps[stepIdx].active = false;
+                this.recipe_details_steps[stepIdx].completed = true;
+                clearInterval(this.recipe_details_interval);
+            }
+        }, 1500);
+    },
+
+    fetchRecipeDetails(recipe_slug) {
+        if (!this.recipe_selected || !recipe_slug) {
+            this.sidebar_analysis = '';
+            this.globalElevateRecipe = [];
+            this.recipe_details_loading = false;
+            return;
+        }
+        
+        this.recipe_details_loading = true;
+        this.sidebar_insight_loading = true;
+        this.startRecipeDetailsProgress();
+
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = `/ai-recipe-details/?recipe_slug=${encodeURIComponent(recipe_slug)}&engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&selected_grains=${encodeURIComponent(selectedGrains)}&category_slug=${encodeURIComponent(this.selected_master)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                this.sidebar_analysis = data.sidebar_science_profile || 'No technical analysis compiled.';
+                this.globalElevateRecipe = data.elevate_recipe || [];
+                this.recipe_details_loading = false;
+                this.sidebar_insight_loading = false;
+                if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
+                this.recipe_details_steps.forEach(s => { s.completed = true; s.active = false; });
+            })
+            .catch(err => {
+                console.error('[GrainLab] Failed fetching recipe details:', err);
+                this.recipe_details_loading = false;
+                this.sidebar_insight_loading = false;
+                if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
             });
     },
 
@@ -391,8 +510,9 @@
         this.presetName = recipe_name;
         this.recipe_selected = true;
         this.recommended_grain_ids = recipe.recommended_grain_ids || [];
-        this.sidebar_analysis = recipe.sidebar_science_profile || '';
-        this.sidebar_labor_roi = (recipe.sidebar_ai_insight && recipe.sidebar_ai_insight.labor_roi) || '';
+        this.sidebar_analysis = '';
+        this.globalElevateRecipe = [];
+        this.sidebar_labor_roi = '';
 
         // Select the ideal grain based on recommended list if available
         if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
@@ -412,8 +532,8 @@
             this.selectIdealGrain();
         }
 
-        // Trigger advisory call to fetch recommended/sub-optimal classifications (handled via presetSlug watcher)
-        // Redundant direct fetchAdvisory call removed to prevent race conditions and invalid presetSlug requests.
+        // Trigger on-demand detailed lazy load call
+        this.fetchRecipeDetails(recipe_id);
     },
 
     getClassificationLabel(berry) {
@@ -1274,9 +1394,20 @@
                         </h3>
                         
                         <!-- Insight Loading State -->
-                        <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 2rem 0;">
-                            <span class="spinner" style="width: 16px; height: 16px;"></span>
-                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Querying Local Gemma Model...</span>
+                        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 0;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span class="spinner" style="width: 12px; height: 12px;"></span>
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
+                            </div>
+                            <template x-for="(step, idx) in recipe_details_steps" :key="idx">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; transition: all 0.3s ease;"
+                                     :style="step.active ? 'color: var(--accent); font-weight: bold;' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
+                                    <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
+                                    <span x-show="step.active" class="spinner" style="width: 8px; height: 8px; border-width: 2px; border-color: var(--accent) transparent var(--accent) transparent; display: inline-block;"></span>
+                                    <span x-show="!step.completed && !step.active" style="display: inline-block; width: 8px; text-align: center;">○</span>
+                                    <span x-text="step.text"></span>
+                                </div>
+                            </template>
                         </div>
                         
                         <!-- Insight Content -->
@@ -1376,11 +1507,26 @@
             </div>
             
             <!-- Global Persistent Ways to Elevate Card -->
-            <div class="card" x-show="global_ai_enabled && elevateWays.length > 0" x-transition style="margin-top: 0; background-color: rgba(255, 136, 0, 0.03); border-top: 4px solid var(--accent); padding: 1.25rem;">
+            <div class="card" x-show="global_ai_enabled && recipe_selected" x-transition style="margin-top: 0; background-color: rgba(255, 136, 0, 0.03); border-top: 4px solid var(--accent); padding: 1.25rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
                     <span>✨ Ways to Elevate the Bake</span>
                 </h4>
-                <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem; font-size: 0.85rem; color: #ffb74d; line-height: 1.55;">
+                
+                <!-- Loading State Checklist -->
+                <div x-show="recipe_details_loading" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                    <template x-for="(step, idx) in recipe_details_steps" :key="idx">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; transition: all 0.3s ease;"
+                             :style="step.active ? 'color: var(--accent); font-weight: bold;' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
+                            <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
+                            <span x-show="step.active" class="spinner" style="width: 8px; height: 8px; border-width: 2px; border-color: var(--accent) transparent var(--accent) transparent; display: inline-block;"></span>
+                            <span x-show="!step.completed && !step.active" style="display: inline-block; width: 8px; text-align: center;">○</span>
+                            <span x-text="step.text"></span>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Content State -->
+                <ul x-show="!recipe_details_loading" style="margin: 0.5rem 0 0 0; padding-left: 1.25rem; font-size: 0.85rem; color: #ffb74d; line-height: 1.55;">
                     <template x-for="way in elevateWays" :key="way">
                         <li style="margin-bottom: 0.5rem;" x-text="way"></li>
                     </template>

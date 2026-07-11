@@ -317,6 +317,8 @@ class DynamicRouteScannerTests(TestCase):
                 response = client.get(url + '?engine_id=lean-crusty&active_archetype_id=classic_sourdough')
             elif name == 'generate_creativity_recipes':
                 response = client.get(url + '?engine_id=lean-crusty&active_archetype_id=classic_sourdough')
+            elif name == 'ai_recipe_details':
+                response = client.get(url + '?recipe_slug=classic_sourdough_level1_1&engine_id=lean-crusty&active_archetype_id=classic_sourdough')
             else:
                 response = client.get(url)
             
@@ -1103,7 +1105,7 @@ class GenerateVariantsTests(TestCase):
         self.assertIsInstance(data["generated_variants"], list)
 
     def test_generate_variants_data_contract(self) -> None:
-        """Each variant must include required polymorphic schema keys."""
+        """Each variant must include required polymorphic schema keys without details."""
         url = (
             f"/generate-variants/"
             f"?engine_id=lean-crusty"
@@ -1119,12 +1121,9 @@ class GenerateVariantsTests(TestCase):
             self.assertIn("variant_id", variant, "Missing variant_id key")
             self.assertIn("variant_name", variant, "Missing variant_name key")
             self.assertIn("recommended_grain_ids", variant, "Missing recommended_grain_ids key")
-            self.assertIn("sidebar_science_profile", variant, "Missing sidebar_science_profile key")
-            self.assertIn("sidebar_ai_insight", variant, "Missing sidebar_ai_insight key")
             self.assertIsInstance(variant["recommended_grain_ids"], list)
-            ai_insight = variant["sidebar_ai_insight"]
-            self.assertIn("labor_roi", ai_insight)
-            self.assertIn("last_10_percent_magic", ai_insight)
+            self.assertNotIn("sidebar_science_profile", variant)
+            self.assertNotIn("sidebar_ai_insight", variant)
 
     def test_generate_variants_cookie_engine(self) -> None:
         """Cookie engine archetypes must produce valid variants."""
@@ -1139,24 +1138,22 @@ class GenerateVariantsTests(TestCase):
         self.assertIn("generated_variants", data)
 
     def test_generate_creativity_recipes_valid(self) -> None:
-        """Verifies generate_creativity_recipes endpoint yields fifteen creativity-tiered recipes."""
+        """Verifies generate_creativity_recipes endpoint yields exactly 10 recipes without science details."""
         url = "/generate-creativity-recipes/?engine_id=lean-crusty&active_archetype_id=classic_sourdough"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("recipes", data)
         recipes = data["recipes"]
-        self.assertEqual(len(recipes), 15)
+        self.assertEqual(len(recipes), 10)
         for recipe in recipes:
             self.assertIn("recipe_id", recipe)
             self.assertIn("recipe_name", recipe)
             self.assertIn("creativity_level", recipe)
             self.assertIn("description", recipe)
             self.assertIn("recommended_grain_ids", recipe)
-            self.assertIn("sidebar_science_profile", recipe)
-            self.assertIn("sidebar_ai_insight", recipe)
-            self.assertIn("labor_roi", recipe["sidebar_ai_insight"])
-            self.assertIn("last_10_percent_magic", recipe["sidebar_ai_insight"])
+            self.assertNotIn("sidebar_science_profile", recipe)
+            self.assertNotIn("sidebar_ai_insight", recipe)
 
     def test_generate_variants_with_creativity_level(self) -> None:
         """Verifies generate_variants handles creativity_level parameters and returns correct alt variants."""
@@ -1167,3 +1164,22 @@ class GenerateVariantsTests(TestCase):
         self.assertIn("generated_variants", data)
         variants = data["generated_variants"]
         self.assertEqual(len(variants), 3)
+
+    def test_ai_recipe_details_valid(self) -> None:
+        """Verifies ai_recipe_details endpoint returns technical science analysis and tips list."""
+        url = "/ai-recipe-details/?recipe_slug=hearth_level1_1&engine_id=lean-crusty&active_archetype_id=classic_sourdough&selected_grains=hard_red_spring_wheat"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("sidebar_science_profile", data)
+        self.assertIn("elevate_recipe", data)
+        self.assertIsInstance(data["elevate_recipe"], list)
+        self.assertGreater(len(data["elevate_recipe"]), 0)
+
+    def test_ai_recipe_details_missing_params(self) -> None:
+        """Verifies ai_recipe_details returns 400 Bad Request if recipe_slug is not provided."""
+        url = "/ai-recipe-details/?engine_id=lean-crusty"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn("error", data)

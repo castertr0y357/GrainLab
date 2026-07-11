@@ -88,6 +88,11 @@
 - [x] Fix grain card sorting/borders by prefixing `this.` to parent property references in child helper functions (`sortedBerriesFor`, `getGrainStyle`)
 - [x] Fix grain hover evaluation matching and duplicate AJAX calls by removing redundant/invalid `fetchAdvisory(recipe_name)` call from `selectRecipe`
 - [x] Implement system prompt directives and `reasoning_effort` payload forwarding in `call_gemma_api` to ensure local LLM honors the user's AI thinking mode preferences
+- [x] Drop Creativity Level 3 (Experimental Profiles) from templates, schemas, mocks, and prompts to streamline LLM response latency
+- [x] Implement on-demand lazy loading details endpoint `/ai-recipe-details/` to fetch recipe-specific science profile and ways to elevate only when a recipe is actively selected
+- [x] Implement dynamic progressive loading checklist UI for recipe generation and recipe details compilation
+- [x] Add automated unit tests validating the 10-recipe list schema, lazy loading endpoint parameters, and dynamic route scanner check
+
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)

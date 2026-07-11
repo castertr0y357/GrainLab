@@ -343,18 +343,32 @@
                 <span>🧪</span> Select Recipe Target (Creativity Tiers)
             </div>
 
-            <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
-                <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-                <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Analyzing flour profiles & formulating recipes...</p>
+            <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: stretch; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                    <strong style="font-size: 0.9rem; color: var(--text-primary);">AI Culinary Formulation Engine Active</strong>
+                </div>
+                <!-- Progressive Steps checklist -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; max-width: 400px; margin: 0 auto; width: 100%;">
+                    <template x-for="(step, idx) in recipe_generation_steps" :key="idx">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.8rem; transition: all 0.3s ease;"
+                             :style="step.active ? 'color: var(--accent); font-weight: bold; transform: scale(1.02);' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
+                            <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
+                            <span x-show="step.active" class="spinner" style="width: 10px; height: 10px; border-width: 2px; border-color: var(--accent) transparent var(--accent) transparent; display: inline-block;"></span>
+                            <span x-show="!step.completed && !step.active" style="display: inline-block; width: 10px; text-align: center;">○</span>
+                            <span x-text="step.text"></span>
+                        </div>
+                    </template>
+                </div>
             </div>
 
             <div x-show="!creativity_loading" style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.5rem;">
             
-            <!-- ROW 1: Baseline Standard Profiles (Level 1) -->
+            <!-- ROW 1: Baseline Standard Profiles -->
             <div x-show="expanded_level === null || expanded_level === 1" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
                     <div style="font-weight: 700; font-size: 0.95rem; color: #81c784; display: flex; align-items: center; gap: 0.5rem;">
-                        <span>🌱</span> Baseline Standard Profiles (Level 1)
+                        <span>🌱</span> Baseline Standard Profiles
                     </div>
                     <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
                             @click="toggleExpandLevel(1)">
@@ -388,7 +402,7 @@
                 <template x-if="expanded_level === 1 && !variant_loading && alternative_variants.length > 0">
                     <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #81c784; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🧬</span> Alternative Structural Variations (Level 1 Tweak Options)
+                            <span>🧬</span> Alternative Structural Variations (Tweak Options)
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
                             <template x-for="alt in alternative_variants" :key="alt.variant_id">
@@ -408,11 +422,11 @@
                 </template>
             </div>
 
-            <!-- ROW 2: Advanced Modern Profiles (Level 2) -->
+            <!-- ROW 2: Advanced Modern Profiles -->
             <div x-show="expanded_level === null || expanded_level === 2" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
                     <div style="font-weight: 700; font-size: 0.95rem; color: #64b5f6; display: flex; align-items: center; gap: 0.5rem;">
-                        <span>⚡</span> Advanced Modern Profiles (Level 2)
+                        <span>⚡</span> Advanced Modern Profiles
                     </div>
                     <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
                             @click="toggleExpandLevel(2)">
@@ -446,7 +460,7 @@
                 <template x-if="expanded_level === 2 && !variant_loading && alternative_variants.length > 0">
                     <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #64b5f6; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🧬</span> Alternative Structural Variations (Level 2 Tweak Options)
+                            <span>🧬</span> Alternative Structural Variations (Tweak Options)
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
                             <template x-for="alt in alternative_variants" :key="alt.variant_id">
@@ -466,63 +480,7 @@
                 </template>
             </div>
 
-            <!-- ROW 3: Experimental/Complex Profiles (Level 3) -->
-            <div x-show="expanded_level === null || expanded_level === 3" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
-                    <div style="font-weight: 700; font-size: 0.95rem; color: #ff8a65; display: flex; align-items: center; gap: 0.5rem;">
-                        <span>🧪</span> Experimental/Complex Profiles (Level 3)
-                    </div>
-                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
-                            @click="toggleExpandLevel(3)">
-                        <span x-text="expanded_level === 3 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
-                    </button>
-                </div>
-                
-                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
-                    <!-- Conceptual Item Card -->
-                    <template x-for="recipe in getRecipesForLevel(3)" :key="recipe.recipe_id">
-                        <div class="card" 
-                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
-                             @mouseenter="onRecipeHover(recipe)"
-                             @mouseleave="clearHoveredElement()"
-                             @click="selectRecipe(recipe)"
-                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
-                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #ff8a65; background: rgba(255, 138, 101, 0.06); box-shadow: 0 0 10px rgba(255, 138, 101, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
-                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
-                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
-                        </div>
-                    </template>
-                </div>
 
-                <!-- Alternatives Loader -->
-                <div x-show="expanded_level === 3 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem 0; color: var(--text-muted);">
-                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-                    <span style="margin-left: 0.75rem; font-size: 0.85rem;">Generating alternative variations...</span>
-                </div>
-
-                <!-- Alternatives Cards (Expanded to a new row below) -->
-                <template x-if="expanded_level === 3 && !variant_loading && alternative_variants.length > 0">
-                    <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: #ff8a65; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🧬</span> Alternative Structural Variations (Level 3 Tweak Options)
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
-                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
-                                <div class="card" 
-                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
-                                     @mouseenter="onRecipeHover(alt)"
-                                     @mouseleave="clearHoveredElement()"
-                                     @click="selectRecipe(alt)"
-                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
-                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #ff8a65; background: rgba(255, 138, 101, 0.06); box-shadow: 0 0 10px rgba(255, 138, 101, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);'">
-                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
-                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-            </div>
 
         </div>
         </div> <!-- Closes x-show="active_archetype_id" -->
