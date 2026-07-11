@@ -74,6 +74,7 @@
     sidebar_analysis: '',
     sidebar_tier: '',
     sidebar_elevate: '',
+    selectedRecipeScienceProfile: '',
     
     // Factual science profiles
     factual_dictionary: {
@@ -203,9 +204,13 @@
     clearHoveredElement() {
         this.hovered_element = null;
         this.sidebar_labor_roi = '';
-        this.sidebar_analysis = '';
         this.sidebar_tier = '';
         this.sidebar_insight_loading = false;
+        if (this.current_phase === 2 && this.selected_recipe_id) {
+            this.sidebar_analysis = this.selectedRecipeScienceProfile;
+        } else {
+            this.sidebar_analysis = '';
+        }
     },
 
     getFactualProfile() {
@@ -440,7 +445,9 @@
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                this.sidebar_analysis = data.sidebar_science_profile || 'No technical analysis compiled.';
+                const profile = data.sidebar_science_profile || 'No technical analysis compiled.';
+                this.sidebar_analysis = profile;
+                this.selectedRecipeScienceProfile = profile;
                 this.globalElevateRecipe = data.elevate_recipe || [];
                 this.recipe_details_loading = false;
                 this.sidebar_insight_loading = false;
@@ -511,6 +518,7 @@
         this.presetName = recipe_name;
         this.recommended_grain_ids = recipe.recommended_grain_ids || [];
         this.sidebar_analysis = '';
+        this.selectedRecipeScienceProfile = '';
         this.globalElevateRecipe = [];
         this.sidebar_labor_roi = '';
 
