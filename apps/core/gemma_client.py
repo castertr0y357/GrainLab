@@ -1847,7 +1847,7 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
     return mock
 
 
-def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, selected_grains: str, category_slug: str) -> dict | None:
+def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str) -> dict | None:
     """
     Asks the LLM to generate the detailed science profile and ways to elevate (last_10_percent_magic)
     for a specific selected recipe.
@@ -1860,7 +1860,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
-        "and a list of active selected grains, generate the menu description, technical science profile, and a list of craft tips to elevate the bake.\n"
+        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, and a list of craft tips to elevate the bake.\n"
         "Each response must match this JSON schema:\n"
         "{\n"
         "  \"menu_description\": \"A 1-2 sentence rich, descriptive flavor profile that highlights taste, aroma, and visual appeal, written in the style of a high-end restaurant menu item description (e.g., 'A decadent, dark chocolate cookie layered with rich malt undertones and finished with pockets of molten Valrhona fudge.').\",\n"
@@ -1874,8 +1874,9 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "Return ONLY raw JSON with no markdown fences.\n"
         "\n"
         "🚨 [CRITICAL PROMPT HARDENING]\n"
-        "1. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
-        "2. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale."
+        "1. FLAVOR-FIRST MENU DESCRIPTION: The `menu_description` MUST highlight and describe the specific flavor characteristics of the recipe name provided (for example: if the recipe is Snickerdoodle, focus on sweet cinnamon-sugar warmth; if it is Classic Chocolate Chip, focus on rich butter and chocolate pockets). Do NOT output generic templates or repeat the same description for different recipes.\n"
+        "2. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
+        "3. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale."
     )
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
@@ -1886,6 +1887,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "engine_id": engine_id,
         "active_archetype_id": active_archetype_id,
         "recipe_slug": recipe_slug,
+        "recipe_name": recipe_name,
         "selected_grains": selected_grains,
         "category_slug": category_slug
     })
@@ -1893,81 +1895,160 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
     try:
         # Check if offline mock mode is active
         if getattr(settings, "MOCK_MODE", True):
-            return get_local_recipe_details(recipe_slug, engine_id, active_archetype_id, selected_grains)
+            return get_local_recipe_details(recipe_slug, recipe_name, engine_id, active_archetype_id, selected_grains)
 
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["sidebar_science_profile", "elevate_recipe"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "elevate_recipe"])
         if result and isinstance(result, dict) and "sidebar_science_profile" in result:
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_details: {str(e)}")
 
     # Fall back to local mock
-    return get_local_recipe_details(recipe_slug, engine_id, active_archetype_id, selected_grains)
+    return get_local_recipe_details(recipe_slug, recipe_name, engine_id, active_archetype_id, selected_grains)
 
 
-def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_id: str, selected_grains: str) -> dict:
+def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str, active_archetype_id: str, selected_grains: str) -> dict:
     """
-    Returns realistic local fallback recipe details (science profile & elevate tips).
+    Returns realistic local fallback recipe details with specific flavor matching.
     """
-    db = {
-        "drop_cookie": {
-            "classic": {
-                "menu": "A timeless classic cookie featuring golden edges, a soft, buttery chew, and a rich distribution of sweet chocolate drops.",
-                "science": "Standard lipid-starch coat limit. Gluten development is mechanically minimized to produce a crumb that is highly uniform, tender, and soft.",
-                "tips": [
-                    "Cream butter and sugar until light and fluffy to incorporate micro-air pockets.",
-                    "Chill the portioned cookie dough balls for 2 hours before baking to control the spread.",
-                    "Use a lower shelf in the oven to ensure even bottom browning without burning the sugars."
-                ]
-            },
-            "modern": {
-                "menu": "An advanced, chocolate-rich creation accented by subtle browned-butter notes, espresso highlights, and a melting caramel core.",
-                "science": "Double-hydration lipid emulsion focus. Pushes hydration to the starch ceiling, optimizing starch gelatinization for maximum softness.",
-                "tips": [
-                    "Substitute 10% of the flour with toasted hazelnut or almond meal to weaken gluten.",
-                    "Incorporate a 60-minute room temperature autolyse phase to pre-saturate starch molecules.",
-                    "Add the final portion of liquid slowly at the end of mixing to prevent emulsion breakage."
-                ]
-            }
-        },
-        "hearth_bread": {
-            "classic": {
-                "menu": "A traditional hearth bread with an aromatic, blistered sourdough crust and a moist, airy crumb of rich wheat flavor.",
-                "science": "Traditional Hearth Boule structure. Relies on moderate hydration (65-68%) and standard bulk fermentation to develop a strong, elastic gluten network.",
-                "tips": [
-                    "Perform 3 sets of stretch-and-folds during the first 2 hours of bulk fermentation.",
-                    "Preheat a heavy Dutch oven at 450°F (232°C) for at least 45 minutes to capture maximum radiant heat.",
-                    "Score the dough sharply at a 45-degree angle to create a beautiful, classic ear."
-                ]
-            },
-            "modern": {
-                "menu": "A high-hydration rustic batard, featuring a dark-baked mahogany crust and a highly open, custardy crumb with exceptional grain expression.",
-                "science": "Advanced high-hydration (75-80%) modern Batard. Pushes water saturation to the limits, creating a glossy, highly open, and gelatinized crumb structure.",
-                "tips": [
-                    "Carry out a 1-hour autolyse (flour and water only) before adding the starter and salt.",
-                    "Use coil folds instead of stretch-and-folds to build structure gently in high-hydration dough.",
-                    "Retard the shaped batard in a banner cloth at 38°F (3°C) for 16 hours to optimize enzyme browning."
-                ]
-            }
-        }
-    }
-    
-    # Simple heuristics to classify recipe_slug
-    is_modern = "l2" in recipe_slug or "modern" in recipe_slug or "high_hydration" in recipe_slug or "v2" in recipe_slug or "level2" in recipe_slug
-    key_type = "drop_cookie" if engine_id in ["cookies-shortbread", "cakes-batters"] else "hearth_bread"
-    sub_key = "modern" if is_modern else "classic"
-    
-    data = db.get(key_type, db["hearth_bread"])[sub_key]
-    
+    slug = (recipe_slug or "").lower()
+    name = (recipe_name or "").lower()
+    is_cookie = engine_id in ["cookies-shortbread", "cakes-batters"]
+
+    # 1. Custom matches for cookies & sweets
+    if is_cookie:
+        if "chocolate" in name or "chocolate" in slug:
+            menu = "A rich, chocolate-focused cookie offering layers of caramelized sugars and dark cocoa notes, balanced by a soft and chewy crumb."
+            science = "Sucrose caramelization interacts with saturated fats to limit structural gluten formation, preserving a tender, cakey bake."
+            tips = [
+                "Chill the creamed fat-sugar mixture to stabilize the fat crystals before creaming.",
+                "Bake at 350°F (177°C) to brown the sugars without drying out the center.",
+                "Fold in chocolate inclusions by hand at the very end to prevent streaking."
+            ]
+        elif "sugar" in name or "sugar" in slug:
+            menu = "A delicate vanilla bean cookie with a clean, sweet profile, featuring crisp edges and a pillowy, tender center."
+            science = "High sugar-to-water ratio prevents complete gluten hydration, resulting in an exceptionally tender crumb."
+            tips = [
+                "Use superfine baker's sugar for a smoother surface melt.",
+                "Roll dough balls gently in white sugar before baking for a sparkling finish.",
+                "Bake on parchment paper to control heat transfer to the cookie bottom."
+            ]
+        elif "snickerdoodle" in name or "snickerdoodle" in slug:
+            menu = "A warm, comforting cookie rolled in fragrant sweet cinnamon and sugar, offering a soft bite and a subtle tang."
+            science = "Cream of tartar introduces an acidic environment that inhibits browning slightly while promoting soft leavening."
+            tips = [
+                "Sift the cream of tartar with baking soda for uniform distribution.",
+                "Use high-quality Ceylon cinnamon for a sweeter, more aromatic spice coating.",
+                "Avoid over-creaming to keep the crumb thick and soft."
+            ]
+        elif "peanut" in name or "peanut" in slug:
+            menu = "A robust, peanut-infused drop cookie with a rich nutty flavor, finished with a classic fork-crisscross texture."
+            science = "High level of fats from natural nut oils shortens protein bonds, creating a dense, crumbly structure."
+            tips = [
+                "Stir the peanut butter thoroughly to integrate separated oils before measuring.",
+                "Bake at 325°F (163°C) to prevent burning the nut solids.",
+                "Use a fork dipped in water to press the classic crisscross pattern."
+            ]
+        elif "ginger" in name or "ginger" in slug or "molasses" in slug or "snap" in slug:
+            menu = "A deeply spiced molasses cookie featuring robust ginger warmth, sweet clove aromatics, and a beautifully cracked surface."
+            science = "Liquid invert sugars increase hygroscopicity, keeping the cookie center chewy while the crust dries and cracks."
+            tips = [
+                "Use fresh ground ginger alongside crystallized pieces for a multi-layered spice profile.",
+                "Bake on a double sheet pan to protect the molasses from burning.",
+                "Sprinkle the hot cookies with a touch of sea salt immediately after baking."
+            ]
+        elif "espresso" in name or "espresso" in slug or "coffee" in slug or "brown butter" in name or "brown_butter" in slug:
+            menu = "A sophisticated, deep-browned butter cookie infused with roasted espresso aromatics and complex caramel undertones."
+            science = "Browning the butter boils off water content, resulting in less steam leavening and a denser, chewier texture."
+            tips = [
+                "Cool the browned butter to room temperature before creaming with sugars.",
+                "Dissolve the espresso powder directly into the warm butter to unlock maximum aroma.",
+                "Allow a 24-hour dough rest to let the coffee flavor mature."
+            ]
+        elif "toffee" in name or "toffee" in slug or "pecan" in slug:
+            menu = "A rich, buttery cookie loaded with shards of house-made pecan brittle and sweet toffee chunks for a nutty, caramelized crunch."
+            science = "Toffee melts during baking to form caramelized pockets, while pecan oils weaken gluten networks."
+            tips = [
+                "Toast the pecans at 350°F (177°C) for 8 minutes before folding them in.",
+                "Chop the toffee into varying sizes for a mix of melted pockets and crunchy bits.",
+                "Rest the dough to allow the flour to fully absorb the liquid from the butter."
+            ]
+        elif "honey" in name or "honey" in slug or "lavender" in slug:
+            menu = "A light, botanical cookie sweetened with floral wildflower honey and infused with aromatic lavender buds."
+            science = "Honey's high fructose content accelerates Maillard reaction, yielding a golden exterior at lower temperatures."
+            tips = [
+                "Grind the lavender buds finely with sugar to avoid a soapy texture.",
+                "Bake at 325°F (163°C) to prevent premature browning of the honey sugars.",
+                "Brush a light honey-glaze on top of the warm cookies for a glossy shine."
+            ]
+        else:
+            menu = "A decadent, golden drop cookie baked to a perfect tender finish, offering sweet buttery aromatics."
+            science = "Standard starch-lipid emulsion ensures controlled horizontal spread and a soft, uniform crumb."
+            tips = [
+                "Cream fats and sugars thoroughly to build a stable air emulsion.",
+                "Bake at 350°F (177°C) until the edges are golden and the center is soft.",
+                "Let the cookies rest on the baking sheet for 5 minutes before transferring to a wire rack."
+            ]
+    # 2. Custom matches for bread & pizzas
+    else:
+        if "sourdough" in name or "sourdough" in slug or "boule" in slug:
+            menu = "An artisanal rustic boule featuring a crackly blistered crust and a highly open crumb with a complex, lactic sourness."
+            science = "Long natural fermentation allows lactic acid bacteria to weaken gluten slightly, enhancing extensibility and open cell structure."
+            tips = [
+                "Utilize a Dutch oven preheated to 450°F (232°C) to trap steam for maximum oven rise.",
+                "Perform stretch-and-folds during bulk fermentation to build dough strength gently.",
+                "Proof overnight at 38°F (3°C) to develop complex organic acids."
+            ]
+        elif "brioche" in name or "brioche" in slug or "challah" in slug or "enriched" in slug:
+            menu = "A rich, golden enriched loaf boasting an exceptionally pillowy texture and a sweet, buttery crumb aroma."
+            science = "Enrichment with lipids and egg proteins coats gluten strands, preventing tough elastic networks from forming."
+            tips = [
+                "Incorporate butter gradually in small cubes after the dough has built basic gluten structure.",
+                "Proof at a cool temperature, around 75°F (24°C), to prevent the butter from melting out.",
+                "Apply an egg wash immediately before baking for a glossy, deep-golden crust."
+            ]
+        elif "pizza" in name or "pizza" in slug:
+            menu = "A high-heat artisan pizza crust, thin and crisp on the bottom with a puffy, charred border."
+            science = "High heat gelatinizes starches rapidly, puffing the rim with steam while locking in moisture."
+            tips = [
+                "Preheat a baking steel or stone at 500°F (260°C) for at least an hour.",
+                "Use a high-protein flour to support thin stretching without tearing.",
+                "Limit toppings to keep the center crust from becoming soggy."
+            ]
+        elif "bagel" in name or "bagel" in slug or "pretzel" in slug:
+            menu = "A dense, chewy bagel with a shiny, deep-golden crust and a distinct malted wheat flavor."
+            science = "An alkaline bath or boiling step gelatinizes surface starches, creating a skin that restricts oven rise and results in a chewy crumb."
+            tips = [
+                "Boil bagels for 60 seconds per side in water with barley malt syrup.",
+                "Use high-gluten flour to achieve a dense, authentic chew.",
+                "Bake on wet wooden boards first, then flip directly onto the hearth stone."
+            ]
+        elif "flatbread" in name or "naan" in slug or "tortilla" in slug:
+            menu = "A warm, soft flatbread cooked on a blisteringly hot griddle, featuring charred spots and a flexible crumb."
+            science = "Rapid dry-heat cooking cooks the flour instantly, keeping the interior moist and flexible."
+            tips = [
+                "Cook on a cast-iron skillet preheated until smoking.",
+                "Roll dough thin to ensure it cooks through before burning.",
+                "Keep cooked flatbreads wrapped in a clean towel to trap steam and keep them soft."
+            ]
+        else:
+            menu = "A golden artisan loaf featuring a crisp, aromatic crust and a soft, flavorful crumb."
+            science = "Yeast fermentation generates carbon dioxide gas, stretching the gluten matrix to build a light crumb."
+            tips = [
+                "Preheat the oven with a steam pan to encourage maximum rise and a thin crust.",
+                "Check doneness by tapping the bottom; it should sound hollow when fully baked.",
+                "Cool completely on a wire rack to allow the internal crumb structure to set."
+            ]
+
     # Customize tips slightly based on selected grains
-    custom_tips = list(data["tips"])
+    custom_tips = list(tips)
     if selected_grains:
         first_grain = selected_grains.split(",")[0].strip().replace("_", " ").title()
         custom_tips.insert(1, f"Accommodate the high absorption rate of fresh {first_grain} by adding 2% extra water if dough feels stiff.")
 
     return {
-        "menu_description": data["menu"],
-        "sidebar_science_profile": data["science"],
+        "menu_description": menu,
+        "sidebar_science_profile": science,
         "elevate_recipe": custom_tips[:3]
     }
 

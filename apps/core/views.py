@@ -1820,6 +1820,7 @@ def ai_recipe_details(request):
     from apps.core import gemma_client
 
     recipe_slug = request.GET.get("recipe_slug", "").strip()
+    recipe_name = request.GET.get("recipe_name", "").strip()
     engine_id = request.GET.get("engine_id", "").strip()
     active_archetype_id = request.GET.get("active_archetype_id", "").strip()
     selected_grains = request.GET.get("selected_grains", "").strip()
@@ -1855,6 +1856,7 @@ def ai_recipe_details(request):
         engine_id=engine_id,
         active_archetype_id=active_archetype_id,
         recipe_slug=recipe_slug,
+        recipe_name=recipe_name,
         selected_grains=selected_grains_names,
         category_slug=category_slug
     )

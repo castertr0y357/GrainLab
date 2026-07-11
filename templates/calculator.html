@@ -444,7 +444,7 @@
             .map(b => b.id)
             .join(',');
 
-        let url = `/ai-recipe-details/?recipe_slug=${encodeURIComponent(recipe_slug)}&engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&selected_grains=${encodeURIComponent(selectedGrains)}&category_slug=${encodeURIComponent(this.selected_master)}`;
+        let url = `/ai-recipe-details/?recipe_slug=${encodeURIComponent(recipe_slug)}&recipe_name=${encodeURIComponent(this.presetName)}&engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&selected_grains=${encodeURIComponent(selectedGrains)}&category_slug=${encodeURIComponent(this.selected_master)}`;
 
         fetch(url)
             .then(res => res.json())
