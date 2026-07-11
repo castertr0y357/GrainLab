@@ -60,6 +60,247 @@ FACTUAL_DICTIONARY = {
 
 logger = logging.getLogger("grainlab.gemma")
 
+ENGINE_FLAVORS = {
+    "alkaline-bath": {
+        1: [
+            {"name": "Classic Salted Pretzel/Bagel", "desc": "A baseline standard profile featuring traditional crust browning and coarse sea salt finish."},
+            {"name": "Cinnamon Raisin Swirl", "desc": "A sweet-spiced profile with sweet raisin inclusions throughout a dense, chewy crumb."},
+            {"name": "Sesame Seed Crunch", "desc": "A nutty, toasted sesame seed coated crust pairing with a soft, low-hydration crumb."},
+            {"name": "Garlic Parmesan Glaze", "desc": "A savory garlic infused dough with a crispy, parmesan-crusted outer shell."},
+            {"name": "Honey Whole Wheat", "desc": "A mellow honey-sweetened bagel/pretzel base with high chewiness."}
+        ],
+        2: [
+            {"name": "Jalapeno White Cheddar", "desc": "An advanced variation with spicy jalapeno slices and pockets of melted aged white cheddar."},
+            {"name": "Malted Caramel Onion", "desc": "A modern savory profile featuring slow-caramelized sweet onion folding and malt glaze."},
+            {"name": "Everything Bagel Herb", "desc": "An aromatic toasted garlic, onion, poppy seed, and herb crusted variation."},
+            {"name": "Asiago Rosemary Crust", "desc": "An advanced formulation utilizing fresh rosemary infusion and baked asiago topping."},
+            {"name": "Sweet Maple Pecan Glaze", "desc": "A sweet, dessert-inspired bagel/pretzel with maple syrup infusion and toasted pecans."}
+        ]
+    },
+    "cakes-batters": {
+        1: [
+            {"name": "Vanilla Bean Sponge Cake", "desc": "A classic vanilla bean sponge with a light, airy crumb structure and high moisture retention."},
+            {"name": "Double Chocolate Chip Muffins", "desc": "A rich dark chocolate batter loaded with chocolate chunks for rich meltability."},
+            {"name": "Blueberry Lemon Zest Muffins", "desc": "A bright lemon-perfumed muffin base bursting with sweet whole blueberries."},
+            {"name": "Spiced Carrot Walnut Cake", "desc": "A traditional spiced batter containing grated carrots and toasted walnuts for texture."},
+            {"name": "Classic Golden Butter Cake", "desc": "A rich, tender butter cake with fine crumb and excellent structure."}
+        ],
+        2: [
+            {"name": "Toasted Coconut Lime Cream Cake", "desc": "An advanced cake featuring fresh lime zest and coconut cream emulsions."},
+            {"name": "Salted Caramel Banana Muffin", "desc": "A modern profile with caramelized banana paste and salted toffee swirl inserts."},
+            {"name": "Red Velvet Espresso Infusion", "desc": "A sophisticated cocoa-red velvet cake elevated by espresso micro-crystals."},
+            {"name": "Cardamom Pistachio Sponge", "desc": "An advanced delicate cake scented with ground cardamom and layered with toasted pistachios."},
+            {"name": "Lavender Honey Poppyseed Cake", "desc": "A modern floral cake sweetened with lavender-infused honey and poppyseeds."}
+        ]
+    },
+    "choux-paste": {
+        1: [
+            {"name": "Vanilla Bean Cream Puffs", "desc": "A traditional hollow choux shell filled with rich vanilla bean pastry cream."},
+            {"name": "Classic Chocolate Glazed Eclairs", "desc": "Standard elongated choux shells topped with a glossy dark chocolate ganache."},
+            {"name": "Salted Caramel Profiteroles", "desc": "Bite-sized choux puffs drizzled with warm, salty caramel glaze."},
+            {"name": "Espresso Mocha Cream Puffs", "desc": "Standard puffs filled with mocha coffee-infused light custard cream."},
+            {"name": "Lemon Curd Choux Puffs", "desc": "Traditional crisp choux filled with a tart, vibrant lemon curd."}
+        ],
+        2: [
+            {"name": "Pistachio Praline Eclairs", "desc": "Advanced choux pastry filled with toasted pistachio praline paste and pastry cream."},
+            {"name": "Hazelnut Gianduja Cream Puffs", "desc": "A modern variant filled with hazelnut-chocolate gianduja mousse."},
+            {"name": "Raspberry Rose Chantilly Puff", "desc": "An advanced floral choux containing fresh raspberry compote and rosewater cream."},
+            {"name": "Spiced Cardamom Pear Choux", "desc": "A modern choux pastry featuring poached pear cubes and cardamom cream."},
+            {"name": "Dark Chocolate Grand Marnier Eclair", "desc": "Advanced orange-liqueur infused pastry cream in a dark chocolate shell."}
+        ]
+    },
+    "cookies-shortbread": {
+        1: [
+            {"name": "Classic Chocolate Chip Cookie", "desc": "A baseline standard cookie prioritizing chocolate chips, balanced horizontal spread, and brown sugar chew."},
+            {"name": "Golden Sugar Cookie", "desc": "Standard soft-baked cookie with a balanced white sugar ratio for crisp edges and chewy centers."},
+            {"name": "Traditional Oatmeal Raisin", "desc": "Reliable rolled oats base bound by butter and eggs, generating a chewy, fibrous structure."},
+            {"name": "Spiced Ginger Snaps", "desc": "Standard molasses-sweetened cookie with high crispness and regular surface cracks."},
+            {"name": "Old-Fashioned Peanut Butter", "desc": "A dense, rich drop cookie using peanut paste fats to shorten gluten strands."}
+        ],
+        2: [
+            {"name": "Triple-Valrhona Malted Cookie", "desc": "Advanced recipe utilizing malted milk powder and three chocolate chunk inclusions."},
+            {"name": "Lactic-Fermented Buttermilk Cookie", "desc": "Modern profile incorporating buttermilk powder for a faint lactic tang and tender center."},
+            {"name": "Espresso-Infused Brown Butter", "desc": "Advanced cookie with espresso micro-crystals dispersed throughout browned butter fat."},
+            {"name": "Salted Toffee Pecan drop cookie", "desc": "Advanced cookie containing homemade toasted pecan brittle and butter toffee shards."},
+            {"name": "Chilled Honey-Lavender Cookie", "desc": "Modern floral cookie sweetened with wildflower honey and infused lavender."}
+        ]
+    },
+    "enriched-soft": {
+        1: [
+            {"name": "Classic Buttery Brioche", "desc": "A rich, egg-and-butter enriched dough yielding an ultra-soft, pillowy feather crumb."},
+            {"name": "Cinnamon Sugar Swirl Buns", "desc": "Standard sweet rolls filled with dark brown sugar and aromatic cinnamon paste."},
+            {"name": "Cardamom Spiced Sweet Bread", "desc": "A traditional Scandinavian recipe scented with freshly ground cardamom seed."},
+            {"name": "Honey Glazed Soft Dinner Rolls", "desc": "Baseline dinner rolls with a shiny honey glaze and exceptionally soft interior."},
+            {"name": "Orange Zest Morning Buns", "desc": "Sweet morning buns infused with refreshing orange zest sugar."}
+        ],
+        2: [
+            {"name": "Chocolate Hazelnut Babka", "desc": "Advanced twisted loaf layered with dark chocolate ganache and hazelnut spread."},
+            {"name": "Pecan Sticky Buns", "desc": "Advanced morning pastry baked in a pool of caramelized butter, honey, and pecans."},
+            {"name": "Vanilla Bean Glazed Yeasted Donuts", "desc": "Modern light yeasted dough, fried and dipped in a real vanilla bean glaze."},
+            {"name": "Maple Pecan Braided Crown", "desc": "An advanced braided crown dough filled with pure maple butter and chopped pecans."},
+            {"name": "Sourdough Enriched Swirl Loaf", "desc": "Modern sourdough brioche base utilizing wild yeast acidity to balance butter richness."}
+        ]
+    },
+    "flatbreads-griddles": {
+        1: [
+            {"name": "Garlic Herb Naan", "desc": "A classic flatbread brushed with garlic-infused ghee and fresh cilantro leaves."},
+            {"name": "Rosemary Sea Salt Focaccia", "desc": "Traditional dimpled olive oil flatbread topped with sea salt flakes and rosemary."},
+            {"name": "Toasted Sesame Pita Bread", "desc": "A baseline pocket pita coated with nutty toasted sesame seeds."},
+            {"name": "Scallion Green Onion Flatbread", "desc": "Standard griddle flatbread layered with green scallions and sesame oil."},
+            {"name": "Spicy Chili Flakes Roti", "desc": "Traditional thin unleavened flatbread seasoned with red chili flakes."}
+        ],
+        2: [
+            {"name": "Honey Butter English Crumpets", "desc": "Advanced high-hydration griddle bread with characteristic honeycomb internal holes."},
+            {"name": "Cumin Spiced Garlic Pita", "desc": "A modern pocket bread seasoned with roasted cumin and garlic paste."},
+            {"name": "Smoked Paprika Olive Flatbread", "desc": "Advanced flatbread topped with kalamata olives and smoked Spanish paprika."},
+            {"name": "Blue Cheese Fig Focaccia", "desc": "A modern flavor profile featuring sweet fig jam and aged blue cheese crumbs."},
+            {"name": "Caramelized Shallot Herb Flatbread", "desc": "Advanced griddle flatbread topped with slow-cooked sweet shallots."}
+        ]
+    },
+    "fresh-pasta-noodles": {
+        1: [
+            {"name": "Classic Egg Semolina Fettuccine", "desc": "Traditional rich golden pasta utilizing whole egg yolks and durum semolina flour."},
+            {"name": "Spinach Herb Green Tagliatelle", "desc": "A vibrant green spinach-puree infused dough with fresh garden herbs."},
+            {"name": "Roasted Garlic Ravioli Dough", "desc": "Standard pasta sheet seasoned with sweet roasted garlic paste."},
+            {"name": "Cracked Black Pepper Pappardelle", "desc": "Egg pasta dough studded with coarse cracked black pepper grains."},
+            {"name": "Vibrant Tomato Basil Penne", "desc": "A red-hued tomato paste and fresh basil infused pasta dough."}
+        ],
+        2: [
+            {"name": "Beet Root Pink Lasagna Sheets", "desc": "Advanced pasta sheets colored with concentrated sweet beet juice."},
+            {"name": "Squid Ink Black Linguine", "desc": "A modern savory seafood pasta colored and flavored with natural squid ink."},
+            {"name": "Porcini Mushroom Fettuccine", "desc": "Advanced pasta dough incorporating dehydrated wild porcini mushroom powder."},
+            {"name": "Golden Saffron Capellini", "desc": "A premium pasta dough infused with luxury saffron threads and white wine."},
+            {"name": "Herb-Laminated Silk Handkerchiefs", "desc": "Advanced pasta with whole parsley leaves pressed between translucent sheets."}
+        ]
+    },
+    "fried-doughs": {
+        1: [
+            {"name": "Glazed Vanilla Ring Donut", "desc": "A baseline standard donut with a light, airy crumb and vanilla sugar glaze."},
+            {"name": "Cinnamon Sugar Churros", "desc": "Crispy ridged fried dough coated in sweet cinnamon sugar."},
+            {"name": "Raspberry Jelly Filled Beignets", "desc": "Traditional square puffed donuts filled with seedless raspberry jam."},
+            {"name": "Chocolate Frosted Sprinkles Donut", "desc": "A rich yeasted donut topped with dark chocolate icing."},
+            {"name": "Powdered Sugar Funnel Cake", "desc": "Classic crispy fried batter ribbons dusted with powdered sugar."}
+        ],
+        2: [
+            {"name": "Maple Bacon Glazed Fritter", "desc": "An advanced yeast donut topped with maple glaze and crispy smoked bacon bits."},
+            {"name": "Apple Cider Spiced Donut", "desc": "A modern cake donut flavored with boiled apple cider reduction and fall spices."},
+            {"name": "Blueberry Glazed Cruller", "desc": "Advanced choux-based fried ring donut with a sweet blueberry glaze."},
+            {"name": "Meyer Lemon Filled Berliner", "desc": "A modern Berliner donut filled with tart Meyer lemon curd."},
+            {"name": "Cardamom Spiced Beignets", "desc": "Advanced beignets flavored with ground cardamom and orange blossom honey."}
+        ]
+    },
+    "lean-crusty": {
+        1: [
+            {"name": "Classic Sourdough Boule", "desc": "A traditional country sourdough boule with an open, airy crumb and blistered crust."},
+            {"name": "Roasted Garlic Herb Batard", "desc": "A baseline lean batard filled with roasted sweet garlic cloves and fresh herbs."},
+            {"name": "Rosemary Sea Salt French Loaf", "desc": "A fragrant, long loaf topped with fresh rosemary and sea salt flakes."},
+            {"name": "Black Olive Oregano Batard", "desc": "Standard Mediterranean loaf filled with sliced kalamata olives and oregano."},
+            {"name": "Simple Hearth Sourdough Batard", "desc": "A traditional, highly reliable sourdough batard prioritizing pure grain expression."}
+        ],
+        2: [
+            {"name": "Fig & Walnut Sourdough Boule", "desc": "Advanced modern boule combining sweet dried black mission figs and toasted walnuts."},
+            {"name": "Cranberry Pecan Hearth Loaf", "desc": "A modern flavor profile featuring tart dried cranberries and toasted pecans."},
+            {"name": "Toasted Sesame Crust Sourdough", "desc": "An advanced sourdough loaf coated completely in toasted sesame seeds for a nutty crunch."},
+            {"name": "Beer Batter Sourdough Rye", "desc": "A modern dark rye bread utilizing craft stout beer instead of water for hydration."},
+            {"name": "Multigrain Honey Seeded Loaf", "desc": "Advanced lean bread packed with pre-soaked flax, sunflower, and pumpkin seeds."}
+        ]
+    },
+    "pastry-lamination": {
+        1: [
+            {"name": "Classic Butter Croissant", "desc": "Traditional laminated pastry featuring hundreds of paper-thin buttery layers."},
+            {"name": "Pain au Chocolat", "desc": "A baseline standard laminated roll filled with sweet dark chocolate bars."},
+            {"name": "Cinnamon Swirl Danish", "desc": "Standard laminated danish dough swirled with sweet cinnamon butter fill."},
+            {"name": "Almond Frangipane Turnover", "desc": "Traditional turnover filled with sweet almond frangipane paste."},
+            {"name": "Raspberry Jam Laminated Twist", "desc": "A simple laminated twist filled with red raspberry jam."}
+        ],
+        2: [
+            {"name": "Meyer Lemon Cheese Danish", "desc": "Advanced laminated danish topped with sweet cream cheese and tart lemon curd."},
+            {"name": "Cardamom Twist Laminated Danish", "desc": "A modern danish flavored with Swedish cardamom sugar and orange glaze."},
+            {"name": "Maple Pecan Plait Danish", "desc": "Advanced braided danish pastry filled with maple syrup butter and toasted pecans."},
+            {"name": "Vanilla Custard Fruit Danish", "desc": "Advanced danish filled with vanilla pastry cream and seasonal fruits."},
+            {"name": "Apple Chausson Laminated Turnover", "desc": "A modern flaky turnover filled with caramelized apple compote."}
+        ]
+    },
+    "quick-breads-scones": {
+        1: [
+            {"name": "Banana Walnut Quick Bread", "desc": "A traditional sweet quick bread loaded with ripe mashed bananas and walnuts."},
+            {"name": "Blueberry Lemon Scones", "desc": "Classic flaky scones bursting with blueberries and glazed with fresh lemon juice."},
+            {"name": "Cranberry Sweet Orange Bread", "desc": "Standard quick bread featuring tart dried cranberries and sweet orange zest."},
+            {"name": "Spiced Pumpkin Scones", "desc": "A baseline pumpkin scone flavored with ginger, nutmeg, and cinnamon spices."},
+            {"name": "Classic Cheddar Chive Scones", "desc": "Standard savory scones layered with sharp cheddar cheese and fresh chives."}
+        ],
+        2: [
+            {"name": "Zucchini Chocolate Chip Quick Bread", "desc": "Advanced quick bread with shredded zucchini for moisture and dark chocolate chips."},
+            {"name": "Maple Pecan Scones", "desc": "Modern scones sweetened with maple syrup and packed with toasted pecans."},
+            {"name": "Cinnamon Apple Streusel Bread", "desc": "Advanced quick bread topped with apple slices and a brown sugar streusel."},
+            {"name": "Lemon Glazed Poppyseed Bread", "desc": "A modern quick bread with blue poppyseeds and a tart lemon icing glaze."},
+            {"name": "Ginger Molasses Scones", "desc": "Advanced spiced scones flavored with dark molasses and candied ginger."}
+        ]
+    }
+}
+
+def get_fallback_creativity_recipes(engine_id: str, active_archetype_id: str, pref_slugs: list) -> dict:
+    cat_slug = engine_id
+    if cat_slug not in ENGINE_FLAVORS:
+        for k, v in CATEGORY_TO_ENGINE.items():
+            if v == engine_id:
+                cat_slug = k
+                break
+                
+    flavors_data = ENGINE_FLAVORS.get(cat_slug)
+    if not flavors_data:
+        flavors_data = ENGINE_FLAVORS["cookies-shortbread"]
+        
+    recipes = []
+    for lvl in [1, 2]:
+        for idx, item in enumerate(flavors_data[lvl]):
+            recipes.append({
+                "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
+                "recipe_name": item["name"],
+                "creativity_level": lvl,
+                "description": item["desc"],
+                "recommended_grain_ids": pref_slugs,
+            })
+    return {"recipes": recipes}
+
+def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_level: int, pref_slugs: list) -> dict:
+    cat_slug = engine_id
+    if cat_slug not in ENGINE_FLAVORS:
+        for k, v in CATEGORY_TO_ENGINE.items():
+            if v == engine_id:
+                cat_slug = k
+                break
+                
+    recipes_list = ENGINE_FLAVORS.get(cat_slug, ENGINE_FLAVORS["cookies-shortbread"]).get(creativity_level, [])
+    
+    variants = []
+    tweak_descriptions = [
+        "A texture-focused variation utilizing modified lipid blending to alter the horizontal spread.",
+        "An aromatic variation introducing toasted inclusions to pair with the whole grain notes.",
+        "A hydration-adjusted twist designed to enhance the chewiness and moisture retention."
+    ]
+    
+    if len(recipes_list) >= 5:
+        # Pick 3 recipes from the flavor list (offsetting index to get different ones from the main recipe view)
+        offsets = [1, 3, 4]
+        for idx, offset in enumerate(offsets):
+            item = recipes_list[offset]
+            variants.append({
+                "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
+                "variant_name": f"{item['name']} Twist",
+                "description": f"{item['desc']} {tweak_descriptions[idx]}",
+                "recommended_grain_ids": pref_slugs,
+            })
+    else:
+        for idx in range(3):
+            variants.append({
+                "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
+                "variant_name": f"Variant {idx+1} for {active_archetype_id.replace('_', ' ').title()}",
+                "description": tweak_descriptions[idx],
+                "recommended_grain_ids": pref_slugs,
+            })
+    return {"generated_variants": variants}
+
 def _get_val(obj, key, default=None):
     if hasattr(obj, key):
         return getattr(obj, key)
@@ -244,119 +485,13 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
 
         hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
         soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
-        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta"] else soft_slugs
+        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta", "lean-crusty", "alkaline-bath", "fresh-pasta-noodles", "enriched-soft"] else soft_slugs
 
-        recipes = []
-        arch_title = active_archetype_id.replace("_", " ").title()
-
-        # Premium Predefined Recipe DB for select archetypes
-        db = {
-            "drop_cookie": {
-                1: [
-                    {"name": "Brown Butter Chocolate Chip", "desc": "A baseline standard cookie prioritizing partial butter browning for a rich nutty aroma and consistent horizontal spread.", "science": "Traditional drop cookie matrix where partially browned lipids emulsify with sugars, preventing premature crystallization.", "roi": "Low Effort / Immediate Aromatics Payoff", "tip": "Chill the dough for exactly 4 hours to consolidate solid fats before portioning."},
-                    {"name": "Golden Sugar Cookie", "desc": "Standard soft-baked cookie with a balanced white and brown sugar ratio for a crisp edge and chewy center.", "science": "Balanced sucrose and fructose levels dictate moderate caramelization rate and crust humidity threshold.", "roi": "Absolute Baseline / 100% Reliable", "tip": "Dust lightly with fine caster sugar before baking for a sparkling finish."},
-                    {"name": "Traditional Oatmeal Raisin", "desc": "Reliable rolled oats base bound by unsalted butter and whole eggs, generating a chewy, fibrous structure.", "science": "Oat beta-glucans absorb ambient moisture, buffering gluten starches from building excessive elasticity.", "roi": "High Fiber / Stable Structure", "tip": "Soak oats in warm water for 5 minutes if they appear excessively dry."},
-                    {"name": "Spiced Ginger Snaps", "desc": "Standard molasses-sweetened drop cookie with high crispness and regular surface cracks.", "science": "Acidic molasses triggers chemical leaveners, releasing carbon dioxide rapidly during the initial thermal phase.", "roi": "Low Effort / High Spice Expression", "tip": "Roll in coarse turbinado sugar for a premium crunch."},
-                    {"name": "Old-Fashioned Peanut Butter", "desc": "A dense, rich drop cookie using nut fats to shorten gluten strands, marked with traditional fork cross-hatching.", "science": "High lipid content from peanut paste coats proteins, limiting water absorption and gluten network formation.", "roi": "Low Effort / Rich Protein Bite", "tip": "Bake immediately after scoring to preserve the distinct structural fork ridges."}
-                ],
-                2: [
-                    {"name": "Triple-Valrhona Malted Cookie", "desc": "Advanced recipe utilizing malted milk powder and three varieties of dark chocolate chunk inclusions.", "science": "Diastatic malt flour modifies starches into simple sugars, accelerating Maillard browning and crumb softness.", "roi": "High Ingredient Cost / Premium Quality Payoff", "tip": "Incorporate chocolate chunks by hand folding to prevent melting into the dough."},
-                    {"name": "Lactic-Fermented Cookie", "desc": "Modern profile incorporating cultured buttermilk powder for a faint lactic tang and tender center.", "science": "Lactic acid weakens gluten networks chemically, keeping the horizontal spread highly uniform and soft.", "roi": "Skill Intensive / Unique Tangy Profile", "tip": "Rest dough in the refrigerator for 24 hours to maximize lactic acid hydration."},
-                    {"name": "Espresso-Infused Brown Butter", "desc": "Advanced drop cookie with dehydrated espresso micro-crystals dispersed throughout the lipid phase.", "science": "Hydrophobic fat phase encapsulates espresso particles, releasing intense roasted flavor during heat dissipation.", "roi": "Moderate Effort / Complex Dessert Flavor", "tip": "Sift espresso powder with dry ingredients to ensure a streak-free distribution."},
-                    {"name": "Salted Toffee Pecan drop cookie", "desc": "Advanced cookie containing homemade toasted pecan brittle and butter toffee shards.", "science": "Toffee shards melt locally during baking, creating localized caramel pockets with higher sugar concentration.", "roi": "Preparation Intensive / Premium Textural Contrast", "tip": "Use silpat mats rather than parchment to prevent sticky caramel leaks."},
-                    {"name": "Chilled Honey-Lavender Cookie", "desc": "Modern floral cookie sweetened with wildflower honey and infused with lavender-infused butter.", "science": "Hygroscopic honey retains moisture after cooling, ensuring long-term softness and slow starch retrogradation.", "roi": "Moderate Return / Sophisticated Botanical Aroma", "tip": "Do not over-bake, as honey-rich doughs brown rapidly and can burn easily."}
-                ],
-                3: [
-                    {"name": "Ancient Spelt & Miso Fudge", "desc": "Savory, umami-rich cookie combining ancient spelt flour and dark red miso paste for a deep savory chew.", "science": "Spelt's high extensibility coupled with miso's high salinity creates a soft, hyper-hydrated, dense structure.", "roi": "High Risk & Skill / Deep Savory Complexity", "tip": "Cream miso paste thoroughly with butter before sugar introduction to prevent lumps."},
-                    {"name": "Sourdough Discard Chocolate Chunk", "desc": "Experimental drop cookie utilizing wild yeast discard to ferment starches and add complex organic acids.", "science": "Acidity from sourdough discard lowers pH, optimizing enzymatic activity and reducing starch viscosity.", "roi": "Resource Optimization / Complex Crust Aesthetics", "tip": "Use cold discard straight from the fridge to prevent butter fat melting."},
-                    {"name": "Buckwheat Hazelnut drop cookie", "desc": "Experimental buckwheat cookie with toasted hazelnut oil adjustments.", "science": "Buckwheat's lack of gluten proteins results in zero elasticity, requiring egg lecithin to bind the cookie matrix.", "roi": "Dietary Friendly / Intense Earthy Nutty Profile", "tip": "Shape into tight domes before baking, as buckwheat dough lacks elasticity."},
-                    {"name": "Smoked Malt & Rye Cookie", "desc": "Experimental cookie utilizing dark rye flour and cherrywood smoked barley malt.", "science": "Rye pentosans absorb immense water, yielding a dense, fudgy, bread-like center with high structural integrity.", "roi": "Experimental / Heavy Smoked Aromatics", "tip": "Slightly flatten the portioned dough balls to encourage spreading."},
-                    {"name": "Einkorn Bourbon Toffee", "desc": "Experimental profile with ancient einkorn flour, bourbon-soaked vanilla bean, and charred sugar shards.", "science": "Einkorn's weak gluten structure and high carotenoids produce a tender, bright yellow crumb with high meltability.", "roi": "Artisanal / Sophisticated Cocktail Profile", "tip": "Bake at a slightly lower temperature (325F) to preserve einkorn's fragile starches."}
-                ]
-            },
-            "hearth_boule": {
-                1: [
-                    {"name": "Baseline Country Sourdough", "desc": "Standard reliable sourdough boule with 70% hydration and straightforward bulk fermentation.", "science": "Traditional yeast and lactic fermentation producing a uniform wild crumb and crisp crust.", "roi": "Low Effort / 100% Reliable", "tip": "Maintain dough temperature at 75-78F throughout bulk fermentation."},
-                    {"name": "Classic San Francisco Hearth", "desc": "Standard sour loaf with an extended cold retardation phase to highlight acetic acid notes.", "science": "Extended cold rest allows heterofermentative bacteria to produce high ratios of acetic acid.", "roi": "Patience Required / Intense Sour Tang", "tip": "Use a mature, slightly acidic starter to kickstart the cold souring."},
-                    {"name": "Everyday Sourdough Boule", "desc": "Standard no-knead sourdough utilizing simple stretch-and-folds for steady gluten strength.", "science": "Autolytic hydration activates protease enzymes, naturally relaxing the gluten matrix.", "roi": "Hands-off / High Volume return", "tip": "Do three sets of coil folds spaced 45 minutes apart during bulk fermentation."},
-                    {"name": "Rustic Sourdough Batard", "desc": "Standard oval loaf utilizing a small addition of whole rye flour for fermentation activity.", "science": "Rye minerals act as biological stimulants, accelerating wild yeast multiplication rates.", "roi": "Low Effort / Reliable Yeast Activity", "tip": "Score with a single deep slash at a 45-degree angle for an optimal ear."},
-                    {"name": "Simple Whole Wheat Sourdough", "desc": "Standard loaf with 20% fresh-milled whole wheat for rustic color and balanced gluten strength.", "science": "Bran particles cut gluten sheets slightly, which is balanced by high-protein white wheat.", "roi": "Low Effort / Balanced Nutty Crumb", "tip": "Sift out large bran flakes if you want a taller, lighter loaf."}
-                ],
-                2: [
-                    {"name": "High-Hydration Open Crumb batard", "desc": "Advanced modern sourdough with 82% hydration and intensive lamination folds.", "science": "High hydration levels create steam expansion channels, producing a glossy, open alveolar structure.", "roi": "Skill Intensive / Exceptional Glossy Crumb", "tip": "Perform a lamination stretch on a wet bench to build early structural memory."},
-                    {"name": "Polenta & Toasted Seed Sourdough", "desc": "Advanced loaf with cooked heirloom corn polenta and toasted sesame and flax seed inclusions.", "science": "Gelatinized polenta starches hold moisture, while toasted seed lipids add crunch.", "roi": "Preparation Intensive / Superior Moisture Retention", "tip": "Let polenta cool completely to room temperature before folding it into the dough."},
-                    {"name": "Porridge-Infused Sourdough", "desc": "Advanced modern loaf featuring a cooked oat porridge gel folded in during lamination.", "science": "Cooked oats lock water inside gelatinized starch matrices, preventing crumb staling.", "roi": "Skill Intensive / Extremely Soft Custard Crumb", "tip": "Adjust bulk fermentation time down, as warm porridge can speed up yeast activity."},
-                    {"name": "Purple Barley & Sesame loaf", "desc": "Advanced recipe utilizing fresh-milled purple barley flour and black sesame seeds.", "science": "Barley anthocyanins react with acidity, turning the crumb a gorgeous violet shade.", "roi": "Artisanal / Unique Visual Appeal", "tip": "Toast sesame seeds to release oils before incorporating them."},
-                    {"name": "Double-Fermented Sourdough", "desc": "Advanced loaf incorporating a yeast liquid ferment (levain) alongside a mature lactic starter.", "science": "Symbiotic yeast and lactic bacterial balances maximize gas production and flavor depth.", "roi": "Time Intensive / Maximum Oven Spring", "tip": "Ensure the liquid ferment is active and bubbly before mixing."}
-                ],
-                3: [
-                    {"name": "Ancient Einkorn & Wild Honey Sourdough", "desc": "Experimental loaf combining ancient einkorn flour with raw wildflower honey and elderberry ferment.", "science": "Einkorn's weak gluten proteins and sticky starch require precise low hydration and quick baking.", "roi": "High Risk / Historic Ancestral Flavor Profile", "tip": "Dust generously with flour and bake in a hot preheated dutch oven to hold shape."},
-                    {"name": "Spiced Emmer & Fig Sourdough", "desc": "Experimental recipe utilizing fresh-milled ancient emmer wheat and dry black mission figs.", "science": "Emmer's high gluten strength is balanced by enzymatic activity from dried fruit sugar.", "roi": "Artisanal / Complex Sweet & Savory Profile", "tip": "Chop figs finely to prevent large gas pocket voids around fruit zones."},
-                    {"name": "Baseline Country Sourdough", "desc": "Standard reliable sourdough boule with 70% hydration and straightforward bulk fermentation."},
-                    {"name": "Classic San Francisco Hearth", "desc": "Standard sour loaf with an extended cold retardation phase to highlight acetic acid notes."},
-                    {"name": "Everyday Sourdough Boule", "desc": "Standard no-knead sourdough utilizing simple stretch-and-folds for steady gluten strength."},
-                    {"name": "Rustic Sourdough Batard", "desc": "Standard oval loaf utilizing a small addition of whole rye flour for fermentation activity."},
-                    {"name": "Simple Whole Wheat Sourdough", "desc": "Standard loaf with 20% fresh-milled whole wheat for rustic color and balanced gluten strength."}
-                ],
-                2: [
-                    {"name": "High-Hydration Open Crumb batard", "desc": "Advanced modern sourdough with 82% hydration and intensive lamination folds."},
-                    {"name": "Polenta & Toasted Seed Sourdough", "desc": "Advanced loaf with cooked heirloom corn polenta and toasted sesame and flax seed inclusions."},
-                    {"name": "Porridge-Infused Sourdough", "desc": "Advanced modern loaf featuring a cooked oat porridge gel folded in during lamination."},
-                    {"name": "Purple Barley & Sesame loaf", "desc": "Advanced recipe utilizing fresh-milled purple barley flour and black sesame seeds."},
-                    {"name": "Double-Fermented Sourdough", "desc": "Advanced loaf incorporating a yeast liquid ferment (levain) alongside a mature lactic starter."}
-                ]
-            }
-        }
-
-        # Check if active archetype is in the predefined database
-        if active_archetype_id in db:
-            for lvl in [1, 2]:
-                for idx, item in enumerate(db[active_archetype_id].get(lvl, [])):
-                    recipes.append({
-                        "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
-                        "recipe_name": item["name"],
-                        "creativity_level": lvl,
-                        "description": item["desc"],
-                        "recommended_grain_ids": pref_slugs,
-                    })
-        else:
-            # High quality fallback generator using rich descriptors to avoid placeholders
-            fallbacks = {
-                1: [
-                    {"suffix": "Traditional Base", "desc": "A traditional, highly reliable base recipe prioritizing pure grain expression and standard, steady fermentation cycles."},
-                    {"suffix": "Daily Standard", "desc": "An optimized daily formula designed for consistent, high-yield crumb structure under standard kitchen conditions."},
-                    {"suffix": "Farmhouse Homestead", "desc": "A rustic farmhouse recipe incorporating a small percentage of whole-grain flour to enhance mineral complexity."},
-                    {"suffix": "Heritage Country Style", "desc": "Traditional country style formula featuring clean yeast activity and balanced hydration."},
-                    {"suffix": "Simple Hearth Formula", "desc": "A baseline, no-fuss formulation designed for beginner bakers using standard home ovens."}
-                ],
-                2: [
-                    {"name_addon": "High-Hydration Modernist", "desc": "An advanced variation with optimized hydration ratios and pre-ferments to create a glossy, open alveolar crumb."},
-                    {"name_addon": "Cultured Lactic Infusion", "desc": "A modern profile incorporating cultured dairy or preferments to achieve a subtle lactic tang and soft center."},
-                    {"name_addon": "Double-Preferment Blend", "desc": "A multi-stage build using both poolish and biga preferments for complex organic flavor profile."},
-                    {"name_addon": "Enzymatic Malt Boosted", "desc": "An advanced recipe utilizing diastatic malt adjustments to accelerate starch modification and crust coloration."},
-                    {"name_addon": "Autolysed Honey Glazed", "desc": "Modern formulation utilizing an extended autolyse phase and wildflower honey hydration."}
-                ]
-            }
-
-            for lvl in [1, 2]:
-                for idx, fallback_item in enumerate(fallbacks[lvl]):
-                    if lvl == 1:
-                        name = f"{arch_title} - {fallback_item['suffix']}"
-                    else:
-                        name = f"{fallback_item['name_addon']} {arch_title}"
-                    recipes.append({
-                        "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
-                        "recipe_name": name,
-                        "creativity_level": lvl,
-                        "description": fallback_item["desc"],
-                        "recommended_grain_ids": pref_slugs,
-                    })
-
-        return {"recipes": recipes}
+        return get_fallback_creativity_recipes(engine_id, active_archetype_id, pref_slugs)
 
     elif expected_keys and "generated_variants" in expected_keys:
         engine_id = user_data.get("engine_id", "hearth")
-        archetype_id = user_data.get("active_archetype_id", "")
+        active_archetype_id = user_data.get("active_archetype_id", "")
         creativity_level = user_data.get("creativity_level")
 
         # Build grain name slug list from inventory for recommended_grain_ids
@@ -369,77 +504,10 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
 
         hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
         soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
-        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta"] else soft_slugs
+        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta", "lean-crusty", "alkaline-bath", "fresh-pasta-noodles", "enriched-soft"] else soft_slugs
 
-        if creativity_level is not None:
-            c_lvl = int(creativity_level)
-            if c_lvl == 1:
-                variants = [
-                    {
-                        "variant_id": f"{archetype_id}_l1_alt1",
-                        "variant_name": f"Traditional Country {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs[:1],
-                    },
-                    {
-                        "variant_id": f"{archetype_id}_l1_alt2",
-                        "variant_name": f"Rustic Farmhouse {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs[:2] if len(pref_slugs) >= 2 else pref_slugs,
-                    },
-                    {
-                        "variant_id": f"{archetype_id}_l1_alt3",
-                        "variant_name": f"Quick-Rise {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs[:1],
-                    }
-                ]
-            else:
-                variants = [
-                    {
-                        "variant_id": f"{archetype_id}_l2_alt1",
-                        "variant_name": f"High-Hydration Modern {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs,
-                    },
-                    {
-                        "variant_id": f"{archetype_id}_l2_alt2",
-                        "variant_name": f"Long-Cold Ferment {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs,
-                    },
-                    {
-                        "variant_id": f"{archetype_id}_l2_alt3",
-                        "variant_name": f"Autolysed Modern {engine_id.title()}",
-                        "recommended_grain_ids": pref_slugs,
-                    }
-                ]
-        else:
-            # Original fallback behavior
-            from grainlab.engines.router import ENGINES
-            engine = ENGINES.get(engine_id)
-            archetype_data = getattr(engine, "archetypes", {}).get(archetype_id, {})
-            affinity = archetype_data.get("grain_affinity", "high_protein")
-
-            if affinity == "high_protein":
-                preferred = hard_grains or inventory
-            elif affinity == "medium_protein":
-                preferred = hard_grains or inventory
-            else:
-                preferred = soft_grains or inventory
-
-            preferred_slugs = [grain_slug(g) for g in preferred[:2]] or ["hard_red_spring_wheat"]
-            archetype_label = archetype_data.get("label", archetype_id.replace("_", " ").title())
-
-            variants = [
-                {
-                    "variant_id": f"{archetype_id}_v1_classic",
-                    "variant_name": f"Classic {archetype_label}",
-                    "recommended_grain_ids": preferred_slugs[:1],
-                },
-                {
-                    "variant_id": f"{archetype_id}_v2_high_hydration",
-                    "variant_name": f"High-Hydration {archetype_label}",
-                    "recommended_grain_ids": preferred_slugs,
-                }
-            ]
-
-        return {"generated_variants": variants}
+        c_lvl = int(creativity_level) if creativity_level is not None else 1
+        return get_fallback_variants(engine_id, active_archetype_id, c_lvl, pref_slugs)
 
     elif expected_keys and "pitfalls" in expected_keys:
         return {
@@ -1549,29 +1617,26 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
 def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list) -> dict | None:
     """
     Given the active engine slug, selected archetype ID, and inventory grain list,
-    asks the LLM to generate a list of recipe variants with sidebar science profiles,
-    AI insights, and recommended_grain_ids for golden highlight ring binding.
-    Returns: { 'generated_variants': [ {...}, ... ] } or None on failure.
+    asks the LLM to generate a list of recipe variants with descriptions
+    and recommended_grain_ids for golden highlight ring binding.
     """
     import json
 
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
-        "generate 3 distinct recipe variants optimized for fresh-milled whole grains. "
+        "generate 3 distinct recipe variants optimized for fresh-milled whole grains.\n"
         f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
-        "You are strictly prohibited from generating recipes crossing over into other archetypes or categories. "
+        "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
+        "CRITICAL: The variants must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
+        "\n"
         "Each variant must match this JSON schema:\n"
         "{\n"
         "  \"generated_variants\": [\n"
         "    {\n"
         "      \"variant_id\": \"unique_slug\",\n"
-        "      \"variant_name\": \"Human readable variant label\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
-        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile for this variant\",\n"
-        "      \"sidebar_ai_insight\": {\n"
-        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
-        "        \"last_10_percent_magic\": \"Specific craft tip to elevate from good to exceptional\"\n"
-        "      }\n"
+        "      \"variant_name\": \"Human readable variant label (representing a culinary/flavor target)\",\n"
+        "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\",\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
         "    }\n"
         "  ]\n"
         "}\n"
@@ -1592,7 +1657,7 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_variants: {str(e)}")
 
-    # Fall back to mock in all cases when AI is not active or fails
+    # Fall back to mock
     mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
     return mock
 
@@ -1612,14 +1677,16 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
         "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profiles).\n"
         "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
         "\n"
+        "CRITICAL: The recipe profiles must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
+        "\n"
         "Each recipe must match this JSON schema:\n"
         "{\n"
         "  \"recipes\": [\n"
         "    {\n"
         "      \"recipe_id\": \"unique_slug\",\n"
-        "      \"recipe_name\": \"Human readable title\",\n"
+        "      \"recipe_name\": \"Human readable title (representing a culinary/flavor target)\",\n"
         "      \"creativity_level\": 1,  // must be 1 or 2\n"
-        "      \"description\": \"1-2 sentence description explaining the recipe structure\",\n"
+        "      \"description\": \"1-2 sentence description explaining the flavor structure\",\n"
         "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
         "    }\n"
         "  ]\n"
@@ -1658,13 +1725,15 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
         f"generate exactly 3 alternative structural profile variations matching ONLY that creativity level.\n"
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
+        "CRITICAL: The variations must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
         "\n"
         "Each variation must match this JSON schema:\n"
         "{\n"
         "  \"generated_variants\": [\n"
         "    {\n"
         "      \"variant_id\": \"unique_slug\",\n"
-        "      \"variant_name\": \"Human readable variant label\",\n"
+        "      \"variant_name\": \"Human readable variant label (representing a culinary/flavor target)\",\n"
+        "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\",\n"
         "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
         "    }\n"
         "  ]\n"

@@ -398,12 +398,8 @@
                     <span style="margin-left: 0.75rem; font-size: 0.85rem;">Generating alternative variations...</span>
                 </div>
 
-                <!-- Alternatives Cards (Expanded to a new row below) -->
                 <template x-if="expanded_level === 1 && !variant_loading && alternative_variants.length > 0">
-                    <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: #81c784; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🧬</span> Alternative Structural Variations (Tweak Options)
-                        </div>
+                    <div style="margin-top: 0.75rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
                             <template x-for="alt in alternative_variants" :key="alt.variant_id">
                                 <div class="card" 
@@ -411,10 +407,10 @@
                                      @mouseenter="onRecipeHover(alt)"
                                      @mouseleave="clearHoveredElement()"
                                      @click="selectRecipe(alt)"
-                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
-                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);'">
+                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
                                     <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
-                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.description"></p>
                                 </div>
                             </template>
                         </div>
@@ -456,12 +452,8 @@
                     <span style="margin-left: 0.75rem; font-size: 0.85rem;">Generating alternative variations...</span>
                 </div>
 
-                <!-- Alternatives Cards (Expanded to a new row below) -->
                 <template x-if="expanded_level === 2 && !variant_loading && alternative_variants.length > 0">
-                    <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: #64b5f6; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🧬</span> Alternative Structural Variations (Tweak Options)
-                        </div>
+                    <div style="margin-top: 0.75rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
                             <template x-for="alt in alternative_variants" :key="alt.variant_id">
                                 <div class="card" 
@@ -469,10 +461,10 @@
                                      @mouseenter="onRecipeHover(alt)"
                                      @mouseleave="clearHoveredElement()"
                                      @click="selectRecipe(alt)"
-                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
-                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);'">
+                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
                                     <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
-                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.description"></p>
                                 </div>
                             </template>
                         </div>
