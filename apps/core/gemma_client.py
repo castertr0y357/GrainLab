@@ -230,89 +230,247 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
             "elevate_recipe": elevate_recipe
         }
 
+    elif expected_keys and "recipes" in expected_keys:
+        engine_id = user_data.get("engine_id", "hearth")
+        inventory = user_data.get("inventory", [])
+        
+        # Build grain name slug list from inventory for recommended_grain_ids
+        hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
+        soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
+        
+        def grain_slug(g):
+            return g.get("name", "").lower().replace(" ", "_").replace("/", "").replace("-", "_")
+
+        hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
+        soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
+        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta"] else soft_slugs
+
+        recipes = [
+            {
+                "recipe_id": f"{engine_id}_level1_concept",
+                "recipe_name": f"Classic {engine_id.title()} Profile",
+                "creativity_level": 1,
+                "description": f"A baseline, highly reliable formula for {engine_id.title()}. Designed for consistent crumb structure and simple, pure grain expression.",
+                "recommended_grain_ids": pref_slugs,
+                "sidebar_science_profile": f"This standard {engine_id.title()} configuration relies on traditional hydrations and straightforward yeast activity.",
+                "sidebar_ai_insight": {
+                    "labor_roi": "Absolute Baseline / 100% Reliable",
+                    "last_10_percent_magic": "Ensure you maintain water temperature at 75-78°F to foster stable fermentation."
+                }
+            },
+            {
+                "recipe_id": f"{engine_id}_level2_concept",
+                "recipe_name": f"Modern Advanced {engine_id.title()}",
+                "creativity_level": 2,
+                "description": f"An advanced modern variation of {engine_id.title()} featuring optimized hydration ratios and pre-ferments to enhance texture.",
+                "recommended_grain_ids": pref_slugs,
+                "sidebar_science_profile": f"Pushes the hydration boundaries of {engine_id.title()} to achieve a more open, modern crumb structure.",
+                "sidebar_ai_insight": {
+                    "labor_roi": "High Return / Texture & Volume Payoff",
+                    "last_10_percent_magic": "Incorporate a 30-minute autolyse phase before adding salt or leaven to relax gluten sheets."
+                }
+            },
+            {
+                "recipe_id": f"{engine_id}_level3_concept",
+                "recipe_name": f"Experimental Heritage {engine_id.title()}",
+                "creativity_level": 3,
+                "description": f"An experimental, rustic {engine_id.title()} profile utilizing complex ancient grains and high-hydration structures.",
+                "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else pref_slugs,
+                "sidebar_science_profile": f"Integrates ancient grains with varying enzymatic activity and weaker gluten, demanding precision water calibration.",
+                "sidebar_ai_insight": {
+                    "labor_roi": "High Risk & Skill / Distinct Flavor Profile",
+                    "last_10_percent_magic": "Pre-hydrate ancient grain portions at 80% water for 45 minutes to avoid dry, crumbly starch zones."
+                }
+            }
+        ]
+        return {"recipes": recipes}
+
     elif expected_keys and "generated_variants" in expected_keys:
-        # Mock generate_recipe_variants
         engine_id = user_data.get("engine_id", "hearth")
         archetype_id = user_data.get("active_archetype_id", "")
+        creativity_level = user_data.get("creativity_level")
 
         # Build grain name slug list from inventory for recommended_grain_ids
         inventory = user_data.get("inventory", [])
         hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
         soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
-        any_grain = inventory[:1]
 
         def grain_slug(g):
             return g.get("name", "").lower().replace(" ", "_").replace("/", "").replace("-", "_")
 
-        # Determine recommended grain slugs based on archetype grain_affinity
-        # Look up archetype grain_affinity from engine
-        from grainlab.engines.router import ENGINES
-        engine = ENGINES.get(engine_id)
-        archetype_data = getattr(engine, "archetypes", {}).get(archetype_id, {})
-        affinity = archetype_data.get("grain_affinity", "high_protein")
+        hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
+        soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
+        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta"] else soft_slugs
 
-        if affinity == "high_protein":
-            preferred = hard_grains or inventory
-        elif affinity == "medium_protein":
-            preferred = hard_grains or inventory
+        if creativity_level is not None:
+            c_lvl = int(creativity_level)
+            if c_lvl == 1:
+                variants = [
+                    {
+                        "variant_id": f"{archetype_id}_l1_alt1",
+                        "variant_name": f"Traditional Country {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs[:1],
+                        "sidebar_science_profile": "Traditional low-hydration approach focusing on structural strength and regular hole distribution.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "Low Effort / High Reliability",
+                            "last_10_percent_magic": "Extend bulk fermentation by 20 minutes if room temperature drops below 70°F."
+                        }
+                    },
+                    {
+                        "variant_id": f"{archetype_id}_l1_alt2",
+                        "variant_name": f"Rustic Farmhouse {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs[:2] if len(pref_slugs) >= 2 else pref_slugs,
+                        "sidebar_science_profile": "Baseline standard with a small whole-wheat addition for increased tannin and ash content.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "Low Effort / Balanced Flavor",
+                            "last_10_percent_magic": "Use a light dusting of rye flour on the proofing basket to enhance crust crispiness."
+                        }
+                    },
+                    {
+                        "variant_id": f"{archetype_id}_l1_alt3",
+                        "variant_name": f"Quick-Rise {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs[:1],
+                        "sidebar_science_profile": "Adjusted yeast percentage to accelerate bulk fermentation without collapsing gluten walls.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "Fast Turnaround / Commercial Standard",
+                            "last_10_percent_magic": "Add 0.5% malt powder to promote yeast activity and speed up browning."
+                        }
+                    }
+                ]
+            elif c_lvl == 2:
+                variants = [
+                    {
+                        "variant_id": f"{archetype_id}_l2_alt1",
+                        "variant_name": f"High-Hydration Modern {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs,
+                        "sidebar_science_profile": "Elevated hydration profile demanding double-hydration mixing techniques to trap maximum water.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "High Effort / Maximum Extensibility",
+                            "last_10_percent_magic": "Add the final 5% of formula water slowly at the end of the mixing cycle to avoid breaking gluten bonds."
+                        }
+                    },
+                    {
+                        "variant_id": f"{archetype_id}_l2_alt2",
+                        "variant_name": f"Long-Cold Ferment {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs,
+                        "sidebar_science_profile": "Starch conversion optimization through a 24-hour cold retardation, developing organic acids.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "Medium Effort / Premium Flavor Complex",
+                            "last_10_percent_magic": "Bake immediately from the refrigerator to maximize oven spring contrast."
+                        }
+                    },
+                    {
+                        "variant_id": f"{archetype_id}_l2_alt3",
+                        "variant_name": f"Autolysed Modern {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs,
+                        "sidebar_science_profile": "Enzymatic flour self-development stage before yeast addition, maximizing extensibility.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "Low Active Effort / Great Yield",
+                            "last_10_percent_magic": "Perform a 60-minute autolyse at room temperature before adding starter or yeast."
+                        }
+                    }
+                ]
+            else:
+                variants = [
+                    {
+                        "variant_id": f"{archetype_id}_l3_alt1",
+                        "variant_name": f"Spontaneous Ancient {engine_id.title()}",
+                        "recommended_grain_ids": [grain_slug(g) for g in soft_grains] or pref_slugs,
+                        "sidebar_science_profile": "Highly experimental formula using 100% Spelt or ancient grains for a soft, weak gluten profile.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "Delicate Handling / Unique Crumb Texture",
+                            "last_10_percent_magic": "Reduce final proofing time by 30% to prevent over-acidification from weakening the weak ancient gluten."
+                        }
+                    },
+                    {
+                        "variant_id": f"{archetype_id}_l3_alt2",
+                        "variant_name": f"Wild Inclusion {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs,
+                        "sidebar_science_profile": "Incorporation of secondary solids at 20% baker's weight. Gluten network must sustain the weight of inclusion particles.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "High Effort / Premium Culinary Value",
+                            "last_10_percent_magic": "Fold inclusions in during the second stretch-and-fold cycle to distribute them evenly without tearing gluten sheets."
+                        }
+                    },
+                    {
+                        "variant_id": f"{archetype_id}_l3_alt3",
+                        "variant_name": f"Extreme Hydration Porridge {engine_id.title()}",
+                        "recommended_grain_ids": pref_slugs,
+                        "sidebar_science_profile": "Gelatinized flour porridge addition (tangzhong method) to carry water up to 90% baker's math equivalent.",
+                        "sidebar_ai_insight": {
+                            "labor_roi": "High Effort / Ultra-Soft Custardy Crumb",
+                            "last_10_percent_magic": "Cook the porridge portion to exactly 150°F (65°C) and let it cool completely before mixing."
+                        }
+                    }
+                ]
         else:
-            preferred = soft_grains or inventory
+            # Original fallback behavior
+            from grainlab.engines.router import ENGINES
+            engine = ENGINES.get(engine_id)
+            archetype_data = getattr(engine, "archetypes", {}).get(archetype_id, {})
+            affinity = archetype_data.get("grain_affinity", "high_protein")
 
-        preferred_slugs = [grain_slug(g) for g in preferred[:2]] or ["hard_red_spring_wheat"]
+            if affinity == "high_protein":
+                preferred = hard_grains or inventory
+            elif affinity == "medium_protein":
+                preferred = hard_grains or inventory
+            else:
+                preferred = soft_grains or inventory
 
-        archetype_label = archetype_data.get("label", archetype_id.replace("_", " ").title())
+            preferred_slugs = [grain_slug(g) for g in preferred[:2]] or ["hard_red_spring_wheat"]
+            archetype_label = archetype_data.get("label", archetype_id.replace("_", " ").title())
 
-        variants = [
-            {
-                "variant_id": f"{archetype_id}_v1_classic",
-                "variant_name": f"Classic {archetype_label}",
-                "recommended_grain_ids": preferred_slugs[:1],
-                "sidebar_science_profile": (
-                    f"The Classic {archetype_label} formula follows traditional baker's percentages with a conservative hydration ceiling. "
-                    f"High-protein grain stocks in the recommended tier supply the gluten elasticity ceiling required for oven spring."
-                ),
-                "sidebar_ai_insight": {
-                    "labor_roi": "High Priority / Absolute Foundation",
-                    "last_10_percent_magic": (
-                        f"Focus on a 30-minute bench rest after shaping to relax the gluten sheets before the final bake. "
-                        f"This single step transforms a good {archetype_label} into an exceptional one."
-                    )
+            variants = [
+                {
+                    "variant_id": f"{archetype_id}_v1_classic",
+                    "variant_name": f"Classic {archetype_label}",
+                    "recommended_grain_ids": preferred_slugs[:1],
+                    "sidebar_science_profile": (
+                        f"The Classic {archetype_label} formula follows traditional baker's percentages with a conservative hydration ceiling. "
+                        f"High-protein grain stocks in the recommended tier supply the gluten elasticity ceiling required for oven spring."
+                    ),
+                    "sidebar_ai_insight": {
+                        "labor_roi": "High Priority / Absolute Foundation",
+                        "last_10_percent_magic": (
+                            f"Focus on a 30-minute bench rest after shaping to relax the gluten sheets before the final bake. "
+                            f"This single step transforms a good {archetype_label} into an exceptional one."
+                        )
+                    }
+                },
+                {
+                    "variant_id": f"{archetype_id}_v2_high_hydration",
+                    "variant_name": f"High-Hydration {archetype_label}",
+                    "recommended_grain_ids": preferred_slugs,
+                    "sidebar_science_profile": (
+                        f"An elevated hydration profile pushes starch gelatinization beyond the baseline threshold. "
+                        f"Open crumb development accelerates but gluten must compensate with additional folding cycles. "
+                        f"Grain selection is critical — only high-absorption stocks can carry the extra water without structural collapse."
+                    ),
+                    "sidebar_ai_insight": {
+                        "labor_roi": "Medium Priority / High-Skill Payoff",
+                        "last_10_percent_magic": (
+                            f"Incorporate 3 sets of stretch-and-fold during the first 90 minutes of bulk fermentation. "
+                            f"This aligns gluten sheets without mechanical kneading, preserving the open crumb structure."
+                        )
+                    }
+                },
+                {
+                    "variant_id": f"{archetype_id}_v3_heritage_blend",
+                    "variant_name": f"Heritage Grain {archetype_label}",
+                    "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else preferred_slugs,
+                    "sidebar_science_profile": (
+                        f"A multi-grain heritage blend introduces pentosan content and varied protein profiles. "
+                        f"The blend complexity adds depth of flavor and subtle textural contrast, but demands careful water absorption calibration."
+                    ),
+                    "sidebar_ai_insight": {
+                        "labor_roi": "High Priority / Flavor Differentiation",
+                        "last_10_percent_magic": (
+                            f"Pre-soak ancient or soft grain portions in 20% of the formula water for 30 minutes before mixing. "
+                            f"This equalizes hydration rates across the diverse grain matrix and prevents gummy pockets."
+                        )
+                    }
                 }
-            },
-            {
-                "variant_id": f"{archetype_id}_v2_high_hydration",
-                "variant_name": f"High-Hydration {archetype_label}",
-                "recommended_grain_ids": preferred_slugs,
-                "sidebar_science_profile": (
-                    f"An elevated hydration profile pushes starch gelatinization beyond the baseline threshold. "
-                    f"Open crumb development accelerates but gluten must compensate with additional folding cycles. "
-                    f"Grain selection is critical — only high-absorption stocks can carry the extra water without structural collapse."
-                ),
-                "sidebar_ai_insight": {
-                    "labor_roi": "Medium Priority / High-Skill Payoff",
-                    "last_10_percent_magic": (
-                        f"Incorporate 3 sets of stretch-and-fold during the first 90 minutes of bulk fermentation. "
-                        f"This aligns gluten sheets without mechanical kneading, preserving the open crumb structure."
-                    )
-                }
-            },
-            {
-                "variant_id": f"{archetype_id}_v3_heritage_blend",
-                "variant_name": f"Heritage Grain {archetype_label}",
-                "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else preferred_slugs,
-                "sidebar_science_profile": (
-                    f"A multi-grain heritage blend introduces pentosan content and varied protein profiles. "
-                    f"The blend complexity adds depth of flavor and subtle textural contrast, but demands careful water absorption calibration."
-                ),
-                "sidebar_ai_insight": {
-                    "labor_roi": "High Priority / Flavor Differentiation",
-                    "last_10_percent_magic": (
-                        f"Pre-soak ancient or soft grain portions in 20% of the formula water for 30 minutes before mixing. "
-                        f"This equalizes hydration rates across the diverse grain matrix and prevents gummy pockets."
-                    )
-                }
-            }
-        ]
+            ]
 
         return {"generated_variants": variants}
 
@@ -1412,3 +1570,129 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
     # Fall back to mock in all cases when AI is not active or fails
     mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
     return mock
+
+
+def generate_creativity_recipes(engine_id: str, inventory: list) -> dict | None:
+    """
+    Given the engine slug and inventory grain list, asks the LLM to generate exactly 3 recipe profiles
+    corresponding to Creativity Level 1, 2, and 3.
+    """
+    import json
+
+    system_prompt = (
+        "You are a baking science expert. Given an engine type and inventory grain list, "
+        "generate exactly 3 distinct recipe profiles matching these three Creativity Levels:\n"
+        "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profile).\n"
+        "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
+        "- Creativity Level 3: Experimental/Complex Profiles. (Unusual grain blends, high hydration, complex preferments, or inclusions).\n"
+        "\n"
+        "Each recipe must match this JSON schema:\n"
+        "{\n"
+        "  \"recipes\": [\n"
+        "    {\n"
+        "      \"recipe_id\": \"unique_slug_level1\",\n"
+        "      \"recipe_name\": \"Human readable title\",\n"
+        "      \"creativity_level\": 1,\n"
+        "      \"description\": \"1-2 sentence description explaining the recipe structure\",\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
+        "      \"sidebar_ai_insight\": {\n"
+        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
+        "        \"last_10_percent_magic\": \"Specific craft tip to elevate the bake\"\n"
+        "      }\n"
+        "    },\n"
+        "    {\n"
+        "      \"recipe_id\": \"unique_slug_level2\",\n"
+        "      \"recipe_name\": \"Human readable title\",\n"
+        "      \"creativity_level\": 2,\n"
+        "      \"description\": \"1-2 sentence description\",\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
+        "      \"sidebar_ai_insight\": {\n"
+        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
+        "        \"last_10_percent_magic\": \"Specific craft tip to elevate the bake\"\n"
+        "      }\n"
+        "    },\n"
+        "    {\n"
+        "      \"recipe_id\": \"unique_slug_level3\",\n"
+        "      \"recipe_name\": \"Human readable title\",\n"
+        "      \"creativity_level\": 3,\n"
+        "      \"description\": \"1-2 sentence description\",\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
+        "      \"sidebar_ai_insight\": {\n"
+        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
+        "        \"last_10_percent_magic\": \"Specific craft tip to elevate the bake\"\n"
+        "      }\n"
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "IMPORTANT: recommended_grain_ids must be lowercase name slugs matching grains from the provided inventory. "
+        "Return ONLY raw JSON with no markdown fences."
+    )
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "inventory": inventory,
+    })
+
+    try:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["recipes"])
+        if result and isinstance(result.get("recipes"), list):
+            return result
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling generate_creativity_recipes: {str(e)}")
+
+    # Fall back to mock
+    mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["recipes"])
+    return mock
+
+
+def generate_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list) -> dict | None:
+    """
+    Given the engine, target creativity level, parent recipe, and inventory grain list,
+    asks the LLM to generate 3 alternative recipe variations matching ONLY that creativity level.
+    """
+    import json
+
+    system_prompt = (
+        f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
+        f"generate exactly 3 alternative structural profile variations matching ONLY that creativity level.\n"
+        "\n"
+        "Each variation must match this JSON schema:\n"
+        "{\n"
+        "  \"generated_variants\": [\n"
+        "    {\n"
+        "      \"variant_id\": \"unique_slug\",\n"
+        "      \"variant_name\": \"Human readable variant label\",\n"
+        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile for this variant\",\n"
+        "      \"sidebar_ai_insight\": {\n"
+        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
+        "        \"last_10_percent_magic\": \"Specific craft tip to elevate from good to exceptional\"\n"
+        "      }\n"
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "IMPORTANT: recommended_grain_ids must be lowercase name slugs matching grains from the provided inventory. "
+        "Return ONLY raw JSON with no markdown fences."
+    )
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "creativity_level": creativity_level,
+        "active_archetype_id": active_archetype_id,
+        "inventory": inventory,
+    })
+
+    try:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["generated_variants"])
+        if result and isinstance(result.get("generated_variants"), list):
+            return result
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling generate_creativity_variants: {str(e)}")
+
+    # Fall back to mock
+    mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
+    return mock
+

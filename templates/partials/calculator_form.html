@@ -306,87 +306,180 @@
 
 
 
-        <!-- TIER 1: Generic Archetype Deck -->
-        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🧬</span> Select Recipe Archetype
+        <!-- CREATIVITY LEVELS RECIPE ENGINE -->
+        <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🧬</span> Select Recipe Target (Creativity Tiers)
         </div>
-        <div id="archetype-deck"
-             style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-            <template x-if="selected_master && enginesArchetypes[selected_master] && Object.keys(enginesArchetypes[selected_master]).length > 0">
-                <div style="display: contents;">
-                    <template x-for="[archetype_id, arch_data] in Object.entries(enginesArchetypes[selected_master] || {})" :key="archetype_id">
-                        <button type="button"
-                                class="chip"
-                                :class="active_archetype_id === archetype_id ? 'active' : ''"
-                                @click="selectArchetype(archetype_id, selected_master)"
-                                @mouseenter="setHoveredElement('archetype_' + archetype_id)"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('archetype_' + archetype_id)"
-                                @focusout="clearHoveredElement()"
-                                tabindex="0"
-                                style="height: 48px; min-width: 120px; padding: 0 1.25rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; letter-spacing: 0.03em; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); border: none;">
-                            <span x-text="arch_data.icon || '🧬'"></span>
-                            <span x-text="arch_data.label || archetype_id.replace(/_/g, ' ')"></span>
-                        </button>
-                    </template>
+
+        <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+            <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+            <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Analyzing flour profiles & formulating recipes...</p>
+        </div>
+
+        <div x-show="!creativity_loading" style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.5rem;">
+            
+            <!-- ROW 1: Baseline Standard Profiles (Level 1) -->
+            <div x-show="expanded_level === null || expanded_level === 1" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #81c784; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🌱</span> Baseline Standard Profiles (Level 1)
+                    </div>
+                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
+                            @click="toggleExpandLevel(1)">
+                        <span x-text="expanded_level === 1 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
+                    </button>
                 </div>
-            </template>
-            <template x-if="!selected_master || !enginesArchetypes[selected_master] || Object.keys(enginesArchetypes[selected_master] || {}).length === 0">
-                <p style="font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px dashed var(--border); border-radius: var(--radius-md); margin: 0;">Select a dough category in Phase 1 to reveal available archetypes.</p>
-            </template>
-        </div>
-
-        <!-- TIER 2: Dynamic Variant Row (DynamicVariantRow) -->
-        <div id="DynamicVariantRow"
-             x-show="active_archetype_id"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 transform -translate-y-2"
-             x-transition:enter-end="opacity-100 transform translate-y-0"
-             style="margin-bottom: 1.5rem;">
-
-            <!-- Loading state -->
-            <div x-show="variant_loading"
-                 style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; text-align: center; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem;">
-                <span class="spinner" style="width: 28px; height: 28px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-                <p style="margin-top: 0.75rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Generating recipe variants...</p>
-            </div>
-
-            <!-- Variant cards row -->
-            <div x-show="!variant_loading && generated_variants.length > 0">
-                <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">⚗️ Generated Variants — Click to bind grain recommendations</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem;">
-                    <template x-for="variant in generated_variants" :key="variant.variant_id">
-                        <div class="card"
-                             :class="hovered_variant === variant.variant_id ? 'hovered' : ''"
-                             @mouseenter="onVariantHover(variant)"
-                             @focusin="onVariantHover(variant)"
+                
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
+                    <!-- Conceptual Item Card -->
+                    <template x-for="recipe in getRecipesForLevel(1)" :key="recipe.recipe_id">
+                        <div class="card" 
+                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
+                             @mouseenter="onRecipeHover(recipe)"
                              @mouseleave="clearHoveredElement()"
-                             @focusout="clearHoveredElement()"
-                             @click="onVariantSelect(variant)"
-                             tabindex="0"
-                             style="padding: 1rem; cursor: pointer; border-width: 2px; transition: var(--transition); margin-bottom: 0; user-select: none;"
-                             :style="hovered_variant === variant.variant_id ? 'border-color: var(--accent); background: rgba(255,136,0,0.06); box-shadow: 0 0 14px rgba(255,136,0,0.3);' : recommended_grain_ids.length > 0 && variant.recommended_grain_ids && variant.recommended_grain_ids.some(rid => recommended_grain_ids.includes(rid)) ? 'border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.4);' : ''">
-                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.4rem;" x-text="variant.variant_name"></div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" x-text="variant.sidebar_science_profile"></div>
-                            <div x-show="variant.recommended_grain_ids && variant.recommended_grain_ids.length > 0"
-                                 style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.3rem;">
-                                <template x-for="gid in (variant.recommended_grain_ids || [])" :key="gid">
-                                    <span style="font-size: 0.65rem; padding: 0.15rem 0.4rem; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; border-radius: 999px; font-weight: 600;" x-text="gid.replace(/_/g, ' ')"></span>
-                                </template>
-                            </div>
+                             @click="selectRecipe(recipe)"
+                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                        </div>
+                    </template>
+
+                    <!-- Alternatives Loader -->
+                    <div x-show="expanded_level === 1 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 0 2rem; color: var(--text-muted);">
+                        <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                    </div>
+
+                    <!-- Alternatives Cards -->
+                    <template x-if="expanded_level === 1 && !variant_loading">
+                        <div style="display: flex; gap: 0.75rem;">
+                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
+                                <div class="card" 
+                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
+                                     @mouseenter="onRecipeHover(alt)"
+                                     @mouseleave="clearHoveredElement()"
+                                     @click="selectRecipe(alt)"
+                                     style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.01);'">
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>
             </div>
 
-            <!-- Empty state -->
-            <div x-show="!variant_loading && generated_variants.length === 0 && active_archetype_id"
-                 style="font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: var(--radius-md);">
-                No variants generated yet. Waiting for engine response...
+            <!-- ROW 2: Advanced Modern Profiles (Level 2) -->
+            <div x-show="expanded_level === null || expanded_level === 2" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #64b5f6; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>⚡</span> Advanced Modern Profiles (Level 2)
+                    </div>
+                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
+                            @click="toggleExpandLevel(2)">
+                        <span x-text="expanded_level === 2 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
+                    <!-- Conceptual Item Card -->
+                    <template x-for="recipe in getRecipesForLevel(2)" :key="recipe.recipe_id">
+                        <div class="card" 
+                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
+                             @mouseenter="onRecipeHover(recipe)"
+                             @mouseleave="clearHoveredElement()"
+                             @click="selectRecipe(recipe)"
+                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                        </div>
+                    </template>
+
+                    <!-- Alternatives Loader -->
+                    <div x-show="expanded_level === 2 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 0 2rem; color: var(--text-muted);">
+                        <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                    </div>
+
+                    <!-- Alternatives Cards -->
+                    <template x-if="expanded_level === 2 && !variant_loading">
+                        <div style="display: flex; gap: 0.75rem;">
+                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
+                                <div class="card" 
+                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
+                                     @mouseenter="onRecipeHover(alt)"
+                                     @mouseleave="clearHoveredElement()"
+                                     @click="selectRecipe(alt)"
+                                     style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.01);'">
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
             </div>
+
+            <!-- ROW 3: Experimental/Complex Profiles (Level 3) -->
+            <div x-show="expanded_level === null || expanded_level === 3" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #ff8a65; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🧪</span> Experimental/Complex Profiles (Level 3)
+                    </div>
+                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
+                            @click="toggleExpandLevel(3)">
+                        <span x-text="expanded_level === 3 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
+                    <!-- Conceptual Item Card -->
+                    <template x-for="recipe in getRecipesForLevel(3)" :key="recipe.recipe_id">
+                        <div class="card" 
+                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
+                             @mouseenter="onRecipeHover(recipe)"
+                             @mouseleave="clearHoveredElement()"
+                             @click="selectRecipe(recipe)"
+                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #ff8a65; background: rgba(255, 138, 101, 0.06); box-shadow: 0 0 10px rgba(255, 138, 101, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                        </div>
+                    </template>
+
+                    <!-- Alternatives Loader -->
+                    <div x-show="expanded_level === 3 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 0 2rem; color: var(--text-muted);">
+                        <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                    </div>
+
+                    <!-- Alternatives Cards -->
+                    <template x-if="expanded_level === 3 && !variant_loading">
+                        <div style="display: flex; gap: 0.75rem;">
+                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
+                                <div class="card" 
+                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
+                                     @mouseenter="onRecipeHover(alt)"
+                                     @mouseleave="clearHoveredElement()"
+                                     @click="selectRecipe(alt)"
+                                     style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #ff8a65; background: rgba(255, 138, 101, 0.06); box-shadow: 0 0 10px rgba(255, 138, 101, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.01);'">
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Grain Bin Optimizer (always visible — system hardlocked to fresh-milled whole grain) -->
+        <!-- Deferred configurations wrapper -->
+        <div x-show="recipe_selected" x-transition>
+
+        <!-- Grain Bin Optimizer (deferred — system hardlocked to fresh-milled whole grain) -->
         <div style="margin-top: 1.5rem;">
             <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;"
                  @mouseenter="setHoveredElement('milled')" @mouseleave="clearHoveredElement()">
@@ -402,7 +495,7 @@
             </div>
 
             <div x-show="!advisoryLoading">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                     <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
                         <label class="card" 
                                @mouseenter="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
@@ -410,13 +503,22 @@
                                @focusin="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
                                @focusout="clearHoveredElement()"
                                tabindex="0"
-                               style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
+                               style="cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
                                :style="getGrainStyle(berry)">
                             <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
-                            <span style="font-size: 1.25rem;">🌾</span>
-                            <div>
-                                <strong x-text="berry.name" style="font-size: 0.9rem; display: block; color: var(--text-primary);"></strong>
-                                <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="berry.protein + '% Prot | ' + Math.round((berry.absorption - 1.0)*100) + '% Abs'"></span>
+                            
+                            <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                                <span style="font-size: 1.25rem; flex-shrink: 0;">🌾</span>
+                                <div style="flex-grow: 1;">
+                                    <strong x-text="berry.name" style="font-size: 0.9rem; display: block; color: var(--text-primary);"></strong>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="berry.protein + '% Prot | ' + Math.round((berry.absorption - 1.0)*100) + '% Abs'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Classification & Reasoning inline display -->
+                            <div x-show="getClassificationLabel(berry)" style="margin-top: 0.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.4rem; width: 100%;">
+                                <span :style="getClassificationBadgeStyle(berry)" x-text="getClassificationLabel(berry)" style="display: block; margin-bottom: 0.2rem;"></span>
+                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.35; white-space: normal;" x-text="getGrainReasoning(berry)"></p>
                             </div>
                         </label>
                     </template>
@@ -729,8 +831,9 @@
                     @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 PROCEED TO RECIPE CONFIGURATION →
             </button>
-        </div>
+        </div> <!-- Closes x-show="recipe_selected" -->
     </div>
+</div>
 
     <!-- PHASE 3: Contextual Variance Sliders & Baking Configuration -->
     <div x-show="current_phase === 3" x-transition>

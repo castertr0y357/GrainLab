@@ -315,6 +315,8 @@ class DynamicRouteScannerTests(TestCase):
             # Perform GET check. For generate_variants, pass required query params.
             if name == 'generate_variants':
                 response = client.get(url + '?engine_id=lean-crusty&active_archetype_id=classic_sourdough')
+            elif name == 'generate_creativity_recipes':
+                response = client.get(url + '?engine_id=lean-crusty')
             else:
                 response = client.get(url)
             
@@ -1135,3 +1137,33 @@ class GenerateVariantsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("generated_variants", data)
+
+    def test_generate_creativity_recipes_valid(self) -> None:
+        """Verifies generate_creativity_recipes endpoint yields three creativity-tiered recipes."""
+        url = "/generate-creativity-recipes/?engine_id=lean-crusty"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("recipes", data)
+        recipes = data["recipes"]
+        self.assertEqual(len(recipes), 3)
+        for recipe in recipes:
+            self.assertIn("recipe_id", recipe)
+            self.assertIn("recipe_name", recipe)
+            self.assertIn("creativity_level", recipe)
+            self.assertIn("description", recipe)
+            self.assertIn("recommended_grain_ids", recipe)
+            self.assertIn("sidebar_science_profile", recipe)
+            self.assertIn("sidebar_ai_insight", recipe)
+            self.assertIn("labor_roi", recipe["sidebar_ai_insight"])
+            self.assertIn("last_10_percent_magic", recipe["sidebar_ai_insight"])
+
+    def test_generate_variants_with_creativity_level(self) -> None:
+        """Verifies generate_variants handles creativity_level parameters and returns correct alt variants."""
+        url = "/generate-variants/?engine_id=lean-crusty&active_archetype_id=hearth_level1_concept&creativity_level=1"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("generated_variants", data)
+        variants = data["generated_variants"]
+        self.assertEqual(len(variants), 3)

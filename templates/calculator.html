@@ -273,53 +273,147 @@
     /* Engine archetypes map keyed by category slug */
     enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}'),
 
-    /* Select a Tier 1 archetype — fires the variant LLM request */
-    selectArchetype(archetype_id, engine_id) {
-        if (this.active_archetype_id === archetype_id) {
-            /* Deselect if tapping the same archetype */
-            this.active_archetype_id = null;
-            this.generated_variants = [];
-            this.recommended_grain_ids = [];
-            this.hovered_variant = null;
+    creativity_recipes: [],
+    creativity_loading: false,
+    expanded_level: null,
+    alternative_variants: [],
+    selected_recipe_id: null,
+    recipe_selected: {% if selected_preset %}true{% else %}false{% endif %},
+
+    fetchCreativityRecipes(category_slug) {
+        if (!category_slug || category_slug === 'null') {
+            this.creativity_recipes = [];
+            this.creativity_loading = false;
             return;
         }
-        this.active_archetype_id = archetype_id;
-        this.generated_variants = [];
-        this.recommended_grain_ids = [];
-        this.hovered_variant = null;
-        this.variant_loading = true;
+        this.creativity_loading = true;
+        this.recipe_selected = false;
+        this.selected_recipe_id = null;
+        this.expanded_level = null;
+        this.alternative_variants = [];
+        this.grainEvaluations = [];
+        this.resetAdvisory();
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-variants/?engine_id=${encodeURIComponent(engine_id)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (this.selected_master === category_slug) {
+                    this.creativity_recipes = data.recipes || [];
+                }
+                this.creativity_loading = false;
+            })
+            .catch(err => {
+                console.error('[GrainLab] Failed fetching creativity recipes:', err);
+                this.creativity_loading = false;
+            });
+    },
+
+    toggleExpandLevel(level) {
+        if (this.expanded_level === level) {
+            this.expanded_level = null;
+            this.alternative_variants = [];
+            return;
+        }
+        this.expanded_level = level;
+        this.alternative_variants = [];
+        this.variant_loading = true;
+
+        const concept_recipe = this.creativity_recipes.find(r => r.creativity_level === level);
+        if (!concept_recipe) {
+            this.variant_loading = false;
+            return;
+        }
+
+        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(concept_recipe.recipe_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
 
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                if (this.active_archetype_id === archetype_id) {
-                    this.generated_variants = data.generated_variants || [];
+                if (this.expanded_level === level) {
+                    this.alternative_variants = data.generated_variants || [];
                 }
                 this.variant_loading = false;
             })
             .catch(err => {
-                console.error('[GrainLab] Failed fetching recipe variants:', err);
+                console.error('[GrainLab] Failed fetching alternative variants:', err);
                 this.variant_loading = false;
             });
     },
 
-    /* Hover a Tier 2 variant card — populate sidebar inspector */
-    onVariantHover(variant) {
-        if (!variant) return;
-        this.hovered_variant = variant.variant_id;
+    getRecipesForLevel(level) {
+        return this.creativity_recipes.filter(r => r.creativity_level === level);
+    },
+
+    onRecipeHover(recipe) {
+        if (!recipe) return;
+        this.hovered_variant = recipe.recipe_id || recipe.variant_id || null;
         this.sidebar_tier = 'recommended';
-        this.sidebar_analysis = variant.sidebar_science_profile || '';
-        this.sidebar_labor_roi = (variant.sidebar_ai_insight && variant.sidebar_ai_insight.labor_roi) || '';
+        this.sidebar_analysis = recipe.sidebar_science_profile || '';
+        this.sidebar_labor_roi = (recipe.sidebar_ai_insight && recipe.sidebar_ai_insight.labor_roi) || '';
         this.sidebar_insight_loading = false;
     },
 
-    /* Click a Tier 2 variant card — lock in recommended_grain_ids for golden rings */
-    onVariantSelect(variant) {
-        if (!variant) return;
-        this.recommended_grain_ids = variant.recommended_grain_ids || [];
+    selectRecipe(recipe) {
+        if (!recipe) return;
+        const recipe_id = recipe.recipe_id || recipe.variant_id;
+        const recipe_name = recipe.recipe_name || recipe.variant_name;
+        this.selected_recipe_id = recipe_id;
+        this.presetSlug = recipe_id;
+        this.presetName = recipe_name;
+        this.recipe_selected = true;
+        this.recommended_grain_ids = recipe.recommended_grain_ids || [];
+        this.sidebar_analysis = recipe.sidebar_science_profile || '';
+        this.sidebar_labor_roi = (recipe.sidebar_ai_insight && recipe.sidebar_ai_insight.labor_roi) || '';
+
+        // Select the ideal grain based on recommended list if available
+        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
+            const firstRec = this.recommended_grain_ids[0];
+            const berry = this.activeBerries.find(b => {
+                const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                return bNameSlug.includes(firstRec) || firstRec.includes(bNameSlug);
+            });
+            if (berry) {
+                this.activeBerries.forEach(b => {
+                    b.selected = (b.id === berry.id);
+                });
+            } else {
+                this.selectIdealGrain();
+            }
+        } else {
+            this.selectIdealGrain();
+        }
+
+        // Trigger advisory call to fetch recommended/sub-optimal classifications
+        this.fetchAdvisory(recipe_name);
+    },
+
+    getClassificationLabel(berry) {
+        if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
+        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+        if (!ev) return '';
+        if (ev.tier === 'recommended') return 'Recommended';
+        if (ev.tier === 'sub-optimal') return 'Sub-Optimal';
+        if (ev.tier === 'not-recommended') return 'Not Recommended';
+        return '';
+    },
+
+    getGrainReasoning(berry) {
+        if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
+        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+        return ev ? ev.reasoning : '';
+    },
+
+    getClassificationBadgeStyle(berry) {
+        if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
+        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+        if (!ev) return '';
+        if (ev.tier === 'recommended') return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        if (ev.tier === 'sub-optimal') return 'color: var(--warning); font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        if (ev.tier === 'not-recommended') return 'color: var(--danger); font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        return '';
     },
 
     /* Grains inventory data mapped from django context */
@@ -372,6 +466,7 @@
         this.$watch('selected_master', value => {
             if (value && value !== 'null') {
                 this.fetchAdvisory(this.presetSlug);
+                this.fetchCreativityRecipes(value);
             }
         });
         this.$watch('grain_mode', value => {
@@ -385,6 +480,9 @@
         this.selectIdealGrain();
         if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
             this.fetchAdvisory(this.presetSlug);
+        }
+        if (this.selected_master && this.selected_master !== 'null') {
+            this.fetchCreativityRecipes(this.selected_master);
         }
         document.body.addEventListener('htmx:afterSwap', (e) => {
             const meta = document.getElementById('geometry-metadata');
@@ -941,7 +1039,7 @@
                                 hx-select="#calculator-form" 
                                 hx-swap="innerHTML" 
                                 hx-push-url="/"
-                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = 'milled'; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; active_archetype_id = null; generated_variants = []; recommended_grain_ids = []; hovered_variant = null; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = 'milled'; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; active_archetype_id = null; generated_variants = []; recommended_grain_ids = []; hovered_variant = null; creativity_recipes = []; creativity_loading = false; expanded_level = null; alternative_variants = []; selected_recipe_id = null; recipe_selected = false; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                             🗑️ HARD RESET
                         </button>
                     </div>

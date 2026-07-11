@@ -1660,12 +1660,13 @@ def ai_sidebar_insight(request):
 def generate_variants(request):
     """
     Polymorphic Tier 2 variant generator.
-    Accepts: GET ?engine_id=<slug>&active_archetype_id=<slug>&inventory_ids=<comma-separated-uuids>
+    Accepts: GET ?engine_id=<slug>&active_archetype_id=<slug>&inventory_ids=<comma-separated-uuids>&creativity_level=<int>
     Returns: JSON { generated_variants: [...] }
     """
     engine_id = request.GET.get("engine_id", "").strip()
     active_archetype_id = request.GET.get("active_archetype_id", "").strip()
     inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
+    creativity_level_raw = request.GET.get("creativity_level", "").strip()
 
     if not engine_id or not active_archetype_id:
         return JsonResponse({"error": "engine_id and active_archetype_id are required."}, status=400)
@@ -1695,8 +1696,61 @@ def generate_variants(request):
                 "absorption": float(g.moisture_absorption_coef),
             })
 
-    result = gemma_client.generate_recipe_variants(engine_id, active_archetype_id, inventory)
+    if creativity_level_raw:
+        try:
+            creativity_level = int(creativity_level_raw)
+            result = gemma_client.generate_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory)
+        except Exception as e:
+            logger.error(f"[Views] Failed generating creativity variants: {e}")
+            result = None
+    else:
+        result = gemma_client.generate_recipe_variants(engine_id, active_archetype_id, inventory)
+
     if result is None:
         return JsonResponse({"generated_variants": []}, status=200)
+
+    return JsonResponse(result, status=200)
+
+
+def generate_creativity_recipes(request):
+    """
+    Generate exactly 3 recipe profiles corresponding to Creativity Levels 1, 2, and 3.
+    Accepts: GET ?engine_id=<slug>&inventory_ids=<comma-separated-uuids>
+    Returns: JSON { recipes: [...] }
+    """
+    engine_id = request.GET.get("engine_id", "").strip()
+    inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
+
+    if not engine_id:
+        return JsonResponse({"error": "engine_id is required."}, status=400)
+
+    # Resolve inventory grains
+    inventory = []
+    if inventory_ids_raw:
+        id_list = [iid.strip() for iid in inventory_ids_raw.split(",") if iid.strip()]
+        grains = WheatBerry.objects.filter(id__in=id_list, is_active=True)
+        for g in grains:
+            inventory.append({
+                "id": str(g.id),
+                "name": g.name,
+                "hardness": g.hardness,
+                "protein": float(g.protein_content),
+                "absorption": float(g.moisture_absorption_coef),
+            })
+    else:
+        # Fall back to all active grains
+        grains = WheatBerry.objects.filter(is_active=True)
+        for g in grains:
+            inventory.append({
+                "id": str(g.id),
+                "name": g.name,
+                "hardness": g.hardness,
+                "protein": float(g.protein_content),
+                "absorption": float(g.moisture_absorption_coef),
+            })
+
+    result = gemma_client.generate_creativity_recipes(engine_id, inventory)
+    if result is None:
+        return JsonResponse({"recipes": []}, status=200)
 
     return JsonResponse(result, status=200)
