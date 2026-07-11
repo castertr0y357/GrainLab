@@ -232,6 +232,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
 
     elif expected_keys and "recipes" in expected_keys:
         engine_id = user_data.get("engine_id", "hearth")
+        active_archetype_id = user_data.get("active_archetype_id", "classic_sourdough")
         inventory = user_data.get("inventory", [])
         
         # Build grain name slug list from inventory for recommended_grain_ids
@@ -245,44 +246,54 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
         pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta"] else soft_slugs
 
-        recipes = [
-            {
-                "recipe_id": f"{engine_id}_level1_concept",
-                "recipe_name": f"Classic {engine_id.title()} Profile",
+        recipes = []
+        arch_title = active_archetype_id.replace("_", " ").title()
+
+        # Level 1 recipes (5 items)
+        for i in range(1, 6):
+            recipes.append({
+                "recipe_id": f"{active_archetype_id}_level1_{i}",
+                "recipe_name": f"Classic {arch_title} - Profile {i}",
                 "creativity_level": 1,
-                "description": f"A baseline, highly reliable formula for {engine_id.title()}. Designed for consistent crumb structure and simple, pure grain expression.",
+                "description": f"Standard reliable version {i} for {arch_title}. Optimized for consistent crumb structure and pure grain expression.",
                 "recommended_grain_ids": pref_slugs,
-                "sidebar_science_profile": f"This standard {engine_id.title()} configuration relies on traditional hydrations and straightforward yeast activity.",
+                "sidebar_science_profile": f"Traditional hydration levels and steady, predictable yeast activity for {arch_title}.",
                 "sidebar_ai_insight": {
-                    "labor_roi": "Absolute Baseline / 100% Reliable",
-                    "last_10_percent_magic": "Ensure you maintain water temperature at 75-78°F to foster stable fermentation."
+                    "labor_roi": "Low Effort / High Reliability",
+                    "last_10_percent_magic": f"Keep water temperature at {74 + i}°F to foster stable fermentation."
                 }
-            },
-            {
-                "recipe_id": f"{engine_id}_level2_concept",
-                "recipe_name": f"Modern Advanced {engine_id.title()}",
+            })
+
+        # Level 2 recipes (5 items)
+        for i in range(1, 6):
+            recipes.append({
+                "recipe_id": f"{active_archetype_id}_level2_{i}",
+                "recipe_name": f"Modern Advanced {arch_title} - Profile {i}",
                 "creativity_level": 2,
-                "description": f"An advanced modern variation of {engine_id.title()} featuring optimized hydration ratios and pre-ferments to enhance texture.",
+                "description": f"An advanced modern variation {i} of {arch_title} featuring optimized hydration ratios and pre-ferments to enhance texture.",
                 "recommended_grain_ids": pref_slugs,
-                "sidebar_science_profile": f"Pushes the hydration boundaries of {engine_id.title()} to achieve a more open, modern crumb structure.",
+                "sidebar_science_profile": f"Pushes the hydration boundaries of {arch_title} to achieve a more open, modern crumb structure.",
                 "sidebar_ai_insight": {
                     "labor_roi": "High Return / Texture & Volume Payoff",
-                    "last_10_percent_magic": "Incorporate a 30-minute autolyse phase before adding salt or leaven to relax gluten sheets."
+                    "last_10_percent_magic": f"Incorporate a {20 + i * 5}-minute autolyse phase before adding salt or leaven."
                 }
-            },
-            {
-                "recipe_id": f"{engine_id}_level3_concept",
-                "recipe_name": f"Experimental Heritage {engine_id.title()}",
+            })
+
+        # Level 3 recipes (5 items)
+        for i in range(1, 6):
+            recipes.append({
+                "recipe_id": f"{active_archetype_id}_level3_{i}",
+                "recipe_name": f"Experimental Heritage {arch_title} - Profile {i}",
                 "creativity_level": 3,
-                "description": f"An experimental, rustic {engine_id.title()} profile utilizing complex ancient grains and high-hydration structures.",
+                "description": f"Experimental rustic {arch_title} profile {i} utilizing complex ancient grains and high-hydration structures.",
                 "recommended_grain_ids": [grain_slug(g) for g in inventory[:2]] if len(inventory) >= 2 else pref_slugs,
-                "sidebar_science_profile": f"Integrates ancient grains with varying enzymatic activity and weaker gluten, demanding precision water calibration.",
+                "sidebar_science_profile": f"Integrates ancient grains with varying enzymatic activity, demanding precision water calibration.",
                 "sidebar_ai_insight": {
                     "labor_roi": "High Risk & Skill / Distinct Flavor Profile",
-                    "last_10_percent_magic": "Pre-hydrate ancient grain portions at 80% water for 45 minutes to avoid dry, crumbly starch zones."
+                    "last_10_percent_magic": f"Pre-hydrate ancient grain portions at {75 + i}% water for 45 minutes."
                 }
-            }
-        ]
+            })
+
         return {"recipes": recipes}
 
     elif expected_keys and "generated_variants" in expected_keys:
@@ -1572,17 +1583,17 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
     return mock
 
 
-def generate_creativity_recipes(engine_id: str, inventory: list) -> dict | None:
+def generate_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list) -> dict | None:
     """
-    Given the engine slug and inventory grain list, asks the LLM to generate exactly 3 recipe profiles
-    corresponding to Creativity Level 1, 2, and 3.
+    Given the engine slug, selected archetype ID, and inventory grain list, asks the LLM to generate
+    exactly 15 recipe profiles (5 per Creativity Level: 1, 2, and 3).
     """
     import json
 
     system_prompt = (
-        "You are a baking science expert. Given an engine type and inventory grain list, "
-        "generate exactly 3 distinct recipe profiles matching these three Creativity Levels:\n"
-        "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profile).\n"
+        "You are a baking science expert. Given an engine type, target archetype, and inventory grain list, "
+        "generate exactly 15 distinct recipe profiles matching these three Creativity Levels (exactly 5 recipes per level):\n"
+        "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profiles).\n"
         "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
         "- Creativity Level 3: Experimental/Complex Profiles. (Unusual grain blends, high hydration, complex preferments, or inclusions).\n"
         "\n"
@@ -1590,34 +1601,10 @@ def generate_creativity_recipes(engine_id: str, inventory: list) -> dict | None:
         "{\n"
         "  \"recipes\": [\n"
         "    {\n"
-        "      \"recipe_id\": \"unique_slug_level1\",\n"
+        "      \"recipe_id\": \"unique_slug\",\n"
         "      \"recipe_name\": \"Human readable title\",\n"
-        "      \"creativity_level\": 1,\n"
+        "      \"creativity_level\": 1,  // must be 1, 2, or 3\n"
         "      \"description\": \"1-2 sentence description explaining the recipe structure\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
-        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
-        "      \"sidebar_ai_insight\": {\n"
-        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
-        "        \"last_10_percent_magic\": \"Specific craft tip to elevate the bake\"\n"
-        "      }\n"
-        "    },\n"
-        "    {\n"
-        "      \"recipe_id\": \"unique_slug_level2\",\n"
-        "      \"recipe_name\": \"Human readable title\",\n"
-        "      \"creativity_level\": 2,\n"
-        "      \"description\": \"1-2 sentence description\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
-        "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
-        "      \"sidebar_ai_insight\": {\n"
-        "        \"labor_roi\": \"One-liner labor return on investment\",\n"
-        "        \"last_10_percent_magic\": \"Specific craft tip to elevate the bake\"\n"
-        "      }\n"
-        "    },\n"
-        "    {\n"
-        "      \"recipe_id\": \"unique_slug_level3\",\n"
-        "      \"recipe_name\": \"Human readable title\",\n"
-        "      \"creativity_level\": 3,\n"
-        "      \"description\": \"1-2 sentence description\",\n"
         "      \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
         "      \"sidebar_science_profile\": \"1-2 sentence technical science profile\",\n"
         "      \"sidebar_ai_insight\": {\n"
@@ -1633,6 +1620,7 @@ def generate_creativity_recipes(engine_id: str, inventory: list) -> dict | None:
 
     user_prompt = json.dumps({
         "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
         "inventory": inventory,
     })
 

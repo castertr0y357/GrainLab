@@ -280,8 +280,29 @@
     selected_recipe_id: null,
     recipe_selected: {% if selected_preset %}true{% else %}false{% endif %},
 
-    fetchCreativityRecipes(category_slug) {
-        if (!category_slug || category_slug === 'null') {
+    selectArchetype(archetype_id, engine_id) {
+        if (this.active_archetype_id === archetype_id) {
+            this.active_archetype_id = null;
+            this.creativity_recipes = [];
+            this.recipe_selected = false;
+            this.selected_recipe_id = null;
+            this.expanded_level = null;
+            this.alternative_variants = [];
+            return;
+        }
+        this.active_archetype_id = archetype_id;
+        this.creativity_recipes = [];
+        this.recipe_selected = false;
+        this.selected_recipe_id = null;
+        this.expanded_level = null;
+        this.alternative_variants = [];
+        
+        // Fetch 5 recipes per creativity level for this archetype!
+        this.fetchCreativityRecipes(engine_id, archetype_id);
+    },
+
+    fetchCreativityRecipes(category_slug, archetype_id) {
+        if (!category_slug || category_slug === 'null' || !archetype_id) {
             this.creativity_recipes = [];
             this.creativity_loading = false;
             return;
@@ -295,11 +316,11 @@
         this.resetAdvisory();
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                if (this.selected_master === category_slug) {
+                if (this.selected_master === category_slug && this.active_archetype_id === archetype_id) {
                     this.creativity_recipes = data.recipes || [];
                 }
                 this.creativity_loading = false;
@@ -464,9 +485,14 @@
             }
         });
         this.$watch('selected_master', value => {
+            this.active_archetype_id = null;
+            this.creativity_recipes = [];
+            this.recipe_selected = false;
+            this.selected_recipe_id = null;
+            this.expanded_level = null;
+            this.alternative_variants = [];
             if (value && value !== 'null') {
                 this.fetchAdvisory(this.presetSlug);
-                this.fetchCreativityRecipes(value);
             }
         });
         this.$watch('grain_mode', value => {
@@ -480,9 +506,6 @@
         this.selectIdealGrain();
         if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
             this.fetchAdvisory(this.presetSlug);
-        }
-        if (this.selected_master && this.selected_master !== 'null') {
-            this.fetchCreativityRecipes(this.selected_master);
         }
         document.body.addEventListener('htmx:afterSwap', (e) => {
             const meta = document.getElementById('geometry-metadata');

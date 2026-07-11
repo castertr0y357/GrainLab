@@ -1714,15 +1714,18 @@ def generate_variants(request):
 
 def generate_creativity_recipes(request):
     """
-    Generate exactly 3 recipe profiles corresponding to Creativity Levels 1, 2, and 3.
-    Accepts: GET ?engine_id=<slug>&inventory_ids=<comma-separated-uuids>
+    Generate exactly 15 recipe profiles corresponding to Creativity Levels 1, 2, and 3 (5 per row).
+    Accepts: GET ?engine_id=<slug>&active_archetype_id=<slug>&inventory_ids=<comma-separated-uuids>
     Returns: JSON { recipes: [...] }
     """
     engine_id = request.GET.get("engine_id", "").strip()
+    active_archetype_id = request.GET.get("active_archetype_id", "").strip()
     inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
 
     if not engine_id:
         return JsonResponse({"error": "engine_id is required."}, status=400)
+    if not active_archetype_id:
+        return JsonResponse({"error": "active_archetype_id is required."}, status=400)
 
     # Resolve inventory grains
     inventory = []
@@ -1749,7 +1752,7 @@ def generate_creativity_recipes(request):
                 "absorption": float(g.moisture_absorption_coef),
             })
 
-    result = gemma_client.generate_creativity_recipes(engine_id, inventory)
+    result = gemma_client.generate_creativity_recipes(engine_id, active_archetype_id, inventory)
     if result is None:
         return JsonResponse({"recipes": []}, status=200)
 

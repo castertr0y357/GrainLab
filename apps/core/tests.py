@@ -316,7 +316,7 @@ class DynamicRouteScannerTests(TestCase):
             if name == 'generate_variants':
                 response = client.get(url + '?engine_id=lean-crusty&active_archetype_id=classic_sourdough')
             elif name == 'generate_creativity_recipes':
-                response = client.get(url + '?engine_id=lean-crusty')
+                response = client.get(url + '?engine_id=lean-crusty&active_archetype_id=classic_sourdough')
             else:
                 response = client.get(url)
             
@@ -1139,14 +1139,14 @@ class GenerateVariantsTests(TestCase):
         self.assertIn("generated_variants", data)
 
     def test_generate_creativity_recipes_valid(self) -> None:
-        """Verifies generate_creativity_recipes endpoint yields three creativity-tiered recipes."""
-        url = "/generate-creativity-recipes/?engine_id=lean-crusty"
+        """Verifies generate_creativity_recipes endpoint yields fifteen creativity-tiered recipes."""
+        url = "/generate-creativity-recipes/?engine_id=lean-crusty&active_archetype_id=classic_sourdough"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("recipes", data)
         recipes = data["recipes"]
-        self.assertEqual(len(recipes), 3)
+        self.assertEqual(len(recipes), 15)
         for recipe in recipes:
             self.assertIn("recipe_id", recipe)
             self.assertIn("recipe_name", recipe)

@@ -306,17 +306,48 @@
 
 
 
-        <!-- CREATIVITY LEVELS RECIPE ENGINE -->
-        <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🧬</span> Select Recipe Target (Creativity Tiers)
+        <!-- TIER 1: Select Archetype first -->
+        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🧬</span> Select Recipe Archetype
+        </div>
+        <div id="archetype-deck"
+             style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+            <template x-if="selected_master && enginesArchetypes[selected_master] && Object.keys(enginesArchetypes[selected_master]).length > 0">
+                <div style="display: contents;">
+                    <template x-for="[archetype_id, arch_data] in Object.entries(enginesArchetypes[selected_master] || {})" :key="archetype_id">
+                        <button type="button"
+                                class="chip"
+                                :class="active_archetype_id === archetype_id ? 'active' : ''"
+                                @click="selectArchetype(archetype_id, selected_master)"
+                                @mouseenter="setHoveredElement('archetype_' + archetype_id)"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('archetype_' + archetype_id)"
+                                @focusout="clearHoveredElement()"
+                                tabindex="0"
+                                style="height: 48px; min-width: 120px; padding: 0 1.25rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; letter-spacing: 0.03em; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); border: none;">
+                            <span x-text="arch_data.icon || '🧬'"></span>
+                            <span x-text="arch_data.label || archetype_id.replace(/_/g, ' ')"></span>
+                        </button>
+                    </template>
+                </div>
+            </template>
+            <template x-if="!selected_master || !enginesArchetypes[selected_master] || Object.keys(enginesArchetypes[selected_master] || {}).length === 0">
+                <p style="font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px dashed var(--border); border-radius: var(--radius-md); margin: 0;">Select a dough category in Phase 1 to reveal available archetypes.</p>
+            </template>
         </div>
 
-        <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
-            <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-            <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Analyzing flour profiles & formulating recipes...</p>
-        </div>
+        <!-- CREATIVITY LEVELS RECIPE ENGINE (Only shown when archetype is selected) -->
+        <div x-show="active_archetype_id" x-transition>
+            <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🧪</span> Select Recipe Target (Creativity Tiers)
+            </div>
 
-        <div x-show="!creativity_loading" style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.5rem;">
+            <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+                <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Analyzing flour profiles & formulating recipes...</p>
+            </div>
+
+            <div x-show="!creativity_loading" style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.5rem;">
             
             <!-- ROW 1: Baseline Standard Profiles (Level 1) -->
             <div x-show="expanded_level === null || expanded_level === 1" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
@@ -475,6 +506,7 @@
             </div>
 
         </div>
+        </div> <!-- Closes x-show="active_archetype_id" -->
 
         <!-- Deferred configurations wrapper -->
         <div x-show="recipe_selected" x-transition>
