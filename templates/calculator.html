@@ -353,7 +353,7 @@
         }
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(concept_recipe.recipe_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
 
         fetch(url)
             .then(res => res.json())

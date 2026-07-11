@@ -1612,6 +1612,8 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
         "generate 3 distinct recipe variants optimized for fresh-milled whole grains. "
+        f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
+        "You are strictly prohibited from generating recipes crossing over into other archetypes or categories. "
         "Each variant must match this JSON schema:\n"
         "{\n"
         "  \"generated_variants\": [\n"
@@ -1659,6 +1661,8 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, and inventory grain list, "
         "generate exactly 15 distinct recipe profiles matching these three Creativity Levels (exactly 5 recipes per level):\n"
+        f"CRITICAL: All 15 generated recipe profiles must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
+        "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profiles).\n"
         "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
         "- Creativity Level 3: Experimental/Complex Profiles. (Unusual grain blends, high hydration, complex preferments, or inclusions).\n"
@@ -1712,6 +1716,8 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
     system_prompt = (
         f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
         f"generate exactly 3 alternative structural profile variations matching ONLY that creativity level.\n"
+        f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
+        f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         "\n"
         "Each variation must match this JSON schema:\n"
         "{\n"

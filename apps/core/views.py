@@ -1668,6 +1668,12 @@ def generate_variants(request):
     inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
     creativity_level_raw = request.GET.get("creativity_level", "").strip()
 
+    # Sanitize archetype_id from any recipe or level suffix
+    if active_archetype_id:
+        for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
+            if suffix in active_archetype_id:
+                active_archetype_id = active_archetype_id.split(suffix)[0]
+
     if not engine_id or not active_archetype_id:
         return JsonResponse({"error": "engine_id and active_archetype_id are required."}, status=400)
 
@@ -1721,6 +1727,12 @@ def generate_creativity_recipes(request):
     engine_id = request.GET.get("engine_id", "").strip()
     active_archetype_id = request.GET.get("active_archetype_id", "").strip()
     inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
+
+    # Sanitize archetype_id from any recipe or level suffix
+    if active_archetype_id:
+        for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
+            if suffix in active_archetype_id:
+                active_archetype_id = active_archetype_id.split(suffix)[0]
 
     if not engine_id:
         return JsonResponse({"error": "engine_id is required."}, status=400)
