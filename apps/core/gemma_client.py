@@ -239,6 +239,102 @@ ENGINE_FLAVORS = {
     }
 }
 
+def generate_dynamic_flavors(cat_slug: str, level: int, count: int = 8, exclude_names: list = None) -> list:
+    if exclude_names is None:
+        exclude_names = []
+    exclude_set = {n.strip().lower() for n in exclude_names}
+    
+    bases = {
+        "alkaline-bath": [
+            "Poppy Seed Crusted", "Toasted Onion & Chive", "Sweet Molasses", "Black Pepper Asiago", 
+            "Sundried Tomato Basil", "Smoked Paprika Glazed", "Sourdough Rye Twist", "Maple Brown Sugar",
+            "Cheddar Herb Butter", "Spiced Pumpkin Seed", "Garlic Herb Infusion", "Sweet Honey Oat"
+        ],
+        "cakes-batters": [
+            "Lemon Raspberry Drizzle", "Spiced Apple Streusel", "Rich Fudge Marble", "Banana Chocolate Chunk",
+            "Toasted Almond Peach", "Orange Cranberry Spice", "Classic Red Velvet", "Vanilla Cream Swirl",
+            "Coconut Pineapple Delight", "Gingerbread Molasses", "Maple Pecan Muffin", "Strawberry Buttermilk"
+        ],
+        "choux-paste": [
+            "Pecan Maple Cream", "White Chocolate Raspberry", "Dark Chocolate Orange", "Salted Caramel Pecan",
+            "Vanilla Custard Glaze", "Double Chocolate Mousse", "Coffee Espresso Swirl", "Lemon Meringue Puff",
+            "Spiced Apple Cinnamon", "Toasted Almond Praline", "Blueberry Cream Custard", "Sweet Coconut Cream"
+        ],
+        "cookies-shortbread": [
+            "Snickerdoodle Cinnamon", "Triple Chocolate Chunk", "White Chocolate Macadamia", "Chewy Oatmeal Raisin",
+            "Lemon Zest Butter", "Spiced Ginger Molasses", "Classic Sugar Sparkle", "Toasted Pecan Shortbread",
+            "Double Fudge Brownie Drop", "Maple Walnut Cookie", "Cranberry Orange Drop", "Almond Butter Sandies"
+        ],
+        "enriched-soft": [
+            "Chocolate Fudge Babka", "Cinnamon Streusel Swirl", "Sweet Maple Braid", "Orange Blossom Honey Rolls",
+            "Cardamom Almond Crown", "Buttermilk Parker House", "Spiced Pumpkin Brioche", "Vanilla Custard Roll",
+            "Toasted Coconut Buns", "Raspberry Jam Twists", "Apple Cinnamon Morning Buns", "Golden Egg Dinner Rolls"
+        ],
+        "flatbreads-griddles": [
+            "Everything Bagel Focaccia", "Garlic Butter Naan", "Spinach Feta Piadina", "Pesto Mozzarella Flatbread",
+            "Caramelized Onion Roti", "Toasted Sesame Pita", "Chili Flake Olive Flatbread", "Rosemary Parmesan Focaccia",
+            "Sweet Honey Butter Crumpet", "Roasted Garlic Herb Pita", "Smoked Paprika Flatbread", "Za'atar Olive Flatbread"
+        ],
+        "fresh-pasta-noodles": [
+            "Saffron Egg Tagliatelle", "Spinach Ricotta Ravioli", "Beet Root Pink Lasagna", "Squid Ink Black Linguine",
+            "Porcini Mushroom Fettuccine", "Roasted Garlic Pappardelle", "Black Pepper Semolina Pasta", "Basil Pesto Penne",
+            "Tomato Paste Fettuccine", "Lemon Herb Tagliolini", "Spiced Red Pepper Pappardelle", "Whole Grain Durum Noodle"
+        ],
+        "fried-doughs": [
+            "Apple Cider Fritter", "Maple Glazed Bacon Donut", "Meyer Lemon Curd Berliner", "Chocolate Frosted Glaze",
+            "Cinnamon Sugar Beignet", "Cardamom Spiced Churro", "Raspberry Jam Jelly Donut", "Powdered Sugar Funnel Cake",
+            "Vanilla Bean Glazed Cruller", "Spiced Pumpkin Donut", "Toasted Coconut Fry Bread", "Blueberry Glazed Donut"
+        ],
+        "lean-crusty": [
+            "Fig & Walnut Sourdough", "Cranberry Pecan Batard", "Toasted Sesame Boule", "Olive Oregano Sourdough",
+            "Roasted Garlic Hearth Batard", "Rosemary French Baguette", "Multigrain Honey Seeded Boule", "Dark Beer Stout Rye",
+            "Classic Country Sourdough", "Sun-Dried Tomato Batard", "Spiced Pumpkin Seed Hearth", "Ancient Grain Emmer Boule"
+        ],
+        "pastry-lamination": [
+            "Meyer Lemon Cream Danish", "Almond Frangipane Turnover", "Raspberry Jam Pinwheel", "Cinnamon Sugar Palmier",
+            "Vanilla Custard Fruit Plait", "Maple Butter Laminated Knot", "Chocolate Hazelnut Croissant", "Orange Glazed Cruffin",
+            "Cardamom Spiced Morning Roll", "Toasted Pecan Laminated Twist", "Apple Compote Turnover", "Savory Ham Cheese Croissant"
+        ],
+        "quick-breads-scones": [
+            "Zucchini Walnut Quick Bread", "Blueberry Lemon Glazed Scone", "Maple Pecan Oatmeal Scone", "Cranberry Orange Loaf",
+            "Chocolate Chip Banana Bread", "Sharp Cheddar Herb Scone", "Spiced Pumpkin Ginger Bread", "Honey Butter Cornbread",
+            "Vanilla Bean Blackberry Scone", "Apple Streusel Quick Loaf", "Savory Bacon Green Onion Scone", "Toasted Almond Poppyseed"
+        ]
+    }
+    
+    category_bases = bases.get(cat_slug, bases["cookies-shortbread"])
+    
+    variants = []
+    descriptions = [
+        "A beautiful, aromatic variant optimized to accentuate whole grain notes.",
+        "A texture-focused twist featuring hydration adjustments for a softer bite.",
+        "A premium profile featuring rich inclusion blending and deep flavor depth.",
+        "An artisanal variation using custom preferment ratios for complex aromatics.",
+        "A delightful variation balancing sweet/savory flavor tones and fine crumb.",
+        "A rustic formula prioritizing crumb tenderness and high oven spring.",
+        "A mouthwatering twist designed for uniform heat distribution and crispy edges.",
+        "A sophisticated variation adding subtle spices to contrast the grain profile.",
+        "A modern take with adjusted baking parameters to produce a stunning crust.",
+        "A highly reliable recipe modification designed for consistent, delicious results."
+    ]
+    
+    gen_idx = 0
+    tweak_count = 0
+    while len(variants) < count and gen_idx < len(category_bases) * 2:
+        base_name = category_bases[gen_idx % len(category_bases)]
+        suffix = "Modern" if level == 2 else "Classic"
+        name = f"{base_name} {suffix}"
+        if name.lower() not in exclude_set:
+            variants.append({
+                "name": name,
+                "desc": f"{descriptions[tweak_count % len(descriptions)]} Perfect for pairing with active milled grains."
+            })
+            tweak_count += 1
+        gen_idx += 1
+        
+    return variants
+
+
 def get_fallback_creativity_recipes(engine_id: str, active_archetype_id: str, pref_slugs: list) -> dict:
     cat_slug = engine_id
     if cat_slug not in ENGINE_FLAVORS:
@@ -263,7 +359,8 @@ def get_fallback_creativity_recipes(engine_id: str, active_archetype_id: str, pr
             })
     return {"recipes": recipes}
 
-def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_level: int, pref_slugs: list) -> dict:
+
+def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_level: int, pref_slugs: list, exclude_names: list = None) -> dict:
     cat_slug = engine_id
     if cat_slug not in ENGINE_FLAVORS:
         for k, v in CATEGORY_TO_ENGINE.items():
@@ -271,34 +368,16 @@ def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_l
                 cat_slug = k
                 break
                 
-    recipes_list = ENGINE_FLAVORS.get(cat_slug, ENGINE_FLAVORS["cookies-shortbread"]).get(creativity_level, [])
+    dynamic_items = generate_dynamic_flavors(cat_slug, creativity_level, count=8, exclude_names=exclude_names)
     
     variants = []
-    tweak_descriptions = [
-        "A texture-focused variation utilizing modified lipid blending to alter the horizontal spread.",
-        "An aromatic variation introducing toasted inclusions to pair with the whole grain notes.",
-        "A hydration-adjusted twist designed to enhance the chewiness and moisture retention."
-    ]
-    
-    if len(recipes_list) >= 5:
-        # Pick 3 recipes from the flavor list (offsetting index to get different ones from the main recipe view)
-        offsets = [1, 3, 4]
-        for idx, offset in enumerate(offsets):
-            item = recipes_list[offset]
-            variants.append({
-                "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
-                "variant_name": f"{item['name']} Twist",
-                "description": f"{item['desc']} {tweak_descriptions[idx]}",
-                "recommended_grain_ids": pref_slugs,
-            })
-    else:
-        for idx in range(3):
-            variants.append({
-                "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
-                "variant_name": f"Variant {idx+1} for {active_archetype_id.replace('_', ' ').title()}",
-                "description": tweak_descriptions[idx],
-                "recommended_grain_ids": pref_slugs,
-            })
+    for idx, item in enumerate(dynamic_items):
+        variants.append({
+            "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
+            "variant_name": item["name"],
+            "description": item["desc"],
+            "recommended_grain_ids": pref_slugs,
+        })
     return {"generated_variants": variants}
 
 def _get_val(obj, key, default=None):
@@ -493,6 +572,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         engine_id = user_data.get("engine_id", "hearth")
         active_archetype_id = user_data.get("active_archetype_id", "")
         creativity_level = user_data.get("creativity_level")
+        exclude_names = user_data.get("exclude_names", [])
 
         # Build grain name slug list from inventory for recommended_grain_ids
         inventory = user_data.get("inventory", [])
@@ -507,7 +587,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta", "lean-crusty", "alkaline-bath", "fresh-pasta-noodles", "enriched-soft"] else soft_slugs
 
         c_lvl = int(creativity_level) if creativity_level is not None else 1
-        return get_fallback_variants(engine_id, active_archetype_id, c_lvl, pref_slugs)
+        return get_fallback_variants(engine_id, active_archetype_id, c_lvl, pref_slugs, exclude_names=exclude_names)
 
     elif expected_keys and "pitfalls" in expected_keys:
         return {
@@ -1614,7 +1694,7 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     return None
 
 
-def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list) -> dict | None:
+def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list, exclude_names: list = None) -> dict | None:
     """
     Given the active engine slug, selected archetype ID, and inventory grain list,
     asks the LLM to generate a list of recipe variants with descriptions
@@ -1624,9 +1704,10 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
 
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
-        "generate 3 distinct recipe variants optimized for fresh-milled whole grains.\n"
+        "generate exactly 8 distinct recipe variants optimized for fresh-milled whole grains.\n"
         f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
+        f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
         "CRITICAL: The variants must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
         "\n"
         "Each variant must match this JSON schema:\n"
@@ -1648,6 +1729,7 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
         "engine_id": engine_id,
         "active_archetype_id": active_archetype_id,
         "inventory": inventory,
+        "exclude_names": exclude_names or [],
     })
 
     try:
@@ -1713,18 +1795,19 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
     return mock
 
 
-def generate_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list) -> dict | None:
+def generate_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list, exclude_names: list = None) -> dict | None:
     """
     Given the engine, target creativity level, parent recipe, and inventory grain list,
-    asks the LLM to generate 3 alternative recipe variations matching ONLY that creativity level.
+    asks the LLM to generate 8 alternative recipe variations matching ONLY that creativity level.
     """
     import json
 
     system_prompt = (
         f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
-        f"generate exactly 3 alternative structural profile variations matching ONLY that creativity level.\n"
+        f"generate exactly 8 alternative structural profile variations matching ONLY that creativity level.\n"
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
+        f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
         "CRITICAL: The variations must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
         "\n"
         "Each variation must match this JSON schema:\n"
@@ -1747,6 +1830,7 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
         "creativity_level": creativity_level,
         "active_archetype_id": active_archetype_id,
         "inventory": inventory,
+        "exclude_names": exclude_names or [],
     })
 
     try:

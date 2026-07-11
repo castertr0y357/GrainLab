@@ -419,7 +419,7 @@
     },
 
     fetchRecipeDetails(recipe_slug) {
-        if (!this.recipe_selected || !recipe_slug) {
+        if (!recipe_slug) {
             this.sidebar_analysis = '';
             this.globalElevateRecipe = [];
             this.recipe_details_loading = false;
@@ -472,7 +472,8 @@
         }
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const exclude_names = this.getRecipesForLevel(level).map(r => r.recipe_name).join(',');
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}&exclude_names=${encodeURIComponent(exclude_names)}`;
 
         fetch(url)
             .then(res => res.json())
@@ -508,7 +509,6 @@
         this.selected_recipe_id = recipe_id;
         this.presetSlug = recipe_id;
         this.presetName = recipe_name;
-        this.recipe_selected = true;
         this.recommended_grain_ids = recipe.recommended_grain_ids || [];
         this.sidebar_analysis = '';
         this.globalElevateRecipe = [];
@@ -534,6 +534,13 @@
 
         // Trigger on-demand detailed lazy load call
         this.fetchRecipeDetails(recipe_id);
+    },
+
+    confirmRecipeSelection() {
+        if (!this.selected_recipe_id) return;
+        this.recipe_selected = true;
+        this.current_phase = 3;
+        this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
     },
 
     getClassificationLabel(berry) {
@@ -1444,6 +1451,59 @@
                     </div>
                 </div>
                 
+                <!-- Phase 2 Sidebar Inspector -->
+                <div x-show="current_phase === 2 && !hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+                    <!-- Idle State: No Recipe Selected -->
+                    <div x-show="!selected_recipe_id" 
+                         style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+                        <div>
+                            <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🍰</span>
+                            Select a recipe profile to view technical science details...
+                        </div>
+                    </div>
+                    
+                    <!-- Active State: Recipe Selected -->
+                    <div x-show="selected_recipe_id" style="display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+                        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <!-- Header -->
+                            <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                                [ Active Target: <span x-text="presetName"></span> ]
+                            </div>
+                            
+                            <!-- Science Profile Card -->
+                            <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                <span style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🔬 Technical Science Profile</span>
+                                <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+                                    <span class="spinner" style="width: 12px; height: 12px;"></span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Compiling analysis...</span>
+                                </div>
+                                <p x-show="!sidebar_insight_loading" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis || 'Generating science analysis...'"></p>
+                            </div>
+                            
+                            <!-- Ways to Elevate Card -->
+                            <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                                <span style="font-size: 0.75rem; color: #ff9800; text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🤖 AI Craft Elevators</span>
+                                <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+                                    <span class="spinner" style="width: 12px; height: 12px;"></span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Analyzing grain matrix...</span>
+                                </div>
+                                <div x-show="!sidebar_insight_loading">
+                                    <template x-if="globalElevateRecipe.length === 0">
+                                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45; font-style: italic;">Generating ways to elevate...</p>
+                                    </template>
+                                    <template x-if="globalElevateRecipe.length > 0">
+                                        <ul style="margin: 0; padding-left: 1.15rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; list-style-type: disc;">
+                                            <template x-for="(tip, index) in globalElevateRecipe" :key="index">
+                                                <li style="margin-bottom: 0.4rem;" x-text="tip"></li>
+                                            </template>
+                                        </ul>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Phase 1 Sidebar Inspector -->
                 <div x-show="current_phase === 1 && !hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
                     <!-- Idle State: No Category Selected -->
