@@ -68,28 +68,28 @@ class HearthEngine(BaseEngine):
     ]
 
     archetypes = {
-        "crusty_boule": {
-            "label": "Crusty Boule",
+        "hearth_boule": {
+            "label": "Hearth Boule / Batard",
             "icon": "🫓",
-            "description": "Spherical hearth loaf baked in a covered vessel. Steam injection drives maximum oven spring and a crackling crust.",
+            "description": "Freeform oval or round configurations baked on radiant stone floors.",
             "grain_affinity": "high_protein",
         },
-        "baguette": {
-            "label": "Baguette / Batard",
-            "icon": "🥖",
-            "description": "Long, thin format demanding maximum gluten extensibility and precise scoring for ear development.",
-            "grain_affinity": "high_protein",
-        },
-        "ciabatta": {
-            "label": "Open Crumb Ciabatta",
+        "high_hydration_slab": {
+            "label": "High-Hydration Slab",
             "icon": "🍞",
-            "description": "High-hydration flat loaf. Extremely open crumb with large irregular holes. No mechanical kneading — stretch-and-fold only.",
+            "description": "Wet, un-kneaded cellular matrices poured out into pans like Focaccia or Ciabatta.",
             "grain_affinity": "high_protein",
         },
-        "pizza_crust": {
-            "label": "Pizza / Flatbread Hearth",
+        "tapered_baguette": {
+            "label": "Tapered Baguette",
+            "icon": "🥖",
+            "description": "Elongated, thin cylinder format optimizing the crust-to-crumb ratio.",
+            "grain_affinity": "high_protein",
+        },
+        "flash_pizza": {
+            "label": "Flash Pizza Crust",
             "icon": "🍕",
-            "description": "Thin, extensible disc baked on high-heat stone or steel. Gluten must stretch without tearing.",
+            "description": "Ultra-thin center with a blistered gas-filled rim set under extreme thermal environments.",
             "grain_affinity": "high_protein",
         },
     }

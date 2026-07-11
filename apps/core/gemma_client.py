@@ -274,7 +274,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                     {"name": "Einkorn Bourbon Toffee", "desc": "Experimental profile with ancient einkorn flour, bourbon-soaked vanilla bean, and charred sugar shards.", "science": "Einkorn's weak gluten structure and high carotenoids produce a tender, bright yellow crumb with high meltability.", "roi": "Artisanal / Sophisticated Cocktail Profile", "tip": "Bake at a slightly lower temperature (325F) to preserve einkorn's fragile starches."}
                 ]
             },
-            "classic_sourdough": {
+            "hearth_boule": {
                 1: [
                     {"name": "Baseline Country Sourdough", "desc": "Standard reliable sourdough boule with 70% hydration and straightforward bulk fermentation.", "science": "Traditional yeast and lactic fermentation producing a uniform wild crumb and crisp crust.", "roi": "Low Effort / 100% Reliable", "tip": "Maintain dough temperature at 75-78F throughout bulk fermentation."},
                     {"name": "Classic San Francisco Hearth", "desc": "Standard sour loaf with an extended cold retardation phase to highlight acetic acid notes.", "science": "Extended cold rest allows heterofermentative bacteria to produce high ratios of acetic acid.", "roi": "Patience Required / Intense Sour Tang", "tip": "Use a mature, slightly acidic starter to kickstart the cold souring."},

@@ -54,22 +54,28 @@ class FlatEngine(BaseEngine):
     ]
 
     archetypes = {
-        "griddle_disk": {
-            "label": "Griddle Disk",
-            "icon": "🫓",
-            "description": "Thin, round flatbread cooked on a dry cast-iron or tawa. Must roll to 1-2mm without elastic snap-back.",
-            "grain_affinity": "medium_protein",
-        },
-        "leavened_pocket": {
-            "label": "Leavened Pocket",
+        "leavened_flatbread": {
+            "label": "Leavened Flatbread",
             "icon": "🫔",
-            "description": "Pita or naan, slightly thicker with steam-pocket formation. Requires brief high-heat exposure for interior steam blast.",
+            "description": "Puffy, vapor-pocket pockets driven by interior steam like Naan and Pita.",
             "grain_affinity": "medium_protein",
         },
-        "crisp_sheet": {
-            "label": "Crisp / Cracker Sheet",
+        "unleavened_stretched": {
+            "label": "Unleavened Stretched",
+            "icon": "🫓",
+            "description": "Paper-thin configurations demanding zero elastic snapback like Tortillas and Roti.",
+            "grain_affinity": "medium_protein",
+        },
+        "blistered_griddle": {
+            "label": "Blistered Griddle Cake",
+            "icon": "🍳",
+            "description": "Direct contact stove-top pan bakes.",
+            "grain_affinity": "medium_protein",
+        },
+        "crisp_flatbread": {
+            "label": "Crisp Crispbread / Lavash",
             "icon": "🍘",
-            "description": "Ultra-thin sheet baked until fully dehydrated and crisp. Zero gluten elasticity snap-back is critical for even thickness.",
+            "description": "Dehydrated sheet structures prioritizing snap and shelf life.",
             "grain_affinity": "low_protein",
         },
     }

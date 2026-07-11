@@ -53,22 +53,28 @@ class BathEngine(BaseEngine):
     ]
 
     archetypes = {
-        "pretzel_twist": {
-            "label": "Pretzel Twist",
+        "twisted_pretzel": {
+            "label": "Twisted Pretzel",
             "icon": "🥨",
-            "description": "Shaped twist bathed in alkaline lye solution (3%). The Maillard browning is driven by the alkaline surface chemistry rather than sugar.",
+            "description": "Traditional knot shapes, maximize surface area for Maillard browning.",
             "grain_affinity": "high_protein",
         },
         "boiled_bagel": {
             "label": "Boiled Bagel",
             "icon": "🥯",
-            "description": "Malt syrup boiling bath gelatinizes the dough surface and creates the signature chewy crust before oven finish.",
+            "description": "Ring geometry, dense core structure, high tensile strength.",
             "grain_affinity": "high_protein",
         },
-        "pretzel_bun": {
-            "label": "Pretzel Bun / Bite",
-            "icon": "🍔",
-            "description": "Portioned bun format alkaline-bathed for deep Maillard browning and a pronounced chewy exterior shell.",
+        "laugen_bun": {
+            "label": "Laugen Bun / Roll",
+            "icon": "🫓",
+            "description": "Spherical soft-crumb interior protected by a thick glossy skin.",
+            "grain_affinity": "high_protein",
+        },
+        "pretzel_stick": {
+            "label": "Pretzel Stick / Cracker",
+            "icon": "🥖",
+            "description": "Ultra-low hydration, brittle, snapping structure.",
             "grain_affinity": "high_protein",
         },
     }

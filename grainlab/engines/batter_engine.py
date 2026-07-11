@@ -88,28 +88,28 @@ class BatterEngine(BaseEngine):
     ]
 
     archetypes = {
-        "layer_cake": {
-            "label": "Layer Cake",
-            "icon": "🎂",
-            "description": "High-ratio batter enriched with fat and sugar exceeding flour weight. Emulsification is the critical structural force.",
-            "grain_affinity": "low_protein",
-        },
-        "sponge_chiffon": {
-            "label": "Sponge / Chiffon",
+        "sponge_cake": {
+            "label": "Foam / Sponge Cake",
             "icon": "🍰",
-            "description": "Aerated batter relying on whipped egg foam for structure. Fat content deliberately minimized to preserve foam lift.",
+            "description": "Fat-free or low-fat aeration systems like Genoise or Chiffon.",
             "grain_affinity": "low_protein",
         },
-        "griddle_batter": {
-            "label": "Griddle Batter",
-            "icon": "🥞",
-            "description": "Poured batter cooked on a flat griddle. Very high hydration, minimal gluten development. Steam venting creates an open crumb.",
+        "creamed_cake": {
+            "label": "Creamed Layer Cake",
+            "icon": "🎂",
+            "description": "Emulsified lipid-sugar crystal structures for standard layers.",
             "grain_affinity": "low_protein",
         },
         "pound_cake": {
-            "label": "Pound Cake / Dense Loaf",
+            "label": "High-Ratio Pound Cake",
             "icon": "🍫",
-            "description": "Equal-weight flour, fat, sugar, and eggs. Creaming method drives emulsification for a dense, fine crumb with a tight structure.",
+            "description": "Dense, uniform crumb carrying massive sugar and fat weights.",
+            "grain_affinity": "low_protein",
+        },
+        "griddle_batter": {
+            "label": "Fluid Griddle Batter",
+            "icon": "🥞",
+            "description": "High-moisture pourable structures like Pancakes, Waffles, and Crepes.",
             "grain_affinity": "low_protein",
         },
     }

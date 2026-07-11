@@ -59,28 +59,28 @@ class FryEngine(BaseEngine):
     ]
 
     archetypes = {
-        "yeast_donut": {
+        "yeast_raised_donut": {
             "label": "Yeast-Raised Donut",
             "icon": "🍩",
-            "description": "Enriched, yeast-leavened ring proofed then deep-fried. Light, airy, pillow-soft crumb. Fat absorption is minimized by proper proofing.",
+            "description": "Highly aerated, light, floating dough rings.",
             "grain_affinity": "medium_protein",
         },
         "cake_donut": {
-            "label": "Cake Donut",
+            "label": "Cake / Chemical Donut",
             "icon": "🍩",
-            "description": "Chemically leavened, denser donut extruded directly into hot oil. No proof time required. Crisp exterior, cakey interior.",
+            "description": "Tender, friable, batter-based rings dropping directly into fat.",
             "grain_affinity": "low_protein",
         },
-        "beignet_puff": {
-            "label": "Beignet / Puff",
+        "fritter_beignet": {
+            "label": "Batter Fritter / Beignet",
             "icon": "☁️",
-            "description": "High-hydration dough dropped into oil, steam-puffing into an irregular hollow. Powdered sugar dusted finish.",
+            "description": "Irregular high-hydration moisture puffs expanding violently in oil.",
             "grain_affinity": "low_protein",
         },
-        "frybread": {
-            "label": "Frybread / Flatbread Fry",
+        "fried_laminate": {
+            "label": "Fried Laminate",
             "icon": "🫓",
-            "description": "Flat dough hand-pressed or rolled then fried until puffed and golden. Extensible gluten and medium hydration.",
+            "description": "Alternating layers flashing open instantly in convection fat.",
             "grain_affinity": "medium_protein",
         },
     }

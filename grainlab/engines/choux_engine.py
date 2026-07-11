@@ -58,28 +58,22 @@ class ChouxEngine(BaseEngine):
     ]
 
     archetypes = {
-        "eclair_log": {
-            "label": "Éclair / Log",
+        "piped_shell": {
+            "label": "Piped Shell",
             "icon": "🍫",
-            "description": "Piped oblong tube. Steam from the high-water paste creates a hollow interior for cream filling. Precise piping width controls surface expansion.",
+            "description": "Linear or round hollow vectors like Éclairs and Profiteroles.",
             "grain_affinity": "low_protein",
         },
-        "puff_sphere": {
-            "label": "Cream Puff / Sphere",
-            "icon": "🧁",
-            "description": "Piped round mound. Convex dome created by uniform steam expansion. Hollow center sized by paste stiffness and egg ratio.",
-            "grain_affinity": "low_protein",
-        },
-        "savory_gougere": {
-            "label": "Savory Gougère",
-            "icon": "🧀",
-            "description": "Cheese-enriched choux sphere. Cheese adds fat that reduces steam drive slightly, requiring slightly stiffer paste consistency.",
-            "grain_affinity": "low_protein",
-        },
-        "piped_churro": {
-            "label": "Piped / Extruded (Churro)",
+        "extrusion_fried": {
+            "label": "Extrusion Fried Paste",
             "icon": "🌀",
-            "description": "Star-piped log for direct frying or baking. Must be stiff enough to hold its star shape during extrusion.",
+            "description": "Star-die extrusion profiles built for rapid oil expansion like Churros.",
+            "grain_affinity": "low_protein",
+        },
+        "savory_emulsion": {
+            "label": "Savory Emulsion",
+            "icon": "🧀",
+            "description": "High-lipid, cheese-bound panade drops like Gougères.",
             "grain_affinity": "low_protein",
         },
     }

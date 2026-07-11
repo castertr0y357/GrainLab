@@ -76,25 +76,25 @@ class CookieEngine(BaseEngine):
         "drop_cookie": {
             "label": "Drop Cookie",
             "icon": "🍪",
-            "description": "Portioned dough balls spread horizontally under heat. Fat-to-protein ratio drives crisp edge / soft center dichotomy.",
+            "description": "Irregular mounds designed to flow into tender discs.",
             "grain_affinity": "low_protein",
         },
         "bar_cookie": {
             "label": "Bar / Slab",
             "icon": "🍫",
-            "description": "Single-layer baked slab, portioned after cooling. Dense, fudgy crumb structure requires high-fat binding and minimal gluten.",
+            "description": "Continuous uniform block baking, minimizing perimeter crisping.",
             "grain_affinity": "low_protein",
         },
         "slice_bake": {
             "label": "Slice & Bake",
             "icon": "🔪",
-            "description": "Dough formed into a log, chilled, then sliced into uniform rounds. Cold fat retention is critical for sharp edges.",
+            "description": "Log configuration, highly compressed fat crystals for crisp rings.",
             "grain_affinity": "low_protein",
         },
         "rolled_cutout": {
             "label": "Rolled Cutout",
             "icon": "⭐",
-            "description": "Sheet-rolled dough stamped with forms. Must retain shape without spreading. Gluten structure slightly elevated for edge definition.",
+            "description": "Zero-spread formulation maintaining clean geometric edges post-bake.",
             "grain_affinity": "medium_protein",
         },
     }

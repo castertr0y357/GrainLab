@@ -66,28 +66,28 @@ class PastaEngine(BaseEngine):
     ]
 
     archetypes = {
-        "fresh_egg_sheet": {
-            "label": "Fresh Egg Sheet",
+        "sheeted_ribbon": {
+            "label": "Sheeted Ribbon Pastas",
             "icon": "🍝",
-            "description": "Egg-enriched pasta sheeted thin. High egg protein creates a tender but silky structure with minimal water needed.",
+            "description": "Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine.",
             "grain_affinity": "high_protein",
         },
-        "extruded_tube": {
-            "label": "Extruded Tube / Die-Cut",
-            "icon": "🔩",
-            "description": "Semolina dough forced through bronze dies. High semolina protein and very low hydration creates a rough surface that holds sauce.",
-            "grain_affinity": "high_protein",
-        },
-        "dumpling_wrapper": {
-            "label": "Dumpling / Wrapper",
+        "stuffed_pocket": {
+            "label": "Stuffed / Encased Pockets",
             "icon": "🥟",
-            "description": "Thin, hand-cut rounds for stuffed dumplings. Must be strong enough to seal and steam without tearing under filling pressure.",
-            "grain_affinity": "medium_protein",
+            "description": "High-elasticity envelopes meant to seal wet fillings securely like Ravioli.",
+            "grain_affinity": "high_protein",
         },
-        "alkaline_noodle": {
-            "label": "Alkaline Noodle (Ramen)",
+        "extruded_shape": {
+            "label": "Extruded Die Shapes",
+            "icon": "🔩",
+            "description": "High-pressure compression matrix tubes or hollows like Rigatoni.",
+            "grain_affinity": "high_protein",
+        },
+        "alkaline_noodles": {
+            "label": "Alkaline Cut Noodles",
             "icon": "🍜",
-            "description": "Lye-water treatment (kansui) creates a yellow pigment and bouncy, springy texture unique to ramen and many Asian noodles.",
+            "description": "Mineral-fortified strings built for snap and yellow coloration like Ramen.",
             "grain_affinity": "high_protein",
         },
     }

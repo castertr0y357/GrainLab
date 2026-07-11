@@ -73,28 +73,28 @@ class PastryEngine(BaseEngine):
     ]
 
     archetypes = {
-        "laminated_croissant": {
-            "label": "Laminated Croissant",
+        "layered_viennoiserie": {
+            "label": "Layered Viennoiserie",
             "icon": "🥐",
-            "description": "Yeast-leavened dough with a butter block folded in. Laminar fat layers must stay cold to create distinct, shatteringly crisp layers.",
+            "description": "Yeast-leavened laminated structures like Croissants and Danishes.",
             "grain_affinity": "medium_protein",
         },
-        "puff_pastry": {
-            "label": "Puff Pastry",
+        "inverted_puff": {
+            "label": "Inverted Puff Pastry",
             "icon": "🍥",
-            "description": "Unleavened, all-butter laminated dough. Steam-driven lift from water in butter creates hundreds of crisp, flaky layers.",
+            "description": "Unleavened laminated doughs driven entirely by water-vapor lift.",
             "grain_affinity": "medium_protein",
         },
-        "pie_tart_crust": {
-            "label": "Pie / Tart Shell",
+        "shortcrust_tart": {
+            "label": "Shortcrust Tart Casing",
             "icon": "🥧",
-            "description": "Short, crumbly pastry worked cold to minimize gluten development. Fat particles coat flour to create a tender, sandy texture.",
+            "description": "High-fat friable crumb shells designed to remain completely impermeable to wet fillings.",
             "grain_affinity": "low_protein",
         },
-        "danish": {
-            "label": "Danish Pastry",
-            "icon": "🌸",
-            "description": "Enriched laminated dough with egg and milk. Slightly richer and softer than croissant, allowing more filling absorption.",
+        "paper_thin_phyllo": {
+            "label": "Paper-Thin Phyllo / Strudel",
+            "icon": "🫓",
+            "description": "Stretched, transparent gluten films stacked with liquid fat layers.",
             "grain_affinity": "medium_protein",
         },
     }
