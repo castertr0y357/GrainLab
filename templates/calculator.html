@@ -142,10 +142,15 @@
         if (!key) return;
         this.hovered_element = key;
         
-        this.sidebar_insight_loading = true;
-        this.sidebar_labor_roi = '';
-        this.sidebar_analysis = '';
-        this.sidebar_tier = '';
+        if (key.startsWith('archetype_')) {
+            const archId = key.replace('archetype_', '');
+            const arch = this.enginesArchetypes[this.selected_master]?.[archId];
+            this.sidebar_tier = '';
+            this.sidebar_labor_roi = '';
+            this.sidebar_analysis = arch ? (arch.description || `Recipes belonging to the ${arch.label || archId} archetype.`) : '';
+            this.sidebar_insight_loading = false;
+            return;
+        }
         
         if (key.startsWith('grain_')) {
             if (this.advisoryLoading) {
@@ -1050,7 +1055,7 @@
                         <button type="button" 
                                 class="nav-btn" 
                                 style="height: 36px; padding: 0 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center;"
-                                @click="current_phase--; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="if (current_phase === 2 && recipe_selected) { recipe_selected = false; selected_recipe_id = null; presetSlug = ''; presetName = ''; } else { current_phase--; } $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                             ← STEP BACK
                         </button>
                         
@@ -1268,7 +1273,7 @@
                                              : 'SUB-OPTIMAL'
                                       "></span>
                             </div>
-                            <div style="margin-bottom: 0.75rem;" x-show="hovered_element && !hovered_element.startsWith('grain_')">
+                            <div style="margin-bottom: 0.75rem;" x-show="hovered_element && !hovered_element.startsWith('grain_') && !hovered_element.startsWith('archetype_')">
                                 <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Labor ROI Matrix</span>
                                 <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
                                       x-text="sidebar_labor_roi"></span>
