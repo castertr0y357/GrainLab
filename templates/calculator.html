@@ -506,7 +506,7 @@
             this.fetchAdvisory(this.presetSlug);
         });
         this.$watch('activeBerries', () => {
-            this.fetchAdvisory(this.presetSlug);
+            this.fetchElevateTips(this.presetSlug);
         }, { deep: true });
         this.selectIdealGrain();
         if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
@@ -525,6 +525,11 @@
     },
 
     fetchAdvisory(slug) {
+        if (!this.recipe_selected) {
+            this.resetAdvisory();
+            return;
+        }
+        
         // Clear any existing debounce timeout
         if (this.advisoryTimeout) {
             clearTimeout(this.advisoryTimeout);
@@ -532,12 +537,12 @@
         
         // Debounce for 750ms
         this.advisoryTimeout = setTimeout(() => {
-            this.executeFetchAdvisory(slug);
+            this.fetchGrainEvaluations(slug);
         }, 750);
     },
 
-    executeFetchAdvisory(slug) {
-        if (!slug && (!this.selected_master || this.selected_master === 'null')) {
+    fetchGrainEvaluations(slug) {
+        if (!this.recipe_selected || !slug) {
             this.resetAdvisory();
             return;
         }
@@ -576,13 +581,7 @@
             this.advisoryLoadingMessage = messages[idx];
         }, 750);
 
-        // Build url with selected grains
-        const selectedGrains = this.activeBerries
-            .filter(b => b.selected)
-            .map(b => b.id)
-            .join(',');
-
-        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug || '') + '&selected_grains=' + encodeURIComponent(selectedGrains);
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&only_evaluations=true';
         if (this.selected_master && this.selected_master !== 'null') {
             url += '&category_slug=' + encodeURIComponent(this.selected_master);
         }
@@ -591,7 +590,6 @@
             .then(res => res.json())
             .then(data => {
                 this.grainEvaluations = data.grain_evaluations || [];
-                this.globalElevateRecipe = data.elevate_recipe || '';
                 const rec = this.grainEvaluations.find(e => e.tier === 'recommended');
                 const risk = this.grainEvaluations.find(e => e.tier === 'not-recommended');
                 this.advisoryRecommendedName = rec ? this.getGrainNameById(rec.grain_id) : '';
@@ -622,18 +620,47 @@
                 window.dispatchEvent(new CustomEvent('grain-advisory-updated', {
                     detail: { grain_evaluations: this.grainEvaluations }
                 }));
+
+                // Immediately trigger "Ways to Elevate" query last, building on user selections
+                this.fetchElevateTips(slug);
             })
             .catch(err => {
                 if (err.name === 'AbortError') {
                     console.log('Advisory fetch aborted.');
                     return;
                 }
-                console.error('Failed fetching advisory:', err);
+                console.error('Failed fetching advisory evaluations:', err);
                 this.advisoryLoading = false;
                 this.advisoryAbortController = null;
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     this.sidebar_insight_loading = false;
                 }
+            });
+    },
+
+    fetchElevateTips(slug) {
+        if (!this.recipe_selected || !slug) {
+            this.globalElevateRecipe = '';
+            return;
+        }
+
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&selected_grains=' + encodeURIComponent(selectedGrains) + '&only_elevate=true';
+        if (this.selected_master && this.selected_master !== 'null') {
+            url += '&category_slug=' + encodeURIComponent(this.selected_master);
+        }
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                this.globalElevateRecipe = data.elevate_recipe || '';
+            })
+            .catch(err => {
+                console.error('Failed fetching elevate tips:', err);
             });
     },
 

@@ -141,7 +141,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                 
         return {"shares": shares, "structural_warning": warning}
 
-    elif expected_keys and "grain_evaluations" in expected_keys:
+    elif expected_keys and ("grain_evaluations" in expected_keys or "elevate_recipe" in expected_keys):
         # Mock get_grain_advisory_ai
         preset_slug = user_data.get("preset_slug", "")
         category_slug = user_data.get("category_slug", "")
@@ -1031,7 +1031,7 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     return None
 
 
-def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None) -> dict | None:
+def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False) -> dict | None:
     """
     Submits a prompt to Gemma asking for evaluation of available kitchen inventory.
     """
@@ -1053,33 +1053,75 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         selected_berries = [wb for wb in active_berries if str(wb.id) in selected_ids]
         selected_names = [wb.name for wb in selected_berries]
 
-        system_prompt = (
-            "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
-            "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
-            "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-            "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
-            "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
-            "Evaluate each grain and assign:\n"
-            "- 'recommended': Grains that are ideal for the preset.\n"
-            "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
-            "- 'not-recommended': Grains that are inappropriate for the preset's required gluten structure, texture, or flavor characteristics.\n"
-            "\n"
-            "Return a JSON object matching this schema:\n"
-            "{\n"
-            "  \"grain_evaluations\": [\n"
-            "    {\n"
-            "      \"grain_id\": \"string (UUID of the grain)\",\n"
-            "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-            "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
-            "    }\n"
-            "  ],\n"
-            "  \"elevate_recipe\": [\n"
-            "    \"string suggestion 1\",\n"
-            "    \"string suggestion 2\",\n"
-            "    \"string suggestion 3 (provide 3 to 5 distinct ways to enhance the outcome, specifically tailored to build upon the user's active grain selections)\"\n"
-            "  ]\n"
-            "}"
-        )
+        expected_keys = ["grain_evaluations", "elevate_recipe"]
+
+        if only_evaluations:
+            system_prompt = (
+                "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
+                "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+                "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
+                "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
+                "Evaluate each grain and assign:\n"
+                "- 'recommended': Grains that are ideal for the preset.\n"
+                "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
+                "- 'not-recommended': Grains that are inappropriate for the preset's required gluten structure, texture, or flavor characteristics.\n"
+                "\n"
+                "Return a JSON object matching this schema:\n"
+                "{\n"
+                "  \"grain_evaluations\": [\n"
+                "    {\n"
+                "      \"grain_id\": \"string (UUID of the grain)\",\n"
+                "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
+                "    }\n"
+                "  ]\n"
+                "}"
+            )
+            expected_keys = ["grain_evaluations"]
+        elif only_elevate:
+            system_prompt = (
+                "You are a baking science expert. Analyze the given bread/pastry preset and the active grain selections checked by the user.\n"
+                "Provide 3 to 5 distinct, highly specific ways to enhance the outcome (e.g. methods like autolyse, preferments, cold retardation, or specific fat/liquid ratio tweaks), tailored specifically to build upon the user's active grain selections.\n"
+                "\n"
+                "Return a JSON object matching this schema:\n"
+                "{\n"
+                "  \"elevate_recipe\": [\n"
+                "    \"string suggestion 1\",\n"
+                "    \"string suggestion 2\",\n"
+                "    \"string suggestion 3\"\n"
+                "  ]\n"
+                "}"
+            )
+            expected_keys = ["elevate_recipe"]
+        else:
+            system_prompt = (
+                "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
+                "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+                "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
+                "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
+                "Evaluate each grain and assign:\n"
+                "- 'recommended': Grains that are ideal for the preset.\n"
+                "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
+                "- 'not-recommended': Grains that are inappropriate for the preset's required gluten structure, texture, or flavor characteristics.\n"
+                "\n"
+                "Return a JSON object matching this schema:\n"
+                "{\n"
+                "  \"grain_evaluations\": [\n"
+                "    {\n"
+                "      \"grain_id\": \"string (UUID of the grain)\",\n"
+                "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
+                "    }\n"
+                "  ],\n"
+                "  \"elevate_recipe\": [\n"
+                "    \"string suggestion 1\",\n"
+                "    \"string suggestion 2\",\n"
+                "    \"string suggestion 3 (provide 3 to 5 distinct ways to enhance the outcome, specifically tailored to build upon the user's active grain selections)\"\n"
+                "  ]\n"
+                "}"
+            )
         
         payload = {
             "preset_slug": preset_slug,
@@ -1100,7 +1142,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         
         user_prompt = json.dumps(payload)
         import re
-        res = call_gemma_api(system_prompt, user_prompt, expected_keys=["grain_evaluations", "elevate_recipe"])
+        res = call_gemma_api(system_prompt, user_prompt, expected_keys=expected_keys)
         if res and isinstance(res, dict) and "grain_evaluations" in res:
             evaluations = res["grain_evaluations"]
             if isinstance(evaluations, list):
