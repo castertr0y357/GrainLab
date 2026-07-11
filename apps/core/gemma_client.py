@@ -1860,9 +1860,10 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
-        "and a list of active selected grains, generate the technical science profile and a list of craft tips to elevate the bake.\n"
+        "and a list of active selected grains, generate the menu description, technical science profile, and a list of craft tips to elevate the bake.\n"
         "Each response must match this JSON schema:\n"
         "{\n"
+        "  \"menu_description\": \"A 1-2 sentence rich, descriptive flavor profile that highlights taste, aroma, and visual appeal, written in the style of a high-end restaurant menu item description (e.g., 'A decadent, dark chocolate cookie layered with rich malt undertones and finished with pockets of molten Valrhona fudge.').\",\n"
         "  \"sidebar_science_profile\": \"1-2 sentence technical science analysis of the crumb, starch-lipid structure, or hydration of this specific recipe.\",\n"
         "  \"elevate_recipe\": [\n"
         "    \"Specific tip 1 (e.g. autolyse time, temperature tweaks, or folding technique relative to this recipe).\",\n"
@@ -1911,6 +1912,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
     db = {
         "drop_cookie": {
             "classic": {
+                "menu": "A timeless classic cookie featuring golden edges, a soft, buttery chew, and a rich distribution of sweet chocolate drops.",
                 "science": "Standard lipid-starch coat limit. Gluten development is mechanically minimized to produce a crumb that is highly uniform, tender, and soft.",
                 "tips": [
                     "Cream butter and sugar until light and fluffy to incorporate micro-air pockets.",
@@ -1919,6 +1921,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
                 ]
             },
             "modern": {
+                "menu": "An advanced, chocolate-rich creation accented by subtle browned-butter notes, espresso highlights, and a melting caramel core.",
                 "science": "Double-hydration lipid emulsion focus. Pushes hydration to the starch ceiling, optimizing starch gelatinization for maximum softness.",
                 "tips": [
                     "Substitute 10% of the flour with toasted hazelnut or almond meal to weaken gluten.",
@@ -1929,6 +1932,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
         },
         "hearth_bread": {
             "classic": {
+                "menu": "A traditional hearth bread with an aromatic, blistered sourdough crust and a moist, airy crumb of rich wheat flavor.",
                 "science": "Traditional Hearth Boule structure. Relies on moderate hydration (65-68%) and standard bulk fermentation to develop a strong, elastic gluten network.",
                 "tips": [
                     "Perform 3 sets of stretch-and-folds during the first 2 hours of bulk fermentation.",
@@ -1937,6 +1941,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
                 ]
             },
             "modern": {
+                "menu": "A high-hydration rustic batard, featuring a dark-baked mahogany crust and a highly open, custardy crumb with exceptional grain expression.",
                 "science": "Advanced high-hydration (75-80%) modern Batard. Pushes water saturation to the limits, creating a glossy, highly open, and gelatinized crumb structure.",
                 "tips": [
                     "Carry out a 1-hour autolyse (flour and water only) before adding the starter and salt.",
@@ -1961,6 +1966,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
         custom_tips.insert(1, f"Accommodate the high absorption rate of fresh {first_grain} by adding 2% extra water if dough feels stiff.")
 
     return {
+        "menu_description": data["menu"],
         "sidebar_science_profile": data["science"],
         "elevate_recipe": custom_tips[:3]
     }

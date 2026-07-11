@@ -1861,6 +1861,7 @@ def ai_recipe_details(request):
 
     if result is None:
         return JsonResponse({
+            "menu_description": "No flavor profile compiled.",
             "sidebar_science_profile": "No technical profile compiled.",
             "elevate_recipe": []
         }, status=200)
