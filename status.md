@@ -93,6 +93,8 @@
 - [x] Implement dynamic progressive loading checklist UI for recipe generation and recipe details compilation
 - [x] Add automated unit tests validating the 10-recipe list schema, lazy loading endpoint parameters, and dynamic route scanner check
 - [x] Fix double quote premature termination of x-data attribute inside calculator_form.html to resolve browser-side Alpine.js ReferenceErrors
+- [x] Fix double quote premature termination of x-data attribute inside calculator.html and escape single quote in baker's label to resolve browser-side Alpine.js ReferenceErrors
+
 
 
 
