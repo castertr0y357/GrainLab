@@ -381,8 +381,6 @@
                     <template x-for="recipe in getRecipesForLevel(1)" :key="recipe.recipe_id">
                         <div class="card" 
                              :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
-                             @mouseenter="onRecipeHover(recipe)"
-                             @mouseleave="clearHoveredElement()"
                              @click="selectRecipe(recipe)"
                              style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                              :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
@@ -404,8 +402,6 @@
                             <template x-for="alt in alternative_variants" :key="alt.variant_id">
                                 <div class="card" 
                                      :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
-                                     @mouseenter="onRecipeHover(alt)"
-                                     @mouseleave="clearHoveredElement()"
                                      @click="selectRecipe(alt)"
                                      style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                                      :style="selected_recipe_id === alt.variant_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
@@ -435,8 +431,6 @@
                     <template x-for="recipe in getRecipesForLevel(2)" :key="recipe.recipe_id">
                         <div class="card" 
                              :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
-                             @mouseenter="onRecipeHover(recipe)"
-                             @mouseleave="clearHoveredElement()"
                              @click="selectRecipe(recipe)"
                              style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                              :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
@@ -458,8 +452,6 @@
                             <template x-for="alt in alternative_variants" :key="alt.variant_id">
                                 <div class="card" 
                                      :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
-                                     @mouseenter="onRecipeHover(alt)"
-                                     @mouseleave="clearHoveredElement()"
                                      @click="selectRecipe(alt)"
                                      style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                                      :style="selected_recipe_id === alt.variant_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">

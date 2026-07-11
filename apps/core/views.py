@@ -1828,6 +1828,23 @@ def ai_recipe_details(request):
     if not recipe_slug:
         return JsonResponse({"error": "recipe_slug is required."}, status=400)
 
+    # Convert grain IDs to actual human-readable names for the LLM
+    selected_grains_names = ""
+    if selected_grains:
+        grain_ids = [g.strip() for g in selected_grains.split(",") if g.strip()]
+        parsed_uuids = []
+        raw_names = []
+        for gid in grain_ids:
+            try:
+                parsed_uuids.append(uuid.UUID(gid))
+            except ValueError:
+                raw_names.append(gid)
+        
+        db_grains = WheatBerry.objects.filter(id__in=parsed_uuids)
+        db_names = [b.name for b in db_grains]
+        all_names = db_names + raw_names
+        selected_grains_names = ", ".join(all_names)
+
     # Sanitize archetype ID if it contains suffixes
     if active_archetype_id:
         for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
@@ -1838,7 +1855,7 @@ def ai_recipe_details(request):
         engine_id=engine_id,
         active_archetype_id=active_archetype_id,
         recipe_slug=recipe_slug,
-        selected_grains=selected_grains,
+        selected_grains=selected_grains_names,
         category_slug=category_slug
     )
 

@@ -98,6 +98,10 @@
 - [x] Streamline alternative variants row to flow seamlessly underneath the main card deck using standard solid card styling and no separate section title
 - [x] Implement dynamic 8-card non-repeating recipe variant generation and parameter exclusion filtering
 - [x] Implement Phase 2 Sidebar inspector details preview and explicit SELECT RECIPE button confirmations
+- [x] Remove mouse-over/mouseenter events on recipe cards to lock sidebar state to active selection
+- [x] Clean up active target/preset brackets and prefix titles from the sidebar headers
+- [x] Harden LLM prompts and view converters to resolve grain UUIDs to human-readable names and ban IDs in responses
+- [x] Enforce double temperature scale formats (Celsius & Fahrenheit) in prompts and fallback mocks
 - [x] Write and run automated tests verifying all refactored progressive workflow features and logic
 
 ## 🚀 Active Feature Tasks

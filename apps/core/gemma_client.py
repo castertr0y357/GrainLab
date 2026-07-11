@@ -30,10 +30,10 @@ FACTUAL_DICTIONARY = {
     'cut_in': 'Distribution of cold fat pieces into dry flour. Forms flat fat pockets for flaky pastry lamination.',
     'sheet': 'Compressing dough through rollers to achieve a uniform thin sheet, aligning starch and gluten strands.',
     'extrude': 'Forcing dense dough through a shaped die to form structured shapes under high compaction pressure.',
-    'ambient': 'Countertop proofing. Relies on local ambient room temperature (70-75°F) for steady biological activity.',
+    'ambient': 'Countertop proofing. Relies on local ambient room temperature (70-75°F (21-24°C)) for steady biological activity.',
     'mat': 'Open heated proofing mat. Warms the bottom of the vessel to accelerate yeast and lactic acid production.',
     'box': 'Warm, humid enclosed proofing chamber. Maximizes biological activity while preventing surface skin drying.',
-    'refrigerator': 'Cold retardation (34-40°F). Solidifies fats and slows yeast while enzymes continue developing complex sugars.',
+    'refrigerator': 'Cold retardation (34-40°F (1-4°C)). Solidifies fats and slows yeast while enzymes continue developing complex sugars.',
     'bench_rest': 'Relaxation rest under a damp cloth. Releases elastic tension in the gluten matrix to allow final shaping.',
     'cast-iron-dutch-oven': 'Heavy cast iron pot. Retains heat and traps steam released from the dough. Ensures optimal starch gelatinization and maximum oven spring.',
     'open-baking-stone-steel': 'High-conduction hearth surface. Transports heat immediately into the base of the loaf for maximum oven spring.',
@@ -1636,6 +1636,8 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "3. TRULY INSIGHTFUL ANALYSIS & OUT-OF-STOCK ALTERNATIVES:\n"
         f"   - If the hovered element is sub-optimal or can be elevated, look at the following wheat grains that are currently NOT on hand (out of stock/inactive in the user's inventory): {inactive_grain_names}.\n"
         "   - Suggest acquiring or activating a specific grain from this out-of-stock list if it would significantly enhance the flavor or yield a superior texture for the target preset. Give a clear explanation of its impact.\n"
+        "4. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
+        "5. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
         "\n"
         "Return a JSON object containing:\n"
         "- 'recommendation_tier': a string of 'recommended', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
@@ -1868,7 +1870,11 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "    \"Specific craft tip (incorporating the last 10 percent magic tip for this recipe).\"\n"
         "  ]\n"
         "}\n"
-        "Return ONLY raw JSON with no markdown fences."
+        "Return ONLY raw JSON with no markdown fences.\n"
+        "\n"
+        "🚨 [CRITICAL PROMPT HARDENING]\n"
+        "1. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
+        "2. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale."
     )
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
@@ -1926,7 +1932,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
                 "science": "Traditional Hearth Boule structure. Relies on moderate hydration (65-68%) and standard bulk fermentation to develop a strong, elastic gluten network.",
                 "tips": [
                     "Perform 3 sets of stretch-and-folds during the first 2 hours of bulk fermentation.",
-                    "Preheat a heavy Dutch oven at 450°F for at least 45 minutes to capture maximum radiant heat.",
+                    "Preheat a heavy Dutch oven at 450°F (232°C) for at least 45 minutes to capture maximum radiant heat.",
                     "Score the dough sharply at a 45-degree angle to create a beautiful, classic ear."
                 ]
             },
@@ -1935,7 +1941,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
                 "tips": [
                     "Carry out a 1-hour autolyse (flour and water only) before adding the starter and salt.",
                     "Use coil folds instead of stretch-and-folds to build structure gently in high-hydration dough.",
-                    "Retard the shaped batard in a banner cloth at 38°F for 16 hours to optimize enzyme browning."
+                    "Retard the shaped batard in a banner cloth at 38°F (3°C) for 16 hours to optimize enzyme browning."
                 ]
             }
         }
