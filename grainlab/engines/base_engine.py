@@ -46,6 +46,30 @@ class BaseEngine:
     }
     secondary_ingredients = {}
 
+    @property
+    def culinary_nuance_directive(self) -> str:
+        """
+        Dynamically construct a highly specific culinary nuance directive 
+        based on the engine's unique parametric attributes.
+        """
+        tannin_text = (
+            "This engine is extremely tannin sensitive. Bitterness or astringency from whole grain bran "
+            "(such as red wheat tannins) will clash aggressively with the sweet, neutral flavors required."
+            if self.tannin_sensitive else
+            "This engine is tannin tolerant. It welcomes rustic, savory caramelization, lactic/acetic sourness, "
+            "and deep whole grain bran expressions."
+        )
+        actions = ", ".join(self.production_profile.get("permissible_action_types", []))
+        
+        return (
+            f"Focus on the unique target chemistry of the {self.name}:\n"
+            f"* Gluten & Structural Behavior: {self.gluten_behavior}\n"
+            f"* Flavor Affinity & Botanical Compatibility: {self.flavor_affinity} ({tannin_text})\n"
+            f"* Required Protein Window: {self.target_protein_min}% to {self.target_protein_max}%\n"
+            f"* Production Parameters: Thermodynamic focus is {self.production_profile.get('thermodynamic_focus')}, "
+            f"rest strategy is {self.production_profile.get('environmental_rest_strategy')}, and permissible actions include [{actions}]."
+        )
+
     permissible_form_factors = {
         "standard-9x5-pan": {
             "name": "Standard 9x5 Loaf Pan",

@@ -698,6 +698,59 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
     return None
 
 
+def assemble_system_prompt(engine, data_context: str, task_instructions: str, response_schema_example: str = None) -> str:
+    """
+    Constructs the system prompt in the modular fixed order:
+    1. Persona & Objective (Global Master Shell Kernel - Part 1)
+    2. Global Ruleset (Global Master Shell Kernel - Part 2)
+    3. The Data Context (Payload)
+    4. The Nuance Injection (Module: Active engine's culinary_nuance_directive)
+    5. The Instruction Block (Logic: Specific task instructions + response schema)
+    """
+    persona_objective = (
+        "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop.\n"
+        "Your tone must be highly practical, conversational, insightful, and focused entirely on the sensory experience of eating and the physical reality of cooking.\n"
+        "Do NOT use corporate filler, generic placeholders, or fluff words like: anomalies, parameter, workspace, matrix, configuration, optimization, performance, detected, or baseline.\n"
+    )
+    
+    global_ruleset = (
+        "[GLOBAL RULESET]\n"
+        "1. [CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+        "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+        "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n"
+        "2. Double Temperature Scale: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
+        "3. Ingredient Naming: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g., 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
+    )
+    
+    data_context_header = f"[USER DATA CONTEXT]\n{data_context}\n"
+    
+    engine_name = getattr(engine, "name", "Default Baking Engine")
+    nuance_directive = getattr(engine, "culinary_nuance_directive", "Standard baking physics and generic flour interactions.")
+    nuance_injection = (
+        f"\n[CRITICAL ENGINE FOCUS: {engine_name}]\n"
+        f"{nuance_directive}\n"
+    )
+    
+    schema_text = ""
+    if response_schema_example:
+        schema_text = f"\nReturn ONLY raw JSON with no markdown fences, matching this schema:\n{response_schema_example}"
+        
+    instruction_block = (
+        f"\n[SPECIFIC TASK INSTRUCTIONS]\n"
+        f"{task_instructions}\n"
+        f"{schema_text}"
+    )
+    
+    prompt = [
+        persona_objective,
+        global_ruleset,
+        data_context_header,
+        nuance_injection,
+        instruction_block
+    ]
+    return "".join(prompt)
+
+
 def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
     """
     Submits a structured prompt to local Gemma and parses the JSON response.
@@ -1201,21 +1254,18 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         expected_keys = ["grain_evaluations", "elevate_recipe"]
 
         if only_evaluations:
-            system_prompt = (
-                "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
-                "Your task is to calculate the precise physical and chemical compatibility between available kitchen raw grain berries "
-                "and the mechanical targets of the production dough/confection archetype.\n\n"
-                "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
-                "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
-                "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+            data_context = (
+                f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
                 f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
                 f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
                 f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
                 f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
-                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n\n"
-                "Return a JSON object matching this schema:\n"
+                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+            )
+            task_instructions = (
+                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification."
+            )
+            response_schema = (
                 "{\n"
                 "  \"grain_evaluations\": [\n"
                 "    {\n"
@@ -1226,41 +1276,50 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "  ]\n"
                 "}"
             )
+            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
             expected_keys = ["grain_evaluations"]
         elif only_elevate:
-            system_prompt = (
-                "You are an expert baking science assistant. Given the active selected material inputs and target archetype mechanics, "
-                "suggest 3 to 5 distinct ways to enhance the physical and chemical outcome of the formulation.\n"
-                "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
-                "You are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
-                "that are not explicitly provided in the user prompt payload. For example, if rye is not in the list of grains, "
-                "do NOT mention rye modifiers, and if eggs are not in the specialty ingredients, do NOT mention egg-based adjustments.\n\n"
-                "Return a JSON object containing:\n"
-                "{\n"
-                "  \"elevate_recipe\": [\"suggestion 1\", \"suggestion 2\"]\n"
-                "}"
-            )
-            expected_keys = ["elevate_recipe"]
-        else:
-            system_prompt = (
-                "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
-                "Your task is to calculate the precise physical and chemical compatibility between available kitchen raw grain berries "
-                "and the mechanical targets of the production dough/confection archetype.\n\n"
-                "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
-                "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
-                "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
-                "When generating the `elevate_recipe` suggestions, you are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
-                "that are not explicitly provided in the 'grains' and 'specialty_ingredients' lists of the user prompt payload. For example, if rye is not in 'grains', "
-                "do NOT mention rye modifiers, and if eggs are not in 'specialty_ingredients', do NOT mention egg-based adjustments.\n\n"
-                "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+            data_context = (
+                f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
                 f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
                 f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
                 f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
                 f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
-                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n\n"
-                "Return a JSON object matching this schema:\n"
+                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+            )
+            task_instructions = (
+                "Given the active selected material inputs and target archetype mechanics, "
+                "suggest 3 to 5 distinct ways to enhance the physical and chemical outcome of the formulation.\n"
+                "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
+                "You are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
+                "that are not explicitly provided in the user prompt payload. For example, if rye is not in the list of grains, "
+                "do NOT mention rye modifiers, and if eggs are not in the specialty ingredients, do NOT mention egg-based adjustments."
+            )
+            response_schema = (
+                "{\n"
+                "  \"elevate_recipe\": [\"suggestion 1\", \"suggestion 2\"]\n"
+                "}"
+            )
+            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
+            expected_keys = ["elevate_recipe"]
+        else:
+            data_context = (
+                f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+                f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+                f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
+                f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
+                f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
+                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+            )
+            task_instructions = (
+                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
+                "Also suggest 3 to 5 distinct ways to enhance the physical and chemical outcome of the formulation.\n"
+                "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
+                "When generating the `elevate_recipe` suggestions, you are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
+                "that are not explicitly provided in the 'grains' and 'specialty_ingredients' lists of the user prompt payload. For example, if rye is not in 'grains', "
+                "do NOT mention rye modifiers, and if eggs are not in 'specialty_ingredients', do NOT mention egg-based adjustments."
+            )
+            response_schema = (
                 "{\n"
                 "  \"grain_evaluations\": [\n"
                 "    {\n"
@@ -1275,6 +1334,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "  ]\n"
                 "}"
             )
+            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
 
         payload = {
             "engine_id": engine.slug if engine else "default",
@@ -1379,33 +1439,28 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
     archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
     
     if _is_ai_enabled():
-        system_prompt = (
-            "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
-            "Your task is to calculate the precise physical and chemical compatibility between a raw grain berry "
-            "and the mechanical targets of a production dough/confection archetype.\n\n"
-            "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
-            "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-            "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
-            "[INTRINSIC RAW MATERIAL PROFILE]\n"
+        data_context = (
+            f"[INTRINSIC RAW MATERIAL PROFILE]\n"
             f"* Element Name: {wb.name}\n"
             f"* Crude Protein: {grain_profile.get('crude_protein_percentage', '12.0%')}\n"
             f"* Gluten Binding Capacity: {grain_profile.get('gluten_binding_capacity', 'high')}\n"
             f"* Pentosan Concentration: {grain_profile.get('pentosan_concentration', 'low_standard')}\n"
             f"* Bran Flavor Profile: {grain_profile.get('bran_tannin_profile', 'none_neutral')}\n\n"
-            "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+            f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
             f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
             f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity', 'high_retention')}\n"
             f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow', 'controlled_expansion')}\n"
             f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio', 'balanced_emulsion')}\n"
-            f"* Target Protein Window: {mechanics.get('optimal_protein_window', '11.0% - 13.0%')}\n\n"
-            "[EVALUATION RULES]\n"
+            f"* Target Protein Window: {mechanics.get('optimal_protein_window', '11.0% - 13.0%')}\n"
+        )
+        task_instructions = (
             "1. Relational Matching: Analyze how the raw ingredient's chemical attributes will behave under the thermal, hydraulic, and mechanical demands of the target archetype.\n"
             "2. Determine Compatibility Tier: Select exactly one tier string: \"RECOMMENDED\", \"SUB-OPTIMAL\", or \"NOT RECOMMENDED\".\n"
             "   - If the grain's native properties directly support or enhance the mechanical goals (even if it breaks traditional wheat rules, like an ancient grain with zero gluten maximizing tenderness where minimal elasticity is requested), classify it as RECOMMENDED.\n"
             "   - If the grain's native properties directly conflict with the physical targets (like an extreme-tensile bread flour causing toughness where high horizontal flow is requested), classify it as NOT RECOMMENDED.\n"
-            "3. Chemistry-Driven Critique: Write a concise, 2-sentence conversational analysis explaining the precise molecular interaction (e.g., starch gelatinization, protein cross-linking, pentosan water-hoarding, lipid crystallization) driving your tier selection.\n"
-            "4. Banned Words: Do not use corporate filler language, including: anomalies, parameter, matrix, configuration, optimization, performance, detected, or baseline.\n\n"
-            "Return ONLY raw JSON with no markdown fences, matching this schema:\n"
+            "3. Chemistry-Driven Critique: Write a concise, 2-sentence conversational analysis explaining the precise molecular interaction (e.g., starch gelatinization, protein cross-linking, pentosan water-hoarding, lipid crystallization) driving your tier selection."
+        )
+        response_schema = (
             "{\n"
             "  \"evaluation_result\": {\n"
             "    \"compatibility_tier\": \"RECOMMENDED | SUB-OPTIMAL | NOT RECOMMENDED\",\n"
@@ -1413,6 +1468,7 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
             "  }\n"
             "}"
         )
+        system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
         
         user_prompt = json.dumps({
             "grain_id": str(wb.id),
@@ -1490,21 +1546,18 @@ def evaluate_grains_batch(grains: list, engine, preset_name: str = None, preset_
     if _is_ai_enabled():
         archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
         
-        system_prompt = (
-            "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
-            "Your task is to calculate the precise physical and chemical compatibility between multiple raw grain berries "
-            "and the mechanical targets of the production dough/confection archetype.\n\n"
-            "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
-            "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-            "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
-            "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+        data_context = (
+            f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
             f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
             f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
             f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
             f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-            f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
-            "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n\n"
-            "Return ONLY raw JSON with no markdown fences, matching this schema:\n"
+            f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+        )
+        task_instructions = (
+            "Evaluate each raw material grain provided in the user context against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification."
+        )
+        response_schema = (
             "{\n"
             "  \"grain_evaluations\": [\n"
             "    {\n"
@@ -1515,6 +1568,7 @@ def evaluate_grains_batch(grains: list, engine, preset_name: str = None, preset_
             "  ]\n"
             "}"
         )
+        system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
         
         payload = {
             "engine_id": engine_id,
