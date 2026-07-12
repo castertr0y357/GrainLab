@@ -109,8 +109,9 @@
 - [x] Delegate required secondary ingredients and permissible option/substitution selectors entirely to the LLM (or fallback mock matcher)
 - [x] Defer recommended grain identification until the specific recipe details API load
 - [x] Restructure sidebar layout to append contextual info below static cards on hover/focus instead of clearing
-- [x] Restrict AI Craft Elevators display card to confirmed selected recipes
-- [x] Implement adaptive fast-forward progress animation that resolves checking steps dynamically upon fetch completions
+- [x] Resolve duplicate sortedBerriesFor and getGrainStyle definitions in partial forms x-data to fix card borders and sorting
+- [x] Embed progressive loading checklists inside the Grain Bin Optimizer box during fetch phases
+- [x] Unify persistent recipe headers at the top of the sidebar and hide standard panels on hover to prevent stacking
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
