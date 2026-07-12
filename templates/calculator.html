@@ -77,6 +77,7 @@
     sidebar_menu_description: '',
     selectedRecipeScienceProfile: '',
     selectedRecipeMenuDescription: '',
+    selectedRecipeSecondaryIngredients: null,
     
     // Factual science profiles
     factual_dictionary: {
@@ -458,6 +459,21 @@
                 this.selectedRecipeMenuDescription = menu;
 
                 this.globalElevateRecipe = data.elevate_recipe || [];
+
+                // Pre-select required secondary ingredients if returned by LLM
+                this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
+                if (data.secondary_ingredients) {
+                    if (data.secondary_ingredients.lipids && data.secondary_ingredients.lipids.required) {
+                        this.secondary_lipid = data.secondary_ingredients.lipids.required;
+                    }
+                    if (data.secondary_ingredients.liquids && data.secondary_ingredients.liquids.required) {
+                        this.secondary_liquid = data.secondary_ingredients.liquids.required;
+                    }
+                    if (data.secondary_ingredients.binders && data.secondary_ingredients.binders.required) {
+                        this.secondary_binder = data.secondary_ingredients.binders.required;
+                    }
+                }
+
                 this.recipe_details_loading = false;
                 this.sidebar_insight_loading = false;
                 if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
@@ -530,8 +546,10 @@
         this.sidebar_menu_description = '';
         this.selectedRecipeScienceProfile = '';
         this.selectedRecipeMenuDescription = '';
+        this.selectedRecipeSecondaryIngredients = null;
         this.globalElevateRecipe = [];
         this.sidebar_labor_roi = '';
+        this.recipe_selected = true;
 
         // Select the ideal grain based on recommended list if available
         if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {

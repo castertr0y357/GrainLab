@@ -464,17 +464,7 @@
                 </template>
             </div>
 
-            <!-- Select Recipe & Proceed Button -->
-            <div x-show="selected_recipe_id" x-transition style="margin-top: 2rem;">
-                <button type="button" 
-                        class="nav-btn primary"
-                        style="width: 100%; height: 50px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition);"
-                        onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
-                        onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                        @click="confirmRecipeSelection()">
-                    SELECT RECIPE &amp; PROCEED →
-                </button>
-            </div>
+
 
 
         </div>
@@ -639,16 +629,16 @@
                     </div>
 
                     <!-- Secondary Ingredient Configuration Deck -->
-                    <div x-show="engines_ff[selected_master]?.secondary_ingredients && Object.keys(engines_ff[selected_master].secondary_ingredients).length > 0"
+                    <div x-show="(selectedRecipeSecondaryIngredients && Object.keys(selectedRecipeSecondaryIngredients).length > 0) || (engines_ff[selected_master]?.secondary_ingredients && Object.keys(engines_ff[selected_master].secondary_ingredients).length > 0)"
                          style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
                         <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Secondary Ingredient Configuration Deck</h4>
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- Lipids Selector -->
-                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.lipids" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) || (engines_ff[selected_master]?.secondary_ingredients && engines_ff[selected_master].secondary_ingredients.lipids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
                                 <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || [])" :key="option">
+                                    <template x-for="option in (selectedRecipeSecondaryIngredients ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_lipid === option ? 'active' : ''"
@@ -663,11 +653,11 @@
                                 </div>
                             </div>
                             <!-- Liquids Selector -->
-                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.liquids" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) || (engines_ff[selected_master]?.secondary_ingredients && engines_ff[selected_master].secondary_ingredients.liquids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Liquid Medium Selection</label>
                                 <input type="hidden" name="secondary_liquid" :value="secondary_liquid">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || [])" :key="option">
+                                    <template x-for="option in (selectedRecipeSecondaryIngredients ? selectedRecipeSecondaryIngredients.liquids.options : (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_liquid === option ? 'active' : ''"
@@ -682,11 +672,11 @@
                                 </div>
                             </div>
                             <!-- Binders Selector -->
-                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.binders" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) || (engines_ff[selected_master]?.secondary_ingredients && engines_ff[selected_master].secondary_ingredients.binders)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Binder Selection</label>
                                 <input type="hidden" name="secondary_binder" :value="secondary_binder">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || [])" :key="option">
+                                    <template x-for="option in (selectedRecipeSecondaryIngredients ? selectedRecipeSecondaryIngredients.binders.options : (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_binder === option ? 'active' : ''"
@@ -832,9 +822,11 @@
             <!-- Proceed button inside the main container -->
             <button type="button" 
                     class="nav-btn primary"
-                    style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
+                    style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition); margin-bottom: 1.5rem;"
+                    onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
+                    onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
                     @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                PROCEED TO RECIPE CONFIGURATION →
+                GENERATE FORMULA &amp; PROCEED →
             </button>
         </div> <!-- Closes x-show="recipe_selected" -->
     </div>

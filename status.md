@@ -105,6 +105,8 @@
 - [x] Fix archetype card hover mouse-leaves to restore the selected recipe's active science profile details
 - [x] Implement menu-style flavor description above the Technical Science Profile in Phase 2 sidebar
 - [x] Integrate human-readable recipe target names into LLM prompts and create flavor-specific local mock fallback descriptions
+- [x] Restore progressive Grain Optimizer and secondary ingredients configuration decks to Phase 2, popping them up immediately upon card selection
+- [x] Delegate required secondary ingredients and permissible option/substitution selectors entirely to the LLM (or fallback mock matcher)
 - [x] Write and run automated tests verifying all refactored progressive workflow features and logic
 
 ## 🚀 Active Feature Tasks

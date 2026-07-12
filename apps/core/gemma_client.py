@@ -1860,7 +1860,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
-        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, and a list of craft tips to elevate the bake.\n"
+        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, required secondary ingredients (including permissible substitutions), and a list of craft tips to elevate the bake.\n"
         "Each response must match this JSON schema:\n"
         "{\n"
         "  \"menu_description\": \"A 1-2 sentence rich, descriptive flavor profile that highlights taste, aroma, and visual appeal, written in the style of a high-end restaurant menu item description (e.g., 'A decadent, dark chocolate cookie layered with rich malt undertones and finished with pockets of molten Valrhona fudge.').\",\n"
@@ -1869,7 +1869,21 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "    \"Specific tip 1 (e.g. autolyse time, temperature tweaks, or folding technique relative to this recipe).\",\n"
         "    \"Specific tip 2 (e.g. hydration adaptation, or mixing speed adjustment relative to the selected grains).\",\n"
         "    \"Specific craft tip (incorporating the last 10 percent magic tip for this recipe).\"\n"
-        "  ]\n"
+        "  ],\n"
+        "  \"secondary_ingredients\": {\n"
+        "    \"lipids\": {\n"
+        "      \"required\": \"One of: unsalted_butter, salted_butter, coconut_oil, avocado_oil (use underscore format)\",\n"
+        "      \"options\": [\"unsalted_butter\", \"salted_butter\", \"coconut_oil\", \"avocado_oil\"]\n"
+        "    },\n"
+        "    \"liquids\": {\n"
+        "      \"required\": \"One of: pure_water, whole_milk, heavy_cream, buttermilk (use underscore format)\",\n"
+        "      \"options\": [\"pure_water\", \"whole_milk\", \"heavy_cream\", \"buttermilk\"]\n"
+        "    },\n"
+        "    \"binders\": {\n"
+        "      \"required\": \"One of: none, whole_eggs, egg_whites, aquafaba_vegan (use underscore format)\",\n"
+        "      \"options\": [\"none\", \"whole_eggs\", \"egg_whites\", \"aquafaba_vegan\"]\n"
+        "    }\n"
+        "  }\n"
         "}\n"
         "Return ONLY raw JSON with no markdown fences.\n"
         "\n"
@@ -1897,7 +1911,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         if getattr(settings, "MOCK_MODE", True):
             return get_local_recipe_details(recipe_slug, recipe_name, engine_id, active_archetype_id, selected_grains)
 
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "elevate_recipe"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "elevate_recipe", "secondary_ingredients"])
         if result and isinstance(result, dict) and "sidebar_science_profile" in result:
             return result
     except Exception as e:
@@ -2040,6 +2054,77 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
                 "Cool completely on a wire rack to allow the internal crumb structure to set."
             ]
 
+    # Build secondary ingredients dynamically
+    sec_lipids = {"required": "none", "options": ["none"]}
+    sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
+    sec_binders = {"required": "none", "options": ["none"]}
+
+    if is_cookie:
+        # Default cookie setup
+        sec_lipids = {
+            "required": "unsalted_butter",
+            "options": ["unsalted_butter", "salted_butter", "coconut_oil", "avocado_oil"]
+        }
+        sec_liquids = {
+            "required": "pure_water",
+            "options": ["pure_water"]
+        }
+        sec_binders = {
+            "required": "whole_eggs",
+            "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]
+        }
+        # Special cookie cases
+        if "avocado" in name or "avocado" in slug:
+            sec_lipids["required"] = "avocado_oil"
+        elif "coconut" in name or "coconut" in slug:
+            sec_lipids["required"] = "coconut_oil"
+    else:
+        # Yeast bread setup
+        if "brioche" in name or "brioche" in slug or "enriched" in slug:
+            sec_lipids = {
+                "required": "unsalted_butter",
+                "options": ["unsalted_butter", "salted_butter"]
+            }
+            sec_liquids = {
+                "required": "whole_milk",
+                "options": ["whole_milk", "heavy_cream", "pure_water"]
+            }
+            sec_binders = {
+                "required": "whole_eggs",
+                "options": ["whole_eggs", "egg_whites"]
+            }
+        elif "challah" in name or "challah" in slug:
+            sec_lipids = {
+                "required": "avocado_oil",
+                "options": ["avocado_oil", "unsalted_butter"]
+            }
+            sec_liquids = {
+                "required": "pure_water",
+                "options": ["pure_water", "whole_milk"]
+            }
+            sec_binders = {
+                "required": "whole_eggs",
+                "options": ["whole_eggs"]
+            }
+        elif "pretzel" in name or "pretzel" in slug or "bagel" in slug:
+            sec_lipids = {
+                "required": "unsalted_butter",
+                "options": ["unsalted_butter", "none"]
+            }
+            sec_liquids = {
+                "required": "pure_water",
+                "options": ["pure_water"]
+            }
+        elif "flatbread" in name or "naan" in slug or "tortilla" in slug:
+            sec_lipids = {
+                "required": "avocado_oil",
+                "options": ["avocado_oil", "unsalted_butter", "none"]
+            }
+            sec_liquids = {
+                "required": "pure_water",
+                "options": ["pure_water", "whole_milk", "buttermilk"]
+            }
+
     # Customize tips slightly based on selected grains
     custom_tips = list(tips)
     if selected_grains:
@@ -2049,6 +2134,11 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     return {
         "menu_description": menu,
         "sidebar_science_profile": science,
-        "elevate_recipe": custom_tips[:3]
+        "elevate_recipe": custom_tips[:3],
+        "secondary_ingredients": {
+            "lipids": sec_lipids,
+            "liquids": sec_liquids,
+            "binders": sec_binders
+        }
     }
 
