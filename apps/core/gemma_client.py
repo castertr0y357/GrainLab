@@ -718,9 +718,12 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         logger.info(f"[AI] - Cache Hit - Key: {cache_key}")
         return _gemma_cache[cache_key]
 
+    logger.info(f"[AI] - API Call Init -\nSYSTEM PROMPT:\n{system_prompt}\nUSER PROMPT:\n{user_prompt}")
+
     # Check if offline mock mode is active
     if getattr(settings, "MOCK_MODE", True):
         res = get_mock_gemma_response(system_prompt, user_prompt, expected_keys)
+        logger.info(f"[AI] - Mock Mode Response: {res}")
         if res:
             _gemma_cache[cache_key] = res
         return res
@@ -758,9 +761,11 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     try:
         # Enforce a 30-second timeout to allow the model sufficient time to load and generate responses
         response = requests.post(url, headers=headers, json=payload, timeout=30.0)
+        logger.info(f"[AI] - HTTP Response Code: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
             content_str = data["choices"][0]["message"]["content"].strip()
+            logger.info(f"[AI] - Raw Content Received: {content_str}")
             
             # Clean possible markdown wrap ```json ... ```
             if content_str.startswith("```"):
@@ -769,6 +774,7 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
                     content_str = "\n".join(lines[1:-1])
             
             parsed_json = json.loads(content_str)
+            logger.info(f"[AI] - Parsed JSON: {parsed_json}")
             
             # Validate keys if requested
             if expected_keys:
@@ -779,7 +785,7 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
             _gemma_cache[cache_key] = parsed_json
             return parsed_json
         else:
-            logger.error(f"[AI] - HTTP Error - Endpoint returned status {response.status_code}")
+            logger.error(f"[AI] - HTTP Error - Endpoint returned status {response.status_code}\nRESPONSE BODY:\n{response.text}")
     except requests.Timeout:
         logger.warning("[AI] - Timeout - Gemma server timed out.")
     except Exception as e:
