@@ -120,6 +120,7 @@
 - [x] Fix cookie variant sub-engine routing bug in router.py by refining the chocolat keyword match to pain-au-chocolat
 - [x] Resolve Alpine.js TypeErrors by adding safe null-checks to hovered_element.startsWith and optional chaining to engines_ff
 - [x] Remove the redundant bottom Ways to Elevate card and link the inline AI Craft Elevators card strictly to global_ai_enabled
+- [x] Implement deterministic culinary sovereignty overrides and post-processing validation guardrails for grain advisory recommendations
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
