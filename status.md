@@ -123,6 +123,10 @@
 - [x] Refactor `apps/core/gemma_client.py` to construct dynamic prompt compiler and strict JSON output schema gate `evaluation_result`.
 - [x] Scrub legacy hardcoded overrides, helper functions, and narrative descriptions from `gemma_client.py`, `seed_db.py`, and client templates.
 - [x] Run and verify all 49 Django tests successfully.
+- [x] Execute absolute file depletions of legacy code paths in `gemma_client.py`.
+- [x] Strip all textual descriptions from `apps/core/grain_registry.json` leaving raw chemical specifications.
+- [x] Implement explicit state purge on archetype change in Alpine.js to prevent context leakage.
+- [x] Force explicit real-time dynamic binding of archetype mechanics read directly from sub-engine files.
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
