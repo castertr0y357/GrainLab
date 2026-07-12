@@ -297,6 +297,10 @@
     recipe_details_loading: false,
     recipe_gen_interval: null,
     recipe_details_interval: null,
+    recipe_gen_resolved: false,
+    recipe_gen_data: null,
+    recipe_details_resolved: false,
+    recipe_details_data: null,
     recipe_generation_steps: [
         { text: 'Initializing workspace sub-engines...', active: false, completed: false },
         { text: 'Analyzing active whole grain profiles...', active: false, completed: false },
@@ -345,6 +349,9 @@
         this.alternative_variants = [];
         this.grainEvaluations = [];
         this.resetAdvisory();
+        
+        this.recipe_gen_resolved = false;
+        this.recipe_gen_data = null;
         this.startRecipeGenerationProgress();
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
@@ -352,22 +359,22 @@
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                if (this.selected_master === category_slug && this.active_archetype_id === archetype_id) {
-                    this.creativity_recipes = data.recipes || [];
-                }
-                this.creativity_loading = false;
-                if (this.recipe_gen_interval) clearInterval(this.recipe_gen_interval);
-                this.recipe_generation_steps.forEach(s => { s.completed = true; s.active = false; });
+                this.recipe_gen_data = {
+                    category_slug: category_slug,
+                    archetype_id: archetype_id,
+                    recipes: data.recipes
+                };
+                this.recipe_gen_resolved = true;
             })
             .catch(err => {
                 console.error('[GrainLab] Failed fetching creativity recipes:', err);
                 this.creativity_loading = false;
-                if (this.recipe_gen_interval) clearInterval(this.recipe_gen_interval);
+                if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
             });
     },
 
     startRecipeGenerationProgress() {
-        if (this.recipe_gen_interval) clearInterval(this.recipe_gen_interval);
+        if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
         
         // Reset steps
         this.recipe_generation_steps.forEach(s => {
@@ -379,26 +386,41 @@
         this.recipe_generation_steps[0].active = true;
         let stepIdx = 0;
         
-        this.recipe_gen_interval = setInterval(() => {
-            if (!this.creativity_loading) {
-                clearInterval(this.recipe_gen_interval);
-                return;
-            }
+        const tick = () => {
+            if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
+            
             if (stepIdx < this.recipe_generation_steps.length - 1) {
                 this.recipe_generation_steps[stepIdx].active = false;
                 this.recipe_generation_steps[stepIdx].completed = true;
                 stepIdx++;
                 this.recipe_generation_steps[stepIdx].active = true;
+                
+                // Rapidly complete if resolved (200ms), else standard pacing (2000ms)
+                const nextDelay = this.recipe_gen_resolved ? 200 : 2000;
+                this.recipe_gen_interval = setTimeout(tick, nextDelay);
             } else {
-                this.recipe_generation_steps[stepIdx].active = false;
-                this.recipe_generation_steps[stepIdx].completed = true;
-                clearInterval(this.recipe_gen_interval);
+                if (this.recipe_gen_resolved) {
+                    this.recipe_generation_steps[stepIdx].active = false;
+                    this.recipe_generation_steps[stepIdx].completed = true;
+                    
+                    setTimeout(() => {
+                        if (this.recipe_gen_data && this.selected_master === this.recipe_gen_data.category_slug && this.active_archetype_id === this.recipe_gen_data.archetype_id) {
+                            this.creativity_recipes = this.recipe_gen_data.recipes || [];
+                        }
+                        this.creativity_loading = false;
+                    }, 300);
+                } else {
+                    // Stay on the last step until resolved
+                    this.recipe_gen_interval = setTimeout(tick, 400);
+                }
             }
-        }, 3000);
+        };
+        
+        this.recipe_gen_interval = setTimeout(tick, 2000);
     },
 
     startRecipeDetailsProgress() {
-        if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
+        if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
         
         // Reset steps
         this.recipe_details_steps.forEach(s => {
@@ -410,22 +432,63 @@
         this.recipe_details_steps[0].active = true;
         let stepIdx = 0;
         
-        this.recipe_details_interval = setInterval(() => {
-            if (!this.recipe_details_loading) {
-                clearInterval(this.recipe_details_interval);
-                return;
-            }
+        const tick = () => {
+            if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
+            
             if (stepIdx < this.recipe_details_steps.length - 1) {
                 this.recipe_details_steps[stepIdx].active = false;
                 this.recipe_details_steps[stepIdx].completed = true;
                 stepIdx++;
                 this.recipe_details_steps[stepIdx].active = true;
+                
+                // Rapidly complete if resolved (150ms), else standard pacing (1000ms)
+                const nextDelay = this.recipe_details_resolved ? 150 : 1000;
+                this.recipe_details_interval = setTimeout(tick, nextDelay);
             } else {
-                this.recipe_details_steps[stepIdx].active = false;
-                this.recipe_details_steps[stepIdx].completed = true;
-                clearInterval(this.recipe_details_interval);
+                if (this.recipe_details_resolved) {
+                    this.recipe_details_steps[stepIdx].active = false;
+                    this.recipe_details_steps[stepIdx].completed = true;
+                    
+                    setTimeout(() => {
+                        const data = this.recipe_details_data;
+                        if (data) {
+                            const profile = data.sidebar_science_profile || 'No technical analysis compiled.';
+                            this.sidebar_analysis = profile;
+                            this.selectedRecipeScienceProfile = profile;
+                            
+                            const menu = data.menu_description || 'Gathering flavor notes...';
+                            this.sidebar_menu_description = menu;
+                            this.selectedRecipeMenuDescription = menu;
+
+                            // Save recommended grains for highlighting in Phase 2
+                            this.recommended_grain_ids = data.recommended_grain_ids || [];
+
+                            // Pre-select required secondary ingredients if returned by LLM
+                            this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
+                            if (data.secondary_ingredients) {
+                                if (data.secondary_ingredients.lipids && data.secondary_ingredients.lipids.required) {
+                                    this.secondary_lipid = data.secondary_ingredients.lipids.required;
+                                }
+                                if (data.secondary_ingredients.liquids && data.secondary_ingredients.liquids.required) {
+                                    this.secondary_liquid = data.secondary_ingredients.liquids.required;
+                                }
+                                if (data.secondary_ingredients.binders && data.secondary_ingredients.binders.required) {
+                                    this.secondary_binder = data.secondary_ingredients.binders.required;
+                                }
+                            }
+                        }
+
+                        this.recipe_details_loading = false;
+                        this.sidebar_insight_loading = false;
+                    }, 200);
+                } else {
+                    // Stay on the last step until resolved
+                    this.recipe_details_interval = setTimeout(tick, 300);
+                }
             }
-        }, 1500);
+        };
+        
+        this.recipe_details_interval = setTimeout(tick, 1000);
     },
 
     fetchRecipeDetails(recipe_slug) {
@@ -438,6 +501,8 @@
         
         this.recipe_details_loading = true;
         this.sidebar_insight_loading = true;
+        this.recipe_details_resolved = false;
+        this.recipe_details_data = null;
         this.startRecipeDetailsProgress();
 
         const selectedGrains = this.activeBerries
@@ -450,41 +515,14 @@
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                const profile = data.sidebar_science_profile || 'No technical analysis compiled.';
-                this.sidebar_analysis = profile;
-                this.selectedRecipeScienceProfile = profile;
-                
-                const menu = data.menu_description || 'Gathering flavor notes...';
-                this.sidebar_menu_description = menu;
-                this.selectedRecipeMenuDescription = menu;
-
-                // Save recommended grains for highlighting in Phase 2
-                this.recommended_grain_ids = data.recommended_grain_ids || [];
-
-                // Pre-select required secondary ingredients if returned by LLM
-                this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
-                if (data.secondary_ingredients) {
-                    if (data.secondary_ingredients.lipids && data.secondary_ingredients.lipids.required) {
-                        this.secondary_lipid = data.secondary_ingredients.lipids.required;
-                    }
-                    if (data.secondary_ingredients.liquids && data.secondary_ingredients.liquids.required) {
-                        this.secondary_liquid = data.secondary_ingredients.liquids.required;
-                    }
-                    if (data.secondary_ingredients.binders && data.secondary_ingredients.binders.required) {
-                        this.secondary_binder = data.secondary_ingredients.binders.required;
-                    }
-                }
-
-                this.recipe_details_loading = false;
-                this.sidebar_insight_loading = false;
-                if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
-                this.recipe_details_steps.forEach(s => { s.completed = true; s.active = false; });
+                this.recipe_details_data = data;
+                this.recipe_details_resolved = true;
             })
             .catch(err => {
                 console.error('[GrainLab] Failed fetching recipe details:', err);
                 this.recipe_details_loading = false;
                 this.sidebar_insight_loading = false;
-                if (this.recipe_details_interval) clearInterval(this.recipe_details_interval);
+                if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
             });
     },
 
