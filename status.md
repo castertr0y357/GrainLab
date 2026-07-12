@@ -112,6 +112,10 @@
 - [x] Resolve duplicate sortedBerriesFor and getGrainStyle definitions in partial forms x-data to fix card borders and sorting
 - [x] Embed progressive loading checklists inside the Grain Bin Optimizer box during fetch phases
 - [x] Unify persistent recipe headers at the top of the sidebar and hide standard panels on hover to prevent stacking
+- [x] Fix not recommended grain borders by triggering fetchAdvisory upon recipe selection confirmation
+- [x] Bind grain evaluations specifically to the active recipe name rather than category fallbacks
+- [x] Correct isIdealGrain category defaults to avoid false-positive recommended borders for cookies
+- [x] Dispatch recipe-details-updated event to synchronize secondary ingredients selection deck between outer and inner Alpine scopes safely without throwing TypeErrors
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
