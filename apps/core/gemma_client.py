@@ -2,6 +2,7 @@ import json
 import logging
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from apps.core.models import SystemSetting
 from apps.core.bakers_math import (
     get_local_sensory_benchmark,
@@ -697,35 +698,49 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
     return None
 
 
-_gemma_cache = {}
-
-
 def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
     """
     Submits a structured prompt to local Gemma and parses the JSON response.
-    Caches results in memory using a hash of the prompts.
+    Caches results persistently using Django file cache framework.
     Returns None if any step fails.
     """
     if not _is_ai_enabled():
         return None
 
     import hashlib
+    # Normalize user_prompt to ensure consistent caching key
+    normalized_user_prompt = user_prompt
+    try:
+        data = json.loads(user_prompt)
+        if isinstance(data, dict):
+            # Sort lists to avoid cache misses due to order variance
+            for k, v in list(data.items()):
+                if isinstance(v, list):
+                    try:
+                        data[k] = sorted(v)
+                    except Exception:
+                        pass
+            normalized_user_prompt = json.dumps(data, sort_keys=True)
+    except Exception:
+        pass
+
     # Compute MD5 hash of prompts as cache key
-    raw_key = f"{system_prompt}|||{user_prompt}"
+    raw_key = f"{system_prompt}|||{normalized_user_prompt}"
     cache_key = hashlib.md5(raw_key.encode("utf-8")).hexdigest()
 
-    if cache_key in _gemma_cache:
+    cached_val = cache.get(cache_key)
+    if cached_val:
         logger.info(f"[AI] - Cache Hit - Key: {cache_key}")
-        return _gemma_cache[cache_key]
+        return cached_val
 
-    logger.info(f"[AI] - API Call Init -\nSYSTEM PROMPT:\n{system_prompt}\nUSER PROMPT:\n{user_prompt}")
+    logger.info(f"[AI] - API Call Init -\nSYSTEM PROMPT:\n{system_prompt}\nUSER PROMPT:\n{normalized_user_prompt}")
 
     # Check if offline mock mode is active
     if getattr(settings, "MOCK_MODE", True):
-        res = get_mock_gemma_response(system_prompt, user_prompt, expected_keys)
+        res = get_mock_gemma_response(system_prompt, normalized_user_prompt, expected_keys)
         logger.info(f"[AI] - Mock Mode Response: {res}")
         if res:
-            _gemma_cache[cache_key] = res
+            cache.set(cache_key, res, timeout=None)
         return res
 
     url, model = _get_api_config()
@@ -748,7 +763,7 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt + " You MUST respond with raw JSON ONLY. No markdown formatting, no codeblocks."},
-            {"role": "user", "content": user_prompt}
+            {"role": "user", "content": normalized_user_prompt}
         ],
         "temperature": 0.1,
         "response_format": {"type": "json_object"}
@@ -782,7 +797,7 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
                     logger.warning(f"[AI] - Parsing - Response missing expected keys {expected_keys}")
                     return None
             
-            _gemma_cache[cache_key] = parsed_json
+            cache.set(cache_key, parsed_json, timeout=None)
             return parsed_json
         else:
             logger.error(f"[AI] - HTTP Error - Endpoint returned status {response.status_code}\nRESPONSE BODY:\n{response.text}")
@@ -1338,8 +1353,6 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         "elevate_recipe": elevate_recipe
     }
 
-_grain_evaluation_cache = {}
-
 
 def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None) -> dict:
     """
@@ -1354,10 +1367,11 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
     grain_id = str(wb.id)
     cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
     
-    if cache_key in _grain_evaluation_cache:
+    cached_val = cache.get(cache_key)
+    if cached_val:
         logger.info(f"[AI] - Cache Hit - Key: {cache_key}")
-        return _grain_evaluation_cache[cache_key]
-    
+        return cached_val
+        
     # 1. Fetch intrinsic chemical profile of the grain from grain_registry.json
     grain_profile = get_grain_registry_profile(wb.name)
     
@@ -1418,7 +1432,7 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
                             "tier": e.get("tier", "SUB-OPTIMAL").lower().replace("_", "-"),
                             "reasoning": e.get("reasoning", "")
                         }
-                        _grain_evaluation_cache[cache_key] = res_dict
+                        cache.set(cache_key, res_dict, timeout=None)
                         return res_dict
             if res and "evaluation_result" in res:
                 eval_result = res["evaluation_result"]
@@ -1434,15 +1448,124 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
                     "tier": tier,
                     "reasoning": eval_result.get("technical_justification", "Analyzed physical targets and chemical profile successfully.")
                 }
-                _grain_evaluation_cache[cache_key] = res_dict
+                cache.set(cache_key, res_dict, timeout=None)
                 return res_dict
         except Exception as e:
             logger.error(f"[Gemma Client] - Error - Failed evaluation for grain {wb.name}: {e}")
 
     # Local fallback
     res_dict = calculate_local_compatibility_from_specs(wb, engine, preset_slug, active_archetype_id)
-    _grain_evaluation_cache[cache_key] = res_dict
+    cache.set(cache_key, res_dict, timeout=None)
     return res_dict
+
+
+def evaluate_grains_batch(grains: list, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None) -> dict:
+    """
+    Evaluates multiple grains in a single LLM API call, caching the results individually.
+    """
+    import json
+    
+    engine_id = engine.slug if engine else "default"
+    archetype_id = active_archetype_id or "default"
+    variant_id = preset_slug or "default"
+    
+    results = {}
+    uncached_grains = []
+    
+    # 1. Try to load from cache first
+    for wb in grains:
+        grain_id = str(wb.id)
+        cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
+        
+        cached_val = cache.get(cache_key)
+        if cached_val:
+            results[grain_id] = cached_val
+        else:
+            uncached_grains.append(wb)
+            
+    if not uncached_grains:
+        return results
+        
+    # 2. If there are uncached grains, query the LLM or run fallback
+    if _is_ai_enabled():
+        archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+        
+        system_prompt = (
+            "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
+            "Your task is to calculate the precise physical and chemical compatibility between multiple raw grain berries "
+            "and the mechanical targets of the production dough/confection archetype.\n\n"
+            "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+            "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+            "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
+            "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+            f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+            f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
+            f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
+            f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
+            f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
+            "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n\n"
+            "Return ONLY raw JSON with no markdown fences, matching this schema:\n"
+            "{\n"
+            "  \"grain_evaluations\": [\n"
+            "    {\n"
+            "      \"grain_id\": \"string (UUID of the grain)\",\n"
+            "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+            "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
+            "    }\n"
+            "  ]\n"
+            "}"
+        )
+        
+        payload = {
+            "engine_id": engine_id,
+            "active_archetype_id": active_archetype_id,
+            "grains": [
+                {
+                    "id": str(wb.id),
+                    "name": wb.name,
+                    "crude_protein_percentage": get_grain_registry_profile(wb.name).get("crude_protein_percentage"),
+                    "gluten_binding_capacity": get_grain_registry_profile(wb.name).get("gluten_binding_capacity"),
+                    "pentosan_concentration": get_grain_registry_profile(wb.name).get("pentosan_concentration"),
+                    "bran_tannin_profile": get_grain_registry_profile(wb.name).get("bran_tannin_profile")
+                }
+                for wb in uncached_grains
+            ]
+        }
+        
+        try:
+            res = call_gemma_api(system_prompt, json.dumps(payload), expected_keys=["grain_evaluations"])
+            if res and isinstance(res, dict) and "grain_evaluations" in res:
+                for ev in res["grain_evaluations"]:
+                    ev_id = str(ev.get("grain_id", "")).strip()
+                    # Find matching grain from uncached_grains to get the exact UUID
+                    matched_wb = None
+                    for wb in uncached_grains:
+                        if str(wb.id) == ev_id or wb.name.lower() in ev_id.lower() or ev_id.lower() in wb.name.lower():
+                            matched_wb = wb
+                            break
+                    if matched_wb:
+                        grain_id = str(matched_wb.id)
+                        res_dict = {
+                            "tier": ev.get("tier", "SUB-OPTIMAL").lower().replace("_", "-"),
+                            "reasoning": ev.get("reasoning", "Analyzed successfully.")
+                        }
+                        # Write to persistent cache
+                        cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
+                        cache.set(cache_key, res_dict, timeout=None)
+                        results[grain_id] = res_dict
+        except Exception as e:
+            logger.error(f"[Gemma Client] - Batch Error - Failed batch evaluation: {e}")
+            
+    # 3. For any grains that are still not evaluated, evaluate using programmatic fallback
+    for wb in uncached_grains:
+        grain_id = str(wb.id)
+        if grain_id not in results:
+            res_dict = calculate_local_compatibility_from_specs(wb, engine, preset_slug, active_archetype_id)
+            cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
+            cache.set(cache_key, res_dict, timeout=None)
+            results[grain_id] = res_dict
+            
+    return results
 
 
 def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None, active_archetype_id: str = None) -> dict:

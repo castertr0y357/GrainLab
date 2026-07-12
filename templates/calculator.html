@@ -185,26 +185,35 @@
             return;
         }
         
-        let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
-        if (this.active_archetype_id) {
-            url += `&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}`;
+        // Debounce the fetching for secondary/other elements to avoid spamming the LLM
+        if (this.hoverTimeout) {
+            clearTimeout(this.hoverTimeout);
         }
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (this.hovered_element === key) {
-                    this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
-                    this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
-                    this.sidebar_tier = data.recommendation_tier || '';
-                    this.sidebar_insight_loading = false;
-                }
-            })
-            .catch(err => {
-                console.error('Failed fetching sidebar insight:', err);
-                if (this.hovered_element === key) {
-                    this.sidebar_insight_loading = false;
-                }
-            });
+        this.sidebar_insight_loading = true;
+        this.hoverTimeout = setTimeout(() => {
+            if (this.hovered_element !== key) return;
+            
+            let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
+            if (this.active_archetype_id) {
+                url += `&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}`;
+            }
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (this.hovered_element === key) {
+                        this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
+                        this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
+                        this.sidebar_tier = data.recommendation_tier || '';
+                        this.sidebar_insight_loading = false;
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed fetching sidebar insight:', err);
+                    if (this.hovered_element === key) {
+                        this.sidebar_insight_loading = false;
+                    }
+                });
+        }, 300);
     },
 
     clearHoveredElement() {
@@ -806,9 +815,7 @@
         this.advisoryTimeout = setTimeout(() => {
             this.fetchGrainEvaluations(slug);
         }, 750);
-    },
-
-    fetchGrainEvaluations(slug) {
+    },    fetchGrainEvaluations(slug) {
         if (!this.recipe_selected || !slug) {
             this.resetAdvisory();
             return;
@@ -850,7 +857,15 @@
             this.advisoryLoadingMessage = messages[idx];
         }, 750);
 
-        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_evaluations=true';
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName);
+        if (selectedGrains) {
+            url += '&selected_grains=' + encodeURIComponent(selectedGrains);
+        }
         if (this.selected_master && this.selected_master !== 'null') {
             url += '&category_slug=' + encodeURIComponent(this.selected_master);
         }
@@ -862,6 +877,7 @@
             .then(res => res.json())
             .then(data => {
                 this.grainEvaluations = data.grain_evaluations || [];
+                this.globalElevateRecipe = data.elevate_recipe || '';
                 const rec = this.grainEvaluations.find(e => e.tier === 'recommended');
                 const risk = this.grainEvaluations.find(e => e.tier === 'not-recommended');
                 this.advisoryRecommendedName = rec ? this.getGrainNameById(rec.grain_id) : '';
@@ -892,9 +908,6 @@
                 window.dispatchEvent(new CustomEvent('grain-advisory-updated', {
                     detail: { grain_evaluations: this.grainEvaluations }
                 }));
-
-                // Immediately trigger 'Ways to Elevate' query last, building on user selections
-                this.fetchElevateTips(slug);
             })
             .catch(err => {
                 if (err.name === 'AbortError') {
@@ -907,35 +920,6 @@
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     this.sidebar_insight_loading = false;
                 }
-            });
-    },
-
-    fetchElevateTips(slug) {
-        if (!this.recipe_selected || !slug) {
-            this.globalElevateRecipe = '';
-            return;
-        }
-
-        const selectedGrains = this.activeBerries
-            .filter(b => b.selected)
-            .map(b => b.id)
-            .join(',');
-
-        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&selected_grains=' + encodeURIComponent(selectedGrains) + '&only_elevate=true';
-        if (this.selected_master && this.selected_master !== 'null') {
-            url += '&category_slug=' + encodeURIComponent(this.selected_master);
-        }
-        if (this.active_archetype_id) {
-            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
-        }
-
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                this.globalElevateRecipe = data.elevate_recipe || '';
-            })
-            .catch(err => {
-                console.error('Failed fetching elevate tips:', err);
             });
     },
 

@@ -17,3 +17,5 @@ db.sqlite3-journal
 staticfiles/
 static_collected/
 media/
+django_cache/
+

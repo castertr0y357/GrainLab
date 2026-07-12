@@ -975,7 +975,7 @@ def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = No
     """
     from apps.core.models import WheatBerry, BreadPreset
     from grainlab.engines import router
-    from apps.core.gemma_client import evaluate_single_grain
+    from apps.core.gemma_client import evaluate_grains_batch
 
     preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
     if not category_slug and preset and preset.dough_category:
@@ -987,11 +987,15 @@ def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = No
         return []
 
     inactive_berries = list(WheatBerry.all_objects.filter(is_active=False, deleted_at__isnull=True))
+    if not inactive_berries:
+        return []
+
+    evals = evaluate_grains_batch(inactive_berries, engine, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
     recommended_inactive = []
 
     for wb in inactive_berries:
-        res = evaluate_single_grain(wb, engine, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
-        if res["tier"] == "recommended":
+        res = evals.get(str(wb.id))
+        if res and res.get("tier") == "recommended":
             recommended_inactive.append({
                 "name": wb.name,
                 "protein": wb.protein_content,
