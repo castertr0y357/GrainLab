@@ -110,7 +110,7 @@
 - [x] Defer recommended grain identification until the specific recipe details API load
 - [x] Restructure sidebar layout to append contextual info below static cards on hover/focus instead of clearing
 - [x] Restrict AI Craft Elevators display card to confirmed selected recipes
-- [x] Fix layout container early closure by restoring the missing closing div tag
+- [x] Implement adaptive fast-forward progress animation that resolves checking steps dynamically upon fetch completions
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
