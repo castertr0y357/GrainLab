@@ -1138,6 +1138,45 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
 
         archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
 
+        # Resolve recommended grains and specialty ingredients natively part of the preset_slug
+        recommended_slugs = []
+        specialty_ingredients = []
+        if preset_slug:
+            native_details = get_local_recipe_details(
+                recipe_slug=preset_slug,
+                recipe_name=preset_name or preset_slug,
+                engine_id=engine.slug if engine else "default",
+                active_archetype_id=active_archetype_id or "default",
+                selected_grains=selected_grains
+            )
+            recommended_slugs = native_details.get("recommended_grain_ids", [])
+            sec_ingredients = native_details.get("secondary_ingredients", {})
+            lipid = sec_ingredients.get("lipids", {}).get("required", "none")
+            liquid = sec_ingredients.get("liquids", {}).get("required", "pure_water")
+            binder = sec_ingredients.get("binders", {}).get("required", "none")
+            
+            if lipid != "none":
+                specialty_ingredients.append(lipid.replace("_", " "))
+            if liquid != "none":
+                specialty_ingredients.append(liquid.replace("_", " "))
+            if binder != "none":
+                specialty_ingredients.append(binder.replace("_", " "))
+                
+        # Resolve recommended grain names from slugs
+        native_grain_names = []
+        for slug in recommended_slugs:
+            for wb in active_berries:
+                import re
+                wb_slug = re.sub(r'[^a-z0-9]', '_', wb.name.lower()).strip('_')
+                wb_slug = re.sub(r'_+', '_', wb_slug)
+                if wb_slug == slug or slug in wb_slug or wb_slug in slug:
+                    native_grain_names.append(wb.name)
+                    break
+        if not native_grain_names:
+            native_grain_names = ["Hard Red Spring Wheat"]
+
+        active_grains_list = selected_names if selected_names else native_grain_names
+
         expected_keys = ["grain_evaluations", "elevate_recipe"]
 
         if only_evaluations:
@@ -1171,6 +1210,10 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             system_prompt = (
                 "You are an expert baking science assistant. Given the active selected material inputs and target archetype mechanics, "
                 "suggest 3 to 5 distinct ways to enhance the physical and chemical outcome of the formulation.\n"
+                "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
+                "You are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
+                "that are not explicitly provided in the user prompt payload. For example, if rye is not in the list of grains, "
+                "do NOT mention rye modifiers, and if eggs are not in the specialty ingredients, do NOT mention egg-based adjustments.\n\n"
                 "Return a JSON object containing:\n"
                 "{\n"
                 "  \"elevate_recipe\": [\"suggestion 1\", \"suggestion 2\"]\n"
@@ -1185,6 +1228,10 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
                 "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
+                "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
+                "When generating the `elevate_recipe` suggestions, you are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
+                "that are not explicitly provided in the 'grains' and 'specialty_ingredients' lists of the user prompt payload. For example, if rye is not in 'grains', "
+                "do NOT mention rye modifiers, and if eggs are not in 'specialty_ingredients', do NOT mention egg-based adjustments.\n\n"
                 "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
                 f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
                 f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
@@ -1212,6 +1259,8 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             "engine_id": engine.slug if engine else "default",
             "active_archetype_id": active_archetype_id,
             "selected_grains": selected_names,
+            "grains": active_grains_list,
+            "specialty_ingredients": specialty_ingredients,
             "inventory": [
                 {
                     "id": str(wb.id),
@@ -1283,6 +1332,8 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         "elevate_recipe": elevate_recipe
     }
 
+_grain_evaluation_cache = {}
+
 
 def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None) -> dict:
     """
@@ -1290,6 +1341,16 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
     """
     import json
     from django.conf import settings
+    
+    engine_id = engine.slug if engine else "default"
+    archetype_id = active_archetype_id or "default"
+    variant_id = preset_slug or "default"
+    grain_id = str(wb.id)
+    cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
+    
+    if cache_key in _grain_evaluation_cache:
+        logger.info(f"[AI] - Cache Hit - Key: {cache_key}")
+        return _grain_evaluation_cache[cache_key]
     
     # 1. Fetch intrinsic chemical profile of the grain from grain_registry.json
     grain_profile = get_grain_registry_profile(wb.name)
@@ -1302,6 +1363,9 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
             "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
             "Your task is to calculate the precise physical and chemical compatibility between a raw grain berry "
             "and the mechanical targets of a production dough/confection archetype.\n\n"
+            "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
+            "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
+            "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
             "[INTRINSIC RAW MATERIAL PROFILE]\n"
             f"* Element Name: {wb.name}\n"
             f"* Crude Protein: {grain_profile.get('crude_protein_percentage', '12.0%')}\n"
@@ -1344,10 +1408,12 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
                 for e in evals:
                     e_id = str(e.get("grain_id", ""))
                     if e_id == str(wb.id) or wb.name.lower() in e_id.lower() or e_id.lower() in wb.name.lower():
-                        return {
+                        res_dict = {
                             "tier": e.get("tier", "SUB-OPTIMAL").lower().replace("_", "-"),
                             "reasoning": e.get("reasoning", "")
                         }
+                        _grain_evaluation_cache[cache_key] = res_dict
+                        return res_dict
             if res and "evaluation_result" in res:
                 eval_result = res["evaluation_result"]
                 tier_raw = str(eval_result.get("compatibility_tier", "SUB-OPTIMAL")).upper().strip()
@@ -1358,15 +1424,19 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
                 else:
                     tier = "recommended"
                     
-                return {
+                res_dict = {
                     "tier": tier,
                     "reasoning": eval_result.get("technical_justification", "Analyzed physical targets and chemical profile successfully.")
                 }
+                _grain_evaluation_cache[cache_key] = res_dict
+                return res_dict
         except Exception as e:
             logger.error(f"[Gemma Client] - Error - Failed evaluation for grain {wb.name}: {e}")
 
     # Local fallback
-    return calculate_local_compatibility_from_specs(wb, engine, preset_slug, active_archetype_id)
+    res_dict = calculate_local_compatibility_from_specs(wb, engine, preset_slug, active_archetype_id)
+    _grain_evaluation_cache[cache_key] = res_dict
+    return res_dict
 
 
 def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None, active_archetype_id: str = None) -> dict:
