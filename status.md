@@ -116,6 +116,7 @@
 - [x] Bind grain evaluations specifically to the active recipe name rather than category fallbacks
 - [x] Correct isIdealGrain category defaults to avoid false-positive recommended borders for cookies
 - [x] Dispatch recipe-details-updated event to synchronize secondary ingredients selection deck between outer and inner Alpine scopes safely without throwing TypeErrors
+- [x] Synchronize advisoryLoading phase with a dedicated advisory_steps paced checklist animation to prevent static/pre-completed lists from showing while the request is loading
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
