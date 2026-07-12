@@ -535,14 +535,14 @@
             <input type="hidden" name="grain_type" value="milled">
 
             <!-- Loading State Spinner -->
-            <div x-show="recipe_details_loading || advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; text-align: center; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+            <div x-show="advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; text-align: center; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
                     <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
                     <strong style="font-size: 0.95rem; color: var(--text-primary);">Culinary Formulation Engine Analyzing Grains</strong>
                 </div>
                 <!-- Paced Checklist Steps -->
                 <div style="display: flex; flex-direction: column; gap: 0.6rem; max-width: 400px; margin: 0 auto; width: 100%; text-align: left;">
-                    <template x-for="(step, idx) in recipe_details_steps" :key="idx">
+                    <template x-for="(step, idx) in advisory_steps" :key="idx">
                         <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; transition: all 0.3s ease;"
                              :style="step.active ? 'color: var(--accent); font-weight: bold;' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
                             <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
@@ -554,7 +554,7 @@
                 </div>
             </div>
 
-            <div x-show="!recipe_details_loading && !advisoryLoading">
+            <div x-show="!advisoryLoading">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                     <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
                         <label class="card" 

@@ -314,6 +314,13 @@
         { text: 'Simulating starch-lipid hydration...', active: false, completed: false },
         { text: 'Formulating artisanal baking tips...', active: false, completed: false }
     ],
+    advisory_resolved: false,
+    advisory_interval: null,
+    advisory_steps: [
+        { text: 'Deconstructing grain protein specs...', active: false, completed: false },
+        { text: 'Simulating starch-lipid hydration...', active: false, completed: false },
+        { text: 'Formulating artisanal baking tips...', active: false, completed: false }
+    ],
 
     selectArchetype(archetype_id, engine_id) {
         if (this.active_archetype_id === archetype_id) {
@@ -483,6 +490,49 @@
         };
         
         this.recipe_details_interval = setTimeout(tick, 1000);
+    },
+
+    startAdvisoryProgress() {
+        if (this.advisory_interval) clearTimeout(this.advisory_interval);
+        
+        // Reset steps
+        this.advisory_steps.forEach(s => {
+            s.active = false;
+            s.completed = false;
+        });
+        
+        // Set first step active
+        this.advisory_steps[0].active = true;
+        let stepIdx = 0;
+        
+        const tick = () => {
+            if (this.advisory_interval) clearTimeout(this.advisory_interval);
+            
+            if (stepIdx < this.advisory_steps.length - 1) {
+                this.advisory_steps[stepIdx].active = false;
+                this.advisory_steps[stepIdx].completed = true;
+                stepIdx++;
+                this.advisory_steps[stepIdx].active = true;
+                
+                // Rapidly complete if resolved (150ms), else standard pacing (1000ms)
+                const nextDelay = this.advisory_resolved ? 150 : 1000;
+                this.advisory_interval = setTimeout(tick, nextDelay);
+            } else {
+                if (this.advisory_resolved) {
+                    this.advisory_steps[stepIdx].active = false;
+                    this.advisory_steps[stepIdx].completed = true;
+                    // Allow the user to see 100% completion briefly before resolving loading state
+                    setTimeout(() => {
+                        this.advisoryLoading = false;
+                    }, 200);
+                } else {
+                    // Stay on the last step until resolved
+                    this.advisory_interval = setTimeout(tick, 300);
+                }
+            }
+        };
+        
+        this.advisory_interval = setTimeout(tick, 1000);
     },
 
     fetchRecipeDetails(recipe_slug) {
@@ -760,6 +810,8 @@
         const signal = this.advisoryAbortController.signal;
 
         this.advisoryLoading = true;
+        this.advisory_resolved = false;
+        this.startAdvisoryProgress();
         if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
             this.sidebar_insight_loading = true;
             this.sidebar_tier = '';
@@ -799,7 +851,7 @@
                 this.advisoryRecommendedReason = rec ? rec.reasoning : '';
                 this.advisoryHighRiskName = risk ? this.getGrainNameById(risk.grain_id) : '';
                 this.advisoryHighRiskReason = risk ? risk.reasoning : '';
-                this.advisoryLoading = false;
+                this.advisory_resolved = true;
                 this.advisoryAbortController = null;
                 
                 // Update hovered grain details dynamically once advisory resolves
@@ -833,7 +885,7 @@
                     return;
                 }
                 console.error('Failed fetching advisory evaluations:', err);
-                this.advisoryLoading = false;
+                this.advisory_resolved = true;
                 this.advisoryAbortController = null;
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     this.sidebar_insight_loading = false;
@@ -874,6 +926,10 @@
         this.advisoryHighRiskReason = '';
         this.grainEvaluations = [];
         this.globalElevateRecipe = '';
+        if (this.advisory_interval) {
+            clearTimeout(this.advisory_interval);
+            this.advisory_interval = null;
+        }
     },
 
     getGrainNameById(id) {
