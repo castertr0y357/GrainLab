@@ -986,7 +986,7 @@ def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = No
     recommended_inactive = []
 
     for wb in inactive_berries:
-        res = evaluate_single_grain(wb, engine)
+        res = evaluate_single_grain(wb, engine, preset_slug=preset_slug)
         if res["tier"] == "recommended":
             recommended_inactive.append({
                 "name": wb.name,
@@ -1637,7 +1637,7 @@ def ai_sidebar_insight(request):
                         break
                         
                 if grain_obj:
-                    res = evaluate_single_grain(grain_obj, engine)
+                    res = evaluate_single_grain(grain_obj, engine, preset_slug=preset_slug)
                     # Determine labor_roi based on tier
                     if res["tier"] == "recommended":
                         roi = "High Priority / Flavor Enhancement Opportunity"

@@ -93,24 +93,48 @@ class BatterEngine(BaseEngine):
             "icon": "🍰",
             "description": "Fat-free or low-fat aeration systems like Genoise or Chiffon.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "8.0% - 9.5%"
+            }
         },
         "creamed_cake": {
             "label": "Creamed Layer Cake",
             "icon": "🎂",
             "description": "Emulsified lipid-sugar crystal structures for standard layers.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "8.0% - 10.0%"
+            }
         },
         "pound_cake": {
             "label": "High-Ratio Pound Cake",
             "icon": "🍫",
             "description": "Dense, uniform crumb carrying massive sugar and fat weights.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
         "griddle_batter": {
             "label": "Fluid Griddle Batter",
             "icon": "🥞",
             "description": "High-moisture pourable structures like Pancakes, Waffles, and Crepes.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "high_spread",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
     }
 

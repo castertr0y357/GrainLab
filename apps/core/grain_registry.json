@@ -1,0 +1,76 @@
+{
+  "grains": {
+    "hard_red_winter_wheat": {
+      "display_name": "Hard Red Winter Wheat",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "13.0%",
+        "gluten_binding_capacity": "high",
+        "pentosan_concentration": "low_standard",
+        "bran_tannin_profile": "high_astringent"
+      }
+    },
+    "hard_red_spring_wheat": {
+      "display_name": "Hard Red Spring Wheat",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "14.5%",
+        "gluten_binding_capacity": "extreme",
+        "pentosan_concentration": "low_standard",
+        "bran_tannin_profile": "high_astringent"
+      }
+    },
+    "hard_white_wheat": {
+      "display_name": "Hard White Wheat",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "12.5%",
+        "gluten_binding_capacity": "high",
+        "pentosan_concentration": "low_standard",
+        "bran_tannin_profile": "none_neutral"
+      }
+    },
+    "soft_white_wheat": {
+      "display_name": "Soft White Wheat",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "9.5%",
+        "gluten_binding_capacity": "moderate",
+        "pentosan_concentration": "low_standard",
+        "bran_tannin_profile": "none_neutral"
+      }
+    },
+    "spelt_wheat_ancient": {
+      "display_name": "Spelt Wheat (Ancient)",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "11.5%",
+        "gluten_binding_capacity": "moderate",
+        "pentosan_concentration": "moderate",
+        "bran_tannin_profile": "low_malty"
+      }
+    },
+    "kamut_ancient": {
+      "display_name": "Kamut (Ancient)",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "13.5%",
+        "gluten_binding_capacity": "moderate",
+        "pentosan_concentration": "low_standard",
+        "bran_tannin_profile": "low_malty"
+      }
+    },
+    "einkorn_ancient": {
+      "display_name": "Einkorn (Ancient)",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "12.5%",
+        "gluten_binding_capacity": "negligible",
+        "pentosan_concentration": "moderate",
+        "bran_tannin_profile": "low_malty"
+      }
+    },
+    "rye_ancient": {
+      "display_name": "Rye (Ancient)",
+      "intrinsic_chemical_profile": {
+        "crude_protein_percentage": "10.0%",
+        "gluten_binding_capacity": "negligible",
+        "pentosan_concentration": "exceptionally_high",
+        "bran_tannin_profile": "low_malty"
+      }
+    }
+  }
+}

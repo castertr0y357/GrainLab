@@ -11,13 +11,13 @@ from apps.core.bakers_math import (
 FACTUAL_DICTIONARY = {
     'refined': 'Store refined commercial flour. High shelf stability and consistent protein levels, but stripped of bran and germ.',
     'milled': 'Freshly milled whole grain. Retains 100% of germ and bran oils. High enzyme activity and complex rustic flavor profile.',
-    'grain_hard_red_spring': 'High-protein hard wheat. Strong, elastic gluten structure suitable for high-rise hearth loaves.',
-    'grain_hard_red_winter': 'Moderate-high protein wheat. Balanced gluten elasticity and extensibility, highly versatile.',
-    'grain_soft_white': 'Low-protein soft wheat. Weak, tender gluten structure ideal for tender pastries, cakes, and cookies.',
-    'grain_hard_white': 'Mild, light-colored hard wheat. Provides structural strength without the bitter red wheat tannins.',
-    'grain_spelt': 'Ancient hulled wheat species. Very extensible but weak gluten strength; highly water-absorbent.',
-    'grain_kamut': 'Ancient Khorasan wheat. Rich, sweet flavor, high protein, but lower elasticity; absorbs water slowly.',
-    'grain_rye': 'Ancient rye grass grain. High pentosans and weak gluten. Produces sticky, dense, complex savory doughs.',
+    'grain_hard_red_spring': 'High-protein hard wheat. Strong, elastic gluten structure.',
+    'grain_hard_red_winter': 'Moderate-high protein wheat. Balanced gluten elasticity and extensibility.',
+    'grain_soft_white': 'Low-protein soft wheat. Weak, tender gluten structure.',
+    'grain_hard_white': 'Mild, light-colored hard wheat. Structural strength without bitter red wheat tannins.',
+    'grain_spelt': 'Ancient hulled wheat species. Extensible but weak gluten strength; water-absorbent.',
+    'grain_kamut': 'Ancient Khorasan wheat. High protein, lower elasticity; absorbs water slowly.',
+    'grain_rye': 'Ancient rye grass grain. High pentosan concentration and weak gluten strength.',
     'stand_mixer': 'Planetary stand mixer. Delivers intensive mechanical shearing, building fast gluten structures but adding heat.',
     'bread_machine': 'Automated high-torque chamber mixer. Fully enclosed, creating high friction heat and rapid development.',
     'food_processor': 'High-velocity steel blade shearing. Forces hydration and gluten alignment rapidly but risks blade damage.',
@@ -402,6 +402,122 @@ def _get_api_config() -> tuple[str, str]:
     return url, model
 
 
+def load_grain_registry():
+    import os
+    import json
+    path = os.path.join(os.path.dirname(__file__), "grain_registry.json")
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+def get_grain_registry_profile(grain_name: str) -> dict:
+    import re
+    slug = re.sub(r'[^a-z0-9]', '_', grain_name.lower()).strip('_')
+    slug = re.sub(r'_+', '_', slug)
+    try:
+        registry = load_grain_registry()
+        grains = registry.get("grains", {})
+        if slug in grains:
+            return grains[slug]["intrinsic_chemical_profile"]
+        for k, val in grains.items():
+            if k in slug or slug in k:
+                return val["intrinsic_chemical_profile"]
+    except Exception:
+        pass
+    return {
+        "crude_protein_percentage": "12.0%",
+        "gluten_binding_capacity": "high",
+        "pentosan_concentration": "low_standard",
+        "bran_tannin_profile": "none_neutral"
+    }
+
+
+def get_archetype_mechanics(engine, active_archetype_id=None, preset_slug=None) -> tuple[str, dict]:
+    archetypes = getattr(engine, "archetypes", {})
+    archetype_data = None
+    archetype_display = "Default Archetype"
+    
+    if active_archetype_id and active_archetype_id in archetypes:
+        archetype_data = archetypes[active_archetype_id]
+        archetype_display = archetype_data.get("label", active_archetype_id)
+    elif preset_slug:
+        slug_lower = preset_slug.lower()
+        for k, v in archetypes.items():
+            k_clean = k.replace("_", "-")
+            label_clean = v.get("label", "").lower()
+            if k_clean in slug_lower or slug_lower in k_clean or label_clean in slug_lower:
+                archetype_data = v
+                active_archetype_id = k
+                archetype_display = v.get("label", k)
+                break
+                
+    if archetype_data is None and archetypes:
+        first_key = list(archetypes.keys())[0]
+        archetype_data = archetypes[first_key]
+        active_archetype_id = first_key
+        archetype_display = archetype_data.get("label", first_key)
+
+    if archetype_data:
+        return archetype_display, archetype_data.get("target_archetype_mechanics", {
+            "required_gluten_elasticity": "high_retention",
+            "desired_horizontal_flow": "controlled_expansion",
+            "moisture_lipid_ratio": "balanced_emulsion",
+            "optimal_protein_window": "11.0% - 13.0%"
+        })
+    
+    return "Default Archetype", {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "11.0% - 13.0%"
+    }
+
+
+def calculate_local_compatibility_from_specs(wb, engine, preset_slug=None, active_archetype_id=None) -> dict:
+    grain_profile = get_grain_registry_profile(wb.name)
+    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+    
+    try:
+        gp = float(grain_profile["crude_protein_percentage"].replace("%", ""))
+    except Exception:
+        gp = getattr(wb, "protein_content", 12.0) or 12.0
+
+    window_str = mechanics.get("optimal_protein_window", "11.0% - 13.0%")
+    try:
+        parts = window_str.replace("%", "").split("-")
+        p_min = float(parts[0].strip())
+        p_max = float(parts[1].strip())
+    except Exception:
+        p_min, p_max = 11.0, 13.0
+
+    elasticity = mechanics.get("required_gluten_elasticity", "high_retention")
+    binding = grain_profile.get("gluten_binding_capacity", "high")
+    
+    if p_min <= gp <= p_max:
+        tier = "recommended"
+    elif (p_min - 1.5) <= gp <= (p_max + 1.5):
+        tier = "sub-optimal"
+    else:
+        tier = "not-recommended"
+
+    if elasticity == "minimal_to_none" and binding in ["negligible", "moderate"]:
+        tier = "recommended"
+    elif elasticity == "extreme_tensile" and binding == "negligible":
+        tier = "not-recommended"
+    elif elasticity == "minimal_to_none" and binding == "extreme":
+        tier = "not-recommended"
+
+    justification = (
+        f"At crude protein of {gp}%, the raw material aligns with the target window of {window_str}. "
+        f"Gluten binding capacity of {binding} provides the necessary structural behaviour for {elasticity} elasticity requirements."
+    )
+    
+    return {
+        "tier": tier,
+        "reasoning": justification
+    }
+
+
 def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
     """
     Generates realistic, schema-compliant mock responses for offline testing/development.
@@ -413,138 +529,48 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         user_data = {}
 
     if expected_keys and "shares" in expected_keys:
-        # Mock optimize_grain_blend
-        preset_slug = user_data.get("preset_slug", "")
-        preset_name = user_data.get("preset_name", "")
         berries = user_data.get("active_berries", [])
-        
         shares = {}
         warning = None
         if not berries:
             return {"shares": {}, "structural_warning": None}
             
-        # Determine if high-rise
-        is_high_rise = preset_slug in ["sourdough-boule", "baguette", "ciabatta", "artisan-pizza", "bagel", "french-loaf"]
-        has_hard = any("hard" in b.get("name", "").lower() for b in berries)
-        
-        if is_high_rise and not has_hard:
-            warning = f"❌ Structural Hazard: Selected grain blend lacks the gluten strength required for a {preset_name}. Adjusting blend to include 70% Hard Red Spring Wheat for safety."
-            
-        # Simple default distribution favoring soft & rye for cookies
-        if "cookie" in preset_slug or "cookie" in preset_name.lower():
-            soft_berry = next((b for b in berries if "soft" in b.get("name", "").lower()), None)
-            rye_berry = next((b for b in berries if "rye" in b.get("name", "").lower()), None)
-            if soft_berry and rye_berry:
-                shares[soft_berry["name"]] = 0.8
-                shares[rye_berry["name"]] = 0.2
-            elif soft_berry:
-                shares[soft_berry["name"]] = 1.0
-            elif rye_berry:
-                shares[rye_berry["name"]] = 1.0
-            else:
-                shares[berries[0]["name"]] = 1.0
-        else:
-            hard_berry = next((b for b in berries if "hard red spring" in b.get("name", "").lower()), None)
-            if not hard_berry:
-                hard_berry = next((b for b in berries if "hard" in b.get("name", "").lower()), None)
-            if hard_berry:
-                shares[hard_berry["name"]] = 1.0
-            else:
-                shares[berries[0]["name"]] = 1.0
-                
-        # Fill in 0.0 for others
+        equal_share = round(1.0 / len(berries), 2)
         for b in berries:
-            if b["name"] not in shares:
-                shares[b["name"]] = 0.0
-                
+            shares[b["name"]] = equal_share
+        shares[berries[-1]["name"]] += round(1.0 - sum(shares.values()), 2)
         return {"shares": shares, "structural_warning": warning}
 
     elif expected_keys and ("grain_evaluations" in expected_keys or "elevate_recipe" in expected_keys):
-        # Mock get_grain_advisory_ai
         preset_slug = user_data.get("preset_slug", "")
         category_slug = user_data.get("category_slug", "")
         preset_name = user_data.get("preset_name", "")
         inventory = user_data.get("inventory", [])
         
-        evaluations = []
-        is_cookie = "cookie" in preset_slug or "cookie" in (category_slug or "").lower()
-        recipe_title = preset_name or preset_slug or "recipe"
+        from grainlab.engines import router
+        engine = router.get_engine_for_preset(preset_slug, category_slug)
         
+        evaluations = []
         for b in inventory:
-            name_lower = b.get("name", "").lower()
-            b_id = b.get("id", "")
-            prot = b.get("protein", 12.0)
-            
-            if is_cookie:
-                # Sovereignty rules override for cookies: Rye and Soft are recommended, Hard is sub-optimal or not-recommended
-                if "soft" in name_lower:
-                    tier = "recommended"
-                    reasoning = f"At {prot}% protein, Soft White Wheat provides tender, delicate structures perfect for {recipe_title}, avoiding any gluten toughness."
-                elif "rye" in name_lower:
-                    tier = "recommended"
-                    reasoning = f"Rye is highly recommended for {recipe_title} due to pentosans blocking gluten development, maximizing tenderness and moisture retention."
-                elif "hard red spring" in name_lower:
-                    tier = "not-recommended"
-                    reasoning = f"High protein content ({prot}%) creates excessive gluten elasticity, causing {recipe_title} to bake into tough, cakey domes."
-                elif "hard red winter" in name_lower:
-                    tier = "sub-optimal"
-                    reasoning = f"Moderate protein content ({prot}%) creates slightly too much gluten structure, leading to a somewhat tough spread in {recipe_title}."
-                elif "hard white" in name_lower:
-                    tier = "sub-optimal"
-                    reasoning = f"Ideal neutral flavor, but the {prot}% protein content is too high for optimal tenderness in {recipe_title}."
-                elif "spelt" in name_lower:
-                    tier = "sub-optimal"
-                    reasoning = f"Extensible but weak gluten provides decent tenderness, but the nutty flavor may overpower delicate notes in {recipe_title}."
-                else:
-                    tier = "sub-optimal"
-                    reasoning = f"At {prot}% protein, this grain is slightly too strong for optimal tenderness in {recipe_title}."
-            else:
-                # Standard bread rules
-                if "hard red spring" in name_lower or "hard red winter" in name_lower or "hard white" in name_lower:
-                    tier = "recommended"
-                    reasoning = f"High protein content ({prot}%) provides the optimal gluten strength and elasticity needed for {recipe_title}."
-                elif "soft" in name_lower:
-                    tier = "not-recommended"
-                    reasoning = f"Low protein ({prot}%) and weak gluten structure will fail to retain gas, resulting in a flat, dense, and gummy {recipe_title}."
-                elif "rye" in name_lower:
-                    tier = "sub-optimal"
-                    reasoning = f"Savory flavor matches {recipe_title} profiles, but high pentosans and low gluten elasticity will produce a denser, stickier crumb."
-                elif "spelt" in name_lower:
-                    tier = "sub-optimal"
-                    reasoning = f"Highly extensible but weak gluten structure in {recipe_title} requires careful hydration management to avoid structural collapse."
-                else:
-                    tier = "sub-optimal"
-                    reasoning = f"Provides pleasant flavor and {prot}% protein, but low elasticity results in reduced oven spring in {recipe_title}."
-                    
+            class MockBerry:
+                def __init__(self, name, protein, hardness):
+                    self.name = name
+                    self.protein_content = protein
+                    self.hardness = hardness
+            wb = MockBerry(b.get("name"), b.get("protein", 12.0), b.get("hardness", "hard"))
+            res = calculate_local_compatibility_from_specs(wb, engine, preset_slug)
             evaluations.append({
-                "grain_id": b_id,
-                "tier": tier,
-                "reasoning": reasoning
+                "grain_id": b.get("id"),
+                "tier": res["tier"],
+                "reasoning": res["reasoning"]
             })
             
-        selected_names = user_data.get("selected_grains") or []
-        selected_names_lower = [n.lower() for n in selected_names]
+        elevate_recipe = [
+            "Adjust initial water temperature to regulate yeast/enzymatic activity under current ambient conditions.",
+            "Incorporate a 30-minute autolyse stage to fully hydrate raw bran and soften the structural network.",
+            "Utilize gradual, gentle folding rather than intensive mechanical mixing to control gluten elasticity."
+        ]
         
-        elevate_recipe = []
-        if is_cookie:
-            elevate_recipe.append("Substitute 1/3 of the flour blend with Soft White Wheat to maximize tenderness and ensure a melt-in-your-mouth quality.")
-            if "rye" in "".join(selected_names_lower):
-                elevate_recipe.append("Rye selection detected: Brown the butter during the creaming stage to pair nuttiness with Rye's deep flavor notes.")
-                elevate_recipe.append("Add a pinch of dark brown sugar to balance the earthy rye profile with rich molasses tones.")
-            else:
-                elevate_recipe.append("To introduce complex nuttiness without heavy gluten, substitute 15% of the flour blend with Spelt or Rye (Ancient).")
-                elevate_recipe.append("Chill the cookie dough for at least 24 hours before baking to allow starch hydration and concentrate flavors.")
-            elevate_recipe.append("Use a low-gluten mixing method to keep the cookie spread wide and prevent a tough, cakey texture.")
-        else:
-            elevate_recipe.append("Introduce a 20% poolish pre-ferment to enhance crumb extensibility and promote a golden, caramelized crust.")
-            if "hard red spring" in "".join(selected_names_lower):
-                elevate_recipe.append("Hard Red Spring Wheat active: increase hydration by 3-5% to accommodate its high protein absorption rate.")
-                elevate_recipe.append("Perform 3 rounds of stretch-and-folds during bulk fermentation to build robust gluten structure.")
-            else:
-                elevate_recipe.append("To elevate extensibility, incorporate 10% Spelt or Kamut (Ancient) into your active grain blend.")
-                elevate_recipe.append("Ensure you preheat your baking stone or steel at 450°F (230°C) for at least 45 minutes prior to bake.")
-            elevate_recipe.append("Extend the final proofing time by 20% if using freshly milled whole grains to allow natural enzymes to mellow.")
-
         return {
             "grain_evaluations": evaluations,
             "elevate_recipe": elevate_recipe
@@ -555,13 +581,11 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         active_archetype_id = user_data.get("active_archetype_id", "classic_sourdough")
         inventory = user_data.get("inventory", [])
         
-        # Build grain name slug list from inventory for recommended_grain_ids
-        hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
-        soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
-        
         def grain_slug(g):
             return g.get("name", "").lower().replace(" ", "_").replace("/", "").replace("-", "_")
 
+        hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
+        soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
         hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
         soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
         pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta", "lean-crusty", "alkaline-bath", "fresh-pasta-noodles", "enriched-soft"] else soft_slugs
@@ -574,7 +598,6 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         creativity_level = user_data.get("creativity_level")
         exclude_names = user_data.get("exclude_names", [])
 
-        # Build grain name slug list from inventory for recommended_grain_ids
         inventory = user_data.get("inventory", [])
         hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
         soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
@@ -618,50 +641,27 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         }
 
     elif expected_keys and "recommendation_tier" in expected_keys:
-        # Mock get_sidebar_insight_ai
         hovered = user_data.get("hovered_element", "").lower()
         preset = user_data.get("preset_slug", "")
         category = user_data.get("category_slug", "")
         
-        is_cookie = "cookie" in preset or "cookie" in (category or "").lower()
+        from grainlab.engines import router
+        engine = router.get_engine_for_preset(preset, category)
         
-        if "soft white" in hovered:
-            if is_cookie:
-                return {
-                    "recommendation_tier": "recommended",
-                    "labor_roi_rating": "High Priority / Worth the Extra Step",
-                    "last_10_percent_analysis": "Soft White Wheat provides an exceptionally tender crumb for Chewy Chocolate Chip Cookies by avoiding gluten toughness, which is critical for achieving a perfect melting spread.",
-                    "elevate_recipe": "Substitute 10% of the soft white wheat with fresh-milled Rye to introduce pentosans that keep the cookie center chewy and gooey."
-                }
-            else:
-                return {
-                    "recommendation_tier": "not-recommended",
-                    "labor_roi_rating": "Low Priority / Dangerous Structural Choice",
-                    "last_10_percent_analysis": "Soft White Wheat completely lacks the gluten strength and elasticity required to support the rise of this bread, causing structural collapse.",
-                    "elevate_recipe": "Use a high-protein hard wheat instead to ensure gas retention and optimal oven spring."
-                }
-        elif "rye" in hovered:
-            if is_cookie:
-                return {
-                    "recommendation_tier": "recommended",
-                    "labor_roi_rating": "High Priority / Worth the Extra Step",
-                    "last_10_percent_analysis": "Rye is highly recommended for Chewy Chocolate Chip Cookies due to pentosans blocking gluten to maximize cookie tenderness and moisture retention.",
-                    "elevate_recipe": "Mix in 20% fresh-milled Rye with Soft White Wheat to create a unique flavor profile with caramelized notes."
-                }
-            else:
-                return {
-                    "recommendation_tier": "sub-optimal",
-                    "labor_roi_rating": "Low Priority / Minor Textural Return",
-                    "last_10_percent_analysis": "Rye adds excellent complex, savory notes but its low gluten elasticity will produce a denser, stickier crumb structure.",
-                    "elevate_recipe": "Blend 80% Hard Red Spring Wheat with 20% Rye to retain structural loft while capturing Rye's complex rustic flavor."
-                }
-        else:
-            return {
-                "recommendation_tier": "recommended",
-                "labor_roi_rating": "High Priority / Worth the Extra Step",
-                "last_10_percent_analysis": f"Using {hovered.title()} matches the target recipe requirements, contributing to optimal crumb texture and flavor balance.",
-                "elevate_recipe": "Ensure high-quality fresh ingredients are used and maintain precise hydration levels."
-            }
+        class MockBerry:
+            def __init__(self, name):
+                self.name = name
+                self.protein_content = 12.0
+                self.hardness = "hard"
+        wb = MockBerry(hovered)
+        res = calculate_local_compatibility_from_specs(wb, engine, preset)
+        
+        return {
+            "recommendation_tier": res["tier"],
+            "labor_roi_rating": "High Priority / Worth the Extra Step" if res["tier"] == "recommended" else "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": res["reasoning"],
+            "elevate_recipe": "Adjust hydration slightly to accommodate the grain's natural water-absorption capacity."
+        }
 
     return None
 
@@ -1085,22 +1085,22 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
 
 def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False, preset_name: str = None) -> dict | None:
     """
-    Submits a prompt to Gemma asking for evaluation of available kitchen inventory.
+    Evaluates raw kitchen inventory against target archetype mechanics using the dynamic pipeline.
     """
+    from apps.core.models import WheatBerry, BreadPreset
+    from grainlab.engines import router
+    import json
+    
+    preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
+    if not category_slug and preset and preset.dough_category:
+        category_slug = preset.dough_category.slug
+    engine = router.get_engine_for_preset(preset_slug, category_slug)
+    
+    active_berries = list(WheatBerry.objects.filter(is_active=True))
+    if not active_berries:
+        return {"grain_evaluations": [], "elevate_recipe": []}
+
     if _is_ai_enabled():
-        from apps.core.models import WheatBerry, BreadPreset
-        from grainlab.engines import router
-        import json
-        
-        preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
-        if not category_slug and preset and preset.dough_category:
-            category_slug = preset.dough_category.slug
-        engine = router.get_engine_for_preset(preset_slug, category_slug)
-        
-        active_berries = list(WheatBerry.objects.filter(is_active=True))
-        if not active_berries:
-            return {"grain_evaluations": [], "elevate_recipe": []}
-            
         selected_ids = [s.strip() for s in selected_grains.split(",") if s.strip()] if selected_grains else []
         selected_berries = [wb for wb in active_berries if str(wb.id) in selected_ids]
         selected_names = [wb.name for wb in selected_berries]
@@ -1113,12 +1113,10 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
                 "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
-                "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
-                "Use the target protein range, gluten behavior, and flavor affinity specifications provided in the user prompt payload to guide your evaluation.\n"
                 "Evaluate each grain and assign:\n"
                 "- 'recommended': Grains that are ideal for the preset.\n"
-                "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
-                "- 'not-recommended': Grains that are inappropriate for the preset's required gluten structure, texture, or flavor characteristics.\n"
+                "- 'sub-optimal': Grains that are usable but not ideal.\n"
+                "- 'not-recommended': Grains that are inappropriate.\n"
                 "\n"
                 "Return a JSON object matching this schema:\n"
                 "{\n"
@@ -1126,7 +1124,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "    {\n"
                 "      \"grain_id\": \"string (UUID of the grain)\",\n"
                 "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
+                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation.\"\n"
                 "    }\n"
                 "  ]\n"
                 "}"
@@ -1134,16 +1132,11 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             expected_keys = ["grain_evaluations"]
         elif only_elevate:
             system_prompt = (
-                "You are a baking science expert. Analyze the given bread/pastry preset and the active grain selections checked by the user.\n"
-                "Provide 3 to 5 distinct, highly specific ways to enhance the outcome (e.g. methods like autolyse, preferments, cold retardation, or specific fat/liquid ratio tweaks), tailored specifically to build upon the user's active grain selections.\n"
-                "\n"
-                "Return a JSON object matching this schema:\n"
+                "You are an expert baking science assistant. Given the active selected material inputs and target archetype mechanics, "
+                "suggest 3 to 5 distinct ways to enhance the physical and chemical outcome of the formulation.\n"
+                "Return a JSON object containing:\n"
                 "{\n"
-                "  \"elevate_recipe\": [\n"
-                "    \"string suggestion 1\",\n"
-                "    \"string suggestion 2\",\n"
-                "    \"string suggestion 3\"\n"
-                "  ]\n"
+                "  \"elevate_recipe\": [\"suggestion 1\", \"suggestion 2\"]\n"
                 "}"
             )
             expected_keys = ["elevate_recipe"]
@@ -1153,12 +1146,10 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
                 "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
-                "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
-                "Use the target protein range, gluten behavior, and flavor affinity specifications provided in the user prompt payload to guide your evaluation.\n"
                 "Evaluate each grain and assign:\n"
                 "- 'recommended': Grains that are ideal for the preset.\n"
-                "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
-                "- 'not-recommended': Grains that are inappropriate for the preset's required gluten structure, texture, or flavor characteristics.\n"
+                "- 'sub-optimal': Grains that are usable but not ideal.\n"
+                "- 'not-recommended': Grains that are inappropriate.\n"
                 "\n"
                 "Return a JSON object matching this schema:\n"
                 "{\n"
@@ -1166,13 +1157,12 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "    {\n"
                 "      \"grain_id\": \"string (UUID of the grain)\",\n"
                 "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation tracking exactly how the grain alters the requested texture, and how its flavor profile impacts the target flavor profile.\"\n"
+                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation.\"\n"
                 "    }\n"
                 "  ],\n"
                 "  \"elevate_recipe\": [\n"
                 "    \"string suggestion 1\",\n"
-                "    \"string suggestion 2\",\n"
-                "    \"string suggestion 3 (provide 3 to 5 distinct ways to enhance the outcome, specifically tailored to build upon the user's active grain selections)\"\n"
+                "    \"string suggestion 2\"\n"
                 "  ]\n"
                 "}"
             )
@@ -1181,12 +1171,6 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             "preset_slug": preset_slug,
             "preset_name": preset_name or (preset.name if preset else preset_slug),
             "category_slug": category_slug,
-            "engine_slug": engine.slug if engine else None,
-            "target_protein_min": engine.target_protein_min if engine else None,
-            "target_protein_max": engine.target_protein_max if engine else None,
-            "gluten_behavior_requirement": engine.gluten_behavior if engine else None,
-            "flavor_affinity_requirement": engine.flavor_affinity if engine else None,
-            "tannin_sensitive": engine.tannin_sensitive if engine else False,
             "selected_grains": selected_names,
             "inventory": [
                 {
@@ -1203,8 +1187,8 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         user_prompt = json.dumps(payload)
         import re
         res = call_gemma_api(system_prompt, user_prompt, expected_keys=expected_keys)
-        if res and isinstance(res, dict) and "grain_evaluations" in res:
-            evaluations = res["grain_evaluations"]
+        if res and isinstance(res, dict):
+            evaluations = res.get("grain_evaluations", [])
             if isinstance(evaluations, list):
                 for evaluation in evaluations:
                     if not isinstance(evaluation, dict):
@@ -1232,188 +1216,103 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                                 break
                     if matched_wb:
                         evaluation["grain_id"] = str(matched_wb.id)
-                        # Ensure culinary/physical constraints are programmatically satisfied
-                        correct_eval = evaluate_single_grain(matched_wb, engine, preset_name)
-                        if evaluation.get("tier") != correct_eval["tier"]:
-                            evaluation["tier"] = correct_eval["tier"]
-                            evaluation["reasoning"] = correct_eval["reasoning"]
             return res
-            
-    return None
 
+    # Local fallback
+    evaluations = []
+    if not only_elevate:
+        for wb in active_berries:
+            res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug)
+            evaluations.append({
+                "grain_id": str(wb.id),
+                "tier": res["tier"],
+                "reasoning": res["reasoning"]
+            })
 
-def evaluate_single_grain(wb, engine, preset_name: str = None) -> dict:
-    """
-    Evaluates a single grain against the engine's protein and tannin rules,
-    applying culinary sovereignty rules for ancient and non-standard grains.
-    """
-    p_min = getattr(engine, "target_protein_min", 11.0)
-    p_max = getattr(engine, "target_protein_max", 13.0)
-    engine_slug = getattr(engine, "slug", "")
-    recipe_title = preset_name or (engine.name if engine else "recipe")
-
-    name = wb.name
-    prot = wb.protein_content
-    hard = wb.hardness
-    name_lower = name.lower()
-
-    tier = None
-    reasoning = ""
-
-    # Rye Override
-    if "rye" in name_lower:
-        if engine_slug == "cookie":
-            tier = "recommended"
-            reasoning = f"Rye is highly recommended for {recipe_title} because its high pentosan content blocks gluten development, preserving maximum cookie tenderness and creating a chewy, gooey center. Its earthy flavor profile pairs beautifully with chocolate chip and brown sugar notes."
-        elif engine_slug in ["hearth", "pan", "flat", "quick", "pasta", "fry"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Rye can be used in {recipe_title} for a unique rustic flavor, but its high pentosans and weak gluten elasticity will result in a denser, stickier structure that requires careful hydration management."
-        else:
-            tier = "not-recommended"
-            reasoning = f"At {prot}% protein, Rye is not recommended for {recipe_title} because its lack of structured gluten and high water-retention pentosans will cause structural collapse or excessive stickiness."
-
-    # Soft White Wheat Override
-    elif "soft" in name_lower:
-        if engine_slug in ["cookie", "batter", "quick", "pastry"]:
-            tier = "recommended"
-            reasoning = f"At {prot}% protein, Soft White Wheat is recommended for {recipe_title} due to its weak, tender gluten structure, which yields the delicate, melt-in-the-mouth crumb required for pastries and confections."
-        elif engine_slug in ["flat", "fry"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Soft White Wheat is usable for {recipe_title} but lacks the moderate gluten strength required for optimal tear and volume."
-        else:
-            tier = "not-recommended"
-            reasoning = f"At {prot}% protein, Soft White Wheat is not recommended for {recipe_title} as its weak gluten structure will fail to retain gas and shape, leading to a flat, dense, or gummy product."
-
-    # Spelt Override
-    elif "spelt" in name_lower:
-        if engine_slug in ["cookie", "quick"]:
-            tier = "recommended"
-            reasoning = f"Spelt is recommended for {recipe_title} as its highly extensible, weak gluten provides excellent tenderness, while adding a pleasant, nutty flavor profile."
-        elif engine_slug in ["hearth", "pan", "pastry", "flat", "fry", "pasta"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Spelt is usable but its highly extensible, weak gluten structure requires careful hydration and dough handling to prevent structural collapse in {recipe_title}."
-        else:
-            tier = "not-recommended"
-            reasoning = f"Spelt is not recommended for {recipe_title} because its weak gluten cannot support the high structural expansion or delicate starch aeration required."
-
-    # Einkorn Override
-    elif "einkorn" in name_lower:
-        if engine_slug in ["cookie", "quick", "flat"]:
-            tier = "recommended"
-            reasoning = f"Einkorn is recommended for {recipe_title} because its exceptionally weak gluten and high starch content yield superior tenderness, while introducing a rich, nutty flavor."
-        elif engine_slug in ["batter", "fry"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Einkorn is usable but its weak gluten and yellow pigment profile may require adjustments to hydration or rise times in {recipe_title}."
-        else:
-            tier = "not-recommended"
-            reasoning = f"Einkorn is not recommended for {recipe_title} because its extremely fragile gluten structure will cause collapse, sticky dough handling, or a lack of structural rise."
-
-    # Kamut Override
-    elif "kamut" in name_lower:
-        if engine_slug in ["pasta", "flat"]:
-            tier = "recommended"
-            reasoning = f"Kamut is highly recommended for {recipe_title} due to its rich, buttery flavor and highly extensible gluten, which is perfect for hand-stretched doughs and pasta structure."
-        elif engine_slug in ["hearth", "pan", "quick", "cookie", "fry"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Kamut is sub-optimal for {recipe_title} because its gluten is extensible but lacks the elastic strength needed for maximum volume, though it adds a pleasant buttery flavor."
-        else:
-            tier = "not-recommended"
-            reasoning = f"Kamut is not recommended for {recipe_title} because its low-elasticity gluten structure is incompatible with the structural browning or rising requirements."
-
-    # Hard Red Spring Wheat Override (High strength)
-    elif "hard red spring" in name_lower:
-        if engine_slug in ["hearth", "pan", "bath", "choux", "pasta", "fry"]:
-            tier = "recommended"
-            reasoning = f"At {prot}% protein, Hard Red Spring Wheat is recommended for {recipe_title} as its strong, elastic gluten provides the optimal structure and gas retention needed for a high-volume rise."
-        elif engine_slug in ["quick", "pastry", "flat"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Hard Red Spring Wheat is sub-optimal for {recipe_title} because its high gluten strength can make the texture slightly tough or difficult to roll out without relaxation."
-        else:
-            tier = "not-recommended"
-            reasoning = f"At {prot}% protein, Hard Red Spring Wheat is not recommended for {recipe_title} because its strong gluten network is fundamentally incompatible with the required delicate, tender crumb."
-
-    # Hard Red Winter Wheat Override (Moderate-high strength)
-    elif "hard red winter" in name_lower:
-        if engine_slug in ["hearth", "pan", "bath", "flat", "pasta", "fry"]:
-            tier = "recommended"
-            reasoning = f"At {prot}% protein, Hard Red Winter Wheat is recommended for {recipe_title} because its balanced gluten elasticity and extensibility provide excellent structure and rise."
-        elif engine_slug in ["quick", "pastry", "choux"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Hard Red Winter Wheat is sub-optimal for {recipe_title} as it provides slightly too much structural strength but can be blended to achieve the target texture."
-        else:
-            tier = "not-recommended"
-            reasoning = f"At {prot}% protein, Hard Red Winter Wheat is not recommended for {recipe_title} because its robust gluten structure results in excessive toughness in delicate crumb applications."
-
-    # Hard White Wheat Override (Mild, hard)
-    elif "hard white" in name_lower:
-        if engine_slug in ["hearth", "pan", "bath", "flat", "pasta", "fry"]:
-            tier = "recommended"
-            reasoning = f"At {prot}% protein, Hard White Wheat is recommended for {recipe_title} as its strong gluten structure and mild flavor profile provide excellent structural integrity and rise without whole-grain bitterness."
-        elif engine_slug in ["quick", "pastry", "choux", "cookie"]:
-            tier = "sub-optimal"
-            reasoning = f"At {prot}% protein, Hard White Wheat is sub-optimal for {recipe_title}. While its mild flavor is desirable, its gluten structure is slightly too strong and elastic for optimal tenderness."
-        else:
-            tier = "not-recommended"
-            reasoning = f"At {prot}% protein, Hard White Wheat is not recommended for {recipe_title} due to its high gluten strength causing a tough, heavy crumb in delicate batters."
-
-    # Default fallback to standard protein/hardness/tannin calculations if no specific override matches
-    if not tier:
-        # Heuristic 1: Structure/Protein Tier
-        is_in_range = p_min <= prot <= p_max
-        is_within_tolerance = (p_min - 1.5) <= prot <= (p_max + 1.5)
-        
-        # Hardness validation
-        hardness_ok = True
-        if p_min >= 11.5:  # Bread engines generally require hard/durum
-            if hard not in ["hard", "durum"]:
-                hardness_ok = False
-        elif p_max <= 10.5:  # Weak engines (cookies/cake/quick) generally require soft
-            if hard != "soft":
-                hardness_ok = False
-
-        if is_in_range and hardness_ok:
-            base_tier = "recommended"
-        elif is_within_tolerance:
-            base_tier = "sub-optimal"
-        else:
-            base_tier = "not-recommended"
-
-        # Heuristic 2: Tannin penalty
-        is_tannin_heavy = any(x in name.lower() for x in ["red", "rye", "spelt", "einkorn"])
-        t_sens = getattr(engine, "tannin_sensitive", False)
-        final_tier = base_tier
-        penalty_applied = False
-        if t_sens and is_tannin_heavy:
-            penalty_applied = True
-            if base_tier == "recommended":
-                final_tier = "sub-optimal"
-            elif base_tier == "sub-optimal":
-                final_tier = "not-recommended"
-
-        tier = final_tier
-        if tier == "recommended":
-            reasoning = f"At {prot}% protein content, {name} is ideal for {recipe_title} (ideal target is {p_min}%-{p_max}%). Its starch/lipid absorption properties promote the optimal spread and texture structure required for this specific formulation."
-        elif tier == "sub-optimal":
-            if penalty_applied and is_in_range:
-                reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with the {recipe_title} flavor profile, dropping it to sub-optimal."
-            else:
-                reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {recipe_title}, which will require minor hydration adjustments."
-        else:
-            if penalty_applied:
-                reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the {recipe_title} flavor profile."
-            else:
-                reasoning = f"At {prot}% protein, {name} completely violates the {recipe_title} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
+    elevate_recipe = []
+    if not only_evaluations:
+        elevate_recipe = [
+            "Adjust initial water temperature to regulate yeast/enzymatic activity under current ambient conditions.",
+            "Incorporate a 30-minute autolyse stage to fully hydrate raw bran and soften the structural network.",
+            "Utilize gradual, gentle folding rather than intensive mechanical mixing to control gluten elasticity."
+        ]
 
     return {
-        "tier": tier,
-        "reasoning": reasoning
+        "grain_evaluations": evaluations,
+        "elevate_recipe": elevate_recipe
     }
+
+
+def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None) -> dict:
+    """
+    Evaluates a single grain against the engine's mechanics using LLM or local fallback.
+    """
+    # Compile profiles
+    grain_profile = get_grain_registry_profile(wb.name)
+    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+    
+    if _is_ai_enabled() and not getattr(settings, "MOCK_MODE", True):
+        system_prompt = (
+            "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
+            "Your task is to calculate the precise physical and chemical compatibility between a raw grain berry "
+            "and the mechanical targets of a production dough/confection archetype.\n\n"
+            "[INTRINSIC RAW MATERIAL PROFILE]\n"
+            f"* Element Name: {wb.name}\n"
+            f"* Crude Protein: {grain_profile.get('crude_protein_percentage')}\n"
+            f"* Gluten Binding Capacity: {grain_profile.get('gluten_binding_capacity')}\n"
+            f"* Pentosan Concentration: {grain_profile.get('pentosan_concentration')}\n"
+            f"* Bran Flavor Profile: {grain_profile.get('bran_tannin_profile')}\n\n"
+            "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+            f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+            f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
+            f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
+            f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
+            f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
+            "[EVALUATION RULES]\n"
+            "1. Relational Matching: Analyze how the raw ingredient's chemical attributes will behave under the thermal, hydraulic, and mechanical demands of the target archetype.\n"
+            "2. Determine Compatibility Tier: Select exactly one tier string: \"RECOMMENDED\", \"SUB-OPTIMAL\", or \"NOT RECOMMENDED\".\n"
+            "   - If the grain's native properties directly support or enhance the mechanical goals (even if it breaks traditional wheat rules, like an ancient grain with zero gluten maximizing tenderness where minimal elasticity is requested), classify it as RECOMMENDED.\n"
+            "   - If the grain's native properties directly conflict with the physical targets (like an extreme-tensile bread flour causing toughness where high horizontal flow is requested), classify it as NOT RECOMMENDED.\n"
+            "3. Chemistry-Driven Critique: Write a concise, 2-sentence conversational analysis explaining the precise molecular interaction (e.g., starch gelatinization, protein cross-linking, pentosan water-hoarding, lipid crystallization) driving your tier selection.\n"
+            "4. Banned Words: Do not use corporate filler language, including: anomalies, parameter, matrix, configuration, optimization, performance, detected, or baseline.\n\n"
+            "Return ONLY raw JSON with no markdown fences, matching this schema:\n"
+            "{\n"
+            "  \"evaluation_result\": {\n"
+            "    \"compatibility_tier\": \"RECOMMENDED | SUB-OPTIMAL | NOT RECOMMENDED\",\n"
+            "    \"technical_justification\": \"A conversational, expert 2-sentence food science breakdown.\"\n"
+            "  }\n"
+            "}"
+        )
+        
+        user_prompt = json.dumps({
+            "grain_name": wb.name,
+            "protein": wb.protein_content or 12.0,
+            "hardness": wb.hardness or "hard",
+            "preset_name": preset_name or archetype_display
+        })
+        
+        try:
+            res = call_gemma_api(system_prompt, user_prompt, expected_keys=["evaluation_result"])
+            if res and "evaluation_result" in res:
+                eval_result = res["evaluation_result"]
+                compatibility_tier = eval_result.get("compatibility_tier", "SUB-OPTIMAL").lower().replace(" ", "_")
+                if compatibility_tier == "not_recommended":
+                    compatibility_tier = "not-recommended"
+                return {
+                    "tier": compatibility_tier,
+                    "reasoning": eval_result.get("technical_justification", "Analyzed target mechanics and chemical profile successfully.")
+                }
+        except Exception as e:
+            logger.error(f"[Gemma Client] - Error - Failed evaluation for grain {wb.name}: {e}")
+
+    # Local fallback
+    return calculate_local_compatibility_from_specs(wb, engine, preset_slug, active_archetype_id)
 
 
 def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None) -> dict:
     """
     Local fallback logic performing programmatic evaluation of kitchen inventory 
-    using the active sub-engine heuristics.
+    using the active sub-engine mechanics.
     """
     from apps.core.models import WheatBerry, BreadPreset
     from grainlab.engines import router
@@ -1427,7 +1326,7 @@ def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset
     evaluations = []
 
     for wb in active_berries:
-        res = evaluate_single_grain(wb, engine, preset_name=preset_name)
+        res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug)
         evaluations.append({
             "grain_id": str(wb.id),
             "tier": res["tier"],
@@ -2036,218 +1935,38 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     """
     slug = (recipe_slug or "").lower()
     name = (recipe_name or "").lower()
-    is_cookie = engine_id in ["cookies-shortbread", "cakes-batters", "cookie", "batter"] or "cookie" in engine_id.lower() or "batter" in engine_id.lower()
-
-    # 1. Custom matches for cookies & sweets
-    if is_cookie:
-        if "chocolate" in name or "chocolate" in slug:
-            menu = "A rich, chocolate-focused cookie offering layers of caramelized sugars and dark cocoa notes, balanced by a soft and chewy crumb."
-            science = "Sucrose caramelization interacts with saturated fats to limit structural gluten formation, preserving a tender, cakey bake."
-            tips = [
-                "Chill the creamed fat-sugar mixture to stabilize the fat crystals before creaming.",
-                "Bake at 350°F (177°C) to brown the sugars without drying out the center.",
-                "Fold in chocolate inclusions by hand at the very end to prevent streaking."
-            ]
-        elif "sugar" in name or "sugar" in slug:
-            menu = "A delicate vanilla bean cookie with a clean, sweet profile, featuring crisp edges and a pillowy, tender center."
-            science = "High sugar-to-water ratio prevents complete gluten hydration, resulting in an exceptionally tender crumb."
-            tips = [
-                "Use superfine baker's sugar for a smoother surface melt.",
-                "Roll dough balls gently in white sugar before baking for a sparkling finish.",
-                "Bake on parchment paper to control heat transfer to the cookie bottom."
-            ]
-        elif "snickerdoodle" in name or "snickerdoodle" in slug:
-            menu = "A warm, comforting cookie rolled in fragrant sweet cinnamon and sugar, offering a soft bite and a subtle tang."
-            science = "Cream of tartar introduces an acidic environment that inhibits browning slightly while promoting soft leavening."
-            tips = [
-                "Sift the cream of tartar with baking soda for uniform distribution.",
-                "Use high-quality Ceylon cinnamon for a sweeter, more aromatic spice coating.",
-                "Avoid over-creaming to keep the crumb thick and soft."
-            ]
-        elif "peanut" in name or "peanut" in slug:
-            menu = "A robust, peanut-infused drop cookie with a rich nutty flavor, finished with a classic fork-crisscross texture."
-            science = "High level of fats from natural nut oils shortens protein bonds, creating a dense, crumbly structure."
-            tips = [
-                "Stir the peanut butter thoroughly to integrate separated oils before measuring.",
-                "Bake at 325°F (163°C) to prevent burning the nut solids.",
-                "Use a fork dipped in water to press the classic crisscross pattern."
-            ]
-        elif "ginger" in name or "ginger" in slug or "molasses" in slug or "snap" in slug:
-            menu = "A deeply spiced molasses cookie featuring robust ginger warmth, sweet clove aromatics, and a beautifully cracked surface."
-            science = "Liquid invert sugars increase hygroscopicity, keeping the cookie center chewy while the crust dries and cracks."
-            tips = [
-                "Use fresh ground ginger alongside crystallized pieces for a multi-layered spice profile.",
-                "Bake on a double sheet pan to protect the molasses from burning.",
-                "Sprinkle the hot cookies with a touch of sea salt immediately after baking."
-            ]
-        elif "espresso" in name or "espresso" in slug or "coffee" in slug or "brown butter" in name or "brown_butter" in slug:
-            menu = "A sophisticated, deep-browned butter cookie infused with roasted espresso aromatics and complex caramel undertones."
-            science = "Browning the butter boils off water content, resulting in less steam leavening and a denser, chewier texture."
-            tips = [
-                "Cool the browned butter to room temperature before creaming with sugars.",
-                "Dissolve the espresso powder directly into the warm butter to unlock maximum aroma.",
-                "Allow a 24-hour dough rest to let the coffee flavor mature."
-            ]
-        elif "toffee" in name or "toffee" in slug or "pecan" in slug:
-            menu = "A rich, buttery cookie loaded with shards of house-made pecan brittle and sweet toffee chunks for a nutty, caramelized crunch."
-            science = "Toffee melts during baking to form caramelized pockets, while pecan oils weaken gluten networks."
-            tips = [
-                "Toast the pecans at 350°F (177°C) for 8 minutes before folding them in.",
-                "Chop the toffee into varying sizes for a mix of melted pockets and crunchy bits.",
-                "Rest the dough to allow the flour to fully absorb the liquid from the butter."
-            ]
-        elif "honey" in name or "honey" in slug or "lavender" in slug:
-            menu = "A light, botanical cookie sweetened with floral wildflower honey and infused with aromatic lavender buds."
-            science = "Honey's high fructose content accelerates Maillard reaction, yielding a golden exterior at lower temperatures."
-            tips = [
-                "Grind the lavender buds finely with sugar to avoid a soapy texture.",
-                "Bake at 325°F (163°C) to prevent premature browning of the honey sugars.",
-                "Brush a light honey-glaze on top of the warm cookies for a glossy shine."
-            ]
-        else:
-            menu = "A decadent, golden drop cookie baked to a perfect tender finish, offering sweet buttery aromatics."
-            science = "Standard starch-lipid emulsion ensures controlled horizontal spread and a soft, uniform crumb."
-            tips = [
-                "Cream fats and sugars thoroughly to build a stable air emulsion.",
-                "Bake at 350°F (177°C) until the edges are golden and the center is soft.",
-                "Let the cookies rest on the baking sheet for 5 minutes before transferring to a wire rack."
-            ]
-    # 2. Custom matches for bread & pizzas
-    else:
-        if "sourdough" in name or "sourdough" in slug or "boule" in slug:
-            menu = "An artisanal rustic boule featuring a crackly blistered crust and a highly open crumb with a complex, lactic sourness."
-            science = "Long natural fermentation allows lactic acid bacteria to weaken gluten slightly, enhancing extensibility and open cell structure."
-            tips = [
-                "Utilize a Dutch oven preheated to 450°F (232°C) to trap steam for maximum oven rise.",
-                "Perform stretch-and-folds during bulk fermentation to build dough strength gently.",
-                "Proof overnight at 38°F (3°C) to develop complex organic acids."
-            ]
-        elif "brioche" in name or "brioche" in slug or "challah" in slug or "enriched" in slug:
-            menu = "A rich, golden enriched loaf boasting an exceptionally pillowy texture and a sweet, buttery crumb aroma."
-            science = "Enrichment with lipids and egg proteins coats gluten strands, preventing tough elastic networks from forming."
-            tips = [
-                "Incorporate butter gradually in small cubes after the dough has built basic gluten structure.",
-                "Proof at a cool temperature, around 75°F (24°C), to prevent the butter from melting out.",
-                "Apply an egg wash immediately before baking for a glossy, deep-golden crust."
-            ]
-        elif "pizza" in name or "pizza" in slug:
-            menu = "A high-heat artisan pizza crust, thin and crisp on the bottom with a puffy, charred border."
-            science = "High heat gelatinizes starches rapidly, puffing the rim with steam while locking in moisture."
-            tips = [
-                "Preheat a baking steel or stone at 500°F (260°C) for at least an hour.",
-                "Use a high-protein flour to support thin stretching without tearing.",
-                "Limit toppings to keep the center crust from becoming soggy."
-            ]
-        elif "bagel" in name or "bagel" in slug or "pretzel" in slug:
-            menu = "A dense, chewy bagel with a shiny, deep-golden crust and a distinct malted wheat flavor."
-            science = "An alkaline bath or boiling step gelatinizes surface starches, creating a skin that restricts oven rise and results in a chewy crumb."
-            tips = [
-                "Boil bagels for 60 seconds per side in water with barley malt syrup.",
-                "Use high-gluten flour to achieve a dense, authentic chew.",
-                "Bake on wet wooden boards first, then flip directly onto the hearth stone."
-            ]
-        elif "flatbread" in name or "naan" in slug or "tortilla" in slug:
-            menu = "A warm, soft flatbread cooked on a blisteringly hot griddle, featuring charred spots and a flexible crumb."
-            science = "Rapid dry-heat cooking cooks the flour instantly, keeping the interior moist and flexible."
-            tips = [
-                "Cook on a cast-iron skillet preheated until smoking.",
-                "Roll dough thin to ensure it cooks through before burning.",
-                "Keep cooked flatbreads wrapped in a clean towel to trap steam and keep them soft."
-            ]
-        else:
-            menu = "A golden artisan loaf featuring a crisp, aromatic crust and a soft, flavorful crumb."
-            science = "Yeast fermentation generates carbon dioxide gas, stretching the gluten matrix to build a light crumb."
-            tips = [
-                "Preheat the oven with a steam pan to encourage maximum rise and a thin crust.",
-                "Check doneness by tapping the bottom; it should sound hollow when fully baked.",
-                "Cool completely on a wire rack to allow the internal crumb structure to set."
-            ]
-
-    # Build secondary ingredients dynamically
-    sec_lipids = {"required": "none", "options": ["none"]}
-    sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
-    sec_binders = {"required": "none", "options": ["none"]}
-
-    if is_cookie:
-        # Default cookie setup
-        sec_lipids = {
-            "required": "unsalted_butter",
-            "options": ["unsalted_butter", "salted_butter", "coconut_oil", "avocado_oil"]
-        }
-        sec_liquids = {
-            "required": "pure_water",
-            "options": ["pure_water"]
-        }
-        sec_binders = {
-            "required": "whole_eggs",
-            "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]
-        }
-        # Special cookie cases
-        if "avocado" in name or "avocado" in slug:
-            sec_lipids["required"] = "avocado_oil"
-        elif "coconut" in name or "coconut" in slug:
-            sec_lipids["required"] = "coconut_oil"
-    else:
-        # Yeast bread setup
-        if "brioche" in name or "brioche" in slug or "enriched" in slug:
-            sec_lipids = {
-                "required": "unsalted_butter",
-                "options": ["unsalted_butter", "salted_butter"]
-            }
-            sec_liquids = {
-                "required": "whole_milk",
-                "options": ["whole_milk", "heavy_cream", "pure_water"]
-            }
-            sec_binders = {
-                "required": "whole_eggs",
-                "options": ["whole_eggs", "egg_whites"]
-            }
-        elif "challah" in name or "challah" in slug:
-            sec_lipids = {
-                "required": "avocado_oil",
-                "options": ["avocado_oil", "unsalted_butter"]
-            }
-            sec_liquids = {
-                "required": "pure_water",
-                "options": ["pure_water", "whole_milk"]
-            }
-            sec_binders = {
-                "required": "whole_eggs",
-                "options": ["whole_eggs"]
-            }
-        elif "pretzel" in name or "pretzel" in slug or "bagel" in slug:
-            sec_lipids = {
-                "required": "unsalted_butter",
-                "options": ["unsalted_butter", "none"]
-            }
-            sec_liquids = {
-                "required": "pure_water",
-                "options": ["pure_water"]
-            }
-        elif "flatbread" in name or "naan" in slug or "tortilla" in slug:
-            sec_lipids = {
-                "required": "avocado_oil",
-                "options": ["avocado_oil", "unsalted_butter", "none"]
-            }
-            sec_liquids = {
-                "required": "pure_water",
-                "options": ["pure_water", "whole_milk", "buttermilk"]
-            }
-
+    category = (engine_id or "").lower()
+    
+    # Defaults
+    sec_lipids = {"required": "none", "options": ["none", "unsalted_butter", "avocado_oil", "coconut_oil"]}
+    sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk", "buttermilk"]}
+    sec_binders = {"required": "none", "options": ["none", "whole_eggs", "egg_whites"]}
+    
+    if category in ["cookies-shortbread", "cakes-batters", "cookies_shortbread", "cakes_batters", "cookie", "batter"]:
+        sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
+        sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
+        sec_binders = {"required": "whole_eggs", "options": ["none", "whole_eggs", "egg_whites"]}
+    elif category in ["pastry-lamination", "pastry_lamination", "pastry", "choux-paste", "choux_paste", "choux", "fry", "fried-doughs"]:
+        sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "salted_butter"]}
+        sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
+        sec_binders = {"required": "whole_eggs", "options": ["whole_eggs", "egg_whites"]}
+    elif category in ["enriched-soft", "enriched_soft", "pan"]:
+        sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil"]}
+        sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
+        sec_binders = {"required": "none", "options": ["none", "whole_eggs"]}
+    elif category in ["alkaline-bath", "alkaline_bath", "bath", "flatbreads-griddles", "flatbreads_griddles", "flat"]:
+        sec_lipids = {"required": "none", "options": ["none", "unsalted_butter"]}
+        sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk"]}
+        
     pref_slugs = []
-    if is_cookie:
-        pref_slugs = ["soft_white_wheat", "rye"]
-    else:
-        if "brioche" in name or "challah" in name or "enriched" in slug:
-            pref_slugs = ["hard_white_wheat"]
-        elif "baguette" in name or "sourdough" in name or "pizza" in slug:
-            pref_slugs = ["hard_red_spring_wheat"]
-        else:
-            pref_slugs = ["hard_red_winter_wheat"]
-
+    if selected_grains:
+        pref_slugs = [g.strip().lower().replace(" ", "_") for g in selected_grains.split(",") if g.strip()]
+    if not pref_slugs:
+        pref_slugs = ["hard_red_spring_wheat"]
+        
     return {
-        "menu_description": menu,
-        "sidebar_science_profile": science,
+        "menu_description": f"A balanced formulation of {recipe_name or slug} optimized for target mechanics.",
+        "sidebar_science_profile": f"Evaluates raw material specifications relative to physical targets of the {engine_id} engine.",
         "recommended_grain_ids": pref_slugs,
         "secondary_ingredients": {
             "lipids": sec_lipids,

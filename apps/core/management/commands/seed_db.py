@@ -879,7 +879,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.0,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "Good baseline hard wheat with solid gluten development suitable for general crusty breads."
+                "notes": "Moderate-high protein hard wheat with standard gluten elasticity and extensibility."
             },
             {
                 "name": "Hard Red Spring Wheat",
@@ -888,7 +888,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.02,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "High protein content, excellent gluten strength, perfect for open crumb and sourdoughs."
+                "notes": "High-protein hard wheat with strong, elastic gluten structure."
             },
             {
                 "name": "Hard White Wheat",
@@ -897,7 +897,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.0,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "Mild flavor and light color. Combines the gluten strength of hard red with a sweeter taste profile."
+                "notes": "Mild, light-colored hard wheat."
             },
             {
                 "name": "Soft White Wheat",
@@ -906,7 +906,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 0.97,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "Low protein, tender gluten. Great for cakes, pastries, biscuits, or softening hard wheat blends."
+                "notes": "Low-protein soft wheat with weak, tender gluten structure."
             },
             {
                 "name": "Spelt Wheat (Ancient)",
@@ -915,7 +915,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.05,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "Highly soluble gluten, ancient variety. Provides a nutty, sweet flavor and a slightly relaxed crumb."
+                "notes": "Ancient hulled wheat species. Very extensible but weak gluten strength."
             },
             {
                 "name": "Kamut (Ancient)",
@@ -924,7 +924,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.06,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "Rich, buttery flavored ancient khorasan grain. High protein but extensible gluten structures."
+                "notes": "Ancient Khorasan wheat. High protein content, extensible gluten structure."
             },
             {
                 "name": "Einkorn (Ancient)",
@@ -933,7 +933,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.04,
                 "is_active": False,
                 "ai_analyzed": True,
-                "notes": "The most ancient cultivated wheat. Weaker gluten structure, high carotenoid pigments (yellow color)."
+                "notes": "Ancient cultivated wheat species. Weaker gluten structure."
             },
             {
                 "name": "Rye (Ancient)",
@@ -942,7 +942,7 @@ class Command(BaseCommand):
                 "moisture_absorption_coef": 1.08,
                 "is_active": True,
                 "ai_analyzed": True,
-                "notes": "Distinct earthy flavor with high soluble dietary fiber (pentosans). Very weak gluten strength."
+                "notes": "Ancient rye grass grain. High pentosan concentration and weak gluten strength."
             }
         ]
 

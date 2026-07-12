@@ -92,24 +92,48 @@ class PanEngine(BaseEngine):
             "icon": "🍞",
             "description": "Straight sidewall containment maximizing volume and thin slicing.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.0% - 13.0%"
+            }
         },
         "freeform_braided": {
             "label": "Freeform Braided Loaf",
             "icon": "🥯",
             "description": "High-tensile strands capable of holding shape without pan walls like Challah or Brioche.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.5% - 13.5%"
+            }
         },
         "soft_dinner_roll": {
             "label": "Soft Dinner Roll",
             "icon": "🫓",
             "description": "Small batch pull-apart clusters prioritizing maximum steam-trapped softness.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.0% - 12.5%"
+            }
         },
         "filled_sweet_roll": {
             "label": "Filled Sweet Roll",
             "icon": "🌀",
             "description": "Laminated or sheeted scroll structures built to contain heavy interior fillings.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.5% - 13.0%"
+            }
         },
     }
     def calculate_recipe(self, **kwargs) -> dict:

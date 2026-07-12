@@ -73,24 +73,48 @@ class HearthEngine(BaseEngine):
             "icon": "🫓",
             "description": "Freeform oval or round configurations baked on radiant stone floors.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "high_hydration_lean",
+                "optimal_protein_window": "11.5% - 14.5%"
+            }
         },
         "high_hydration_slab": {
             "label": "High-Hydration Slab",
             "icon": "🍞",
             "description": "Wet, un-kneaded cellular matrices poured out into pans like Focaccia or Ciabatta.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "high_hydration_lean",
+                "optimal_protein_window": "12.5% - 14.5%"
+            }
         },
         "tapered_baguette": {
             "label": "Tapered Baguette",
             "icon": "🥖",
             "description": "Elongated, thin cylinder format optimizing the crust-to-crumb ratio.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "high_hydration_lean",
+                "optimal_protein_window": "11.5% - 14.5%"
+            }
         },
         "flash_pizza": {
             "label": "Flash Pizza Crust",
             "icon": "🍕",
             "description": "Ultra-thin center with a blistered gas-filled rim set under extreme thermal environments.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "high_hydration_lean",
+                "optimal_protein_window": "12.5% - 14.5%"
+            }
         },
     }
 

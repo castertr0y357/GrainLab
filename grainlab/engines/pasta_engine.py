@@ -71,24 +71,48 @@ class PastaEngine(BaseEngine):
             "icon": "🍝",
             "description": "Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "12.5% - 15.0%"
+            }
         },
         "stuffed_pocket": {
             "label": "Stuffed / Encased Pockets",
             "icon": "🥟",
             "description": "High-elasticity envelopes meant to seal wet fillings securely like Ravioli.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "12.0% - 14.5%"
+            }
         },
         "extruded_shape": {
             "label": "Extruded Die Shapes",
             "icon": "🔩",
             "description": "High-pressure compression matrix tubes or hollows like Rigatoni.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "13.0% - 15.0%"
+            }
         },
         "alkaline_noodles": {
             "label": "Alkaline Cut Noodles",
             "icon": "🍜",
             "description": "Mineral-fortified strings built for snap and yellow coloration like Ramen.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "12.0% - 14.5%"
+            }
         },
     }
 

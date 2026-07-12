@@ -78,24 +78,48 @@ class CookieEngine(BaseEngine):
             "icon": "🍪",
             "description": "Irregular mounds designed to flow into tender discs.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "high_spread",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
         "bar_cookie": {
             "label": "Bar / Slab",
             "icon": "🍫",
             "description": "Continuous uniform block baking, minimizing perimeter crisping.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
         "slice_bake": {
             "label": "Slice & Bake",
             "icon": "🔪",
             "description": "Log configuration, highly compressed fat crystals for crisp rings.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.0%"
+            }
         },
         "rolled_cutout": {
             "label": "Rolled Cutout",
             "icon": "⭐",
             "description": "Zero-spread formulation maintaining clean geometric edges post-bake.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "9.0% - 11.0%"
+            }
         },
     }
 

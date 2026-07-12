@@ -78,24 +78,48 @@ class PastryEngine(BaseEngine):
             "icon": "🥐",
             "description": "Yeast-leavened laminated structures like Croissants and Danishes.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "11.0% - 13.0%"
+            }
         },
         "inverted_puff": {
             "label": "Inverted Puff Pastry",
             "icon": "🍥",
             "description": "Unleavened laminated doughs driven entirely by water-vapor lift.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "11.0% - 13.0%"
+            }
         },
         "shortcrust_tart": {
             "label": "Shortcrust Tart Casing",
             "icon": "🥧",
             "description": "High-fat friable crumb shells designed to remain completely impermeable to wet fillings.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
         "paper_thin_phyllo": {
             "label": "Paper-Thin Phyllo / Strudel",
             "icon": "🫓",
             "description": "Stretched, transparent gluten films stacked with liquid fat layers.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "11.5% - 13.5%"
+            }
         },
     }
 

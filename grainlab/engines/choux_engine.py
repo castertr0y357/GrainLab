@@ -63,18 +63,36 @@ class ChouxEngine(BaseEngine):
             "icon": "🍫",
             "description": "Linear or round hollow vectors like Éclairs and Profiteroles.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "9.5% - 11.5%"
+            }
         },
         "extrusion_fried": {
             "label": "Extrusion Fried Paste",
             "icon": "🌀",
             "description": "Star-die extrusion profiles built for rapid oil expansion like Churros.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "9.0% - 11.0%"
+            }
         },
         "savory_emulsion": {
             "label": "Savory Emulsion",
             "icon": "🧀",
             "description": "High-lipid, cheese-bound panade drops like Gougères.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "9.5% - 11.5%"
+            }
         },
     }
 

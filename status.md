@@ -119,8 +119,10 @@
 - [x] Synchronize advisoryLoading phase with a dedicated advisory_steps paced checklist animation to prevent static/pre-completed lists from showing while the request is loading
 - [x] Fix cookie variant sub-engine routing bug in router.py by refining the chocolat keyword match to pain-au-chocolat
 - [x] Resolve Alpine.js TypeErrors by adding safe null-checks to hovered_element.startsWith and optional chaining to engines_ff
-- [x] Remove the redundant bottom Ways to Elevate card and link the inline AI Craft Elevators card strictly to global_ai_enabled
-- [x] Implement deterministic culinary sovereignty overrides and post-processing validation guardrails for grain advisory recommendations
+- [x] Integrate `target_archetype_mechanics` containing physical/mechanical targets to all archetypes inside the 11 engine modules.
+- [x] Refactor `apps/core/gemma_client.py` to construct dynamic prompt compiler and strict JSON output schema gate `evaluation_result`.
+- [x] Scrub legacy hardcoded overrides, helper functions, and narrative descriptions from `gemma_client.py`, `seed_db.py`, and client templates.
+- [x] Run and verify all 49 Django tests successfully.
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
@@ -135,3 +137,4 @@
 - Injected Correlation IDs in logging formats and response headers (`X-Correlation-ID`) for request-response trace correlation.
 - Split monolithic math timeline module into 11 isolated domain-specific sub-engines with custom boundaries, structural grain ceilings, and dynamic step cards inheriting from `BaseEngine`.
 - Separated AI operations from local algorithmic rules: when AI is enabled, the backend bypasses all programmatic heuristics, hides the factual science profiles, and displays LLM-sourced recommendations and Ways to Elevate suggestions.
+- **Pure Polymorphic Relational Evaluation Matrix**: Replaced all hardcoded culinary grain exception logic and override loops with an objective dynamic prompt compiler combining `intrinsic_chemical_profile` (from `grain_registry.json`) and `target_archetype_mechanics` (defined inside the 11 sub-engines) analyzed via LLM or programmatic physical-chemical comparator.

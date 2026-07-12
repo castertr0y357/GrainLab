@@ -59,24 +59,48 @@ class FlatEngine(BaseEngine):
             "icon": "🫔",
             "description": "Puffy, vapor-pocket pockets driven by interior steam like Naan and Pita.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.0% - 13.0%"
+            }
         },
         "unleavened_stretched": {
             "label": "Unleavened Stretched",
             "icon": "🫓",
             "description": "Paper-thin configurations demanding zero elastic snapback like Tortillas and Roti.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "10.0% - 12.0%"
+            }
         },
         "blistered_griddle": {
             "label": "Blistered Griddle Cake",
             "icon": "🍳",
             "description": "Direct contact stove-top pan bakes.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "10.5% - 12.5%"
+            }
         },
         "crisp_flatbread": {
             "label": "Crisp Crispbread / Lavash",
             "icon": "🍘",
             "description": "Dehydrated sheet structures prioritizing snap and shelf life.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "9.0% - 11.0%"
+            }
         },
     }
 

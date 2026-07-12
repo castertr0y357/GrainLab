@@ -92,24 +92,48 @@ class QuickEngine(BaseEngine):
             "icon": "🍞",
             "description": "Thick pourable batters baked slowly in high-walled pans like Banana or Soda Bread.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
         "layered_scone": {
             "label": "Layered Wedge Scone",
             "icon": "🍰",
             "description": "Laminated dry-shred flakes cut into solid clean triangles.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.0%"
+            }
         },
         "dropped_biscuit": {
             "label": "Dropped / Cut Biscuit",
             "icon": "🧁",
             "description": "High vertical expansion rounds utilizing shortening pockets for flaky separation.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.0%"
+            }
         },
         "textured_muffin": {
             "label": "Textured Muffin",
             "icon": "🧁",
             "description": "Individual cup-bounded portions prioritizing a domed, porous crown.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
     }
 

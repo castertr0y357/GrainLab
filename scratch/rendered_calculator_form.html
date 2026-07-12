@@ -1,0 +1,1319 @@
+<form id="calculator-form"
+      hx-post="/calculate/"
+      hx-trigger="change, keyup delay:300ms, load"
+      hx-target="#recipe-output-container"
+      x-data="{
+          texture: 50,
+          crumb: 50,
+          starter: 0,
+          leaven: 'yeast',
+          get leavening_type() { return this.leaven; },
+          grain: 'all_purpose',
+          maturity: 'matured',
+          portioned: true,
+          subOriginal: 'water',
+          subSubstitute: 'none',
+          use_custom: false,
+          category_slug: 'alkaline-bath',
+          custom_mixer: 'static',
+          mixing_method: 'stand_mixer',
+          secondary_lipid: 'unsalted_butter',
+          secondary_liquid: 'pure_water',
+          secondary_binder: 'none',
+          proofing_environment: 'ambient',
+          mill_type: 'stoneground',
+          form_factor_val: 'baguette-long-loaf',
+          recommended_ff_slug: 'baguette-long-loaf',
+          yield_scale: 1.0,
+          fat_starting_temp: 'room_temp',
+          workspace_temp: 65,
+          liquid_temp: 40,
+          active_action: 'knead',
+          hardware_registry: [
+              { id: 'stand_mixer', name: 'Stand Mixer', category: 'high_torque' },
+              { id: 'bread_machine', name: 'Bread Machine', category: 'high_torque' },
+              { id: 'food_processor', name: 'Food Processor', category: 'high_torque' },
+              { id: 'hand_beaters', name: 'Hand Beaters', category: 'whipping_whisk' },
+              { id: 'whisk', name: 'Hand Whisk', category: 'whipping_whisk' },
+              { id: 'spatula_bowl', name: 'Manual Spatula & Bowl', category: 'zero_friction' }
+          ],
+          get activeProductionProfile() {
+              return this.engines_ff[this.selected_master]?.production_profile || {
+                  thermodynamic_focus: 'biological_yeast_activity',
+                  mechanical_energy_threshold: 'high_kneading',
+                  permissible_action_types: ['knead'],
+                  environmental_rest_strategy: 'gas_proofing'
+              };
+          },
+          get filteredTools() {
+              const threshold = this.activeProductionProfile.mechanical_energy_threshold;
+              if (threshold === 'high_kneading' || threshold === 'moderate_shearing' || threshold === 'mechanical_compaction') {
+                  return this.hardware_registry.filter(t => t.category === 'high_torque' || t.category === 'zero_friction');
+              } else if (threshold === 'low_emulsifying') {
+                  return this.hardware_registry.filter(t => t.category === 'whipping_whisk' || t.category === 'zero_friction');
+              } else if (threshold === 'minimal_folding') {
+                  return this.hardware_registry.filter(t => t.category === 'zero_friction');
+              }
+              return this.hardware_registry;
+          },
+          engines_ff: JSON.parse('{\u0022lean\u002Dcrusty\u0022: {\u0022permissible_form_factors\u0022: {\u0022cast\u002Diron\u002Ddutch\u002Doven\u0022: {\u0022name\u0022: \u0022Cast Iron Dutch Oven\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 750.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022loaf\u0022, \u0022unit_label_plural\u0022: \u0022loaves\u0022, \u0022bake_temp_f\u0022: 450, \u0022bake_time_min\u0022: 40, \u0022steam_required\u0022: true, \u0022is_enriched_profile\u0022: false}, \u0022open\u002Dbaking\u002Dstone\u002Dsteel\u0022: {\u0022name\u0022: \u0022Open Baking Stone / Steel\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 750.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022loaf\u0022, \u0022unit_label_plural\u0022: \u0022loaves\u0022, \u0022bake_temp_f\u0022: 450, \u0022bake_time_min\u0022: 35, \u0022steam_required\u0022: true, \u0022is_enriched_profile\u0022: false}, \u0022standard\u002D9x5\u002Dpan\u0022: {\u0022name\u0022: \u0022Standard 9x5 Loaf Pan\u0022, \u0022tier\u0022: \u0022sub\u002Doptimal\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 750.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022loaf\u0022, \u0022unit_label_plural\u0022: \u0022loaves\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 45, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022biological_yeast_activity\u0022, \u0022mechanical_energy_threshold\u0022: \u0022high_kneading\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022, \u0022fold\u0022], \u0022environmental_rest_strategy\u0022: \u0022gas_proofing\u0022}, \u0022secondary_ingredients\u0022: {}}, \u0022enriched\u002Dsoft\u0022: {\u0022permissible_form_factors\u0022: {\u0022standard\u002D9x5\u002Dpan\u0022: {\u0022name\u0022: \u0022Standard 9x5 Loaf Pan\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 900.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022loaf\u0022, \u0022unit_label_plural\u0022: \u0022loaves\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 45, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}, \u0022pullman\u002Dpan\u002Dlidded\u0022: {\u0022name\u0022: \u0022Pullman Pan (Lidded)\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 900.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022loaf\u0022, \u0022unit_label_plural\u0022: \u0022loaves\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 45, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}, \u0022individual\u002Dportion\u002Dsheet\u0022: {\u0022name\u0022: \u0022Individual Portion Sheet\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 90.0, \u0022base_count\u0022: 12, \u0022step_increment\u0022: 12, \u0022unit_label\u0022: \u0022bun\u0022, \u0022unit_label_plural\u0022: \u0022buns\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 20, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022biological_yeast_activity\u0022, \u0022mechanical_energy_threshold\u0022: \u0022high_kneading\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022], \u0022environmental_rest_strategy\u0022: \u0022gas_proofing\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022none\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022alkaline\u002Dbath\u0022: {\u0022permissible_form_factors\u0022: {\u0022perforated\u002Dbaking\u002Dsheet\u0022: {\u0022name\u0022: \u0022Perforated Baking Sheet\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 110.0, \u0022base_count\u0022: 8, \u0022step_increment\u0022: 6, \u0022unit_label\u0022: \u0022portion\u0022, \u0022unit_label_plural\u0022: \u0022portions\u0022, \u0022bake_temp_f\u0022: 425, \u0022bake_time_min\u0022: 20, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}, \u0022standard\u002Dsilicon\u002Dmat\u002Dsheet\u0022: {\u0022name\u0022: \u0022Standard Silicon Mat Sheet\u0022, \u0022tier\u0022: \u0022sub\u002Doptimal\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 110.0, \u0022base_count\u0022: 8, \u0022step_increment\u0022: 6, \u0022unit_label\u0022: \u0022portion\u0022, \u0022unit_label_plural\u0022: \u0022portions\u0022, \u0022bake_temp_f\u0022: 425, \u0022bake_time_min\u0022: 25, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022biological_yeast_activity\u0022, \u0022mechanical_energy_threshold\u0022: \u0022high_kneading\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022], \u0022environmental_rest_strategy\u0022: \u0022gas_proofing\u0022}, \u0022secondary_ingredients\u0022: {}}, \u0022flatbreads\u002Dgriddles\u0022: {\u0022permissible_form_factors\u0022: {\u0022heavy\u002Dcast\u002Diron\u002Dskillet\u0022: {\u0022name\u0022: \u0022Heavy Cast\u002DIron Skillet / Griddle\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 80.0, \u0022base_count\u0022: 8, \u0022step_increment\u0022: 4, \u0022unit_label\u0022: \u0022disk\u0022, \u0022unit_label_plural\u0022: \u0022disks\u0022, \u0022bake_temp_f\u0022: 500, \u0022bake_time_min\u0022: 2, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}, \u0022high\u002Dheat\u002Doven\u002Dstone\u0022: {\u0022name\u0022: \u0022High\u002DHeat Oven Baking Stone\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 80.0, \u0022base_count\u0022: 8, \u0022step_increment\u0022: 4, \u0022unit_label\u0022: \u0022disk\u0022, \u0022unit_label_plural\u0022: \u0022disks\u0022, \u0022bake_temp_f\u0022: 500, \u0022bake_time_min\u0022: 3, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022hydration_binding_shock\u0022, \u0022mechanical_energy_threshold\u0022: \u0022moderate_shearing\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022, \u0022sheet\u0022], \u0022environmental_rest_strategy\u0022: \u0022gluten_relaxation\u0022}, \u0022secondary_ingredients\u0022: {}}, \u0022quick\u002Dbreads\u002Dscones\u0022: {\u0022permissible_form_factors\u0022: {\u0022standard\u002D8x4\u002Dloaf\u002Dpan\u0022: {\u0022name\u0022: \u0022Standard 8x4 Loaf Pan\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 800.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022loaf\u0022, \u0022unit_label_plural\u0022: \u0022loaves\u0022, \u0022bake_temp_f\u0022: 350, \u0022bake_time_min\u0022: 50, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}, \u0022muffin\u002Dcupcake\u002Dtin\u0022: {\u0022name\u0022: \u0022Muffin / Cupcake Tin\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 70.0, \u0022base_count\u0022: 12, \u0022step_increment\u0022: 12, \u0022unit_label\u0022: \u0022muffin\u0022, \u0022unit_label_plural\u0022: \u0022muffins\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 20, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}, \u0022individual\u002Dwedge\u002Dsheet\u0022: {\u0022name\u0022: \u0022Individual Wedge Sheet\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 70.0, \u0022base_count\u0022: 12, \u0022step_increment\u0022: 12, \u0022unit_label\u0022: \u0022scone\u0022, \u0022unit_label_plural\u0022: \u0022scones\u0022, \u0022bake_temp_f\u0022: 400, \u0022bake_time_min\u0022: 18, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022crystalline_fat_preservation\u0022, \u0022mechanical_energy_threshold\u0022: \u0022minimal_folding\u0022, \u0022permissible_action_types\u0022: [\u0022cut_in\u0022, \u0022fold\u0022], \u0022environmental_rest_strategy\u0022: \u0022gluten_relaxation\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022none\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022cakes\u002Dbatters\u0022: {\u0022permissible_form_factors\u0022: {\u0022straight\u002Dsided\u002Dround\u002Dtin\u0022: {\u0022name\u0022: \u0022Straight\u002DSided Round Tin\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 500.0, \u0022base_count\u0022: 2, \u0022step_increment\u0022: 2, \u0022unit_label\u0022: \u0022layer\u0022, \u0022unit_label_plural\u0022: \u0022layers\u0022, \u0022bake_temp_f\u0022: 350, \u0022bake_time_min\u0022: 30, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}, \u0022high\u002Dborder\u002Dsheet\u002Dpan\u0022: {\u0022name\u0022: \u0022High\u002DBorder Sheet Cake Pan\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 1000.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022pan\u0022, \u0022unit_label_plural\u0022: \u0022pans\u0022, \u0022bake_temp_f\u0022: 350, \u0022bake_time_min\u0022: 25, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}, \u0022cupcake\u002Dliner\u002Dmatrix\u0022: {\u0022name\u0022: \u0022Cupcake Liner Matrix\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 41.67, \u0022base_count\u0022: 24, \u0022step_increment\u0022: 24, \u0022unit_label\u0022: \u0022cupcake\u0022, \u0022unit_label_plural\u0022: \u0022cupcakes\u0022, \u0022bake_temp_f\u0022: 350, \u0022bake_time_min\u0022: 20, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022lipid_emulsification\u0022, \u0022mechanical_energy_threshold\u0022: \u0022low_emulsifying\u0022, \u0022permissible_action_types\u0022: [\u0022cream\u0022, \u0022fold\u0022], \u0022environmental_rest_strategy\u0022: \u0022gluten_relaxation\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022none\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022pastry\u002Dlamination\u0022: {\u0022permissible_form_factors\u0022: {\u0022perforated\u002Dsheet\u002Dair\u002Dmat\u0022: {\u0022name\u0022: \u0022Perforated Sheet + Air Mat\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 90.0, \u0022base_count\u0022: 6, \u0022step_increment\u0022: 6, \u0022unit_label\u0022: \u0022pastry\u0022, \u0022unit_label_plural\u0022: \u0022pastries\u0022, \u0022bake_temp_f\u0022: 400, \u0022bake_time_min\u0022: 20, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}, \u0022fluted\u002Dring\u002Dtart\u002Dpan\u0022: {\u0022name\u0022: \u0022Fluted Ring Tart Pan\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 400.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022tart\u0022, \u0022unit_label_plural\u0022: \u0022tarts\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 25, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022crystalline_fat_preservation\u0022, \u0022mechanical_energy_threshold\u0022: \u0022minimal_folding\u0022, \u0022permissible_action_types\u0022: [\u0022cut_in\u0022, \u0022sheet\u0022], \u0022environmental_rest_strategy\u0022: \u0022fat_solidification\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022none\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022choux\u002Dpaste\u0022: {\u0022permissible_form_factors\u0022: {\u0022extrusion\u002Dpiping\u002Dsheet\u0022: {\u0022name\u0022: \u0022Extrusion Piping Sheet / Silpat\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 45.0, \u0022base_count\u0022: 12, \u0022step_increment\u0022: 12, \u0022unit_label\u0022: \u0022portion\u0022, \u0022unit_label_plural\u0022: \u0022portions\u0022, \u0022bake_temp_f\u0022: 425, \u0022bake_time_min\u0022: 20, \u0022steam_required\u0022: true, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022hydration_binding_shock\u0022, \u0022mechanical_energy_threshold\u0022: \u0022moderate_shearing\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022, \u0022cream\u0022], \u0022environmental_rest_strategy\u0022: \u0022gluten_relaxation\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022whole_eggs\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022cookies\u002Dshortbread\u0022: {\u0022permissible_form_factors\u0022: {\u0022heavy\u002Daluminum\u002Dsheet\u0022: {\u0022name\u0022: \u0022Heavy Aluminum Cookie Sheet\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 40.0, \u0022base_count\u0022: 24, \u0022step_increment\u0022: 12, \u0022unit_label\u0022: \u0022cookie\u0022, \u0022unit_label_plural\u0022: \u0022cookies\u0022, \u0022bake_temp_f\u0022: 350, \u0022bake_time_min\u0022: 12, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}, \u0022continuous\u002Dbar\u002Dpan\u0022: {\u0022name\u0022: \u0022Continuous Bar Pan / Single Layer\u0022, \u0022tier\u0022: \u0022sub\u002Doptimal\u0022, \u0022is_portioned\u0022: false, \u0022unit_weight\u0022: 960.0, \u0022base_count\u0022: 1, \u0022step_increment\u0022: 1, \u0022unit_label\u0022: \u0022pan\u0022, \u0022unit_label_plural\u0022: \u0022pans\u0022, \u0022bake_temp_f\u0022: 350, \u0022bake_time_min\u0022: 25, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022lipid_emulsification\u0022, \u0022mechanical_energy_threshold\u0022: \u0022low_emulsifying\u0022, \u0022permissible_action_types\u0022: [\u0022cream\u0022, \u0022fold\u0022], \u0022environmental_rest_strategy\u0022: \u0022fat_solidification\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022none\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022fried\u002Ddoughs\u0022: {\u0022permissible_form_factors\u0022: {\u0022high\u002Dvolume\u002Doil\u002Dvat\u0022: {\u0022name\u0022: \u0022High\u002DVolume Cast Iron Oil Vat\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 65.0, \u0022base_count\u0022: 12, \u0022step_increment\u0022: 12, \u0022unit_label\u0022: \u0022donut\u0022, \u0022unit_label_plural\u0022: \u0022donuts\u0022, \u0022bake_temp_f\u0022: 375, \u0022bake_time_min\u0022: 5, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: true}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022biological_yeast_activity\u0022, \u0022mechanical_energy_threshold\u0022: \u0022high_kneading\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022], \u0022environmental_rest_strategy\u0022: \u0022gas_proofing\u0022}, \u0022secondary_ingredients\u0022: {\u0022lipids\u0022: {\u0022default\u0022: \u0022unsalted_butter\u0022, \u0022options\u0022: [\u0022unsalted_butter\u0022, \u0022salted_butter\u0022, \u0022coconut_oil\u0022, \u0022avocado_oil\u0022], \u0022math_modifiers\u0022: {\u0022salted_butter\u0022: {\u0022target_target\u0022: \u0022salt\u0022, \u0022subtract_percentage\u0022: 0.015}}}, \u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022none\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}, \u0022fresh\u002Dpasta\u002Dnoodles\u0022: {\u0022permissible_form_factors\u0022: {\u0022mechanical\u002Dsheeter\u0022: {\u0022name\u0022: \u0022Mechanical Sheeter Sheets / Cutters\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 120.0, \u0022base_count\u0022: 4, \u0022step_increment\u0022: 2, \u0022unit_label\u0022: \u0022serving\u0022, \u0022unit_label_plural\u0022: \u0022servings\u0022, \u0022bake_temp_f\u0022: 0, \u0022bake_time_min\u0022: 0, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}, \u0022high\u002Dpressure\u002Ddies\u0022: {\u0022name\u0022: \u0022High\u002DPressure Extrusion Dies\u0022, \u0022tier\u0022: \u0022recommended\u0022, \u0022is_portioned\u0022: true, \u0022unit_weight\u0022: 120.0, \u0022base_count\u0022: 4, \u0022step_increment\u0022: 2, \u0022unit_label\u0022: \u0022serving\u0022, \u0022unit_label_plural\u0022: \u0022servings\u0022, \u0022bake_temp_f\u0022: 0, \u0022bake_time_min\u0022: 0, \u0022steam_required\u0022: false, \u0022is_enriched_profile\u0022: false}}, \u0022production_profile\u0022: {\u0022thermodynamic_focus\u0022: \u0022hydration_binding_shock\u0022, \u0022mechanical_energy_threshold\u0022: \u0022mechanical_compaction\u0022, \u0022permissible_action_types\u0022: [\u0022knead\u0022, \u0022sheet\u0022, \u0022extrude\u0022], \u0022environmental_rest_strategy\u0022: \u0022gluten_relaxation\u0022}, \u0022secondary_ingredients\u0022: {\u0022liquids\u0022: {\u0022default\u0022: \u0022pure_water\u0022, \u0022options\u0022: [\u0022pure_water\u0022, \u0022whole_milk\u0022, \u0022heavy_cream\u0022, \u0022buttermilk\u0022], \u0022math_modifiers\u0022: {\u0022buttermilk\u0022: {\u0022trigger_chemical_leavening_acid_flag\u0022: true}}}, \u0022binders\u0022: {\u0022default\u0022: \u0022whole_eggs\u0022, \u0022options\u0022: [\u0022none\u0022, \u0022whole_eggs\u0022, \u0022egg_whites\u0022, \u0022aquafaba_vegan\u0022]}}}}'),
+          enginesArchetypes: JSON.parse('{\u0022lean\u002Dcrusty\u0022: {\u0022hearth_boule\u0022: {\u0022label\u0022: \u0022Hearth Boule / Batard\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded3\u0022, \u0022description\u0022: \u0022Freeform oval or round configurations baked on radiant stone floors.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022high_hydration_slab\u0022: {\u0022label\u0022: \u0022High\u002DHydration Slab\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf5e\u0022, \u0022description\u0022: \u0022Wet, un\u002Dkneaded cellular matrices poured out into pans like Focaccia or Ciabatta.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022tapered_baguette\u0022: {\u0022label\u0022: \u0022Tapered Baguette\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd56\u0022, \u0022description\u0022: \u0022Elongated, thin cylinder format optimizing the crust\u002Dto\u002Dcrumb ratio.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022flash_pizza\u0022: {\u0022label\u0022: \u0022Flash Pizza Crust\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf55\u0022, \u0022description\u0022: \u0022Ultra\u002Dthin center with a blistered gas\u002Dfilled rim set under extreme thermal environments.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}}, \u0022enriched\u002Dsoft\u0022: {\u0022sandwich_pan\u0022: {\u0022label\u0022: \u0022Sandwich Pan Loaf\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf5e\u0022, \u0022description\u0022: \u0022Straight sidewall containment maximizing volume and thin slicing.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022freeform_braided\u0022: {\u0022label\u0022: \u0022Freeform Braided Loaf\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd6f\u0022, \u0022description\u0022: \u0022High\u002Dtensile strands capable of holding shape without pan walls like Challah or Brioche.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022soft_dinner_roll\u0022: {\u0022label\u0022: \u0022Soft Dinner Roll\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded3\u0022, \u0022description\u0022: \u0022Small batch pull\u002Dapart clusters prioritizing maximum steam\u002Dtrapped softness.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022filled_sweet_roll\u0022: {\u0022label\u0022: \u0022Filled Sweet Roll\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf00\u0022, \u0022description\u0022: \u0022Laminated or sheeted scroll structures built to contain heavy interior fillings.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}}, \u0022alkaline\u002Dbath\u0022: {\u0022twisted_pretzel\u0022: {\u0022label\u0022: \u0022Twisted Pretzel\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd68\u0022, \u0022description\u0022: \u0022Traditional knot shapes, maximize surface area for Maillard browning.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022boiled_bagel\u0022: {\u0022label\u0022: \u0022Boiled Bagel\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd6f\u0022, \u0022description\u0022: \u0022Ring geometry, dense core structure, high tensile strength.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022laugen_bun\u0022: {\u0022label\u0022: \u0022Laugen Bun / Roll\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded3\u0022, \u0022description\u0022: \u0022Spherical soft\u002Dcrumb interior protected by a thick glossy skin.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022pretzel_stick\u0022: {\u0022label\u0022: \u0022Pretzel Stick / Cracker\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd56\u0022, \u0022description\u0022: \u0022Ultra\u002Dlow hydration, brittle, snapping structure.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}}, \u0022flatbreads\u002Dgriddles\u0022: {\u0022leavened_flatbread\u0022: {\u0022label\u0022: \u0022Leavened Flatbread\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded4\u0022, \u0022description\u0022: \u0022Puffy, vapor\u002Dpocket pockets driven by interior steam like Naan and Pita.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022unleavened_stretched\u0022: {\u0022label\u0022: \u0022Unleavened Stretched\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded3\u0022, \u0022description\u0022: \u0022Paper\u002Dthin configurations demanding zero elastic snapback like Tortillas and Roti.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022blistered_griddle\u0022: {\u0022label\u0022: \u0022Blistered Griddle Cake\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf73\u0022, \u0022description\u0022: \u0022Direct contact stove\u002Dtop pan bakes.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022crisp_flatbread\u0022: {\u0022label\u0022: \u0022Crisp Crispbread / Lavash\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf58\u0022, \u0022description\u0022: \u0022Dehydrated sheet structures prioritizing snap and shelf life.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}}, \u0022quick\u002Dbreads\u002Dscones\u0022: {\u0022chemical_loaf\u0022: {\u0022label\u0022: \u0022Chemical Loaf\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf5e\u0022, \u0022description\u0022: \u0022Thick pourable batters baked slowly in high\u002Dwalled pans like Banana or Soda Bread.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022layered_scone\u0022: {\u0022label\u0022: \u0022Layered Wedge Scone\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf70\u0022, \u0022description\u0022: \u0022Laminated dry\u002Dshred flakes cut into solid clean triangles.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022dropped_biscuit\u0022: {\u0022label\u0022: \u0022Dropped / Cut Biscuit\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuddc1\u0022, \u0022description\u0022: \u0022High vertical expansion rounds utilizing shortening pockets for flaky separation.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022textured_muffin\u0022: {\u0022label\u0022: \u0022Textured Muffin\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuddc1\u0022, \u0022description\u0022: \u0022Individual cup\u002Dbounded portions prioritizing a domed, porous crown.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}}, \u0022cakes\u002Dbatters\u0022: {\u0022sponge_cake\u0022: {\u0022label\u0022: \u0022Foam / Sponge Cake\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf70\u0022, \u0022description\u0022: \u0022Fat\u002Dfree or low\u002Dfat aeration systems like Genoise or Chiffon.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022creamed_cake\u0022: {\u0022label\u0022: \u0022Creamed Layer Cake\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf82\u0022, \u0022description\u0022: \u0022Emulsified lipid\u002Dsugar crystal structures for standard layers.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022pound_cake\u0022: {\u0022label\u0022: \u0022High\u002DRatio Pound Cake\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf6b\u0022, \u0022description\u0022: \u0022Dense, uniform crumb carrying massive sugar and fat weights.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022griddle_batter\u0022: {\u0022label\u0022: \u0022Fluid Griddle Batter\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd5e\u0022, \u0022description\u0022: \u0022High\u002Dmoisture pourable structures like Pancakes, Waffles, and Crepes.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}}, \u0022pastry\u002Dlamination\u0022: {\u0022layered_viennoiserie\u0022: {\u0022label\u0022: \u0022Layered Viennoiserie\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd50\u0022, \u0022description\u0022: \u0022Yeast\u002Dleavened laminated structures like Croissants and Danishes.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022inverted_puff\u0022: {\u0022label\u0022: \u0022Inverted Puff Pastry\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf65\u0022, \u0022description\u0022: \u0022Unleavened laminated doughs driven entirely by water\u002Dvapor lift.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022shortcrust_tart\u0022: {\u0022label\u0022: \u0022Shortcrust Tart Casing\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd67\u0022, \u0022description\u0022: \u0022High\u002Dfat friable crumb shells designed to remain completely impermeable to wet fillings.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022paper_thin_phyllo\u0022: {\u0022label\u0022: \u0022Paper\u002DThin Phyllo / Strudel\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded3\u0022, \u0022description\u0022: \u0022Stretched, transparent gluten films stacked with liquid fat layers.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}}, \u0022choux\u002Dpaste\u0022: {\u0022piped_shell\u0022: {\u0022label\u0022: \u0022Piped Shell\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf6b\u0022, \u0022description\u0022: \u0022Linear or round hollow vectors like \u005Cu00c9clairs and Profiteroles.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022extrusion_fried\u0022: {\u0022label\u0022: \u0022Extrusion Fried Paste\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf00\u0022, \u0022description\u0022: \u0022Star\u002Ddie extrusion profiles built for rapid oil expansion like Churros.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022savory_emulsion\u0022: {\u0022label\u0022: \u0022Savory Emulsion\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuddc0\u0022, \u0022description\u0022: \u0022High\u002Dlipid, cheese\u002Dbound panade drops like Goug\u005Cu00e8res.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}}, \u0022cookies\u002Dshortbread\u0022: {\u0022drop_cookie\u0022: {\u0022label\u0022: \u0022Drop Cookie\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf6a\u0022, \u0022description\u0022: \u0022Irregular mounds designed to flow into tender discs.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022bar_cookie\u0022: {\u0022label\u0022: \u0022Bar / Slab\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf6b\u0022, \u0022description\u0022: \u0022Continuous uniform block baking, minimizing perimeter crisping.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022slice_bake\u0022: {\u0022label\u0022: \u0022Slice \u0026 Bake\u0022, \u0022icon\u0022: \u0022\u005Cud83d\u005Cudd2a\u0022, \u0022description\u0022: \u0022Log configuration, highly compressed fat crystals for crisp rings.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022rolled_cutout\u0022: {\u0022label\u0022: \u0022Rolled Cutout\u0022, \u0022icon\u0022: \u0022\u005Cu2b50\u0022, \u0022description\u0022: \u0022Zero\u002Dspread formulation maintaining clean geometric edges post\u002Dbake.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}}, \u0022fried\u002Ddoughs\u0022: {\u0022yeast_raised_donut\u0022: {\u0022label\u0022: \u0022Yeast\u002DRaised Donut\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf69\u0022, \u0022description\u0022: \u0022Highly aerated, light, floating dough rings.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}, \u0022cake_donut\u0022: {\u0022label\u0022: \u0022Cake / Chemical Donut\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf69\u0022, \u0022description\u0022: \u0022Tender, friable, batter\u002Dbased rings dropping directly into fat.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022fritter_beignet\u0022: {\u0022label\u0022: \u0022Batter Fritter / Beignet\u0022, \u0022icon\u0022: \u0022\u005Cu2601\u005Cufe0f\u0022, \u0022description\u0022: \u0022Irregular high\u002Dhydration moisture puffs expanding violently in oil.\u0022, \u0022grain_affinity\u0022: \u0022low_protein\u0022}, \u0022fried_laminate\u0022: {\u0022label\u0022: \u0022Fried Laminate\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cuded3\u0022, \u0022description\u0022: \u0022Alternating layers flashing open instantly in convection fat.\u0022, \u0022grain_affinity\u0022: \u0022medium_protein\u0022}}, \u0022fresh\u002Dpasta\u002Dnoodles\u0022: {\u0022sheeted_ribbon\u0022: {\u0022label\u0022: \u0022Sheeted Ribbon Pastas\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf5d\u0022, \u0022description\u0022: \u0022Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022stuffed_pocket\u0022: {\u0022label\u0022: \u0022Stuffed / Encased Pockets\u0022, \u0022icon\u0022: \u0022\u005Cud83e\u005Cudd5f\u0022, \u0022description\u0022: \u0022High\u002Delasticity envelopes meant to seal wet fillings securely like Ravioli.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022extruded_shape\u0022: {\u0022label\u0022: \u0022Extruded Die Shapes\u0022, \u0022icon\u0022: \u0022\u005Cud83d\u005Cudd29\u0022, \u0022description\u0022: \u0022High\u002Dpressure compression matrix tubes or hollows like Rigatoni.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}, \u0022alkaline_noodles\u0022: {\u0022label\u0022: \u0022Alkaline Cut Noodles\u0022, \u0022icon\u0022: \u0022\u005Cud83c\u005Cudf5c\u0022, \u0022description\u0022: \u0022Mineral\u002Dfortified strings built for snap and yellow coloration like Ramen.\u0022, \u0022grain_affinity\u0022: \u0022high_protein\u0022}}}'),
+          get formFactorBaseline() {
+              const activeEngineFFs = this.engines_ff[this.selected_master]?.permissible_form_factors || {};
+              return activeEngineFFs[this.form_factor_val] || { 
+                  name: 'Standard Loaf',
+                  is_portioned: false, 
+                  unit_weight: 900, 
+                  base_count: 1, 
+                  step_increment: 1,
+                  unit_label: 'loaf', 
+                  unit_label_plural: 'loaves',
+                  bake_temp_f: 375,
+                  bake_time_min: 45,
+                  steam_required: false,
+                  is_enriched_profile: false
+              };
+          },
+          get yieldHelperString() {
+              const ff = this.formFactorBaseline;
+              const totalCount = Math.round(ff.base_count * this.yield_scale);
+              const label = totalCount === 1 ? ff.unit_label : ff.unit_label_plural;
+              if (ff.is_portioned) {
+                  return `Yield Matrix: Generates ${totalCount} total ${label} (Portion cleanly into uniform ~${Math.round(ff.unit_weight)}g pieces before proofing)`;
+              } else {
+                  const totalWeight = Math.round(ff.unit_weight * ff.base_count * this.yield_scale);
+                  const displayCount = (ff.base_count * this.yield_scale);
+                  const displayLabel = displayCount === 1 ? ff.unit_label : ff.unit_label_plural;
+                  return `Yield Matrix: Generates ${displayCount} total ${displayLabel} (Total dough weight: ~${totalWeight}g)`;
+              }
+          },
+          getFormFactorButtonStyle(ff_slug, ff_data) {
+              if (this.form_factor_val === ff_slug) {
+                  if (this.geometry_status === 'sub-optimal') {
+                      return 'background-color: var(--warning); color: #000; border-color: var(--warning); box-shadow: 0 0 15px var(--warning); font-weight: 800;';
+                  } else {
+                      return 'background-color: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 15px var(--accent); font-weight: 800;';
+                  }
+              } else {
+                  return 'background: transparent; color: var(--text-primary);';
+              }
+          },
+          sortedBerriesFor(berries) {
+              const evs = grainEvaluations || [];
+              if (!evs || evs.length === 0) return berries || [];
+              const score = { 'recommended': 1, 'sub-optimal': 2, 'indifferent': 3, 'not-recommended': 4 };
+              return [...(berries || [])].sort((a, b) => {
+                  const eA = evs.find(e => e.grain_id === a.id);
+                  const eB = evs.find(e => e.grain_id === b.id);
+                  const sA = score[eA ? eA.tier : 'indifferent'] || 3;
+                  const sB = score[eB ? eB.tier : 'indifferent'] || 3;
+                  if (sA !== sB) return sA - sB;
+                  return a.name.localeCompare(b.name);
+              });
+          },
+          getGrainStyle(berry) {
+              const evs = grainEvaluations || [];
+              if (evs && evs.length > 0) {
+                  const ev = evs.find(e => e.grain_id === berry.id);
+                  if (ev) {
+                      if (ev.tier === 'recommended') {
+                          return berry.selected
+                              ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255,215,0,0.6); background-color: rgba(255,215,0,0.08);'
+                              : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.3); background-color: rgba(255,215,0,0.02);';
+                      } else if (ev.tier === 'sub-optimal') {
+                          return berry.selected
+                              ? 'border-color: var(--warning); box-shadow: 0 0 12px rgba(255,193,7,0.6); background-color: rgba(255,193,7,0.08);'
+                              : 'border-color: var(--warning); box-shadow: 0 0 8px rgba(255,193,7,0.3); background-color: rgba(255,193,7,0.02);';
+                      } else if (ev.tier === 'not-recommended') {
+                          return berry.selected
+                              ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220,53,69,0.6); background-color: rgba(220,53,69,0.08);'
+                              : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220,53,69,0.3); background-color: rgba(220,53,69,0.02);';
+                      }
+                  }
+              }
+              return berry.selected
+                  ? 'border-color: var(--accent); background-color: rgba(255,136,0,0.05);'
+                  : '';
+          }
+      }"
+      x-init="
+          $watch('leaven', value => { if (value === 'yeast') { starter = 0; } else if (starter === 0) { starter = 20; } });
+          $watch('crumbMin', val => { if (crumb < val) crumb = val; });
+          $watch('crumbMax', val => { if (crumb > val) crumb = val; });
+          /* editor_mode watcher removed — variable no longer exists */
+          $watch('selected_master', val => {
+              category_slug = val;
+              const keys = Object.keys(engines_ff[val]?.permissible_form_factors || {});
+              if (keys.length > 0) {
+                  form_factor_val = keys[0];
+                  recommended_ff_slug = keys[0];
+                  portioned = engines_ff[val].permissible_form_factors[keys[0]].is_portioned;
+              }
+              yield_scale = 1.0;
+              
+              // Reset secondary ingredients based on new active engine defaults
+              const sec = engines_ff[val]?.secondary_ingredients || {};
+              secondary_lipid = sec.lipids?.default || 'unsalted_butter';
+              secondary_liquid = sec.liquids?.default || 'pure_water';
+              secondary_binder = sec.binders?.default || 'none';
+              
+              // Reset action & environment to defaults based on profile
+              const profile = engines_ff[val]?.production_profile || {};
+              if (profile.permissible_action_types && profile.permissible_action_types.length > 0) {
+                  active_action = profile.permissible_action_types[0];
+              } else {
+                  active_action = 'knead';
+              }
+              if (profile.environmental_rest_strategy === 'gas_proofing') {
+                  proofing_environment = 'ambient';
+              } else if (profile.environmental_rest_strategy === 'structural_retardation' || profile.environmental_rest_strategy === 'fat_solidification') {
+                  proofing_environment = 'refrigerator';
+              } else if (profile.environmental_rest_strategy === 'gluten_relaxation') {
+                  proofing_environment = 'bench_rest';
+              }
+              $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+          });
+          $watch('filteredTools', val => {
+              if (val && val.length > 0) {
+                  const currentValid = val.find(t => t.id === mixing_method);
+                  if (!currentValid) {
+                      mixing_method = val[0].id;
+                  }
+              }
+          });
+          $watch('form_factor_val', val => {
+              portioned = formFactorBaseline.is_portioned;
+              yield_scale = 1.0;
+              $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+          });
+          $watch('yield_scale', val => {
+              $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+          });
+          
+      ">
+
+    
+    <input type="hidden" name="current_phase" :value="current_phase" value="1">
+    <input type="hidden" name="form_factor" :value="form_factor_val" value="freeform-loaf">
+    <input type="hidden" name="target_weight" :value="formFactorBaseline.unit_weight * formFactorBaseline.base_count * yield_scale">
+    <input type="hidden" name="unit_weight" :value="formFactorBaseline.unit_weight">
+    <input type="hidden" name="portion_count" :value="Math.round(formFactorBaseline.base_count * yield_scale)">
+
+    <!-- Hidden Dough Category and Form Factor selectors linked to HTMX -->
+    <div style="display: none;">
+        <select name="dough_category" id="id_dough_category" x-ref="doughCategorySelect"
+                hx-get="/" 
+                hx-target="#calculator-form-container"
+                hx-select="#calculator-form"
+                hx-swap="innerHTML">
+            
+                <option value="alkaline-bath" selected>
+                    Alkaline Bath
+                </option>
+            
+                <option value="cakes-batters" >
+                    Cakes &amp; Batters
+                </option>
+            
+                <option value="choux-paste" >
+                    Choux Paste
+                </option>
+            
+                <option value="cookies-shortbread" >
+                    Cookies &amp; Shortbread
+                </option>
+            
+                <option value="enriched-soft" >
+                    Enriched &amp; Soft
+                </option>
+            
+                <option value="flatbreads-griddles" >
+                    Flatbreads &amp; Griddles
+                </option>
+            
+                <option value="fresh-pasta-noodles" >
+                    Fresh Pasta &amp; Noodles
+                </option>
+            
+                <option value="fried-doughs" >
+                    Fried Doughs
+                </option>
+            
+                <option value="lean-crusty" >
+                    Lean &amp; Crusty
+                </option>
+            
+                <option value="pastry-lamination" >
+                    Pastry &amp; Lamination
+                </option>
+            
+                <option value="quick-breads-scones" >
+                    Quick Breads &amp; Scones
+                </option>
+            
+        </select>
+    </div>
+
+    <!-- PHASE 1: Master Category Selector -->
+    <div x-show="current_phase === 1" x-transition>
+        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
+            Phase 1: Choose Dough Category
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'alkaline-bath' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'alkaline-bath' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'alkaline-bath';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🥨
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Alkaline Bath</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'cakes-batters' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'cakes-batters' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'cakes-batters';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🥞
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Cakes &amp; Batters</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'choux-paste' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'choux-paste' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'choux-paste';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🥯
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Choux Paste</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'cookies-shortbread' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'cookies-shortbread' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'cookies-shortbread';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🍪
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Cookies &amp; Shortbread</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'enriched-soft' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'enriched-soft' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'enriched-soft';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🍞
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Enriched &amp; Soft</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'flatbreads-griddles' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'flatbreads-griddles' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'flatbreads-griddles';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🫓
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Flatbreads &amp; Griddles</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'fresh-pasta-noodles' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'fresh-pasta-noodles' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'fresh-pasta-noodles';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🍝
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Fresh Pasta &amp; Noodles</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'fried-doughs' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'fried-doughs' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'fried-doughs';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🍩
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Fried Doughs</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'lean-crusty' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'lean-crusty' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'lean-crusty';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🌾
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Lean &amp; Crusty</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'pastry-lamination' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'pastry-lamination' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'pastry-lamination';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🥐
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Pastry &amp; Lamination</strong>
+                </div>
+            
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === 'quick-breads-scones' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === 'quick-breads-scones' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = 'quick-breads-scones';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        🧁
+                        
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">Quick Breads &amp; Scones</strong>
+                </div>
+            
+        </div>
+
+        <!-- Autocomplete search relocated prominently to Phase 1 -->
+        <div style="background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 1rem; color: var(--text-secondary);">
+                Or Search Preset Target
+            </label>
+            <div class="search-container">
+                <input type="text" 
+                       name="q" 
+                       placeholder="Search all recipes (e.g. Bagel, Focaccia, Naan)..." 
+                       class="search-input"
+                       x-model="query"
+                       @input="searchOpen = query.length >= 2"
+                       @click.away="searchOpen = false"
+                       hx-get="/search/" 
+                       hx-trigger="keyup changed delay:300ms" 
+                       hx-target="#search-suggestions-flow"
+                       hx-indicator="#search-indicator-flow"
+                       style="height: 48px;">
+                
+                <div id="search-indicator-flow" class="htmx-indicator" style="position: absolute; right: 15px; top: 12px;">
+                    <span class="spinner"></span>
+                </div>
+                
+                <div id="search-suggestions-flow" 
+                     class="search-results" 
+                     x-show="searchOpen" 
+                     style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION -->
+    <div x-show="current_phase === 2" x-transition>
+        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
+            PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION
+        </div>
+
+
+
+
+        <div x-show="!recipe_selected" x-transition>
+        <!-- TIER 1: Select Archetype first -->
+        <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🧬</span> Select Recipe Archetype
+        </div>
+        <div id="archetype-deck"
+             style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+            <template x-if="selected_master && enginesArchetypes[selected_master] && Object.keys(enginesArchetypes[selected_master]).length > 0">
+                <div style="display: contents;">
+                    <template x-for="[archetype_id, arch_data] in Object.entries(enginesArchetypes[selected_master] || {})" :key="archetype_id">
+                        <button type="button"
+                                class="chip"
+                                :class="active_archetype_id === archetype_id ? 'active' : ''"
+                                @click="selectArchetype(archetype_id, selected_master)"
+                                @mouseenter="setHoveredElement('archetype_' + archetype_id)"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('archetype_' + archetype_id)"
+                                @focusout="clearHoveredElement()"
+                                tabindex="0"
+                                style="height: 48px; min-width: 120px; padding: 0 1.25rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; letter-spacing: 0.03em; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); border: none;">
+                            <span x-text="arch_data.icon || '🧬'"></span>
+                            <span x-text="arch_data.label || archetype_id.replace(/_/g, ' ')"></span>
+                        </button>
+                    </template>
+                </div>
+            </template>
+            <template x-if="!selected_master || !enginesArchetypes[selected_master] || Object.keys(enginesArchetypes[selected_master] || {}).length === 0">
+                <p style="font-size: 0.85rem; color: var(--text-muted); padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px dashed var(--border); border-radius: var(--radius-md); margin: 0;">Select a dough category in Phase 1 to reveal available archetypes.</p>
+            </template>
+        </div>
+
+        <!-- CREATIVITY LEVELS RECIPE ENGINE (Only shown when archetype is selected) -->
+        <div x-show="active_archetype_id" x-transition>
+            <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🧪</span> Select Recipe Target (Creativity Tiers)
+            </div>
+
+            <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+                <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Analyzing flour profiles & formulating recipes...</p>
+            </div>
+
+            <div x-show="!creativity_loading" style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.5rem;">
+            
+            <!-- ROW 1: Baseline Standard Profiles (Level 1) -->
+            <div x-show="expanded_level === null || expanded_level === 1" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #81c784; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🌱</span> Baseline Standard Profiles (Level 1)
+                    </div>
+                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
+                            @click="toggleExpandLevel(1)">
+                        <span x-text="expanded_level === 1 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
+                    <!-- Conceptual Item Card -->
+                    <template x-for="recipe in getRecipesForLevel(1)" :key="recipe.recipe_id">
+                        <div class="card" 
+                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
+                             @mouseenter="onRecipeHover(recipe)"
+                             @mouseleave="clearHoveredElement()"
+                             @click="selectRecipe(recipe)"
+                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Alternatives Loader -->
+                <div x-show="expanded_level === 1 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem 0; color: var(--text-muted);">
+                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                    <span style="margin-left: 0.75rem; font-size: 0.85rem;">Generating alternative variations...</span>
+                </div>
+
+                <!-- Alternatives Cards (Expanded to a new row below) -->
+                <template x-if="expanded_level === 1 && !variant_loading && alternative_variants.length > 0">
+                    <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #81c784; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🧬</span> Alternative Structural Variations (Level 1 Tweak Options)
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
+                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
+                                <div class="card" 
+                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
+                                     @mouseenter="onRecipeHover(alt)"
+                                     @mouseleave="clearHoveredElement()"
+                                     @click="selectRecipe(alt)"
+                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);'">
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- ROW 2: Advanced Modern Profiles (Level 2) -->
+            <div x-show="expanded_level === null || expanded_level === 2" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #64b5f6; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>⚡</span> Advanced Modern Profiles (Level 2)
+                    </div>
+                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
+                            @click="toggleExpandLevel(2)">
+                        <span x-text="expanded_level === 2 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
+                    <!-- Conceptual Item Card -->
+                    <template x-for="recipe in getRecipesForLevel(2)" :key="recipe.recipe_id">
+                        <div class="card" 
+                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
+                             @mouseenter="onRecipeHover(recipe)"
+                             @mouseleave="clearHoveredElement()"
+                             @click="selectRecipe(recipe)"
+                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Alternatives Loader -->
+                <div x-show="expanded_level === 2 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem 0; color: var(--text-muted);">
+                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                    <span style="margin-left: 0.75rem; font-size: 0.85rem;">Generating alternative variations...</span>
+                </div>
+
+                <!-- Alternatives Cards (Expanded to a new row below) -->
+                <template x-if="expanded_level === 2 && !variant_loading && alternative_variants.length > 0">
+                    <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #64b5f6; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🧬</span> Alternative Structural Variations (Level 2 Tweak Options)
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
+                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
+                                <div class="card" 
+                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
+                                     @mouseenter="onRecipeHover(alt)"
+                                     @mouseleave="clearHoveredElement()"
+                                     @click="selectRecipe(alt)"
+                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);'">
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- ROW 3: Experimental/Complex Profiles (Level 3) -->
+            <div x-show="expanded_level === null || expanded_level === 3" x-transition style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #ff8a65; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🧪</span> Experimental/Complex Profiles (Level 3)
+                    </div>
+                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-secondary); cursor: pointer;" 
+                            @click="toggleExpandLevel(3)">
+                        <span x-text="expanded_level === 3 ? 'Collapse ↩' : 'See More / Expand ➔'"></span>
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin;">
+                    <!-- Conceptual Item Card -->
+                    <template x-for="recipe in getRecipesForLevel(3)" :key="recipe.recipe_id">
+                        <div class="card" 
+                             :class="selected_recipe_id === recipe.recipe_id ? 'active' : ''"
+                             @mouseenter="onRecipeHover(recipe)"
+                             @mouseleave="clearHoveredElement()"
+                             @click="selectRecipe(recipe)"
+                             style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                             :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #ff8a65; background: rgba(255, 138, 101, 0.06); box-shadow: 0 0 10px rgba(255, 138, 101, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Alternatives Loader -->
+                <div x-show="expanded_level === 3 && variant_loading" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem 0; color: var(--text-muted);">
+                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                    <span style="margin-left: 0.75rem; font-size: 0.85rem;">Generating alternative variations...</span>
+                </div>
+
+                <!-- Alternatives Cards (Expanded to a new row below) -->
+                <template x-if="expanded_level === 3 && !variant_loading && alternative_variants.length > 0">
+                    <div style="margin-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #ff8a65; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🧬</span> Alternative Structural Variations (Level 3 Tweak Options)
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.75rem;">
+                            <template x-for="alt in alternative_variants" :key="alt.variant_id">
+                                <div class="card" 
+                                     :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
+                                     @mouseenter="onRecipeHover(alt)"
+                                     @mouseleave="clearHoveredElement()"
+                                     @click="selectRecipe(alt)"
+                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: dashed; transition: var(--transition); margin-bottom: 0;"
+                                     :style="selected_recipe_id === alt.variant_id ? 'border-color: #ff8a65; background: rgba(255, 138, 101, 0.06); box-shadow: 0 0 10px rgba(255, 138, 101, 0.2);' : 'border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);'">
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.sidebar_science_profile"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+        </div>
+        </div> <!-- Closes x-show="active_archetype_id" -->
+        </div> <!-- Closes x-show="!recipe_selected" -->
+
+        <!-- Deferred configurations wrapper -->
+        <div x-show="recipe_selected" x-transition>
+
+        <!-- Grain Bin Optimizer (deferred — system hardlocked to fresh-milled whole grain) -->
+        <div style="margin-top: 1.5rem;">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;"
+                 @mouseenter="setHoveredElement('milled')" @mouseleave="clearHoveredElement()">
+                🌾 Grain Bin Optimizer (Stock Selection)
+            </div>
+            <!-- Hidden input for hardlocked milled grain type -->
+            <input type="hidden" name="grain_type" value="milled">
+
+            <!-- Loading State Spinner -->
+            <div x-show="advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+                <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);" x-text="advisoryLoadingMessage || 'Consulting Local Gemma model for grain advisory and stock optimization...'"></p>
+            </div>
+
+            <div x-show="!advisoryLoading">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
+                        <label class="card" 
+                               @mouseenter="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
+                               @mouseleave="clearHoveredElement()"
+                               @focusin="setHoveredElement('grain_' + berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_'))"
+                               @focusout="clearHoveredElement()"
+                               tabindex="0"
+                               style="cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
+                               :style="getGrainStyle(berry)">
+                            <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
+                            
+                            <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                                <span style="font-size: 1.25rem; flex-shrink: 0;">🌾</span>
+                                <div style="flex-grow: 1;">
+                                    <strong x-text="berry.name" style="font-size: 0.9rem; display: block; color: var(--text-primary);"></strong>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="berry.protein + '% Prot | ' + Math.round((berry.absorption - 1.0)*100) + '% Abs'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Classification & Reasoning inline display -->
+                            <div x-show="getClassificationLabel(berry)" style="margin-top: 0.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.4rem; width: 100%;">
+                                <span :style="getClassificationBadgeStyle(berry)" x-text="getClassificationLabel(berry)" style="display: block; margin-bottom: 0.2rem;"></span>
+                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.35; white-space: normal;" x-text="getGrainReasoning(berry)"></p>
+                            </div>
+                        </label>
+                    </template>
+                </div>
+
+                <!-- Soft-Locking Warning Alert -->
+                <div class="warning-box" x-show="showStructuralWarning()" 
+                     style="background-color: hsla(0, 72%, 50%, 0.1); border-color: var(--danger); border-left-width: 4px; padding: 0.75rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">❌ Structural Safety Warning</h4>
+                    <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
+                </div>
+            </div>
+
+            <input type="hidden" name="custom_mixer" value="static">
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
+                
+                <!-- Component 1: Dynamic Temperature Calibration Node -->
+                <div class="card" 
+                     @mouseenter="
+                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
+                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
+                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
+                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
+                     "
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="
+                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
+                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
+                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
+                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
+                     "
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <!-- Case A: biological_yeast_activity -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="room_temp">Room Temp (°F)</label>
+                                <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+                            </div>
+                            <div class="input-group">
+                                <label for="flour_temp">Flour Temp (°F)</label>
+                                <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case B: lipid_emulsification -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'lipid_emulsification'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Fat Starting Temperature Target</h4>
+                        <input type="hidden" name="fat_starting_temp" :value="fat_starting_temp">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'room_temp' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'room_temp'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Room Temperature (Creaming)
+                            </button>
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'melted' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'melted'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Melted / Liquid State
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Case C: crystalline_fat_preservation -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Workspace Temperature Target</h4>
+                        <div class="input-group">
+                            <label for="workspace_temp">Enforced Ambient Limit (°F)</label>
+                            <input type="number" name="workspace_temp" id="workspace_temp" class="num-input" x-model.number="workspace_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        </div>
+                    </div>
+
+                    <!-- Case D: hydration_binding_shock -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Liquid Medium Temperature Target</h4>
+                        <div class="input-group">
+                            <label for="liquid_temp">Target Liquid Temp (°F)</label>
+                            <input type="number" name="liquid_temp" id="liquid_temp" class="num-input" x-model.number="liquid_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Component 2: Semantic Appliance Filtering & Contextual Actions -->
+                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <!-- Appliance selection deck -->
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Hardware &amp; Appliance Selector</h4>
+                    <input type="hidden" name="mixing_method" :value="mixing_method">
+                    <div class="pill-btn-group">
+                        <template x-for="tool in filteredTools" :key="tool.id">
+                            <button type="button" 
+                                    class="pill-btn" 
+                                    :class="mixing_method === tool.id ? 'active' : ''"
+                                    @click="mixing_method = tool.id; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement(tool.id)"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement(tool.id)"
+                                    @focusout="clearHoveredElement()">
+                                <span x-text="tool.name"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Gluten prevention warning banner -->
+                    <div class="warning-box" x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding'"
+                         style="background-color: hsla(38, 92%, 50%, 0.1); border-color: var(--warning); border-left-width: 4px; padding: 0.75rem; margin-top: 1rem;">
+                        <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">⚠️ Gluten Prevention Alert</h4>
+                        <p style="font-size: 0.85rem; margin: 0; color: var(--text-primary); line-height: 1.4;">
+                            Minimal folding threshold active. Use zero-friction tools only (Manual Spatula & Bowl) to prevent accidental gluten development and preserve tender structures.
+                        </p>
+                    </div>
+
+                    <!-- Secondary Ingredient Configuration Deck -->
+                    <div x-show="engines_ff[selected_master]?.secondary_ingredients && Object.keys(engines_ff[selected_master].secondary_ingredients).length > 0"
+                         style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                        <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Secondary Ingredient Configuration Deck</h4>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Lipids Selector -->
+                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.lipids" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
+                                <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
+                                <div class="pill-btn-group">
+                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || [])" :key="option">
+                                        <button type="button"
+                                                class="pill-btn"
+                                                :class="secondary_lipid === option ? 'active' : ''"
+                                                @click="secondary_lipid = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                                @mouseenter="setHoveredElement(option)"
+                                                @mouseleave="clearHoveredElement()"
+                                                @focusin="setHoveredElement(option)"
+                                                @focusout="clearHoveredElement()">
+                                            <span x-text="option.replace(/_/g, ' ')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Liquids Selector -->
+                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.liquids" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Liquid Medium Selection</label>
+                                <input type="hidden" name="secondary_liquid" :value="secondary_liquid">
+                                <div class="pill-btn-group">
+                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || [])" :key="option">
+                                        <button type="button"
+                                                class="pill-btn"
+                                                :class="secondary_liquid === option ? 'active' : ''"
+                                                @click="secondary_liquid = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                                @mouseenter="setHoveredElement(option)"
+                                                @mouseleave="clearHoveredElement()"
+                                                @focusin="setHoveredElement(option)"
+                                                @focusout="clearHoveredElement()">
+                                            <span x-text="option.replace(/_/g, ' ')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Binders Selector -->
+                            <div x-show="engines_ff[selected_master]?.secondary_ingredients?.binders" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Binder Selection</label>
+                                <input type="hidden" name="secondary_binder" :value="secondary_binder">
+                                <div class="pill-btn-group">
+                                    <template x-for="option in (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || [])" :key="option">
+                                        <button type="button"
+                                                class="pill-btn"
+                                                :class="secondary_binder === option ? 'active' : ''"
+                                                @click="secondary_binder = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                                @mouseenter="setHoveredElement(option)"
+                                                @mouseleave="clearHoveredElement()"
+                                                @focusin="setHoveredElement(option)"
+                                                @focusout="clearHoveredElement()">
+                                            <span x-text="option.replace(/_/g, ' ')"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contextual Action deck -->
+                    <h4 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Required Mechanical Action</h4>
+                    <input type="hidden" name="primary_action" :value="active_action">
+                    <div class="pill-btn-group">
+                        <template x-for="action in activeProductionProfile.permissible_action_types" :key="action">
+                            <button type="button" 
+                                    class="pill-btn" 
+                                    :class="active_action === action ? 'active' : ''"
+                                    @click="active_action = action; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement(action)"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement(action)"
+                                    @focusout="clearHoveredElement()">
+                                <span x-text="action.toUpperCase().replace('_', ' ')"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Component 3: Adaptive Environment Mapping -->
+                <div class="card" 
+                     @mouseenter="
+                        if (activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation') setHoveredElement('bench_rest');
+                        else if (activeProductionProfile.environmental_rest_strategy !== 'gas_proofing') setHoveredElement('refrigerator');
+                     "
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="
+                        if (activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation') setHoveredElement('bench_rest');
+                        else if (activeProductionProfile.environmental_rest_strategy !== 'gas_proofing') setHoveredElement('refrigerator');
+                     "
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Rest &amp; Environment Strategy</h4>
+                    
+                    <!-- Case A: gas_proofing strategy -->
+                    <div x-show="activeProductionProfile.environmental_rest_strategy === 'gas_proofing'">
+                        <input type="hidden" name="proofing_environment" :value="proofing_environment">
+                        <div class="pill-btn-group">
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
+                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement('ambient'); event.stopPropagation();"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement('ambient'); event.stopPropagation();"
+                                    @focusout="clearHoveredElement()">
+                                Ambient Room
+                            </button>
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
+                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement('mat'); event.stopPropagation();"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement('mat'); event.stopPropagation();"
+                                    @focusout="clearHoveredElement()">
+                                Open Proofing Mat
+                            </button>
+                            <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
+                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                    @mouseenter="setHoveredElement('box'); event.stopPropagation();"
+                                    @mouseleave="clearHoveredElement()"
+                                    @focusin="setHoveredElement('box'); event.stopPropagation();"
+                                    @focusout="clearHoveredElement()">
+                                Enclosed Proofing Box
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Case B: structural_retardation / fat_solidification -->
+                    <div x-show="['structural_retardation', 'fat_solidification'].includes(activeProductionProfile.environmental_rest_strategy)">
+                        <input type="hidden" name="proofing_environment" value="refrigerator">
+                        <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                            <span style="font-weight: 700; color: var(--accent); display: block; margin-bottom: 0.25rem;">[ FORCED REFRIGERATION REST ]</span>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                                A cold retardation cycle is required for this engine strategy to stabilize fat dispersion and control whole-grain cellular hydration rates.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Case C: gluten_relaxation -->
+                    <div x-show="activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation'">
+                        <input type="hidden" name="proofing_environment" value="bench_rest">
+                        <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                            <span style="font-weight: 700; color: var(--accent); display: block; margin-bottom: 0.25rem;">[ DAMP-COVERED BENCH REST ]</span>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                                An ambient bench rest under a damp cloth is enforced to allow the gluten sheet matrix to relax, preventing elasticity snap-back during subsequent shaping or extrusion operations.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Component 4: Milling Profile Parameters (always visible — hardlocked to fresh-milled whole grain) -->
+                <div @mouseenter="setHoveredElement('milled')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('milled')"
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="background-color: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;">
+                    <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
+                        Milling Profile Parameters
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Mill Machinery Profile</label>
+                            <input type="hidden" name="mill_type" :value="mill_type">
+                            <div class="pill-btn-group">
+                                <button type="button" class="pill-btn" :class="mill_type === 'stoneground' ? 'active' : ''"
+                                        @click="mill_type = 'stoneground'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Stoneground Mill
+                                </button>
+                                <button type="button" class="pill-btn" :class="mill_type === 'steel_roller' ? 'active' : ''"
+                                        @click="mill_type = 'steel_roller'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                    Steel Roller Mill
+                                </button>
+                            </div>
+                        </div>
+                        <div class="switch-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; margin-bottom: 0;">
+                            <label for="flow_is_sifted" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Flour Bran Sifted</label>
+                            <label class="switch">
+                                <input type="checkbox" name="is_sifted" id="flow_is_sifted">
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Proceed button inside the main container -->
+            <button type="button" 
+                    class="nav-btn primary"
+                    style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: var(--radius-sm); margin-bottom: 1.5rem;"
+                    @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                PROCEED TO RECIPE CONFIGURATION →
+            </button>
+        </div> <!-- Closes x-show="recipe_selected" -->
+    </div>
+</div>
+
+    <!-- PHASE 3: Contextual Variance Sliders & Baking Configuration -->
+    <div x-show="current_phase === 3" x-transition>
+        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
+            Phase 3: Recipe Fine-Tuning
+        </div>
+
+        <!-- Client-side Formula Ratios Readout Panel -->
+        <div class="card" style="padding: 1.25rem; border-color: var(--border-glow); margin-bottom: 1.5rem; background: var(--bg-card);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Real-Time Formula Estimates</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center;">
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round(45 + (crumb/100)*40) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Hydration</div>
+                </div>
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*15) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Fats / Oil</div>
+                </div>
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*12) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Sugar</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="starter + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Starter</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geometry Constraints & Form Factor Selection -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Geometry Constraints &amp; Yield Scale</h4>
+            
+            <!-- Form Factor Pill Grid Selector -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Baking Form Factor</label>
+                <div class="pill-btn-group">
+                    <template x-for="(ff_data, ff_slug) in (engines_ff[selected_master]?.permissible_form_factors || {})" :key="ff_slug">
+                        <button type="button"
+                                class="pill-btn"
+                                :class="{'active': form_factor_val === ff_slug}"
+                                :style="form_factor_val === ff_slug && ff_data.tier === 'sub-optimal' ? 'background-color: rgba(255, 159, 28, 0.1); border-color: var(--warning); color: var(--warning); box-shadow: 0 0 10px hsla(38, 92%, 50%, 0.4);' : ''"
+                                @click="form_factor_val = ff_slug;"
+                                @mouseenter="setHoveredElement(ff_slug)"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement(ff_slug)"
+                                @focusout="clearHoveredElement()">
+                            <span x-text="ff_data.name + ' (' + (ff_data.tier === 'recommended' ? 'Recommended' : 'Sub-Optimal') + ')'"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Tactile Yield Stepper Control -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Batch Yield Scale</label>
+                <div style="display: inline-flex; align-items: center; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem;">
+                    <button type="button" 
+                            style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
+                            @click="if (yield_scale > 0.5) { yield_scale = parseFloat((yield_scale - 0.5).toFixed(1)); }"
+                            :disabled="yield_scale <= 0.5"
+                            :style="yield_scale <= 0.5 ? 'opacity: 0.3; cursor: not-allowed;' : ''">
+                        &minus;
+                    </button>
+                    <span style="font-size: 1.25rem; font-weight: 800; min-width: 48px; text-align: center; color: var(--accent);" x-text="yield_scale.toFixed(1)"></span>
+                    <button type="button" 
+                            style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
+                            @click="yield_scale = parseFloat((yield_scale + 0.5).toFixed(1))">
+                        &plus;
+                    </button>
+                </div>
+                
+                <!-- Helper Text String -->
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4; border-left: 3px solid var(--accent); padding-left: 0.75rem;" 
+                     x-text="yieldHelperString">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sliders -->
+        <div class="slider-group" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Texture Variance</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="texture + '%'"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Softness (' + texture + '%)'"></span>
+                <input type="range" name="texture_score" min="0" max="100" x-model="texture" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Crusty (' + (100 - texture) + '%)'"></span>
+            </div>
+        </div>
+
+        <div class="slider-group" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Hydration Variance</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="'Crumb: ' + crumb + '% | Effective Hydration: ' + Math.round(45 + (crumb / 100) * 40) + '%'"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Dense (' + (100 - crumb) + '%)'"></span>
+                <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Open (' + crumb + '%)'"></span>
+            </div>
+            <template x-if="(weightedAbsorption() - 1.0) >= 0.05">
+                <div style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4;">
+                    ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
+                </div>
+            </template>
+        </div>
+
+        <!-- Leavening Biology -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Leavening Biology</label>
+            <div class="chip-container">
+                <span class="chip" :class="leaven === 'yeast' ? 'active' : ''" @click="leaven = 'yeast'">
+                    Commercial Yeast (1.5%)
+                </span>
+                <span class="chip" :class="leaven === 'sourdough' ? 'active' : ''" @click="leaven = 'sourdough'">
+                    Sourdough Starter (Wild Yeast)
+                </span>
+                <input type="hidden" name="leaven_type" :value="leaven">
+            </div>
+        </div>
+
+        <div class="slider-group" x-show="leavening_type === 'sourdough'" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Sourdough Starter Percentage</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="starter + '%'"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;">Mild (5%)</span>
+                <input type="range" name="starter_pct" min="5" max="40" x-model="starter" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;">Sour (40%)</span>
+            </div>
+        </div>
+
+        <!-- Flour Maturity -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Milling Maturity</label>
+            <div class="chip-container">
+                <span class="chip" :class="maturity === 'just_milled' ? 'active' : ''" @click="maturity = 'just_milled'">Fresh Milled (Today)</span>
+                <span class="chip" :class="maturity === 'dead_zone' ? 'active' : ''" @click="maturity = 'dead_zone'">1-2 Weeks Dead Zone (-2%)</span>
+                <span class="chip" :class="maturity === 'matured' ? 'active' : ''" @click="maturity = 'matured'">Matured (2+ Weeks)</span>
+                <input type="hidden" name="flour_maturity" :value="maturity">
+            </div>
+        </div>
+
+        <!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
+        <div x-show="leavening_type === 'sourdough'"
+             style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
+                Sourdough Starter Diagnostics
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="input-group">
+                    <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
+                    <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
+                            hx-post="/sourdough-calibrate/" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="4_8">Active Feed (4-8 hours ago)</option>
+                        <option value="8_12">Matured Feed (8-12 hours ago)</option>
+                        <option value="12_18">Hungry starter (12-18 hours ago)</option>
+                        <option value="18_plus">Starved starter (18+ hours ago)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="flow_rise_speed">Starter activity speed</label>
+                    <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
+                            hx-post="/sourdough-calibrate/" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="fast">Explosive (Doubles in &lt;4 hours)</option>
+                        <option value="normal">Normal (Doubles in 4-8 hours)</option>
+                        <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Calibration box target -->
+            <div id="sourdough-diagnostic-output" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Chemical Substitutions -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
+             x-init="$watch('subOriginal', val => { subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change')); })">
+            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Chemical Substitutions</h4>
+            
+            <input type="hidden" name="sub_original" :value="subOriginal">
+            <input type="hidden" name="sub_substitute" :value="subSubstitute">
+
+            <!-- Original Ingredient Pill Row -->
+            <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Original Ingredient</label>
+                <div class="pill-btn-group">
+                    <button type="button" class="pill-btn" :class="subOriginal === 'water' ? 'active' : ''"
+                            @click="subOriginal = 'water'; subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        Water
+                    </button>
+                    <button type="button" class="pill-btn" :class="subOriginal === 'fat' ? 'active' : ''"
+                            @click="subOriginal = 'fat'; subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                        Oil / Fats
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alternative Swap Pill Row -->
+            <div>
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Alternative Swap</label>
+                
+                <!-- If Water selected -->
+                <div x-show="subOriginal === 'water'" class="pill-btn-group">
+                    <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
+                            @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                            @mouseenter="setHoveredElement('refined')"
+                            @mouseleave="clearHoveredElement()"
+                            @focusin="setHoveredElement('refined')"
+                            @focusout="clearHoveredElement()">
+                        No Swap
+                    </button>
+                    <button type="button" class="pill-btn" :class="subSubstitute === 'whole_milk' ? 'active' : ''"
+                            @click="subSubstitute = 'whole_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                            @mouseenter="setHoveredElement('whole_milk')"
+                            @mouseleave="clearHoveredElement()"
+                            @focusin="setHoveredElement('whole_milk')"
+                            @focusout="clearHoveredElement()">
+                        Whole Milk
+                    </button>
+                    <button type="button" class="pill-btn" :class="subSubstitute === 'almond_milk' ? 'active' : ''"
+                            @click="subSubstitute = 'almond_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                            @mouseenter="setHoveredElement('almond_milk')"
+                            @mouseleave="clearHoveredElement()"
+                            @focusin="setHoveredElement('almond_milk')"
+                            @focusout="clearHoveredElement()">
+                        Almond Milk
+                    </button>
+                </div>
+
+                <!-- If Fat selected -->
+                <div x-show="subOriginal === 'fat'">
+                    <div class="pill-btn-group">
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
+                                @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('refined')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('refined')"
+                                @focusout="clearHoveredElement()">
+                            No Swap
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'butter' ? 'active' : ''"
+                                @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('butter')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('butter')"
+                                @focusout="clearHoveredElement()">
+                            Butter
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
+                                @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('unsalted_butter')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('unsalted_butter')"
+                                @focusout="clearHoveredElement()">
+                            Unsalted Butter
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
+                                @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('salted_butter')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('salted_butter')"
+                                @focusout="clearHoveredElement()">
+                            Salted Butter
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
+                                @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('olive_oil')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('olive_oil')"
+                                @focusout="clearHoveredElement()">
+                            Olive Oil
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
+                                @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('canola_oil')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('canola_oil')"
+                                @focusout="clearHoveredElement()">
+                            Canola Oil
+                        </button>
+                        <button type="button" class="pill-btn" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
+                                @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                @mouseenter="setHoveredElement('vegetable_oil')"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement('vegetable_oil')"
+                                @focusout="clearHoveredElement()">
+                            Vegetable Oil
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Bake Action Button -->
+        <button type="button" 
+                class="nav-btn primary"
+                style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"
+                @click="startBake()">
+            🚀 INITIALIZE BAKE: LAUNCH COUNTERTOP VIEW
+        </button>
+    </div>
+
+</form>

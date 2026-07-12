@@ -64,24 +64,48 @@ class FryEngine(BaseEngine):
             "icon": "🍩",
             "description": "Highly aerated, light, floating dough rings.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.0% - 13.0%"
+            }
         },
         "cake_donut": {
             "label": "Cake / Chemical Donut",
             "icon": "🍩",
             "description": "Tender, friable, batter-based rings dropping directly into fat.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "8.5% - 10.5%"
+            }
         },
         "fritter_beignet": {
             "label": "Batter Fritter / Beignet",
             "icon": "☁️",
             "description": "Irregular high-hydration moisture puffs expanding violently in oil.",
             "grain_affinity": "low_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "high_spread",
+                "moisture_lipid_ratio": "high_hydration_lean",
+                "optimal_protein_window": "9.0% - 11.0%"
+            }
         },
         "fried_laminate": {
-            "label": "Fried Laminate",
+            "label": "Fried Laminated",
             "icon": "🫓",
             "description": "Alternating layers flashing open instantly in convection fat.",
             "grain_affinity": "medium_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "10.0% - 12.0%"
+            }
         },
     }
 

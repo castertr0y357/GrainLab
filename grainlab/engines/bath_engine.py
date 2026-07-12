@@ -58,24 +58,48 @@ class BathEngine(BaseEngine):
             "icon": "🥨",
             "description": "Traditional knot shapes, maximize surface area for Maillard browning.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "12.0% - 14.5%"
+            }
         },
         "boiled_bagel": {
             "label": "Boiled Bagel",
             "icon": "🥯",
             "description": "Ring geometry, dense core structure, high tensile strength.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "extreme_tensile",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "high_hydration_lean",
+                "optimal_protein_window": "13.0% - 15.0%"
+            }
         },
         "laugen_bun": {
             "label": "Laugen Bun / Roll",
             "icon": "🫓",
             "description": "Spherical soft-crumb interior protected by a thick glossy skin.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "high_retention",
+                "desired_horizontal_flow": "controlled_expansion",
+                "moisture_lipid_ratio": "balanced_emulsion",
+                "optimal_protein_window": "11.5% - 13.5%"
+            }
         },
         "pretzel_stick": {
             "label": "Pretzel Stick / Cracker",
             "icon": "🥖",
             "description": "Ultra-low hydration, brittle, snapping structure.",
             "grain_affinity": "high_protein",
+            "target_archetype_mechanics": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "zero_spread_stable",
+                "moisture_lipid_ratio": "low_moisture_high_fat",
+                "optimal_protein_window": "11.0% - 13.0%"
+            }
         },
     }
 
