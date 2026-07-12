@@ -905,6 +905,7 @@ def ai_grain_advisory(request):
     import json
     
     preset_slug = request.GET.get("preset_slug", "").strip()
+    preset_name = request.GET.get("preset_name", "").strip()
     category_slug = request.GET.get("category_slug", "").strip()
     selected_grains = request.GET.get("selected_grains", "").strip()
     only_evaluations = request.GET.get("only_evaluations", "false").lower() == "true"
@@ -930,13 +931,14 @@ def ai_grain_advisory(request):
                 preset_slug, category_slug, 
                 selected_grains=selected_grains,
                 only_evaluations=only_evaluations,
-                only_elevate=only_elevate
+                only_elevate=only_elevate,
+                preset_name=preset_name
             )
         except Exception as e:
             logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
             advisory = {"grain_evaluations": [], "elevate_recipe": []}
     else:
-        advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug)
+        advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug, preset_name=preset_name)
         if only_elevate:
             # Generate local/mock elevate tips when AI is disabled
             mock_data = gemma_client.get_mock_gemma_response(
@@ -1862,10 +1864,13 @@ def ai_recipe_details(request):
     )
 
     if result is None:
-        return JsonResponse({
-            "menu_description": "No flavor profile compiled.",
-            "sidebar_science_profile": "No technical profile compiled.",
-            "elevate_recipe": []
-        }, status=200)
+        result = gemma_client.get_local_recipe_details(
+            recipe_slug=recipe_slug,
+            recipe_name=recipe_name,
+            engine_id=engine_id,
+            active_archetype_id=active_archetype_id,
+            selected_grains=selected_grains_names
+        )
+        return JsonResponse(result, status=200)
 
     return JsonResponse(result, status=200)

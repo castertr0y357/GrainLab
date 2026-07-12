@@ -166,6 +166,20 @@
           }
       }"
       x-init="
+          window.addEventListener('recipe-details-updated', (e) => {
+              const sec = e.detail.secondary_ingredients;
+              if (sec) {
+                  if (sec.lipids && sec.lipids.required) {
+                      this.secondary_lipid = sec.lipids.required;
+                  }
+                  if (sec.liquids && sec.liquids.required) {
+                      this.secondary_liquid = sec.liquids.required;
+                  }
+                  if (sec.binders && sec.binders.required) {
+                      this.secondary_binder = sec.binders.required;
+                  }
+              }
+          });
           $watch('leaven', value => { if (value === 'yeast') { this.starter = 0; } else if (this.starter === 0) { this.starter = 20; } });
           $watch('crumbMin', val => { if (this.crumb < val) this.crumb = val; });
           $watch('crumbMax', val => { if (this.crumb > val) this.crumb = val; });
@@ -689,7 +703,7 @@
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
                                 <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in (selectedRecipeSecondaryIngredients ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
+                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_lipid === option ? 'active' : ''"
@@ -708,7 +722,7 @@
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Liquid Medium Selection</label>
                                 <input type="hidden" name="secondary_liquid" :value="secondary_liquid">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in (selectedRecipeSecondaryIngredients ? selectedRecipeSecondaryIngredients.liquids.options : (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || []))" :key="option">
+                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.options : (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_liquid === option ? 'active' : ''"
@@ -727,7 +741,7 @@
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Binder Selection</label>
                                 <input type="hidden" name="secondary_binder" :value="secondary_binder">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in (selectedRecipeSecondaryIngredients ? selectedRecipeSecondaryIngredients.binders.options : (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || []))" :key="option">
+                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.options : (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_binder === option ? 'active' : ''"

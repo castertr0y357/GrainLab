@@ -465,17 +465,11 @@
 
                             // Pre-select required secondary ingredients if returned by LLM
                             this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
-                            if (data.secondary_ingredients) {
-                                if (data.secondary_ingredients.lipids && data.secondary_ingredients.lipids.required) {
-                                    this.secondary_lipid = data.secondary_ingredients.lipids.required;
-                                }
-                                if (data.secondary_ingredients.liquids && data.secondary_ingredients.liquids.required) {
-                                    this.secondary_liquid = data.secondary_ingredients.liquids.required;
-                                }
-                                if (data.secondary_ingredients.binders && data.secondary_ingredients.binders.required) {
-                                    this.secondary_binder = data.secondary_ingredients.binders.required;
-                                }
-                            }
+                            
+                            // Broadcast the recipe-details-updated event to update the inner form component!
+                            window.dispatchEvent(new CustomEvent('recipe-details-updated', {
+                                detail: { secondary_ingredients: data.secondary_ingredients }
+                            }));
                         }
 
                         this.recipe_details_loading = false;
@@ -600,7 +594,7 @@
         this.activeBerries.forEach(b => {
             b.selected = false;
         });
-        this.fetchElevateTips(this.presetSlug);
+        this.fetchAdvisory(this.presetSlug);
         this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
     },
 
@@ -790,7 +784,7 @@
             this.advisoryLoadingMessage = messages[idx];
         }, 750);
 
-        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&only_evaluations=true';
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_evaluations=true';
         if (this.selected_master && this.selected_master !== 'null') {
             url += '&category_slug=' + encodeURIComponent(this.selected_master);
         }
@@ -981,19 +975,19 @@
     },
 
     isIdealGrain(berryName) {
-        if (!this.presetSlug) {
+        if (!this.selected_master || this.selected_master === 'null') {
             return false;
         }
-        let idealName = 'Hard Red Winter Wheat';
-        let s = this.presetSlug.toLowerCase();
-        if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
-            idealName = 'Hard Red Spring Wheat';
-        } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
-            idealName = 'Hard Red Winter Wheat';
-        } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
-            idealName = 'Hard White Wheat';
-        } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
+        let idealName = '';
+        let cat = this.selected_master.toLowerCase();
+        if (['cookies-shortbread', 'cakes-batters', 'quick-breads-scones'].includes(cat)) {
             idealName = 'Soft White Wheat';
+        } else if (['lean-crusty', 'alkaline-bath', 'choux-paste', 'fresh-pasta-noodles'].includes(cat)) {
+            idealName = 'Hard Red Spring Wheat';
+        } else if (['enriched-soft'].includes(cat)) {
+            idealName = 'Hard White Wheat';
+        } else if (['flatbreads-griddles', 'pastry-lamination', 'fried-doughs'].includes(cat)) {
+            idealName = 'Hard Red Winter Wheat';
         }
         return berryName === idealName;
     },

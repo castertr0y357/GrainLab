@@ -463,10 +463,12 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         # Mock get_grain_advisory_ai
         preset_slug = user_data.get("preset_slug", "")
         category_slug = user_data.get("category_slug", "")
+        preset_name = user_data.get("preset_name", "")
         inventory = user_data.get("inventory", [])
         
         evaluations = []
         is_cookie = "cookie" in preset_slug or "cookie" in (category_slug or "").lower()
+        recipe_title = preset_name or preset_slug or "recipe"
         
         for b in inventory:
             name_lower = b.get("name", "").lower()
@@ -477,42 +479,42 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
                 # Sovereignty rules override for cookies: Rye and Soft are recommended, Hard is sub-optimal or not-recommended
                 if "soft" in name_lower:
                     tier = "recommended"
-                    reasoning = f"At {prot}% protein, Soft White Wheat provides tender, delicate structures perfect for cookies, avoiding any gluten toughness."
+                    reasoning = f"At {prot}% protein, Soft White Wheat provides tender, delicate structures perfect for {recipe_title}, avoiding any gluten toughness."
                 elif "rye" in name_lower:
                     tier = "recommended"
-                    reasoning = "Rye is highly recommended for cookies due to pentosans blocking gluten development, maximizing tenderness and moisture retention."
+                    reasoning = f"Rye is highly recommended for {recipe_title} due to pentosans blocking gluten development, maximizing tenderness and moisture retention."
                 elif "hard red spring" in name_lower:
                     tier = "not-recommended"
-                    reasoning = f"High protein content ({prot}%) creates excessive gluten elasticity, causing the cookies to bake into tough, cakey domes."
+                    reasoning = f"High protein content ({prot}%) creates excessive gluten elasticity, causing {recipe_title} to bake into tough, cakey domes."
                 elif "hard red winter" in name_lower:
                     tier = "sub-optimal"
-                    reasoning = f"Moderate protein content ({prot}%) creates slightly too much gluten structure, leading to a somewhat tough cookie spread."
+                    reasoning = f"Moderate protein content ({prot}%) creates slightly too much gluten structure, leading to a somewhat tough spread in {recipe_title}."
                 elif "hard white" in name_lower:
                     tier = "sub-optimal"
-                    reasoning = f"Ideal neutral flavor, but the {prot}% protein content is too high for optimal cookie tenderness."
+                    reasoning = f"Ideal neutral flavor, but the {prot}% protein content is too high for optimal tenderness in {recipe_title}."
                 elif "spelt" in name_lower:
                     tier = "sub-optimal"
-                    reasoning = "Extensible but weak gluten provides decent tenderness, but the nutty flavor may overpower delicate recipe notes."
+                    reasoning = f"Extensible but weak gluten provides decent tenderness, but the nutty flavor may overpower delicate notes in {recipe_title}."
                 else:
                     tier = "sub-optimal"
-                    reasoning = f"At {prot}% protein, this grain is slightly too strong for optimal cookie tenderness."
+                    reasoning = f"At {prot}% protein, this grain is slightly too strong for optimal tenderness in {recipe_title}."
             else:
                 # Standard bread rules
                 if "hard red spring" in name_lower or "hard red winter" in name_lower or "hard white" in name_lower:
                     tier = "recommended"
-                    reasoning = f"High protein content ({prot}%) provides the optimal gluten strength and elasticity needed for a tall, open-crumb rise."
+                    reasoning = f"High protein content ({prot}%) provides the optimal gluten strength and elasticity needed for {recipe_title}."
                 elif "soft" in name_lower:
                     tier = "not-recommended"
-                    reasoning = f"Low protein ({prot}%) and weak gluten structure will fail to retain gas, resulting in a flat, dense, and gummy loaf."
+                    reasoning = f"Low protein ({prot}%) and weak gluten structure will fail to retain gas, resulting in a flat, dense, and gummy {recipe_title}."
                 elif "rye" in name_lower:
                     tier = "sub-optimal"
-                    reasoning = "Savory flavor matches hearth profiles, but high pentosans and low gluten elasticity will produce a denser, stickier crumb."
+                    reasoning = f"Savory flavor matches {recipe_title} profiles, but high pentosans and low gluten elasticity will produce a denser, stickier crumb."
                 elif "spelt" in name_lower:
                     tier = "sub-optimal"
-                    reasoning = "Highly extensible but weak gluten structure requires careful hydration management to avoid structural collapse."
+                    reasoning = f"Highly extensible but weak gluten structure in {recipe_title} requires careful hydration management to avoid structural collapse."
                 else:
                     tier = "sub-optimal"
-                    reasoning = f"Provides pleasant flavor and {prot}% protein, but low elasticity results in reduced oven spring."
+                    reasoning = f"Provides pleasant flavor and {prot}% protein, but low elasticity results in reduced oven spring in {recipe_title}."
                     
             evaluations.append({
                 "grain_id": b_id,
@@ -1081,7 +1083,7 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     return None
 
 
-def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False) -> dict | None:
+def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False, preset_name: str = None) -> dict | None:
     """
     Submits a prompt to Gemma asking for evaluation of available kitchen inventory.
     """
@@ -1175,7 +1177,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         
         payload = {
             "preset_slug": preset_slug,
-            "preset_name": preset.name if preset else preset_slug,
+            "preset_name": preset_name or (preset.name if preset else preset_slug),
             "category_slug": category_slug,
             "selected_grains": selected_names,
             "inventory": [
@@ -1227,7 +1229,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
     return None
 
 
-def evaluate_single_grain(wb, engine) -> dict:
+def evaluate_single_grain(wb, engine, preset_name: str = None) -> dict:
     """
     Evaluates a single grain against the engine's protein and tannin rules.
     """
@@ -1273,18 +1275,19 @@ def evaluate_single_grain(wb, engine) -> dict:
             final_tier = "not-recommended"
 
     # Analytical reasoning string construction
+    recipe_title = preset_name or (engine.name if engine else "recipe")
     if final_tier == "recommended":
-        reasoning = f"At {prot}% protein content, {name} fits the {engine.name} target range ({p_min}%-{p_max}%) for optimal gluten behavior. Its sweet/neutral profile matches the recipe flavor."
+        reasoning = f"At {prot}% protein content, {name} is ideal for {recipe_title} (ideal target is {p_min}%-{p_max}%). Its starch/lipid absorption properties promote the optimal spread and texture structure required for this specific formulation."
     elif final_tier == "sub-optimal":
         if penalty_applied and is_in_range:
-            reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with this sweet/neutral recipe, dropping it to sub-optimal."
+            reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with the {recipe_title} flavor profile, dropping it to sub-optimal."
         else:
-            reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {engine.name}, which will require minor hydration adjustments."
+            reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {recipe_title}, which will require minor hydration adjustments."
     else:
         if penalty_applied:
-            reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the sweet/neutral flavor profile."
+            reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the {recipe_title} flavor profile."
         else:
-            reasoning = f"At {prot}% protein, {name} completely violates the {engine.name} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
+            reasoning = f"At {prot}% protein, {name} completely violates the {recipe_title} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
 
     return {
         "tier": final_tier,
@@ -1292,7 +1295,7 @@ def evaluate_single_grain(wb, engine) -> dict:
     }
 
 
-def get_local_grain_advisory(preset_slug: str, category_slug: str = None) -> dict:
+def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None) -> dict:
     """
     Local fallback logic performing programmatic evaluation of kitchen inventory 
     using the active sub-engine heuristics.
@@ -1309,7 +1312,7 @@ def get_local_grain_advisory(preset_slug: str, category_slug: str = None) -> dic
     evaluations = []
 
     for wb in active_berries:
-        res = evaluate_single_grain(wb, engine)
+        res = evaluate_single_grain(wb, engine, preset_name=preset_name)
         evaluations.append({
             "grain_id": str(wb.id),
             "tier": res["tier"],
