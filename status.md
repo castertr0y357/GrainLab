@@ -117,6 +117,9 @@
 - [x] Correct isIdealGrain category defaults to avoid false-positive recommended borders for cookies
 - [x] Dispatch recipe-details-updated event to synchronize secondary ingredients selection deck between outer and inner Alpine scopes safely without throwing TypeErrors
 - [x] Synchronize advisoryLoading phase with a dedicated advisory_steps paced checklist animation to prevent static/pre-completed lists from showing while the request is loading
+- [x] Fix cookie variant sub-engine routing bug in router.py by refining the chocolat keyword match to pain-au-chocolat
+- [x] Resolve Alpine.js TypeErrors by adding safe null-checks to hovered_element.startsWith and optional chaining to engines_ff
+- [x] Remove the redundant bottom Ways to Elevate card and link the inline AI Craft Elevators card strictly to global_ai_enabled
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
