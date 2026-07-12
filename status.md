@@ -127,6 +127,8 @@
 - [x] Strip all textual descriptions from `apps/core/grain_registry.json` leaving raw chemical specifications.
 - [x] Implement explicit state purge on archetype change in Alpine.js to prevent context leakage.
 - [x] Force explicit real-time dynamic binding of archetype mechanics read directly from sub-engine files.
+- [x] Implement unique composite cache keys (engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}) in evaluate_single_grain.
+- [x] Force strict input context sanity check for AI Elevators in get_grain_advisory_ai (passing only selected/native grains and specialty ingredients).
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
@@ -142,3 +144,5 @@
 - Split monolithic math timeline module into 11 isolated domain-specific sub-engines with custom boundaries, structural grain ceilings, and dynamic step cards inheriting from `BaseEngine`.
 - Separated AI operations from local algorithmic rules: when AI is enabled, the backend bypasses all programmatic heuristics, hides the factual science profiles, and displays LLM-sourced recommendations and Ways to Elevate suggestions.
 - **Pure Polymorphic Relational Evaluation Matrix**: Replaced all hardcoded culinary grain exception logic and override loops with an objective dynamic prompt compiler combining `intrinsic_chemical_profile` (from `grain_registry.json`) and `target_archetype_mechanics` (defined inside the 11 sub-engines) analyzed via LLM or programmatic physical-chemical comparator.
+- **Unique Composite Caching & Input Filtering**: Implemented composite caching keys in `evaluate_single_grain` to isolate grain evaluations per engine/archetype/variant, and restricted input payloads for AI Elevators to actively selected/native recipe ingredients.
+
