@@ -1166,15 +1166,14 @@ class GenerateVariantsTests(TestCase):
         self.assertEqual(len(variants), 8)
 
     def test_ai_recipe_details_valid(self) -> None:
-        """Verifies ai_recipe_details endpoint returns technical science analysis and tips list."""
+        """Verifies ai_recipe_details endpoint returns flavor description and technical science profile."""
         url = "/ai-recipe-details/?recipe_slug=hearth_level1_1&engine_id=lean-crusty&active_archetype_id=classic_sourdough&selected_grains=hard_red_spring_wheat"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("sidebar_science_profile", data)
-        self.assertIn("elevate_recipe", data)
-        self.assertIsInstance(data["elevate_recipe"], list)
-        self.assertGreater(len(data["elevate_recipe"]), 0)
+        self.assertIn("menu_description", data)
+        self.assertIn("secondary_ingredients", data)
 
     def test_ai_recipe_details_missing_params(self) -> None:
         """Verifies ai_recipe_details returns 400 Bad Request if recipe_slug is not provided."""

@@ -458,7 +458,7 @@
                 this.sidebar_menu_description = menu;
                 this.selectedRecipeMenuDescription = menu;
 
-                this.globalElevateRecipe = data.elevate_recipe || [];
+                // globalElevateRecipe is loaded separately via fetchElevateTips after recipe selection is confirmed
 
                 // Pre-select required secondary ingredients if returned by LLM
                 this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
@@ -549,25 +549,7 @@
         this.selectedRecipeSecondaryIngredients = null;
         this.globalElevateRecipe = [];
         this.sidebar_labor_roi = '';
-        this.recipe_selected = true;
-
-        // Select the ideal grain based on recommended list if available
-        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
-            const firstRec = this.recommended_grain_ids[0];
-            const berry = this.activeBerries.find(b => {
-                const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                return bNameSlug.includes(firstRec) || firstRec.includes(bNameSlug);
-            });
-            if (berry) {
-                this.activeBerries.forEach(b => {
-                    b.selected = (b.id === berry.id);
-                });
-            } else {
-                this.selectIdealGrain();
-            }
-        } else {
-            this.selectIdealGrain();
-        }
+        this.recipe_selected = false;
 
         // Trigger on-demand detailed lazy load call
         this.fetchRecipeDetails(recipe_id);
@@ -576,11 +558,21 @@
     confirmRecipeSelection() {
         if (!this.selected_recipe_id) return;
         this.recipe_selected = true;
-        this.current_phase = 3;
+        this.activeBerries.forEach(b => {
+            b.selected = false;
+        });
+        this.fetchElevateTips(this.presetSlug);
         this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
     },
 
     getClassificationLabel(berry) {
+        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
+            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
+                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+            );
+            if (isVariantRecommended) return 'Recommended';
+        }
         if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
         const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
         if (!ev) return '';
@@ -591,12 +583,26 @@
     },
 
     getGrainReasoning(berry) {
+        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
+            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
+                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+            );
+            if (isVariantRecommended) return 'Highly recommended starch/lipid balance for this specific formulation.';
+        }
         if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
         const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
         return ev ? ev.reasoning : '';
     },
 
     getClassificationBadgeStyle(berry) {
+        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
+            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
+                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+            );
+            if (isVariantRecommended) return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        }
         if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
         const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
         if (!ev) return '';
@@ -647,7 +653,7 @@
 
     init() {
         this.$watch('presetSlug', value => {
-            this.selectIdealGrain();
+            this.activeBerries.forEach(b => { b.selected = false; });
             this.fetchAdvisory(value);
             if (value) {
                 this.presetModified = false;
@@ -672,7 +678,7 @@
         this.$watch('activeBerries', () => {
             this.fetchElevateTips(this.presetSlug);
         }, { deep: true });
-        this.selectIdealGrain();
+        this.activeBerries.forEach(b => { b.selected = false; });
         if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
             this.fetchAdvisory(this.presetSlug);
         }

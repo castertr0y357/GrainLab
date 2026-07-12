@@ -1860,16 +1860,11 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
-        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, required secondary ingredients (including permissible substitutions), and a list of craft tips to elevate the bake.\n"
+        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, and required secondary ingredients (including permissible substitutions).\n"
         "Each response must match this JSON schema:\n"
         "{\n"
         "  \"menu_description\": \"A 1-2 sentence rich, descriptive flavor profile that highlights taste, aroma, and visual appeal, written in the style of a high-end restaurant menu item description (e.g., 'A decadent, dark chocolate cookie layered with rich malt undertones and finished with pockets of molten Valrhona fudge.').\",\n"
         "  \"sidebar_science_profile\": \"1-2 sentence technical science analysis of the crumb, starch-lipid structure, or hydration of this specific recipe.\",\n"
-        "  \"elevate_recipe\": [\n"
-        "    \"Specific tip 1 (e.g. autolyse time, temperature tweaks, or folding technique relative to this recipe).\",\n"
-        "    \"Specific tip 2 (e.g. hydration adaptation, or mixing speed adjustment relative to the selected grains).\",\n"
-        "    \"Specific craft tip (incorporating the last 10 percent magic tip for this recipe).\"\n"
-        "  ],\n"
         "  \"secondary_ingredients\": {\n"
         "    \"lipids\": {\n"
         "      \"required\": \"One of: unsalted_butter, salted_butter, coconut_oil, avocado_oil (use underscore format)\",\n"
@@ -1911,7 +1906,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         if getattr(settings, "MOCK_MODE", True):
             return get_local_recipe_details(recipe_slug, recipe_name, engine_id, active_archetype_id, selected_grains)
 
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "elevate_recipe", "secondary_ingredients"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "secondary_ingredients"])
         if result and isinstance(result, dict) and "sidebar_science_profile" in result:
             return result
     except Exception as e:
@@ -2125,16 +2120,9 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
                 "options": ["pure_water", "whole_milk", "buttermilk"]
             }
 
-    # Customize tips slightly based on selected grains
-    custom_tips = list(tips)
-    if selected_grains:
-        first_grain = selected_grains.split(",")[0].strip().replace("_", " ").title()
-        custom_tips.insert(1, f"Accommodate the high absorption rate of fresh {first_grain} by adding 2% extra water if dough feels stiff.")
-
     return {
         "menu_description": menu,
         "sidebar_science_profile": science,
-        "elevate_recipe": custom_tips[:3],
         "secondary_ingredients": {
             "lipids": sec_lipids,
             "liquids": sec_liquids,
