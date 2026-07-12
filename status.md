@@ -136,6 +136,7 @@
 - [x] Implement user prompt key/list normalization in `call_gemma_api`.
 - [x] Implement `evaluate_grains_batch` in `gemma_client.py` to evaluate inactive grains in bulk.
 - [x] Refactor `get_inactive_grain_recommendations` in `views.py` to use `evaluate_grains_batch`.
+- [x] Implement Modular System Prompt Assembly compiling Global Master Shell, Nuance Injection, and Logic instructions.
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
@@ -153,5 +154,7 @@
 - **Pure Polymorphic Relational Evaluation Matrix**: Replaced all hardcoded culinary grain exception logic and override loops with an objective dynamic prompt compiler combining `intrinsic_chemical_profile` (from `grain_registry.json`) and `target_archetype_mechanics` (defined inside the 11 sub-engines) analyzed via LLM or programmatic physical-chemical comparator.
 - **Unique Composite Caching & Input Filtering**: Implemented composite caching keys in `evaluate_single_grain` to isolate grain evaluations per engine/archetype/variant, and restricted input payloads for AI Elevators to actively selected/native recipe ingredients.
 - **High-Performance LLM Optimization**: Debounced front-end hover fetches to prevent request spam, combined split evaluations/elevate requests, batched inactive grain evaluations into a single API query, normalized prompt user payloads, and configured a persistent `FileBasedCache` backend to preserve cache entries across development server restarts.
+- **Modular System Prompt Assembly**: Re-architected system prompt construction into a fixed order kernel-and-module structure: Persona & Objective, Global Ruleset, Data Context Payload, Dynamic Engine Nuance Injection, and Specific Task Instruction Logic (placed closest to user inputs to maximize attention weighting).
+
 
 
