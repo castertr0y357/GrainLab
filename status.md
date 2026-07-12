@@ -129,6 +129,13 @@
 - [x] Force explicit real-time dynamic binding of archetype mechanics read directly from sub-engine files.
 - [x] Implement unique composite cache keys (engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}) in evaluate_single_grain.
 - [x] Force strict input context sanity check for AI Elevators in get_grain_advisory_ai (passing only selected/native grains and specialty ingredients).
+- [x] Implement frontend pointer hover debouncing (300ms) for `/ai-sidebar-insight/` requests in `calculator.html`.
+- [x] Combine evaluations and elevate tips into a single `/ai-grain-advisory/` request.
+- [x] Add persistent File-Based cache engine in `settings.py`.
+- [x] Replace memory cache dicts with Django persistent `cache` in `gemma_client.py`.
+- [x] Implement user prompt key/list normalization in `call_gemma_api`.
+- [x] Implement `evaluate_grains_batch` in `gemma_client.py` to evaluate inactive grains in bulk.
+- [x] Refactor `get_inactive_grain_recommendations` in `views.py` to use `evaluate_grains_batch`.
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
@@ -145,4 +152,6 @@
 - Separated AI operations from local algorithmic rules: when AI is enabled, the backend bypasses all programmatic heuristics, hides the factual science profiles, and displays LLM-sourced recommendations and Ways to Elevate suggestions.
 - **Pure Polymorphic Relational Evaluation Matrix**: Replaced all hardcoded culinary grain exception logic and override loops with an objective dynamic prompt compiler combining `intrinsic_chemical_profile` (from `grain_registry.json`) and `target_archetype_mechanics` (defined inside the 11 sub-engines) analyzed via LLM or programmatic physical-chemical comparator.
 - **Unique Composite Caching & Input Filtering**: Implemented composite caching keys in `evaluate_single_grain` to isolate grain evaluations per engine/archetype/variant, and restricted input payloads for AI Elevators to actively selected/native recipe ingredients.
+- **High-Performance LLM Optimization**: Debounced front-end hover fetches to prevent request spam, combined split evaluations/elevate requests, batched inactive grain evaluations into a single API query, normalized prompt user payloads, and configured a persistent `FileBasedCache` backend to preserve cache entries across development server restarts.
+
 
