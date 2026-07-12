@@ -107,7 +107,10 @@
 - [x] Integrate human-readable recipe target names into LLM prompts and create flavor-specific local mock fallback descriptions
 - [x] Restore progressive Grain Optimizer and secondary ingredients configuration decks to Phase 2, popping them up immediately upon card selection
 - [x] Delegate required secondary ingredients and permissible option/substitution selectors entirely to the LLM (or fallback mock matcher)
-- [x] Write and run automated tests verifying all refactored progressive workflow features and logic
+- [x] Defer recommended grain identification until the specific recipe details API load
+- [x] Restructure sidebar layout to append contextual info below static cards on hover/focus instead of clearing
+- [x] Restrict AI Craft Elevators display card to confirmed selected recipes
+- [x] Fix layout container early closure by restoring the missing closing div tag
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
