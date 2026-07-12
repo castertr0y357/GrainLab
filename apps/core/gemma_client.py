@@ -1114,6 +1114,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
                 "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
                 "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
+                "Use the target protein range, gluten behavior, and flavor affinity specifications provided in the user prompt payload to guide your evaluation.\n"
                 "Evaluate each grain and assign:\n"
                 "- 'recommended': Grains that are ideal for the preset.\n"
                 "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
@@ -1153,6 +1154,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
                 "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
                 "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
+                "Use the target protein range, gluten behavior, and flavor affinity specifications provided in the user prompt payload to guide your evaluation.\n"
                 "Evaluate each grain and assign:\n"
                 "- 'recommended': Grains that are ideal for the preset.\n"
                 "- 'sub-optimal': Grains that are usable but not ideal, or require workflow/hydration adjustments.\n"
@@ -1179,6 +1181,12 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             "preset_slug": preset_slug,
             "preset_name": preset_name or (preset.name if preset else preset_slug),
             "category_slug": category_slug,
+            "engine_slug": engine.slug if engine else None,
+            "target_protein_min": engine.target_protein_min if engine else None,
+            "target_protein_max": engine.target_protein_max if engine else None,
+            "gluten_behavior_requirement": engine.gluten_behavior if engine else None,
+            "flavor_affinity_requirement": engine.flavor_affinity if engine else None,
+            "tannin_sensitive": engine.tannin_sensitive if engine else False,
             "selected_grains": selected_names,
             "inventory": [
                 {
@@ -1224,6 +1232,11 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                                 break
                     if matched_wb:
                         evaluation["grain_id"] = str(matched_wb.id)
+                        # Ensure culinary/physical constraints are programmatically satisfied
+                        correct_eval = evaluate_single_grain(matched_wb, engine, preset_name)
+                        if evaluation.get("tier") != correct_eval["tier"]:
+                            evaluation["tier"] = correct_eval["tier"]
+                            evaluation["reasoning"] = correct_eval["reasoning"]
             return res
             
     return None
@@ -1231,66 +1244,168 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
 
 def evaluate_single_grain(wb, engine, preset_name: str = None) -> dict:
     """
-    Evaluates a single grain against the engine's protein and tannin rules.
+    Evaluates a single grain against the engine's protein and tannin rules,
+    applying culinary sovereignty rules for ancient and non-standard grains.
     """
     p_min = getattr(engine, "target_protein_min", 11.0)
     p_max = getattr(engine, "target_protein_max", 13.0)
-    g_behav = getattr(engine, "gluten_behavior", "standard")
-    flavor_affinity = getattr(engine, "flavor_affinity", "")
-    t_sens = getattr(engine, "tannin_sensitive", False)
+    engine_slug = getattr(engine, "slug", "")
+    recipe_title = preset_name or (engine.name if engine else "recipe")
 
     name = wb.name
     prot = wb.protein_content
     hard = wb.hardness
+    name_lower = name.lower()
 
-    # Heuristic 1: Structure/Protein Tier
-    is_in_range = p_min <= prot <= p_max
-    is_within_tolerance = (p_min - 1.5) <= prot <= (p_max + 1.5)
-    
-    # Hardness validation
-    hardness_ok = True
-    if p_min >= 11.5:  # Bread engines generally require hard/durum
-        if hard not in ["hard", "durum"]:
-            hardness_ok = False
-    elif p_max <= 10.5:  # Weak engines (cookies/cake/quick) generally require soft
-        if hard != "soft":
-            hardness_ok = False
+    tier = None
+    reasoning = ""
 
-    if is_in_range and hardness_ok:
-        base_tier = "recommended"
-    elif is_within_tolerance:
-        base_tier = "sub-optimal"
-    else:
-        base_tier = "not-recommended"
-
-    # Heuristic 2: Tannin penalty
-    is_tannin_heavy = any(x in name.lower() for x in ["red", "rye", "spelt", "einkorn"])
-    final_tier = base_tier
-    penalty_applied = False
-    if t_sens and is_tannin_heavy:
-        penalty_applied = True
-        if base_tier == "recommended":
-            final_tier = "sub-optimal"
-        elif base_tier == "sub-optimal":
-            final_tier = "not-recommended"
-
-    # Analytical reasoning string construction
-    recipe_title = preset_name or (engine.name if engine else "recipe")
-    if final_tier == "recommended":
-        reasoning = f"At {prot}% protein content, {name} is ideal for {recipe_title} (ideal target is {p_min}%-{p_max}%). Its starch/lipid absorption properties promote the optimal spread and texture structure required for this specific formulation."
-    elif final_tier == "sub-optimal":
-        if penalty_applied and is_in_range:
-            reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with the {recipe_title} flavor profile, dropping it to sub-optimal."
+    # Rye Override
+    if "rye" in name_lower:
+        if engine_slug == "cookie":
+            tier = "recommended"
+            reasoning = f"Rye is highly recommended for {recipe_title} because its high pentosan content blocks gluten development, preserving maximum cookie tenderness and creating a chewy, gooey center. Its earthy flavor profile pairs beautifully with chocolate chip and brown sugar notes."
+        elif engine_slug in ["hearth", "pan", "flat", "quick", "pasta", "fry"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Rye can be used in {recipe_title} for a unique rustic flavor, but its high pentosans and weak gluten elasticity will result in a denser, stickier structure that requires careful hydration management."
         else:
-            reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {recipe_title}, which will require minor hydration adjustments."
-    else:
-        if penalty_applied:
-            reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the {recipe_title} flavor profile."
+            tier = "not-recommended"
+            reasoning = f"At {prot}% protein, Rye is not recommended for {recipe_title} because its lack of structured gluten and high water-retention pentosans will cause structural collapse or excessive stickiness."
+
+    # Soft White Wheat Override
+    elif "soft" in name_lower:
+        if engine_slug in ["cookie", "batter", "quick", "pastry"]:
+            tier = "recommended"
+            reasoning = f"At {prot}% protein, Soft White Wheat is recommended for {recipe_title} due to its weak, tender gluten structure, which yields the delicate, melt-in-the-mouth crumb required for pastries and confections."
+        elif engine_slug in ["flat", "fry"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Soft White Wheat is usable for {recipe_title} but lacks the moderate gluten strength required for optimal tear and volume."
         else:
-            reasoning = f"At {prot}% protein, {name} completely violates the {recipe_title} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
+            tier = "not-recommended"
+            reasoning = f"At {prot}% protein, Soft White Wheat is not recommended for {recipe_title} as its weak gluten structure will fail to retain gas and shape, leading to a flat, dense, or gummy product."
+
+    # Spelt Override
+    elif "spelt" in name_lower:
+        if engine_slug in ["cookie", "quick"]:
+            tier = "recommended"
+            reasoning = f"Spelt is recommended for {recipe_title} as its highly extensible, weak gluten provides excellent tenderness, while adding a pleasant, nutty flavor profile."
+        elif engine_slug in ["hearth", "pan", "pastry", "flat", "fry", "pasta"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Spelt is usable but its highly extensible, weak gluten structure requires careful hydration and dough handling to prevent structural collapse in {recipe_title}."
+        else:
+            tier = "not-recommended"
+            reasoning = f"Spelt is not recommended for {recipe_title} because its weak gluten cannot support the high structural expansion or delicate starch aeration required."
+
+    # Einkorn Override
+    elif "einkorn" in name_lower:
+        if engine_slug in ["cookie", "quick", "flat"]:
+            tier = "recommended"
+            reasoning = f"Einkorn is recommended for {recipe_title} because its exceptionally weak gluten and high starch content yield superior tenderness, while introducing a rich, nutty flavor."
+        elif engine_slug in ["batter", "fry"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Einkorn is usable but its weak gluten and yellow pigment profile may require adjustments to hydration or rise times in {recipe_title}."
+        else:
+            tier = "not-recommended"
+            reasoning = f"Einkorn is not recommended for {recipe_title} because its extremely fragile gluten structure will cause collapse, sticky dough handling, or a lack of structural rise."
+
+    # Kamut Override
+    elif "kamut" in name_lower:
+        if engine_slug in ["pasta", "flat"]:
+            tier = "recommended"
+            reasoning = f"Kamut is highly recommended for {recipe_title} due to its rich, buttery flavor and highly extensible gluten, which is perfect for hand-stretched doughs and pasta structure."
+        elif engine_slug in ["hearth", "pan", "quick", "cookie", "fry"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Kamut is sub-optimal for {recipe_title} because its gluten is extensible but lacks the elastic strength needed for maximum volume, though it adds a pleasant buttery flavor."
+        else:
+            tier = "not-recommended"
+            reasoning = f"Kamut is not recommended for {recipe_title} because its low-elasticity gluten structure is incompatible with the structural browning or rising requirements."
+
+    # Hard Red Spring Wheat Override (High strength)
+    elif "hard red spring" in name_lower:
+        if engine_slug in ["hearth", "pan", "bath", "choux", "pasta", "fry"]:
+            tier = "recommended"
+            reasoning = f"At {prot}% protein, Hard Red Spring Wheat is recommended for {recipe_title} as its strong, elastic gluten provides the optimal structure and gas retention needed for a high-volume rise."
+        elif engine_slug in ["quick", "pastry", "flat"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Hard Red Spring Wheat is sub-optimal for {recipe_title} because its high gluten strength can make the texture slightly tough or difficult to roll out without relaxation."
+        else:
+            tier = "not-recommended"
+            reasoning = f"At {prot}% protein, Hard Red Spring Wheat is not recommended for {recipe_title} because its strong gluten network is fundamentally incompatible with the required delicate, tender crumb."
+
+    # Hard Red Winter Wheat Override (Moderate-high strength)
+    elif "hard red winter" in name_lower:
+        if engine_slug in ["hearth", "pan", "bath", "flat", "pasta", "fry"]:
+            tier = "recommended"
+            reasoning = f"At {prot}% protein, Hard Red Winter Wheat is recommended for {recipe_title} because its balanced gluten elasticity and extensibility provide excellent structure and rise."
+        elif engine_slug in ["quick", "pastry", "choux"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Hard Red Winter Wheat is sub-optimal for {recipe_title} as it provides slightly too much structural strength but can be blended to achieve the target texture."
+        else:
+            tier = "not-recommended"
+            reasoning = f"At {prot}% protein, Hard Red Winter Wheat is not recommended for {recipe_title} because its robust gluten structure results in excessive toughness in delicate crumb applications."
+
+    # Hard White Wheat Override (Mild, hard)
+    elif "hard white" in name_lower:
+        if engine_slug in ["hearth", "pan", "bath", "flat", "pasta", "fry"]:
+            tier = "recommended"
+            reasoning = f"At {prot}% protein, Hard White Wheat is recommended for {recipe_title} as its strong gluten structure and mild flavor profile provide excellent structural integrity and rise without whole-grain bitterness."
+        elif engine_slug in ["quick", "pastry", "choux", "cookie"]:
+            tier = "sub-optimal"
+            reasoning = f"At {prot}% protein, Hard White Wheat is sub-optimal for {recipe_title}. While its mild flavor is desirable, its gluten structure is slightly too strong and elastic for optimal tenderness."
+        else:
+            tier = "not-recommended"
+            reasoning = f"At {prot}% protein, Hard White Wheat is not recommended for {recipe_title} due to its high gluten strength causing a tough, heavy crumb in delicate batters."
+
+    # Default fallback to standard protein/hardness/tannin calculations if no specific override matches
+    if not tier:
+        # Heuristic 1: Structure/Protein Tier
+        is_in_range = p_min <= prot <= p_max
+        is_within_tolerance = (p_min - 1.5) <= prot <= (p_max + 1.5)
+        
+        # Hardness validation
+        hardness_ok = True
+        if p_min >= 11.5:  # Bread engines generally require hard/durum
+            if hard not in ["hard", "durum"]:
+                hardness_ok = False
+        elif p_max <= 10.5:  # Weak engines (cookies/cake/quick) generally require soft
+            if hard != "soft":
+                hardness_ok = False
+
+        if is_in_range and hardness_ok:
+            base_tier = "recommended"
+        elif is_within_tolerance:
+            base_tier = "sub-optimal"
+        else:
+            base_tier = "not-recommended"
+
+        # Heuristic 2: Tannin penalty
+        is_tannin_heavy = any(x in name.lower() for x in ["red", "rye", "spelt", "einkorn"])
+        t_sens = getattr(engine, "tannin_sensitive", False)
+        final_tier = base_tier
+        penalty_applied = False
+        if t_sens and is_tannin_heavy:
+            penalty_applied = True
+            if base_tier == "recommended":
+                final_tier = "sub-optimal"
+            elif base_tier == "sub-optimal":
+                final_tier = "not-recommended"
+
+        tier = final_tier
+        if tier == "recommended":
+            reasoning = f"At {prot}% protein content, {name} is ideal for {recipe_title} (ideal target is {p_min}%-{p_max}%). Its starch/lipid absorption properties promote the optimal spread and texture structure required for this specific formulation."
+        elif tier == "sub-optimal":
+            if penalty_applied and is_in_range:
+                reasoning = f"At {prot}% protein, {name} has ideal strength for this bake, but its tannin-rich red/rustic bran flavor profile clashes with the {recipe_title} flavor profile, dropping it to sub-optimal."
+            else:
+                reasoning = f"At {prot}% protein, {name} is slightly outside the ideal target range ({p_min}%-{p_max}%) for {recipe_title}, which will require minor hydration adjustments."
+        else:
+            if penalty_applied:
+                reasoning = f"At {prot}% protein, {name} is sub-optimal in strength and its bitter/astringent tannins clash aggressively with the {recipe_title} flavor profile."
+            else:
+                reasoning = f"At {prot}% protein, {name} completely violates the {recipe_title} target range ({p_min}%-{p_max}%), which will cause gas retention failure or excessive toughness."
 
     return {
-        "tier": final_tier,
+        "tier": tier,
         "reasoning": reasoning
     }
 
@@ -1921,7 +2036,7 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     """
     slug = (recipe_slug or "").lower()
     name = (recipe_name or "").lower()
-    is_cookie = engine_id in ["cookies-shortbread", "cakes-batters"]
+    is_cookie = engine_id in ["cookies-shortbread", "cakes-batters", "cookie", "batter"] or "cookie" in engine_id.lower() or "batter" in engine_id.lower()
 
     # 1. Custom matches for cookies & sweets
     if is_cookie:

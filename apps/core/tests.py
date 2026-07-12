@@ -930,6 +930,25 @@ class AIGrainAdvisoryTests(TestCase):
 
 
 
+class CulinarySovereigntyTests(TestCase):
+    def test_culinary_sovereignty_grain_evaluation(self):
+        from apps.core.models import WheatBerry
+        from grainlab.engines.cookie_engine import CookieEngine
+        from apps.core.gemma_client import evaluate_single_grain
+
+        engine = CookieEngine()
+
+        rye = WheatBerry(name="Rye (Ancient)", protein_content=10.0, hardness="ancient")
+        soft = WheatBerry(name="Soft White Wheat", protein_content=9.5, hardness="soft")
+        hard_white = WheatBerry(name="Hard White Wheat", protein_content=12.5, hardness="hard")
+        hard_red = WheatBerry(name="Hard Red Spring Wheat", protein_content=14.5, hardness="hard")
+
+        self.assertEqual(evaluate_single_grain(rye, engine)["tier"], "recommended")
+        self.assertEqual(evaluate_single_grain(soft, engine)["tier"], "recommended")
+        self.assertEqual(evaluate_single_grain(hard_white, engine)["tier"], "sub-optimal")
+        self.assertEqual(evaluate_single_grain(hard_red, engine)["tier"], "not-recommended")
+
+
 class GeometryEvaluationTests(TestCase):
     """
     Tests the engine permissible form factors, geometry advisory client,
