@@ -1120,8 +1120,6 @@ class GenerateVariantsTests(TestCase):
         for variant in variants:
             self.assertIn("variant_id", variant, "Missing variant_id key")
             self.assertIn("variant_name", variant, "Missing variant_name key")
-            self.assertIn("recommended_grain_ids", variant, "Missing recommended_grain_ids key")
-            self.assertIsInstance(variant["recommended_grain_ids"], list)
             self.assertNotIn("sidebar_science_profile", variant)
             self.assertNotIn("sidebar_ai_insight", variant)
 
@@ -1151,7 +1149,6 @@ class GenerateVariantsTests(TestCase):
             self.assertIn("recipe_name", recipe)
             self.assertIn("creativity_level", recipe)
             self.assertIn("description", recipe)
-            self.assertIn("recommended_grain_ids", recipe)
             self.assertNotIn("sidebar_science_profile", recipe)
             self.assertNotIn("sidebar_ai_insight", recipe)
 
@@ -1174,6 +1171,8 @@ class GenerateVariantsTests(TestCase):
         self.assertIn("sidebar_science_profile", data)
         self.assertIn("menu_description", data)
         self.assertIn("secondary_ingredients", data)
+        self.assertIn("recommended_grain_ids", data)
+        self.assertIsInstance(data["recommended_grain_ids"], list)
 
     def test_ai_recipe_details_missing_params(self) -> None:
         """Verifies ai_recipe_details returns 400 Bad Request if recipe_slug is not provided."""

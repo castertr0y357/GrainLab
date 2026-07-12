@@ -458,7 +458,8 @@
                 this.sidebar_menu_description = menu;
                 this.selectedRecipeMenuDescription = menu;
 
-                // globalElevateRecipe is loaded separately via fetchElevateTips after recipe selection is confirmed
+                // Save recommended grains for highlighting in Phase 2
+                this.recommended_grain_ids = data.recommended_grain_ids || [];
 
                 // Pre-select required secondary ingredients if returned by LLM
                 this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
@@ -1398,23 +1399,23 @@
                     <span x-text="presetName"></span> <span x-show="presetModified" style="color: var(--warning); font-size: 0.8rem; text-transform: uppercase; margin-left: 0.25rem;">(Modified)</span>
                 </div>
                 
-                <!-- Contextual Sidebar Inspector (Active on Hover/Focus) -->
-                <div x-show="hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+                <!-- Contextual Hover Details Panel (Appended below standard cards) -->
+                <div x-show="hovered_element" x-transition style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 1rem;">
                     
                     <!-- Panel A: Factual Science Profile (StaticInspectorCard) -->
-                    <div x-show="!global_ai_enabled" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
-                        <h3 style="color: var(--accent); margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <div x-show="!global_ai_enabled || hovered_element.startsWith('grain_')" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <h3 style="color: var(--accent); margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             🔬 Factual Science Profile
                         </h3>
-                        <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500; margin-bottom: 0.5rem; text-transform: capitalize;">
+                        <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500; margin-bottom: 0.5rem; text-transform: capitalize;">
                             Element: <span x-text="(hovered_element || '').replace('grain_', '').replace(/_/g, ' ')"></span>
                         </div>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="getFactualProfile()"></p>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="getFactualProfile()"></p>
                         
-                        <!-- Dynamic Grain Advisory (only shown when hovering/focusing a grain and evaluation is present) -->
+                        <!-- Dynamic Grain Advisory -->
                         <template x-if="getHoveredGrainEval()">
-                            <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                                <span style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;"
+                            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                                <span style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.3rem;"
                                       :style="
                                          getHoveredGrainEval().tier === 'recommended' 
                                              ? 'color: #ffc107;' 
@@ -1430,41 +1431,32 @@
                                              : '[ SUB-OPTIMAL STOCK ]'
                                       ">
                                 </span>
-                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" 
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" 
                                    x-text="getHoveredGrainEval().reasoning"></p>
                             </div>
                         </template>
                     </div>
 
-                    <!-- Panel B: Pragmatic Magic Layer (AIInsightCard) -->
-                    <div x-show="global_ai_enabled" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
-                        <h3 style="color: #ff9800; margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 136, 0, 0.1); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <!-- Panel B: Pragmatic Magic Layer (AIInsightCard for non-grain items when AI active) -->
+                    <div x-show="global_ai_enabled && !hovered_element.startsWith('grain_')" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                        <h3 style="color: #ff9800; margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 136, 0, 0.1); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             🤖 Pragmatic Magic Layer
                         </h3>
                         
                         <!-- Insight Loading State -->
-                        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 0;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <span class="spinner" style="width: 12px; height: 12px;"></span>
-                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
+                        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <span class="spinner" style="width: 10px; height: 10px;"></span>
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
                             </div>
-                            <template x-for="(step, idx) in recipe_details_steps" :key="idx">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; transition: all 0.3s ease;"
-                                     :style="step.active ? 'color: var(--accent); font-weight: bold;' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
-                                    <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
-                                    <span x-show="step.active" class="spinner" style="width: 8px; height: 8px; border-width: 2px; border-color: var(--accent) transparent var(--accent) transparent; display: inline-block;"></span>
-                                    <span x-show="!step.completed && !step.active" style="display: inline-block; width: 8px; text-align: center;">○</span>
-                                    <span x-text="step.text"></span>
-                                </div>
-                            </template>
                         </div>
                         
                         <!-- Insight Content -->
                         <div x-show="!sidebar_insight_loading">
                             <!-- Recommendation Tier -->
-                            <div style="margin-bottom: 0.75rem;" x-show="sidebar_tier">
-                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Recommendation Tier</span>
-                                <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;"
+                            <div style="margin-bottom: 0.5rem;" x-show="sidebar_tier">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Recommendation Tier</span>
+                                <span style="display: inline-block; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;"
                                       :style="
                                          sidebar_tier === 'recommended' 
                                              ? 'background-color: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2);' 
@@ -1480,21 +1472,21 @@
                                              : 'SUB-OPTIMAL'
                                       "></span>
                             </div>
-                            <div style="margin-bottom: 0.75rem;" x-show="hovered_element && !hovered_element.startsWith('grain_') && !hovered_element.startsWith('archetype_')">
-                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Labor ROI Matrix</span>
-                                <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
+                            <div style="margin-bottom: 0.5rem;" x-show="hovered_element && !hovered_element.startsWith('grain_') && !hovered_element.startsWith('archetype_')">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Labor ROI Matrix</span>
+                                <span style="display: inline-block; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
                                       x-text="sidebar_labor_roi"></span>
                             </div>
-                            <div style="margin-bottom: 0.75rem;">
-                                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">AI Critique &amp; Reasoning</span>
-                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis"></p>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">AI Critique &amp; Reasoning</span>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis"></p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Phase 2 Sidebar Inspector -->
-                <div x-show="current_phase === 2 && !hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+                <div x-show="current_phase === 2" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
                     <!-- Idle State: No Recipe Selected -->
                     <div x-show="!selected_recipe_id" 
                          style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
@@ -1532,7 +1524,7 @@
                             </div>
                             
                             <!-- Ways to Elevate Card -->
-                            <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                            <div x-show="recipe_selected" x-transition style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
                                 <span style="font-size: 0.75rem; color: #ff9800; text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🤖 AI Craft Elevators</span>
                                 <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
                                     <span class="spinner" style="width: 12px; height: 12px;"></span>
@@ -1556,7 +1548,7 @@
                 </div>
 
                 <!-- Phase 1 Sidebar Inspector -->
-                <div x-show="current_phase === 1 && !hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+                <div x-show="current_phase === 1" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
                     <!-- Idle State: No Category Selected -->
                     <div x-show="!selected_master || selected_master === 'null'" 
                          style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
@@ -1608,7 +1600,7 @@
                     </div>
                 </div>
                 
-                <div id="recipe-output-container" x-show="current_phase >= 3 && !hovered_element">
+                <div id="recipe-output-container" x-show="current_phase >= 3">
                     <!-- Swapped in dynamically by HTMX -->
                     <div style="text-align: center; padding: 6rem 1.5rem; color: var(--text-muted);">
                         <span class="spinner" style="width: 40px; height: 40px;"></span>

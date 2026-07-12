@@ -355,7 +355,6 @@ def get_fallback_creativity_recipes(engine_id: str, active_archetype_id: str, pr
                 "recipe_name": item["name"],
                 "creativity_level": lvl,
                 "description": item["desc"],
-                "recommended_grain_ids": pref_slugs,
             })
     return {"recipes": recipes}
 
@@ -376,7 +375,6 @@ def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_l
             "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
             "variant_name": item["name"],
             "description": item["desc"],
-            "recommended_grain_ids": pref_slugs,
         })
     return {"generated_variants": variants}
 
@@ -1761,7 +1759,7 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
         "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profiles).\n"
         "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
         "\n"
-        "CRITICAL: The recipe profiles must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
+        "CRITICAL: The recipe profiles must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard').\n"
         "\n"
         "Each recipe must match this JSON schema:\n"
         "{\n"
@@ -1770,12 +1768,10 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
         "      \"recipe_id\": \"unique_slug\",\n"
         "      \"recipe_name\": \"Human readable title (representing a culinary/flavor target)\",\n"
         "      \"creativity_level\": 1,  // must be 1 or 2\n"
-        "      \"description\": \"1-2 sentence description explaining the flavor structure\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
+        "      \"description\": \"1-2 sentence description explaining the flavor structure\"\n"
         "    }\n"
         "  ]\n"
         "}\n"
-        "IMPORTANT: recommended_grain_ids must be lowercase name slugs matching grains from the provided inventory. "
         "Return ONLY raw JSON with no markdown fences."
     )
 
@@ -1810,7 +1806,7 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
-        "CRITICAL: The variations must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
+        "CRITICAL: The variations must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard').\n"
         "\n"
         "Each variation must match this JSON schema:\n"
         "{\n"
@@ -1818,12 +1814,10 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
         "    {\n"
         "      \"variant_id\": \"unique_slug\",\n"
         "      \"variant_name\": \"Human readable variant label (representing a culinary/flavor target)\",\n"
-        "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\",\n"
-        "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
+        "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\"\n"
         "    }\n"
         "  ]\n"
         "}\n"
-        "IMPORTANT: recommended_grain_ids must be lowercase name slugs matching grains from the provided inventory. "
         "Return ONLY raw JSON with no markdown fences."
     )
 
@@ -1860,11 +1854,12 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
-        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, and required secondary ingredients (including permissible substitutions).\n"
+        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, recommended grain selections, and required secondary ingredients (including permissible substitutions).\n"
         "Each response must match this JSON schema:\n"
         "{\n"
         "  \"menu_description\": \"A 1-2 sentence rich, descriptive flavor profile that highlights taste, aroma, and visual appeal, written in the style of a high-end restaurant menu item description (e.g., 'A decadent, dark chocolate cookie layered with rich malt undertones and finished with pockets of molten Valrhona fudge.').\",\n"
         "  \"sidebar_science_profile\": \"1-2 sentence technical science analysis of the crumb, starch-lipid structure, or hydration of this specific recipe.\",\n"
+        "  \"recommended_grain_ids\": [\"grain_name_slug\"],  // list of lowercase name slugs matching grains from the provided inventory that are recommended for this flavor profile\n"
         "  \"secondary_ingredients\": {\n"
         "    \"lipids\": {\n"
         "      \"required\": \"One of: unsalted_butter, salted_butter, coconut_oil, avocado_oil (use underscore format)\",\n"
@@ -1885,7 +1880,8 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "🚨 [CRITICAL PROMPT HARDENING]\n"
         "1. FLAVOR-FIRST MENU DESCRIPTION: The `menu_description` MUST highlight and describe the specific flavor characteristics of the recipe name provided (for example: if the recipe is Snickerdoodle, focus on sweet cinnamon-sugar warmth; if it is Classic Chocolate Chip, focus on rich butter and chocolate pockets). Do NOT output generic templates or repeat the same description for different recipes.\n"
         "2. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
-        "3. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale."
+        "3. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
+        "4. RECOMMENDED GRAINS DETECTOR: You must identify which grains from the provided active selected grains list are recommended for this recipe and list their lowercase name slugs (e.g. ['soft_white_wheat', 'rye']) in the recommended_grain_ids key."
     )
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
@@ -1906,7 +1902,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         if getattr(settings, "MOCK_MODE", True):
             return get_local_recipe_details(recipe_slug, recipe_name, engine_id, active_archetype_id, selected_grains)
 
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "secondary_ingredients"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "secondary_ingredients", "recommended_grain_ids"])
         if result and isinstance(result, dict) and "sidebar_science_profile" in result:
             return result
     except Exception as e:
@@ -2120,9 +2116,21 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
                 "options": ["pure_water", "whole_milk", "buttermilk"]
             }
 
+    pref_slugs = []
+    if is_cookie:
+        pref_slugs = ["soft_white_wheat", "rye"]
+    else:
+        if "brioche" in name or "challah" in name or "enriched" in slug:
+            pref_slugs = ["hard_white_wheat"]
+        elif "baguette" in name or "sourdough" in name or "pizza" in slug:
+            pref_slugs = ["hard_red_spring_wheat"]
+        else:
+            pref_slugs = ["hard_red_winter_wheat"]
+
     return {
         "menu_description": menu,
         "sidebar_science_profile": science,
+        "recommended_grain_ids": pref_slugs,
         "secondary_ingredients": {
             "lipids": sec_lipids,
             "liquids": sec_liquids,
