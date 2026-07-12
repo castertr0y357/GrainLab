@@ -911,6 +911,8 @@ def ai_grain_advisory(request):
     only_evaluations = request.GET.get("only_evaluations", "false").lower() == "true"
     only_elevate = request.GET.get("only_elevate", "false").lower() == "true"
     
+    active_archetype_id = request.GET.get("active_archetype_id", "").strip() or None
+
     # Sanitize preset_slug from any recipe or level suffix
     if preset_slug:
         for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
@@ -932,13 +934,14 @@ def ai_grain_advisory(request):
                 selected_grains=selected_grains,
                 only_evaluations=only_evaluations,
                 only_elevate=only_elevate,
-                preset_name=preset_name
+                preset_name=preset_name,
+                active_archetype_id=active_archetype_id
             )
         except Exception as e:
             logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
             advisory = {"grain_evaluations": [], "elevate_recipe": []}
     else:
-        advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug, preset_name=preset_name)
+        advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug, preset_name=preset_name, active_archetype_id=active_archetype_id)
         if only_elevate:
             # Generate local/mock elevate tips when AI is disabled
             mock_data = gemma_client.get_mock_gemma_response(
@@ -946,6 +949,7 @@ def ai_grain_advisory(request):
                 user_prompt=json.dumps({
                     "preset_slug": preset_slug,
                     "category_slug": category_slug,
+                    "active_archetype_id": active_archetype_id,
                     "selected_grains": [s.strip() for s in selected_grains.split(",") if s.strip()]
                 }),
                 expected_keys=["elevate_recipe"]
@@ -965,9 +969,9 @@ def ai_grain_advisory(request):
             "elevate_recipe": advisory.get("elevate_recipe", [])
         })
 
-def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None) -> list[dict]:
+def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None, active_archetype_id: str = None) -> list[dict]:
     """
-    Evaluates all inactive grains and returns those that are 'recommended' for the current preset/engine.
+    Evaluates all inactive grains and returns those that are 'recommended' for the current preset/engine/archetype.
     """
     from apps.core.models import WheatBerry, BreadPreset
     from grainlab.engines import router
@@ -986,7 +990,7 @@ def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = No
     recommended_inactive = []
 
     for wb in inactive_berries:
-        res = evaluate_single_grain(wb, engine, preset_slug=preset_slug)
+        res = evaluate_single_grain(wb, engine, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
         if res["tier"] == "recommended":
             recommended_inactive.append({
                 "name": wb.name,
@@ -1007,6 +1011,7 @@ def ai_sidebar_insight(request):
     element = request.GET.get("element", "").strip()
     category_slug = request.GET.get("category_slug", "").strip()
     preset_slug = request.GET.get("preset_slug", "").strip()
+    active_archetype_id = request.GET.get("active_archetype_id", "").strip() or None
     
     if not element:
         return JsonResponse({
@@ -1679,7 +1684,7 @@ def ai_sidebar_insight(request):
                 
         # 3. Dynamic out-of-stock grain suggestion (only when AI is NOT enabled)
         if not ai_enabled:
-            inactive_recs = get_inactive_grain_recommendations(preset_slug, category_slug)
+            inactive_recs = get_inactive_grain_recommendations(preset_slug, category_slug, active_archetype_id=active_archetype_id)
             if inactive_recs:
                 # Avoid duplicate recommendations if the hovered element itself is that out-of-stock grain
                 rec = inactive_recs[0]

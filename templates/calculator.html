@@ -186,6 +186,9 @@
         }
         
         let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
+        if (this.active_archetype_id) {
+            url += `&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}`;
+        }
         fetch(url)
             .then(res => res.json())
             .then(data => {
@@ -322,22 +325,33 @@
         { text: 'Formulating artisanal baking tips...', active: false, completed: false }
     ],
 
+    purgeArchetypeState() {
+        this.generated_variants = [];
+        this.alternative_variants = [];
+        this.grainEvaluations = [];
+        this.recommended_grain_ids = [];
+        this.creativity_recipes = [];
+        this.selected_recipe_id = null;
+        this.recipe_selected = false;
+        this.expanded_level = null;
+        this.hovered_variant = null;
+        if (this.recipe_gen_interval) {
+            clearInterval(this.recipe_gen_interval);
+            this.recipe_gen_interval = null;
+        }
+        if (this.recipe_details_interval) {
+            clearInterval(this.recipe_details_interval);
+            this.recipe_details_interval = null;
+        }
+    },
+
     selectArchetype(archetype_id, engine_id) {
+        this.purgeArchetypeState();
         if (this.active_archetype_id === archetype_id) {
             this.active_archetype_id = null;
-            this.creativity_recipes = [];
-            this.recipe_selected = false;
-            this.selected_recipe_id = null;
-            this.expanded_level = null;
-            this.alternative_variants = [];
             return;
         }
         this.active_archetype_id = archetype_id;
-        this.creativity_recipes = [];
-        this.recipe_selected = false;
-        this.selected_recipe_id = null;
-        this.expanded_level = null;
-        this.alternative_variants = [];
         
         // Fetch 5 recipes per creativity level for this archetype!
         this.fetchCreativityRecipes(engine_id, archetype_id);
@@ -840,6 +854,9 @@
         if (this.selected_master && this.selected_master !== 'null') {
             url += '&category_slug=' + encodeURIComponent(this.selected_master);
         }
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
 
         fetch(url, { signal })
             .then(res => res.json())
@@ -907,6 +924,9 @@
         let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&selected_grains=' + encodeURIComponent(selectedGrains) + '&only_elevate=true';
         if (this.selected_master && this.selected_master !== 'null') {
             url += '&category_slug=' + encodeURIComponent(this.selected_master);
+        }
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
         }
 
         fetch(url)

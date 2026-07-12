@@ -528,6 +528,37 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
     except Exception:
         user_data = {}
 
+    if expected_keys and "evaluation_result" in expected_keys:
+        grain_name = user_data.get("grain_name", "")
+        from apps.core.models import WheatBerry
+        wb = WheatBerry.objects.filter(name=grain_name).first()
+        if not wb:
+            grain_id = user_data.get("grain_id", "")
+            wb = WheatBerry.objects.filter(id=grain_id).first()
+        
+        from grainlab.engines import router
+        engine_id = user_data.get("engine_id", "hearth")
+        active_archetype_id = user_data.get("active_archetype_id")
+        
+        engine = None
+        try:
+            engine = router.get_engine_by_id(engine_id)
+        except Exception:
+            pass
+        if not engine:
+            try:
+                engine = router.get_engine_for_preset("", engine_id)
+            except Exception:
+                pass
+            
+        res = calculate_local_compatibility_from_specs(wb, engine, active_archetype_id=active_archetype_id)
+        return {
+            "evaluation_result": {
+                "compatibility_tier": res["tier"].upper().replace("-", "_"),
+                "technical_justification": res["reasoning"]
+            }
+        }
+
     if expected_keys and "shares" in expected_keys:
         berries = user_data.get("active_berries", [])
         shares = {}
@@ -1083,7 +1114,7 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     return None
 
 
-def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False, preset_name: str = None) -> dict | None:
+def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False, preset_name: str = None, active_archetype_id: str = None) -> dict | None:
     """
     Evaluates raw kitchen inventory against target archetype mechanics using the dynamic pipeline.
     """
@@ -1105,26 +1136,32 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         selected_berries = [wb for wb in active_berries if str(wb.id) in selected_ids]
         selected_names = [wb.name for wb in selected_berries]
 
+        archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+
         expected_keys = ["grain_evaluations", "elevate_recipe"]
 
         if only_evaluations:
             system_prompt = (
-                "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
+                "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
+                "Your task is to calculate the precise physical and chemical compatibility between available kitchen raw grain berries "
+                "and the mechanical targets of the production dough/confection archetype.\n\n"
                 "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
-                "Evaluate each grain and assign:\n"
-                "- 'recommended': Grains that are ideal for the preset.\n"
-                "- 'sub-optimal': Grains that are usable but not ideal.\n"
-                "- 'not-recommended': Grains that are inappropriate.\n"
-                "\n"
+                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
+                "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+                f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+                f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
+                f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
+                f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
+                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
+                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n\n"
                 "Return a JSON object matching this schema:\n"
                 "{\n"
                 "  \"grain_evaluations\": [\n"
                 "    {\n"
                 "      \"grain_id\": \"string (UUID of the grain)\",\n"
                 "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation.\"\n"
+                "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
                 "    }\n"
                 "  ]\n"
                 "}"
@@ -1142,22 +1179,26 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             expected_keys = ["elevate_recipe"]
         else:
             system_prompt = (
-                "You are a baking science expert. Analyze the given bread/pastry preset and evaluate the available wheat berries in the kitchen inventory.\n"
+                "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
+                "Your task is to calculate the precise physical and chemical compatibility between available kitchen raw grain berries "
+                "and the mechanical targets of the production dough/confection archetype.\n\n"
                 "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"
                 "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
-                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry. "
-                "Evaluate each grain and assign:\n"
-                "- 'recommended': Grains that are ideal for the preset.\n"
-                "- 'sub-optimal': Grains that are usable but not ideal.\n"
-                "- 'not-recommended': Grains that are inappropriate.\n"
-                "\n"
+                "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n\n"
+                "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+                f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+                f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
+                f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
+                f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
+                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
+                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n\n"
                 "Return a JSON object matching this schema:\n"
                 "{\n"
                 "  \"grain_evaluations\": [\n"
                 "    {\n"
                 "      \"grain_id\": \"string (UUID of the grain)\",\n"
                 "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-                "      \"reasoning\": \"A concise 1-2 sentence analytical explanation.\"\n"
+                "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
                 "    }\n"
                 "  ],\n"
                 "  \"elevate_recipe\": [\n"
@@ -1166,19 +1207,19 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "  ]\n"
                 "}"
             )
-        
+
         payload = {
-            "preset_slug": preset_slug,
-            "preset_name": preset_name or (preset.name if preset else preset_slug),
-            "category_slug": category_slug,
+            "engine_id": engine.slug if engine else "default",
+            "active_archetype_id": active_archetype_id,
             "selected_grains": selected_names,
             "inventory": [
                 {
                     "id": str(wb.id),
                     "name": wb.name,
-                    "protein": wb.protein_content,
-                    "hardness": wb.hardness,
-                    "notes": wb.notes
+                    "crude_protein_percentage": get_grain_registry_profile(wb.name).get("crude_protein_percentage"),
+                    "gluten_binding_capacity": get_grain_registry_profile(wb.name).get("gluten_binding_capacity"),
+                    "pentosan_concentration": get_grain_registry_profile(wb.name).get("pentosan_concentration"),
+                    "bran_tannin_profile": get_grain_registry_profile(wb.name).get("bran_tannin_profile")
                 }
                 for wb in active_berries
             ]
@@ -1222,7 +1263,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
     evaluations = []
     if not only_elevate:
         for wb in active_berries:
-            res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug)
+            res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
             evaluations.append({
                 "grain_id": str(wb.id),
                 "tier": res["tier"],
@@ -1245,29 +1286,34 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
 
 def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None) -> dict:
     """
-    Evaluates a single grain against the engine's mechanics using LLM or local fallback.
+    Polymorphically evaluates a single grain against target mechanics using the two-dataset prompt.
     """
-    # Compile profiles
+    import json
+    from django.conf import settings
+    
+    # 1. Fetch intrinsic chemical profile of the grain from grain_registry.json
     grain_profile = get_grain_registry_profile(wb.name)
+    
+    # 2. Fetch target archetype mechanics from active engine (force explicit dynamic prompt binding)
     archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
     
-    if _is_ai_enabled() and not getattr(settings, "MOCK_MODE", True):
+    if _is_ai_enabled():
         system_prompt = (
             "You are a molecular food scientist and artisan baking chemist running an objective evaluation loop. "
             "Your task is to calculate the precise physical and chemical compatibility between a raw grain berry "
             "and the mechanical targets of a production dough/confection archetype.\n\n"
             "[INTRINSIC RAW MATERIAL PROFILE]\n"
             f"* Element Name: {wb.name}\n"
-            f"* Crude Protein: {grain_profile.get('crude_protein_percentage')}\n"
-            f"* Gluten Binding Capacity: {grain_profile.get('gluten_binding_capacity')}\n"
-            f"* Pentosan Concentration: {grain_profile.get('pentosan_concentration')}\n"
-            f"* Bran Flavor Profile: {grain_profile.get('bran_tannin_profile')}\n\n"
+            f"* Crude Protein: {grain_profile.get('crude_protein_percentage', '12.0%')}\n"
+            f"* Gluten Binding Capacity: {grain_profile.get('gluten_binding_capacity', 'high')}\n"
+            f"* Pentosan Concentration: {grain_profile.get('pentosan_concentration', 'low_standard')}\n"
+            f"* Bran Flavor Profile: {grain_profile.get('bran_tannin_profile', 'none_neutral')}\n\n"
             "[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
             f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
-            f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
-            f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
-            f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-            f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n\n"
+            f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity', 'high_retention')}\n"
+            f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow', 'controlled_expansion')}\n"
+            f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio', 'balanced_emulsion')}\n"
+            f"* Target Protein Window: {mechanics.get('optimal_protein_window', '11.0% - 13.0%')}\n\n"
             "[EVALUATION RULES]\n"
             "1. Relational Matching: Analyze how the raw ingredient's chemical attributes will behave under the thermal, hydraulic, and mechanical demands of the target archetype.\n"
             "2. Determine Compatibility Tier: Select exactly one tier string: \"RECOMMENDED\", \"SUB-OPTIMAL\", or \"NOT RECOMMENDED\".\n"
@@ -1285,22 +1331,36 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
         )
         
         user_prompt = json.dumps({
+            "grain_id": str(wb.id),
             "grain_name": wb.name,
-            "protein": wb.protein_content or 12.0,
-            "hardness": wb.hardness or "hard",
-            "preset_name": preset_name or archetype_display
+            "engine_id": engine.slug if engine else "default",
+            "active_archetype_id": active_archetype_id
         })
         
         try:
             res = call_gemma_api(system_prompt, user_prompt, expected_keys=["evaluation_result"])
+            if res and "grain_evaluations" in res:
+                evals = res["grain_evaluations"]
+                for e in evals:
+                    e_id = str(e.get("grain_id", ""))
+                    if e_id == str(wb.id) or wb.name.lower() in e_id.lower() or e_id.lower() in wb.name.lower():
+                        return {
+                            "tier": e.get("tier", "SUB-OPTIMAL").lower().replace("_", "-"),
+                            "reasoning": e.get("reasoning", "")
+                        }
             if res and "evaluation_result" in res:
                 eval_result = res["evaluation_result"]
-                compatibility_tier = eval_result.get("compatibility_tier", "SUB-OPTIMAL").lower().replace(" ", "_")
-                if compatibility_tier == "not_recommended":
-                    compatibility_tier = "not-recommended"
+                tier_raw = str(eval_result.get("compatibility_tier", "SUB-OPTIMAL")).upper().strip()
+                if "NOT" in tier_raw:
+                    tier = "not-recommended"
+                elif "SUB" in tier_raw:
+                    tier = "sub-optimal"
+                else:
+                    tier = "recommended"
+                    
                 return {
-                    "tier": compatibility_tier,
-                    "reasoning": eval_result.get("technical_justification", "Analyzed target mechanics and chemical profile successfully.")
+                    "tier": tier,
+                    "reasoning": eval_result.get("technical_justification", "Analyzed physical targets and chemical profile successfully.")
                 }
         except Exception as e:
             logger.error(f"[Gemma Client] - Error - Failed evaluation for grain {wb.name}: {e}")
@@ -1309,30 +1369,30 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
     return calculate_local_compatibility_from_specs(wb, engine, preset_slug, active_archetype_id)
 
 
-def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None) -> dict:
+def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None, active_archetype_id: str = None) -> dict:
     """
     Local fallback logic performing programmatic evaluation of kitchen inventory 
     using the active sub-engine mechanics.
     """
     from apps.core.models import WheatBerry, BreadPreset
     from grainlab.engines import router
-
+ 
     preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
     if not category_slug and preset and preset.dough_category:
         category_slug = preset.dough_category.slug
     engine = router.get_engine_for_preset(preset_slug, category_slug)
-
+ 
     active_berries = list(WheatBerry.objects.filter(is_active=True))
     evaluations = []
-
+ 
     for wb in active_berries:
-        res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug)
+        res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
         evaluations.append({
             "grain_id": str(wb.id),
             "tier": res["tier"],
             "reasoning": res["reasoning"]
         })
-
+ 
     return {
         "grain_evaluations": evaluations
     }
