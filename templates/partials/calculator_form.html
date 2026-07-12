@@ -38,7 +38,7 @@
               { id: 'spatula_bowl', name: 'Manual Spatula & Bowl', category: 'zero_friction' }
           ],
           get activeProductionProfile() {
-              return this.engines_ff[this.selected_master]?.production_profile || {
+              return this.engines_ff?.[this.selected_master]?.production_profile || {
                   thermodynamic_focus: 'biological_yeast_activity',
                   mechanical_energy_threshold: 'high_kneading',
                   permissible_action_types: ['knead'],
@@ -59,7 +59,7 @@
           engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}'),
           enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}'),
           get formFactorBaseline() {
-              const activeEngineFFs = this.engines_ff[this.selected_master]?.permissible_form_factors || {};
+              const activeEngineFFs = this.engines_ff?.[this.selected_master]?.permissible_form_factors || {};
               return activeEngineFFs[this.form_factor_val] || { 
                   name: 'Standard Loaf',
                   is_portioned: false, 
@@ -186,22 +186,22 @@
           /* editor_mode watcher removed — variable no longer exists */
           $watch('selected_master', val => {
               this.category_slug = val;
-              const keys = Object.keys(this.engines_ff[val]?.permissible_form_factors || {});
+              const keys = Object.keys(this.engines_ff?.[val]?.permissible_form_factors || {});
               if (keys.length > 0) {
                   this.form_factor_val = keys[0];
                   this.recommended_ff_slug = keys[0];
-                  this.portioned = this.engines_ff[val].permissible_form_factors[keys[0]].is_portioned;
+                  this.portioned = this.engines_ff?.[val]?.permissible_form_factors?.[keys[0]]?.is_portioned || false;
               }
               this.yield_scale = 1.0;
               
               // Reset secondary ingredients based on new active engine defaults
-              const sec = this.engines_ff[val]?.secondary_ingredients || {};
+              const sec = this.engines_ff?.[val]?.secondary_ingredients || {};
               this.secondary_lipid = sec.lipids?.default || 'unsalted_butter';
               this.secondary_liquid = sec.liquids?.default || 'pure_water';
               this.secondary_binder = sec.binders?.default || 'none';
               
               // Reset action & environment to defaults based on profile
-              const profile = this.engines_ff[val]?.production_profile || {};
+              const profile = this.engines_ff?.[val]?.production_profile || {};
               if (profile.permissible_action_types && profile.permissible_action_types.length > 0) {
                   this.active_action = profile.permissible_action_types[0];
               } else {
@@ -694,16 +694,16 @@
                     </div>
 
                     <!-- Secondary Ingredient Configuration Deck -->
-                    <div x-show="(selectedRecipeSecondaryIngredients && Object.keys(selectedRecipeSecondaryIngredients).length > 0) || (engines_ff[selected_master]?.secondary_ingredients && Object.keys(engines_ff[selected_master].secondary_ingredients).length > 0)"
+                    <div x-show="(selectedRecipeSecondaryIngredients && Object.keys(selectedRecipeSecondaryIngredients).length > 0) || (engines_ff?.[selected_master]?.secondary_ingredients && Object.keys(engines_ff?.[selected_master].secondary_ingredients).length > 0)"
                          style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
                         <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Secondary Ingredient Configuration Deck</h4>
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- Lipids Selector -->
-                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) || (engines_ff[selected_master]?.secondary_ingredients && engines_ff[selected_master].secondary_ingredients.lipids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.lipids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
                                 <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
+                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_lipid === option ? 'active' : ''"
@@ -718,11 +718,11 @@
                                 </div>
                             </div>
                             <!-- Liquids Selector -->
-                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) || (engines_ff[selected_master]?.secondary_ingredients && engines_ff[selected_master].secondary_ingredients.liquids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.liquids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Liquid Medium Selection</label>
                                 <input type="hidden" name="secondary_liquid" :value="secondary_liquid">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.options : (engines_ff[selected_master]?.secondary_ingredients?.liquids?.options || []))" :key="option">
+                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.options : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_liquid === option ? 'active' : ''"
@@ -737,11 +737,11 @@
                                 </div>
                             </div>
                             <!-- Binders Selector -->
-                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) || (engines_ff[selected_master]?.secondary_ingredients && engines_ff[selected_master].secondary_ingredients.binders)" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.binders)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Binder Selection</label>
                                 <input type="hidden" name="secondary_binder" :value="secondary_binder">
                                 <div class="pill-btn-group">
-                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.options : (engines_ff[selected_master]?.secondary_ingredients?.binders?.options || []))" :key="option">
+                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.options : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.options || []))" :key="option">
                                         <button type="button"
                                                 class="pill-btn"
                                                 :class="secondary_binder === option ? 'active' : ''"
@@ -934,7 +934,7 @@
             <div style="margin-bottom: 1.5rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Baking Form Factor</label>
                 <div class="pill-btn-group">
-                    <template x-for="(ff_data, ff_slug) in (engines_ff[selected_master]?.permissible_form_factors || {})" :key="ff_slug">
+                    <template x-for="(ff_data, ff_slug) in (engines_ff?.[selected_master]?.permissible_form_factors || {})" :key="ff_slug">
                         <button type="button"
                                 class="pill-btn"
                                 :class="{'active': form_factor_val === ff_slug}"

@@ -54,7 +54,7 @@ def get_engine_for_preset(preset_slug: str, category_slug: str = None) -> BaseEn
             return ENGINES["batter"]
             
         # Check Pastry
-        if any(x in preset_slug_lower for x in ["croissant", "chocolat", "puff-pastry", "danish", "pie-crust", "tart", "palmier", "vol-au-vent"]):
+        if any(x in preset_slug_lower for x in ["croissant", "pain-au-chocolat", "puff-pastry", "danish", "pie-crust", "tart", "palmier", "vol-au-vent"]):
             return ENGINES["pastry"]
             
         # Check Choux
