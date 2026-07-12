@@ -100,36 +100,65 @@
           },
           sortedBerriesFor(berries) {
               const evs = this.grainEvaluations || [];
-              if (!evs || evs.length === 0) return berries || [];
+              const recIds = this.recommended_grain_ids || [];
+              const getTier = (berry) => {
+                  if (evs && evs.length > 0) {
+                      const ev = evs.find(e => e.grain_id === berry.id);
+                      if (ev) return ev.tier;
+                  }
+                  if (recIds && recIds.length > 0) {
+                      const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                      const isVariantRecommended = recIds.some(rid =>
+                          berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+                      );
+                      if (isVariantRecommended) return 'recommended';
+                  }
+                  if (this.isIdealGrain && this.isIdealGrain(berry.name)) {
+                      return 'recommended';
+                  }
+                  return 'indifferent';
+              };
               const score = { 'recommended': 1, 'sub-optimal': 2, 'indifferent': 3, 'not-recommended': 4 };
               return [...(berries || [])].sort((a, b) => {
-                  const eA = evs.find(e => e.grain_id === a.id);
-                  const eB = evs.find(e => e.grain_id === b.id);
-                  const sA = score[eA ? eA.tier : 'indifferent'] || 3;
-                  const sB = score[eB ? eB.tier : 'indifferent'] || 3;
+                  const sA = score[getTier(a)] || 3;
+                  const sB = score[getTier(b)] || 3;
                   if (sA !== sB) return sA - sB;
                   return a.name.localeCompare(b.name);
               });
           },
           getGrainStyle(berry) {
               const evs = this.grainEvaluations || [];
-              if (evs && evs.length > 0) {
-                  const ev = evs.find(e => e.grain_id === berry.id);
-                  if (ev) {
-                      if (ev.tier === 'recommended') {
-                          return berry.selected
-                              ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255,215,0,0.6); background-color: rgba(255,215,0,0.08);'
-                              : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.3); background-color: rgba(255,215,0,0.02);';
-                      } else if (ev.tier === 'sub-optimal') {
-                          return berry.selected
-                              ? 'border-color: var(--warning); box-shadow: 0 0 12px rgba(255,193,7,0.6); background-color: rgba(255,193,7,0.08);'
-                              : 'border-color: var(--warning); box-shadow: 0 0 8px rgba(255,193,7,0.3); background-color: rgba(255,193,7,0.02);';
-                      } else if (ev.tier === 'not-recommended') {
-                          return berry.selected
-                              ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220,53,69,0.6); background-color: rgba(220,53,69,0.08);'
-                              : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220,53,69,0.3); background-color: rgba(220,53,69,0.02);';
-                      }
+              const recIds = this.recommended_grain_ids || [];
+              const getTier = () => {
+                  if (evs && evs.length > 0) {
+                      const ev = evs.find(e => e.grain_id === berry.id);
+                      if (ev) return ev.tier;
                   }
+                  if (recIds && recIds.length > 0) {
+                      const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                      const isVariantRecommended = recIds.some(rid =>
+                          berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+                      );
+                      if (isVariantRecommended) return 'recommended';
+                  }
+                  if (this.isIdealGrain && this.isIdealGrain(berry.name)) {
+                      return 'recommended';
+                  }
+                  return 'indifferent';
+              };
+              const tier = getTier();
+              if (tier === 'recommended') {
+                  return berry.selected
+                      ? 'border-color: #ffd700; box-shadow: 0 0 18px rgba(255, 215, 0, 0.9); background-color: rgba(255, 215, 0, 0.12); outline: 2px solid rgba(255, 215, 0, 0.6);'
+                      : 'border-color: #ffd700; box-shadow: 0 0 14px rgba(255, 215, 0, 0.7); background-color: rgba(255, 215, 0, 0.06); outline: 1px solid rgba(255, 215, 0, 0.4);';
+              } else if (tier === 'sub-optimal') {
+                  return berry.selected
+                      ? 'border-color: var(--warning); box-shadow: 0 0 12px rgba(255,193,7,0.6); background-color: rgba(255,193,7,0.08);'
+                      : 'border-color: var(--warning); box-shadow: 0 0 8px rgba(255,193,7,0.3); background-color: rgba(255,193,7,0.02);';
+              } else if (tier === 'not-recommended') {
+                  return berry.selected
+                      ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220,53,69,0.6); background-color: rgba(220,53,69,0.08);'
+                      : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220,53,69,0.3); background-color: rgba(220,53,69,0.02);';
               }
               return berry.selected
                   ? 'border-color: var(--accent); background-color: rgba(255,136,0,0.05);'
@@ -492,12 +521,26 @@
             <input type="hidden" name="grain_type" value="milled">
 
             <!-- Loading State Spinner -->
-            <div x-show="advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; text-align: center; color: var(--text-muted); background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
-                <span class="spinner" style="width: 32px; height: 32px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-                <p style="margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);" x-text="advisoryLoadingMessage || 'Consulting Local Gemma model for grain advisory and stock optimization...'"></p>
+            <div x-show="recipe_details_loading || advisoryLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; text-align: center; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                    <strong style="font-size: 0.95rem; color: var(--text-primary);">Culinary Formulation Engine Analyzing Grains</strong>
+                </div>
+                <!-- Paced Checklist Steps -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; max-width: 400px; margin: 0 auto; width: 100%; text-align: left;">
+                    <template x-for="(step, idx) in recipe_details_steps" :key="idx">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; transition: all 0.3s ease;"
+                             :style="step.active ? 'color: var(--accent); font-weight: bold;' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
+                            <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
+                            <span x-show="step.active" class="spinner" style="width: 10px; height: 10px; border-width: 2px; border-color: var(--accent) transparent var(--accent) transparent; display: inline-block;"></span>
+                            <span x-show="!step.completed && !step.active" style="display: inline-block; width: 10px; text-align: center;">○</span>
+                            <span x-text="step.text"></span>
+                        </div>
+                    </template>
+                </div>
             </div>
 
-            <div x-show="!advisoryLoading">
+            <div x-show="!recipe_details_loading && !advisoryLoading">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
                     <template x-for="berry in sortedBerriesFor(activeBerries)" :key="berry.id">
                         <label class="card" 
