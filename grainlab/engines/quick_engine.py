@@ -97,7 +97,13 @@ class QuickEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on uniform gas retention from rapid acid-base neutralization within a thick, pourable matrix. "
+                "Gluten development must be suppressed to ensure a tender, cake-like slice. Look for low-protein grains "
+                "or high-pentosan ancient grains that absorb liquid smoothly, allowing fruit sugars or starches to stabilize "
+                "the high-walled crumb walls slowly during the long baking window without developing elasticity."
+            )
         },
         "layered_scone": {
             "label": "Layered Wedge Scone",
@@ -109,7 +115,13 @@ class QuickEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on the strict preservation of solid fat crystal domains to drive physical steam lamination. Grains must "
+                "exhibit low protein binding capacity to prevent moisture from initiating a continuous dough web. Highly reward "
+                "highly friable starch profiles that maintain clean, non-elastic geometric wedge cuts, flashing into short, "
+                "flaky layers as the fat melts out in the oven."
+            )
         },
         "dropped_biscuit": {
             "label": "Dropped / Cut Biscuit",
@@ -121,7 +133,13 @@ class QuickEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on maximizing sudden vertical steam expansion while maintaining zero horizontal spread. Grains must have "
+                "low protein elasticity to ensure complete tenderness. Look for soft white wheats that tolerate brief, "
+                "delicate hand-folding around cold fat pockets, allowing rapid chemical carbon dioxide release to lift the biscuit "
+                "into distinct, flaky layers."
+            )
         },
         "textured_muffin": {
             "label": "Textured Muffin",
@@ -133,7 +151,12 @@ class QuickEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on pourable emulsion physics and rapid outer starch setting. Passing quick-acting chemical leavening "
+                "must expand the inner crumb, pushing the center upward into a high, porous, beautifully domed crown "
+                "before the perimeter structural walls set."
+            )
         },
     }
 

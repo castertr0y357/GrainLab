@@ -63,7 +63,13 @@ class BathEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "12.0% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on extreme tensile alignment paired with zero horizontal flow. Grains must survive high mechanical "
+                "pulling into micro-thin strands that maintain distinct structural knot vectors under intense heat. "
+                "Maximize surface area structural stability to host the hot alkaline-dipped Maillard browning "
+                "without core collapsing."
+            )
         },
         "boiled_bagel": {
             "label": "Boiled Bagel",
@@ -75,7 +81,13 @@ class BathEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "high_hydration_lean",
                 "optimal_protein_window": "13.0% - 15.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on extreme long-chain protein cross-linking and a highly compact core network. Grains must yield "
+                "maximum elasticity to withstand extended fermentation arcs followed by a rolling water boil. "
+                "The brief surface starch gelatinization must establish a thick, chew-resistant skin barrier that "
+                "locks in internal moisture."
+            )
         },
         "laugen_bun": {
             "label": "Laugen Bun / Roll",
@@ -87,7 +99,12 @@ class BathEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.5% - 13.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high structural retention and controlled gas expansion. Grains must provide enough tensile strength "
+                "to encapsulate standard yeast activity while supporting moderate lipid enrichment, ensuring a uniform, "
+                "soft interior crumb wrapped securely in a thick, glossy, alkaline-blistered skin."
+            )
         },
         "pretzel_stick": {
             "label": "Pretzel Stick / Cracker",
@@ -99,7 +116,12 @@ class BathEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "11.0% - 13.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on ultra-low hydration mechanics and maximum crisp brittleness. Minimize protein stretch; look for "
+                "high-hardness grains that pack tightly during compaction rolling, allowing rapid surface moisture loss to "
+                "achieve a clean, snapping structural break post-bake."
+            )
         },
     }
 

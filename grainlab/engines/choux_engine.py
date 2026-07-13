@@ -68,7 +68,12 @@ class ChouxEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "9.5% - 11.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on pre-gelatinized starch panade formation and moderate gluten extensibility. The flour must bind "
+                "massive egg moisture volumes during the secondary paste integration, providing a flexible protein web "
+                "that stretches cleanly under explosive internal steam expansion without rupturing the shell walls."
+            )
         },
         "extrusion_fried": {
             "label": "Extrusion Fried Paste",
@@ -80,7 +85,12 @@ class ChouxEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "9.0% - 11.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on structural moisture containment and rapid surface setting under direct hot fat conduction. The paste "
+                "network must minimize horizontal flow while maintaining deep star-die definition, allowing water-vapor to flash "
+                "immediately into a light interior puff while sealing out oil absorption."
+            )
         },
         "savory_emulsion": {
             "label": "Savory Emulsion",
@@ -92,7 +102,12 @@ class ChouxEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "9.5% - 11.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high lipid encapsulation alongside moderate protein elasticity. The matrix must support heavy grated "
+                "cheese weights and fat loads, maintaining stable structural drops that puff cleanly in the oven without "
+                "collapsing into oily pools."
+            )
         },
     }
 

@@ -76,7 +76,12 @@ class PastaEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "12.5% - 15.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on extreme protein density and absolute plastic deformation. Grains must allow the stiff, low-hydration matrix "
+                "to be rolled down to sub-millimeter thickness through sequential mechanical passes without snapping back, locking "
+                "starches inside the web to ensure a firm 'al dente' bite when boiled."
+            )
         },
         "stuffed_pocket": {
             "label": "Stuffed / Encased Pockets",
@@ -88,7 +93,12 @@ class PastaEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "12.0% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high structural extensibility and watertight protein cross-linking. The matrix must form a dense, flexible "
+                "envelope that seals damp fillings securely, stretching cleanly without tearing or leaching starches when dropped into "
+                "rolling boiling water."
+            )
         },
         "extruded_shape": {
             "label": "Extruded Die Shapes",
@@ -100,7 +110,12 @@ class PastaEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "13.0% - 15.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on maximum high-pressure compaction stability. The flour must yield an ultra-dense, non-elastic protein web "
+                "that forces smoothly through mechanical dies, retaining sharp structural ridges and hollows without losing shape or "
+                "turning gummy when boiled."
+            )
         },
         "alkaline_noodles": {
             "label": "Alkaline Cut Noodles",
@@ -112,7 +127,12 @@ class PastaEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "12.0% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high tensile snap and mineral-induced protein compaction. Grains must provide a clean, high-protein background "
+                "that interacts with alkaline salts to accelerate snapping elasticity, keeping the strands firm and springy while "
+                "resisting grey structural discoloration."
+            )
         },
     }
 

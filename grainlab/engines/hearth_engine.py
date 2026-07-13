@@ -78,7 +78,12 @@ class HearthEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "high_hydration_lean",
                 "optimal_protein_window": "11.5% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on long-chain protein cross-linking, extreme gas retention, and structural tensile elasticity. Grains must "
+                "yield maximum elasticity to hold high water weights and shape boundaries without pan walls, maximizing explosive "
+                "oven spring under initial steam injection."
+            )
         },
         "high_hydration_slab": {
             "label": "High-Hydration Slab",
@@ -90,7 +95,12 @@ class HearthEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "high_hydration_lean",
                 "optimal_protein_window": "12.5% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high water-absorption kinetics and open cellular networks. Grains must allow wet, un-kneaded slack "
+                "doughs to hold massive moisture values, using gentle gas production to lift large irregular cell walls "
+                "without slumping across continuous sheet pans."
+            )
         },
         "tapered_baguette": {
             "label": "Tapered Baguette",
@@ -102,7 +112,12 @@ class HearthEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "high_hydration_lean",
                 "optimal_protein_window": "11.5% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on intense gluten alignment and high crust-to-crumb ratio mapping. The protein network must allow the dough "
+                "to be shaped into long, uniform cylinders that maintain surface tension during proofing, scoring cleanly to "
+                "yield sharp ears and blistered textures."
+            )
         },
         "flash_pizza": {
             "label": "Flash Pizza Crust",
@@ -114,7 +129,12 @@ class HearthEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "high_hydration_lean",
                 "optimal_protein_window": "12.5% - 14.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on extreme tensile strength and high structural extensibility. Grains must allow the dough to be stretched "
+                "paper-thin in the center without tearing, holding a robust, gas-filled rim that blisters instantly into dark charred "
+                "spots under intense thermal conduction."
+            )
         },
     }
 

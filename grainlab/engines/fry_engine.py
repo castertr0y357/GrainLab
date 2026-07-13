@@ -69,7 +69,12 @@ class FryEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.0% - 13.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high gas retention and maximum structural lightness. The dough demands an elastic, highly resilient "
+                "long-chain protein web capable of capturing yeast respiration during proofing, enabling the ring to float "
+                "high in hot fat while building an oil-impermeable outer crust."
+            )
         },
         "cake_donut": {
             "label": "Cake / Chemical Donut",
@@ -81,7 +86,12 @@ class FryEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on complete gluten suppression and controlled chemical gas expansion. Grains must maximize tender starch "
+                "swelling with zero elastic snapback, allowing the thick batter to release cleanly from extrusion dies and "
+                "fry into a soft, cakey ring with a short crumb."
+            )
         },
         "fritter_beignet": {
             "label": "Batter Fritter / Beignet",
@@ -93,7 +103,12 @@ class FryEngine(BaseEngine):
                 "desired_horizontal_flow": "high_spread",
                 "moisture_lipid_ratio": "high_hydration_lean",
                 "optimal_protein_window": "9.0% - 11.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high-hydration steam puffs and explosive internal vapor expansion. Grains must allow irregular, wet "
+                "dough masses to hold their shape loosely upon dropping into fat, flash-frying into hollow, airy pillows "
+                "without absorbing excess grease."
+            )
         },
         "fried_laminate": {
             "label": "Fried Laminated",
@@ -105,7 +120,12 @@ class FryEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "10.0% - 12.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on thin alternating layer definition under sudden convective thermal shock. The flour must provide excellent "
+                "extensibility to hold crisp rolled structural sheets separate from fat boundaries, allowing the layers to separate "
+                "cleanly into flaky shards upon frying."
+            )
         },
     }
 

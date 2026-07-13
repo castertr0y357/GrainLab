@@ -97,7 +97,11 @@ class PanEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.0% - 13.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on maximizing vertical volume and achieving a uniform, tight cell structure. Grains must provide high protein "
+                "retention to support thin sidewall pans, ensuring a soft, elastic crumb that slices cleanly without crumbling."
+            )
         },
         "freeform_braided": {
             "label": "Freeform Braided Loaf",
@@ -109,7 +113,12 @@ class PanEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.5% - 13.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high structural retention and zero horizontal flow without pan walls. Grains must yield an elastic, highly "
+                "cohesive protein backbone capable of holding intricate braided definition under heavy lipid and sugar enrichment "
+                "weights without collapsing or slumping."
+            )
         },
         "soft_dinner_roll": {
             "label": "Soft Dinner Roll",
@@ -121,7 +130,12 @@ class PanEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.0% - 12.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on steam-trapped softness and excellent cluster lift. The protein web must remain extensible and resilient, "
+                "allowing small batch dough clusters to crowd together and climb vertically, trapping internal moisture for a classic "
+                "feather-light, pull-apart tear texture."
+            )
         },
         "filled_sweet_roll": {
             "label": "Filled Sweet Roll",
@@ -133,7 +147,12 @@ class PanEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.5% - 13.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on uniform dough-sheet stretch and high filling containment. The flour must provide an elastic, robust backbone "
+                "capable of being rolled thin, scroll-shaped, and baked without rupturing or allowing heavy sweet fillings to cause "
+                "structural collapse."
+            )
         },
     }
     def calculate_recipe(self, **kwargs) -> dict:

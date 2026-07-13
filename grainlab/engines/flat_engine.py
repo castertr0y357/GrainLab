@@ -64,7 +64,12 @@ class FlatEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "11.0% - 13.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high gluten extensibility paired with moderate elasticity. The protein network must comfortably "
+                "support yeast gas pockets, stretching smoothly under sudden, intense conduction heat to form large, hollow "
+                "steam chambers without tearing the thin dough membrane."
+            )
         },
         "unleavened_stretched": {
             "label": "Unleavened Stretched",
@@ -76,7 +81,12 @@ class FlatEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "10.0% - 12.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on maximum plastic deformation and absolute zero elastic snapback. Grains must allow the dough to be "
+                "rolled down to millimeter thickness without tearing, ensuring the starches blister instantly on dry iron "
+                "without shrinking or hardening into tough sheets."
+            )
         },
         "blistered_griddle": {
             "label": "Blistered Griddle Cake",
@@ -88,7 +98,12 @@ class FlatEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "10.5% - 12.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on quick conduction heat response and rapid starch setting. Flour must provide a soft, extensible web "
+                "that stretches cleanly to fit hot griddle surfaces, enabling immediate surface charring and leopard-spotting "
+                "while keeping the inner crumb soft and pliable."
+            )
         },
         "crisp_flatbread": {
             "label": "Crisp Crispbread / Lavash",
@@ -100,7 +115,12 @@ class FlatEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "9.0% - 11.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on complete structural dehydration and maximum snapping brittleness. Grains must have minimal protein "
+                "stretch to encourage zero moisture retention, allowing paper-thin rolled sheets to dry out entirely into rigid, "
+                "shard-like crispbread tiles."
+            )
         },
     }
 

@@ -83,7 +83,16 @@ class CookieEngine(BaseEngine):
                 "desired_horizontal_flow": "high_spread",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus heavily on achieving minimal gluten elasticity and maximum horizontal spread. "
+                "CRITICAL PHYSICS: High pentosan concentrations (found in grains like Rye) are highly RECOMMENDED. "
+                "Because pentosans aggressively absorb and hoard water, they starve wheat proteins of the hydration "
+                "required to form gluten webs, naturally ensuring a perfectly tender, gooey center. "
+                "FLAVOR COMPATIBILITY: Strictly sensitive to high-astringent red wheat tannins, which create bitter notes. "
+                "However, neutral or low-malty ancient profiles (like Rye or Spelt) are excellent choices that introduce "
+                "desirable culinary depth without clashing with confections."
+            )
         },
         "bar_cookie": {
             "label": "Bar / Slab",
@@ -95,7 +104,12 @@ class CookieEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on perimeter stability and controlled horizontal expansion. Grains must preserve a tender, short crumb "
+                "that slices cleanly without shattering, while providing enough uniform starch walls to hold heavy inclusion "
+                "weights across a continuous slab pan without center sinking."
+            )
         },
         "slice_bake": {
             "label": "Slice & Bake",
@@ -107,11 +121,16 @@ class CookieEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on high compression crystal arrays and clean circular margins. Dough demands maximum fat-crystal packing "
+                "with minimal protein resilience, allowing chilled logs to be sheeted or sliced cleanly without dragging crumbs, "
+                "baking into uniform, crisp rings."
+            )
         },
         "rolled_cutout": {
             "label": "Rolled Cutout",
-            "icon": "⭐",
+            "icon": "📐",
             "description": "Zero-spread formulation maintaining clean geometric edges post-bake.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
@@ -119,8 +138,13 @@ class CookieEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "9.0% - 11.0%"
-            }
-        },
+            },
+            "culinary_nuance_directive": (
+                "Focus on moderate structural extensibility and zero thermal flow. Grains must allow the dough to accept "
+                "sharp die-cutting and release cleanly from rolling mats, holding precise geometric definitions and sharp "
+                "borders under immediate oven heat."
+            )
+        }
     }
 
     def calculate_recipe(self, **kwargs) -> dict:

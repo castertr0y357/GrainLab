@@ -98,7 +98,12 @@ class BatterEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "8.0% - 9.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus entirely on egg-protein foam stabilization and complete gluten suppression. Grains must have minimal "
+                "protein content to prevent structural toughness, allowing delicate egg-cell walls to expand unhindered "
+                "while relying purely on gentle liquid starch gelatinization to set a feather-light, aerated crumb."
+            )
         },
         "creamed_cake": {
             "label": "Creamed Layer Cake",
@@ -110,7 +115,12 @@ class BatterEngine(BaseEngine):
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "8.0% - 10.0%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on lipid-sugar crystal aeration and uniform emulsion stability. Low-protein grains are mandatory to "
+                "prevent unwanted gluten strands during liquid integration. Flour starches must absorb moisture smoothly "
+                "to encapsulate fat phases uniformly, preventing batter separation and ensuring a velvety, tender layered structure."
+            )
         },
         "pound_cake": {
             "label": "High-Ratio Pound Cake",
@@ -122,7 +132,12 @@ class BatterEngine(BaseEngine):
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on managing high-ratio sugar and lipid loads within a dense, uniform crumb matrix. Grains must maximize "
+                "tender starch swelling without developing elastic protein networks, allowing the batter to hold massive "
+                "butter and sugar weights without collapsing or leaving greasy pockets."
+            )
         },
         "griddle_batter": {
             "label": "Fluid Griddle Batter",
@@ -134,7 +149,12 @@ class BatterEngine(BaseEngine):
                 "desired_horizontal_flow": "high_spread",
                 "moisture_lipid_ratio": "balanced_emulsion",
                 "optimal_protein_window": "8.5% - 10.5%"
-            }
+            },
+            "culinary_nuance_directive": (
+                "Focus on pourable hydration mechanics and rapid surface heat transfer. Grains must allow instant liquid "
+                "dispersion and minimal viscosity development. Texture relies on swift starch gelatinization upon hot "
+                "iron contact, forming crisp outer grids while keeping the interior soft and aerated."
+            )
         },
     }
 
