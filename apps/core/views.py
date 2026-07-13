@@ -912,6 +912,10 @@ def ai_grain_advisory(request):
     only_elevate = request.GET.get("only_elevate", "false").lower() == "true"
     
     active_archetype_id = request.GET.get("active_archetype_id", "").strip() or None
+    
+    lipid = request.GET.get("lipid", "").strip() or request.GET.get("secondary_lipid", "").strip() or None
+    liquid = request.GET.get("liquid", "").strip() or request.GET.get("secondary_liquid", "").strip() or None
+    binder = request.GET.get("binder", "").strip() or request.GET.get("secondary_binder", "").strip() or None
 
     # Sanitize preset_slug from any recipe or level suffix
     if preset_slug:
@@ -935,7 +939,10 @@ def ai_grain_advisory(request):
                 only_evaluations=only_evaluations,
                 only_elevate=only_elevate,
                 preset_name=preset_name,
-                active_archetype_id=active_archetype_id
+                active_archetype_id=active_archetype_id,
+                lipid=lipid,
+                liquid=liquid,
+                binder=binder
             )
         except Exception as e:
             logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")

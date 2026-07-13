@@ -189,15 +189,22 @@
         if (this.hoverTimeout) {
             clearTimeout(this.hoverTimeout);
         }
+        if (this.hoverAbortController) {
+            this.hoverAbortController.abort();
+            this.hoverAbortController = null;
+        }
         this.sidebar_insight_loading = true;
         this.hoverTimeout = setTimeout(() => {
             if (this.hovered_element !== key) return;
+            
+            this.hoverAbortController = new AbortController();
+            const signal = this.hoverAbortController.signal;
             
             let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
             if (this.active_archetype_id) {
                 url += `&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}`;
             }
-            fetch(url)
+            fetch(url, { signal })
                 .then(res => res.json())
                 .then(data => {
                     if (this.hovered_element === key) {
@@ -208,9 +215,16 @@
                     }
                 })
                 .catch(err => {
-                    console.error('Failed fetching sidebar insight:', err);
+                    if (err.name !== 'AbortError') {
+                        console.error('Failed fetching sidebar insight:', err);
+                    }
                     if (this.hovered_element === key) {
                         this.sidebar_insight_loading = false;
+                    }
+                })
+                .finally(() => {
+                    if (this.hoverAbortController && this.hoverAbortController.signal === signal) {
+                        this.hoverAbortController = null;
                     }
                 });
         }, 300);
@@ -271,9 +285,29 @@
     advisoryLoading: false,
     advisoryLoadingMessage: '',
     grainEvaluations: [],
+    get grainEvaluationsMap() {
+        const map = {};
+        (this.grainEvaluations || []).forEach(e => {
+            if (e.grain_id) {
+                map[e.grain_id] = e;
+            }
+        });
+        return map;
+    },
+    get recommendedGrainsMap() {
+        const map = {};
+        (this.recommended_grain_ids || []).forEach(id => {
+            map[id] = true;
+        });
+        return map;
+    },
     globalElevateRecipe: '',
     advisoryTimeout: null,
     advisoryAbortController: null,
+    hoverAbortController: null,
+    creativityRecipesAbortController: null,
+    recipeDetailsAbortController: null,
+    alternativeVariantsAbortController: null,
     get elevateWays() {
         if (Array.isArray(this.globalElevateRecipe)) {
             return this.globalElevateRecipe;
@@ -334,7 +368,69 @@
         { text: 'Formulating artisanal baking tips...', active: false, completed: false }
     ],
 
+    cancelAllInFlightRequests() {
+        if (this.advisoryAbortController) {
+            this.advisoryAbortController.abort();
+            this.advisoryAbortController = null;
+        }
+        if (this.hoverAbortController) {
+            this.hoverAbortController.abort();
+            this.hoverAbortController = null;
+        }
+        if (this.creativityRecipesAbortController) {
+            this.creativityRecipesAbortController.abort();
+            this.creativityRecipesAbortController = null;
+        }
+        if (this.recipeDetailsAbortController) {
+            this.recipeDetailsAbortController.abort();
+            this.recipeDetailsAbortController = null;
+        }
+        if (this.alternativeVariantsAbortController) {
+            this.alternativeVariantsAbortController.abort();
+            this.alternativeVariantsAbortController = null;
+        }
+    },
+
+    flushStateToNull() {
+        this.grainEvaluations = [];
+        this.recommended_grain_ids = [];
+        this.creativity_recipes = [];
+        this.alternative_variants = [];
+        this.selected_recipe_id = null;
+        this.recipe_selected = false;
+        this.hovered_variant = null;
+        
+        this.sidebar_tier = '';
+        this.sidebar_labor_roi = '';
+        this.sidebar_analysis = '';
+        this.sidebar_menu_description = '';
+        this.selectedRecipeScienceProfile = '';
+        this.selectedRecipeMenuDescription = '';
+        this.selectedRecipeSecondaryIngredients = null;
+        this.globalElevateRecipe = [];
+        this.advisoryRecommendedName = '';
+        this.advisoryRecommendedReason = '';
+        this.advisoryHighRiskName = '';
+        this.advisoryHighRiskReason = '';
+        
+        // Clear timers and intervals
+        if (this.advisory_interval) {
+            clearTimeout(this.advisory_interval);
+            this.advisory_interval = null;
+        }
+        if (this.recipe_gen_interval) {
+            clearTimeout(this.recipe_gen_interval);
+            this.recipe_gen_interval = null;
+        }
+        if (this.recipe_details_interval) {
+            clearTimeout(this.recipe_details_interval);
+            this.recipe_details_interval = null;
+        }
+    },
+
     purgeArchetypeState() {
+        this.cancelAllInFlightRequests();
+        this.flushStateToNull();
         this.generated_variants = [];
         this.alternative_variants = [];
         this.grainEvaluations = [];
@@ -384,9 +480,16 @@
         this.recipe_gen_data = null;
         this.startRecipeGenerationProgress();
 
+        if (this.creativityRecipesAbortController) {
+            this.creativityRecipesAbortController.abort();
+            this.creativityRecipesAbortController = null;
+        }
+        this.creativityRecipesAbortController = new AbortController();
+        const signal = this.creativityRecipesAbortController.signal;
+
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
         const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
-        fetch(url)
+        fetch(url, { signal })
             .then(res => res.json())
             .then(data => {
                 this.recipe_gen_data = {
@@ -397,9 +500,16 @@
                 this.recipe_gen_resolved = true;
             })
             .catch(err => {
-                console.error('[GrainLab] Failed fetching creativity recipes:', err);
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching creativity recipes:', err);
+                }
                 this.creativity_loading = false;
                 if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
+            })
+            .finally(() => {
+                if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {
+                    this.creativityRecipesAbortController = null;
+                }
             });
     },
 
@@ -572,6 +682,13 @@
         this.recipe_details_data = null;
         this.startRecipeDetailsProgress();
 
+        if (this.recipeDetailsAbortController) {
+            this.recipeDetailsAbortController.abort();
+            this.recipeDetailsAbortController = null;
+        }
+        this.recipeDetailsAbortController = new AbortController();
+        const signal = this.recipeDetailsAbortController.signal;
+
         const selectedGrains = this.activeBerries
             .filter(b => b.selected)
             .map(b => b.id)
@@ -579,17 +696,24 @@
 
         let url = `/ai-recipe-details/?recipe_slug=${encodeURIComponent(recipe_slug)}&recipe_name=${encodeURIComponent(this.presetName)}&engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&selected_grains=${encodeURIComponent(selectedGrains)}&category_slug=${encodeURIComponent(this.selected_master)}`;
 
-        fetch(url)
+        fetch(url, { signal })
             .then(res => res.json())
             .then(data => {
                 this.recipe_details_data = data;
                 this.recipe_details_resolved = true;
             })
             .catch(err => {
-                console.error('[GrainLab] Failed fetching recipe details:', err);
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching recipe details:', err);
+                }
                 this.recipe_details_loading = false;
                 this.sidebar_insight_loading = false;
                 if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
+            })
+            .finally(() => {
+                if (this.recipeDetailsAbortController && this.recipeDetailsAbortController.signal === signal) {
+                    this.recipeDetailsAbortController = null;
+                }
             });
     },
 
@@ -609,11 +733,18 @@
             return;
         }
 
+        if (this.alternativeVariantsAbortController) {
+            this.alternativeVariantsAbortController.abort();
+            this.alternativeVariantsAbortController = null;
+        }
+        this.alternativeVariantsAbortController = new AbortController();
+        const signal = this.alternativeVariantsAbortController.signal;
+
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
         const exclude_names = this.getRecipesForLevel(level).map(r => r.recipe_name).join(',');
         const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}&exclude_names=${encodeURIComponent(exclude_names)}`;
 
-        fetch(url)
+        fetch(url, { signal })
             .then(res => res.json())
             .then(data => {
                 if (this.expanded_level === level) {
@@ -622,8 +753,15 @@
                 this.variant_loading = false;
             })
             .catch(err => {
-                console.error('[GrainLab] Failed fetching alternative variants:', err);
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching alternative variants:', err);
+                }
                 this.variant_loading = false;
+            })
+            .finally(() => {
+                if (this.alternativeVariantsAbortController && this.alternativeVariantsAbortController.signal === signal) {
+                    this.alternativeVariantsAbortController = null;
+                }
             });
     },
 
@@ -672,15 +810,15 @@
     },
 
     getClassificationLabel(berry) {
-        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
-            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
-                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
-            );
-            if (isVariantRecommended) return 'Recommended';
+        const recMap = this.recommendedGrainsMap;
+        const evs = this.grainEvaluationsMap;
+        const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        
+        if (recMap[berryNameSlug]) {
+            return 'Recommended';
         }
-        if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
-        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+        
+        const ev = evs[berry.id];
         if (!ev) return '';
         if (ev.tier === 'recommended') return 'Recommended';
         if (ev.tier === 'sub-optimal') return 'Sub-Optimal';
@@ -689,28 +827,28 @@
     },
 
     getGrainReasoning(berry) {
-        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
-            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
-                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
-            );
-            if (isVariantRecommended) return 'Highly recommended starch/lipid balance for this specific formulation.';
+        const recMap = this.recommendedGrainsMap;
+        const evs = this.grainEvaluationsMap;
+        const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        
+        if (recMap[berryNameSlug]) {
+            return 'Highly recommended starch/lipid balance for this specific formulation.';
         }
-        if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
-        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+        
+        const ev = evs[berry.id];
         return ev ? ev.reasoning : '';
     },
 
     getClassificationBadgeStyle(berry) {
-        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
-            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
-                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
-            );
-            if (isVariantRecommended) return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        const recMap = this.recommendedGrainsMap;
+        const evs = this.grainEvaluationsMap;
+        const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        
+        if (recMap[berryNameSlug]) {
+            return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
         }
-        if (!this.grainEvaluations || this.grainEvaluations.length === 0) return '';
-        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+        
+        const ev = evs[berry.id];
         if (!ev) return '';
         if (ev.tier === 'recommended') return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
         if (ev.tier === 'sub-optimal') return 'color: var(--warning); font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
@@ -766,6 +904,8 @@
             }
         });
         this.$watch('selected_master', value => {
+            this.cancelAllInFlightRequests();
+            this.flushStateToNull();
             this.active_archetype_id = null;
             this.creativity_recipes = [];
             this.recipe_selected = false;
@@ -774,6 +914,16 @@
             this.alternative_variants = [];
             if (value && value !== 'null') {
                 this.fetchAdvisory(this.presetSlug);
+            }
+        });
+        this.$watch('active_archetype_id', () => {
+            this.cancelAllInFlightRequests();
+            this.flushStateToNull();
+        });
+        this.$watch('current_phase', (value, oldValue) => {
+            if (value < oldValue) {
+                this.cancelAllInFlightRequests();
+                this.flushStateToNull();
             }
         });
         this.$watch('grain_mode', value => {
@@ -797,6 +947,9 @@
                 this.geometry_time_offset = parseInt(meta.getAttribute('data-geometry-time-offset') || '0', 10);
                 this.geometry_steam_override = meta.getAttribute('data-geometry-steam-override') || 'no-change';
             }
+        });
+        window.addEventListener('beforeunload', () => {
+            this.cancelAllInFlightRequests();
         });
     },
 
@@ -871,6 +1024,19 @@
         }
         if (this.active_archetype_id) {
             url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        const lipidEl = document.querySelector('select[name=secondary_lipid]');
+        const liquidEl = document.querySelector('select[name=secondary_liquid]');
+        const binderEl = document.querySelector('select[name=secondary_binder]');
+        if (lipidEl && lipidEl.value) {
+            url += '&lipid=' + encodeURIComponent(lipidEl.value);
+        }
+        if (liquidEl && liquidEl.value) {
+            url += '&liquid=' + encodeURIComponent(liquidEl.value);
+        }
+        if (binderEl && binderEl.value) {
+            url += '&binder=' + encodeURIComponent(binderEl.value);
         }
 
         fetch(url, { signal })

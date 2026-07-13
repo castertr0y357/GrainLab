@@ -11,18 +11,72 @@ from grainlab.engines.cookie_engine import CookieEngine
 from grainlab.engines.fry_engine import FryEngine
 from grainlab.engines.pasta_engine import PastaEngine
 
+# Instantiate singletons to prevent multiple instances
+hearth_engine = HearthEngine()
+pan_engine = PanEngine()
+bath_engine = BathEngine()
+flat_engine = FlatEngine()
+quick_engine = QuickEngine()
+batter_engine = BatterEngine()
+pastry_engine = PastryEngine()
+choux_engine = ChouxEngine()
+cookie_engine = CookieEngine()
+fry_engine = FryEngine()
+pasta_engine = PastaEngine()
+
 ENGINES = {
-    "hearth": HearthEngine(),
-    "pan": PanEngine(),
-    "bath": BathEngine(),
-    "flat": FlatEngine(),
-    "quick": QuickEngine(),
-    "batter": BatterEngine(),
-    "pastry": PastryEngine(),
-    "choux": ChouxEngine(),
-    "cookie": CookieEngine(),
-    "fry": FryEngine(),
-    "pasta": PastaEngine(),
+    # Original singular keys
+    "hearth": hearth_engine,
+    "pan": pan_engine,
+    "bath": bath_engine,
+    "flat": flat_engine,
+    "quick": quick_engine,
+    "batter": batter_engine,
+    "pastry": pastry_engine,
+    "choux": choux_engine,
+    "cookie": cookie_engine,
+    "fry": fry_engine,
+    "pasta": pasta_engine,
+
+    # Plural fallback keys
+    "hearths": hearth_engine,
+    "pans": pan_engine,
+    "baths": bath_engine,
+    "flats": flat_engine,
+    "quicks": quick_engine,
+    "batters": batter_engine,
+    "pastries": pastry_engine,
+    "cookies": cookie_engine,
+    "frys": fry_engine,
+    "pastas": pasta_engine,
+
+    # Duplicate semantic & category slug aliases
+    "lean-crusty": hearth_engine,
+    "lean_crusty": hearth_engine,
+    "enriched-soft": pan_engine,
+    "enriched_soft": pan_engine,
+    "alkaline-bath": bath_engine,
+    "alkaline_bath": bath_engine,
+    "flatbreads-griddles": flat_engine,
+    "flatbreads_griddles": flat_engine,
+    "quick-breads-scones": quick_engine,
+    "quick_breads_scones": quick_engine,
+    "quick-breads": quick_engine,
+    "quick_breads": quick_engine,
+    "cakes-batters": batter_engine,
+    "cakes_batters": batter_engine,
+    "pastry-lamination": pastry_engine,
+    "pastry_lamination": pastry_engine,
+    "pastries-laminated": pastry_engine,
+    "pastries_laminated": pastry_engine,
+    "choux-paste": choux_engine,
+    "choux_paste": choux_engine,
+    "cookies-shortbread": cookie_engine,
+    "cookies_shortbread": cookie_engine,
+    "fried-doughs": fry_engine,
+    "fried_doughs": fry_engine,
+    "fresh-pasta-noodles": pasta_engine,
+    "fresh_pasta_noodles": pasta_engine,
 }
 
 def get_engine_for_preset(preset_slug: str, category_slug: str = None) -> BaseEngine:
@@ -77,6 +131,9 @@ def get_engine_for_preset(preset_slug: str, category_slug: str = None) -> BaseEn
 
     if category_slug:
         category_slug_lower = category_slug.lower()
+        if category_slug_lower in ENGINES:
+            return ENGINES[category_slug_lower]
+            
         if "hearth" in category_slug_lower or "lean" in category_slug_lower:
             return ENGINES["hearth"]
         if "pan" in category_slug_lower or "enriched" in category_slug_lower:

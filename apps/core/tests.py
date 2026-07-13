@@ -1181,3 +1181,46 @@ class GenerateVariantsTests(TestCase):
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertIn("error", data)
+
+    def test_culinary_nuance_directive_method(self) -> None:
+        """Verifies converting culinary_nuance_directive from property to a method with archetype stacked directives."""
+        from grainlab.engines.cookie_engine import CookieEngine
+        engine = CookieEngine()
+        
+        # Test default/macro-level return
+        macro_text = engine.culinary_nuance_directive()
+        self.assertIn("Focus on the unique target chemistry of the Cookies & Shortbread Engine", macro_text)
+        self.assertNotIn("[TARGET ARCHETYPE:", macro_text)
+        
+        # Test specific archetype stack
+        archetype_text = engine.culinary_nuance_directive("drop_cookie")
+        self.assertIn("[TARGET ARCHETYPE: Drop Cookie MOLECULAR PHYSICS OBJECTIVES]", archetype_text)
+        self.assertIn("[BOTANICAL COMPATIBILITY BOUNDARIES]", archetype_text)
+        
+    def test_engines_router_aliases(self) -> None:
+        """Verifies plural, singular, and category-slug dictionary lookups in ENGINES."""
+        from grainlab.engines import router
+        
+        # Singular
+        self.assertEqual(router.get_engine_for_preset(None, "cookie").slug, "cookie")
+        # Plural
+        self.assertEqual(router.get_engine_for_preset(None, "cookies").slug, "cookie")
+        # Category slug
+        self.assertEqual(router.get_engine_for_preset(None, "cookies-shortbread").slug, "cookie")
+        
+    def test_json_healing_resilience(self) -> None:
+        """Verifies formatting/delimiting corrections on raw truncated JSON text."""
+        from apps.core.gemma_client import heal_json_string
+        import json
+        
+        # Truncated trailing commas
+        raw1 = '{"shares": {"rye": 10}, "structural_warning": "Too much hydration",}'
+        self.assertEqual(json.loads(heal_json_string(raw1)), {"shares": {"rye": 10}, "structural_warning": "Too much hydration"})
+        
+        # Truncated missing braces
+        raw2 = '{"shares": {"rye": 10, "spelt": 5'
+        self.assertEqual(json.loads(heal_json_string(raw2)), {"shares": {"rye": 10, "spelt": 5}})
+        
+        # Truncated array bracket
+        raw3 = '{"grain_evaluations": [{"grain_id": "123", "tier": "recommended"'
+        self.assertEqual(json.loads(heal_json_string(raw3)), {"grain_evaluations": [{"grain_id": "123", "tier": "recommended"}]})

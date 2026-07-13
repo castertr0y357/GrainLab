@@ -698,7 +698,7 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
     return None
 
 
-def assemble_system_prompt(engine, data_context: str, task_instructions: str, response_schema_example: str = None) -> str:
+def assemble_system_prompt(engine, data_context: str, task_instructions: str, response_schema_example: str = None, active_archetype_id: str = None) -> str:
     """
     Constructs the system prompt in the modular fixed order:
     1. Persona & Objective (Global Master Shell Kernel - Part 1)
@@ -725,7 +725,13 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
     data_context_header = f"[USER DATA CONTEXT]\n{data_context}\n"
     
     engine_name = getattr(engine, "name", "Default Baking Engine")
-    nuance_directive = getattr(engine, "culinary_nuance_directive", "Standard baking physics and generic flour interactions.")
+    
+    # Overhaul Nuance Injection: invoke culinary_nuance_directive method passing active_archetype_id
+    if hasattr(engine, "culinary_nuance_directive") and callable(engine.culinary_nuance_directive):
+        nuance_directive = engine.culinary_nuance_directive(active_archetype_id)
+    else:
+        nuance_directive = getattr(engine, "culinary_nuance_directive", "Standard baking physics and generic flour interactions.")
+        
     nuance_injection = (
         f"\n[CRITICAL ENGINE FOCUS: {engine_name}]\n"
         f"{nuance_directive}\n"
@@ -749,6 +755,94 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
         instruction_block
     ]
     return "".join(prompt)
+
+
+def heal_json_string(raw_str: str) -> str:
+    """
+    Sanitizes raw text streams before they are evaluated by the strict system JSON interpreter.
+    Repairs mismatched braces/brackets due to truncation and strips trailing commas.
+    """
+    if not raw_str:
+        return ""
+
+    cleaned = raw_str.strip()
+
+    # Find starting brace/bracket
+    first_brace = cleaned.find('{')
+    first_bracket = cleaned.find('[')
+    
+    start_idx = -1
+    if first_brace != -1 and first_bracket != -1:
+        start_idx = min(first_brace, first_bracket)
+    elif first_brace != -1:
+        start_idx = first_brace
+    elif first_bracket != -1:
+        start_idx = first_bracket
+        
+    if start_idx != -1:
+        cleaned = cleaned[start_idx:]
+
+    # Clean markdown code blocks fences if they are at the end
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3].strip()
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:].strip()
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:].strip()
+
+    # Balance structural truncations: count open vs closed braces and brackets in a stack
+    stack = []
+    in_string = False
+    escape = False
+    
+    import re
+    i = 0
+    n = len(cleaned)
+    while i < n:
+        char = cleaned[i]
+        if escape:
+            escape = False
+        elif char == '\\':
+            escape = True
+        elif char == '"':
+            in_string = not in_string
+        elif not in_string:
+            if char in ('{', '['):
+                stack.append(char)
+            elif char == '}':
+                if '{' in stack:
+                    while stack:
+                        pop_char = stack.pop()
+                        if pop_char == '{':
+                            break
+            elif char == ']':
+                if '[' in stack:
+                    while stack:
+                        pop_char = stack.pop()
+                        if pop_char == '[':
+                            break
+        i += 1
+
+    if in_string:
+        cleaned += '"'
+
+    # Strip dangling separators: trailing commas right before closing braces or brackets,
+    # or at the very end of the string.
+    cleaned = re.sub(r',\s*([\]}])', r'\1', cleaned)
+    cleaned = re.sub(r',\s*$', '', cleaned)
+
+    # Append missing closing delimiters in LIFO order
+    while stack:
+        pop_char = stack.pop()
+        if pop_char == '{':
+            cleaned += '}'
+        elif pop_char == '[':
+            cleaned += ']'
+
+    # Double check trailing commas again after healing
+    cleaned = re.sub(r',\s*([\]}])', r'\1', cleaned)
+    
+    return cleaned
 
 
 def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
@@ -841,7 +935,13 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
                 if lines[0].startswith("```json") or lines[0].startswith("```"):
                     content_str = "\n".join(lines[1:-1])
             
-            parsed_json = json.loads(content_str)
+            # Resilient JSON Processing Gate: heal the JSON string
+            healed_content_str = heal_json_string(content_str)
+            try:
+                parsed_json = json.loads(healed_content_str)
+            except Exception as parse_err:
+                logger.error(f"[AI] - Parsing Failed - Error: {parse_err}. Raw: {content_str}. Healed: {healed_content_str}")
+                parsed_json = json.loads(content_str)
             logger.info(f"[AI] - Parsed JSON: {parsed_json}")
             
             # Validate keys if requested
@@ -1188,7 +1288,18 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     return None
 
 
-def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_grains: str = None, only_evaluations: bool = False, only_elevate: bool = False, preset_name: str = None, active_archetype_id: str = None) -> dict | None:
+def get_grain_advisory_ai(
+    preset_slug: str,
+    category_slug: str = None,
+    selected_grains: str = None,
+    only_evaluations: bool = False,
+    only_elevate: bool = False,
+    preset_name: str = None,
+    active_archetype_id: str = None,
+    lipid: str = None,
+    liquid: str = None,
+    binder: str = None
+) -> dict | None:
     """
     Evaluates raw kitchen inventory against target archetype mechanics using the dynamic pipeline.
     """
@@ -1215,7 +1326,17 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
         # Resolve recommended grains and specialty ingredients natively part of the preset_slug
         recommended_slugs = []
         specialty_ingredients = []
-        if preset_slug:
+        
+        # Read specialty inclusions directly from the localized request payload at the moment of execution
+        has_selections = (lipid is not None) or (liquid is not None) or (binder is not None)
+        if has_selections:
+            if lipid and lipid != "none":
+                specialty_ingredients.append(lipid.replace("_", " "))
+            if liquid and liquid != "none" and liquid != "pure_water" and liquid != "water":
+                specialty_ingredients.append(liquid.replace("_", " "))
+            if binder and binder != "none":
+                specialty_ingredients.append(binder.replace("_", " "))
+        elif preset_slug:
             native_details = get_local_recipe_details(
                 recipe_slug=preset_slug,
                 recipe_name=preset_name or preset_slug,
@@ -1225,16 +1346,16 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
             )
             recommended_slugs = native_details.get("recommended_grain_ids", [])
             sec_ingredients = native_details.get("secondary_ingredients", {})
-            lipid = sec_ingredients.get("lipids", {}).get("required", "none")
-            liquid = sec_ingredients.get("liquids", {}).get("required", "pure_water")
-            binder = sec_ingredients.get("binders", {}).get("required", "none")
+            native_lipid = sec_ingredients.get("lipids", {}).get("required", "none")
+            native_liquid = sec_ingredients.get("liquids", {}).get("required", "pure_water")
+            native_binder = sec_ingredients.get("binders", {}).get("required", "none")
             
-            if lipid != "none":
-                specialty_ingredients.append(lipid.replace("_", " "))
-            if liquid != "none":
-                specialty_ingredients.append(liquid.replace("_", " "))
-            if binder != "none":
-                specialty_ingredients.append(binder.replace("_", " "))
+            if native_lipid != "none":
+                specialty_ingredients.append(native_lipid.replace("_", " "))
+            if native_liquid != "none" and native_liquid != "pure_water" and native_liquid != "water":
+                specialty_ingredients.append(native_liquid.replace("_", " "))
+            if native_binder != "none":
+                specialty_ingredients.append(native_binder.replace("_", " "))
                 
         # Resolve recommended grain names from slugs
         native_grain_names = []
@@ -1246,10 +1367,12 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 if wb_slug == slug or slug in wb_slug or wb_slug in slug:
                     native_grain_names.append(wb.name)
                     break
-        if not native_grain_names:
-            native_grain_names = ["Hard Red Spring Wheat"]
-
-        active_grains_list = selected_names if selected_names else native_grain_names
+        
+        # If the user has not selected an item, pass empty array bounds [] to force the model to reason about macro mechanics
+        if selected_names:
+            active_grains_list = selected_names
+        else:
+            active_grains_list = []
 
         expected_keys = ["grain_evaluations", "elevate_recipe"]
 
@@ -1276,7 +1399,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "  ]\n"
                 "}"
             )
-            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
+            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
             expected_keys = ["grain_evaluations"]
         elif only_elevate:
             data_context = (
@@ -1300,7 +1423,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "  \"elevate_recipe\": [\"suggestion 1\", \"suggestion 2\"]\n"
                 "}"
             )
-            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
+            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
             expected_keys = ["elevate_recipe"]
         else:
             data_context = (
@@ -1334,7 +1457,7 @@ def get_grain_advisory_ai(preset_slug: str, category_slug: str = None, selected_
                 "  ]\n"
                 "}"
             )
-            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
+            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
 
         payload = {
             "engine_id": engine.slug if engine else "default",

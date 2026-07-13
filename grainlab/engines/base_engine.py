@@ -46,11 +46,10 @@ class BaseEngine:
     }
     secondary_ingredients = {}
 
-    @property
-    def culinary_nuance_directive(self) -> str:
+    def culinary_nuance_directive(self, active_archetype_id: str = None) -> str:
         """
         Dynamically construct a highly specific culinary nuance directive 
-        based on the engine's unique parametric attributes.
+        based on the engine's unique parametric attributes and optional active archetype.
         """
         tannin_text = (
             "This engine is extremely tannin sensitive. Bitterness or astringency from whole grain bran "
@@ -61,7 +60,7 @@ class BaseEngine:
         )
         actions = ", ".join(self.production_profile.get("permissible_action_types", []))
         
-        return (
+        global_criteria = (
             f"Focus on the unique target chemistry of the {self.name}:\n"
             f"* Gluten & Structural Behavior: {self.gluten_behavior}\n"
             f"* Flavor Affinity & Botanical Compatibility: {self.flavor_affinity} ({tannin_text})\n"
@@ -69,6 +68,39 @@ class BaseEngine:
             f"* Production Parameters: Thermodynamic focus is {self.production_profile.get('thermodynamic_focus')}, "
             f"rest strategy is {self.production_profile.get('environmental_rest_strategy')}, and permissible actions include [{actions}]."
         )
+        
+        if not active_archetype_id:
+            return global_criteria
+
+        archetypes = getattr(self, "archetypes", {})
+        archetype = archetypes.get(active_archetype_id)
+        if not archetype:
+            return global_criteria
+            
+        mechanics = archetype.get("target_archetype_mechanics", {})
+        arch_directive = archetype.get("culinary_nuance_directive", "")
+        
+        gluten = mechanics.get("required_gluten_elasticity", "N/A")
+        flow = mechanics.get("desired_horizontal_flow", "N/A")
+        lipids = mechanics.get("moisture_lipid_ratio", "N/A")
+        protein_window = mechanics.get("optimal_protein_window", "N/A")
+        affinity = archetype.get("grain_affinity", "N/A")
+        
+        stacked_text = (
+            f"{global_criteria}\n\n"
+            f"[TARGET ARCHETYPE: {archetype.get('label', active_archetype_id)} MOLECULAR PHYSICS OBJECTIVES]\n"
+            f"* Gluten Behavior Objective: {gluten}\n"
+            f"* Flow Objective: {flow}\n"
+            f"* Lipid & Moisture Objective: {lipids}\n\n"
+            f"[BOTANICAL COMPATIBILITY BOUNDARIES]\n"
+            f"* Optimal Protein Window: {protein_window}\n"
+            f"* Grain Affinity: {affinity}"
+        )
+        
+        if arch_directive:
+            stacked_text += f"\n\n[SPECIFIC CULINARY NUANCE DIRECTIVE]\n{arch_directive}"
+            
+        return stacked_text
 
     permissible_form_factors = {
         "standard-9x5-pan": {

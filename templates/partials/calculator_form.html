@@ -99,20 +99,15 @@
               }
           },
           sortedBerriesFor(berries) {
-              const evs = this.grainEvaluations || [];
-              const recIds = this.recommended_grain_ids || [];
+              const evs = this.grainEvaluationsMap;
+              const recMap = this.recommendedGrainsMap;
               const getTier = (berry) => {
-                  if (evs && evs.length > 0) {
-                      const ev = evs.find(e => e.grain_id === berry.id);
-                      if (ev) return ev.tier;
-                  }
-                  if (recIds && recIds.length > 0) {
-                      const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                      const isVariantRecommended = recIds.some(rid =>
-                          berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
-                      );
-                      if (isVariantRecommended) return 'recommended';
-                  }
+                  const ev = evs[berry.id];
+                  if (ev) return ev.tier;
+
+                  const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                  if (recMap[berryNameSlug]) return 'recommended';
+
                   if (this.isIdealGrain && this.isIdealGrain(berry.name)) {
                       return 'recommended';
                   }
@@ -127,20 +122,15 @@
               });
           },
           getGrainStyle(berry) {
-              const evs = this.grainEvaluations || [];
-              const recIds = this.recommended_grain_ids || [];
+              const evs = this.grainEvaluationsMap;
+              const recMap = this.recommendedGrainsMap;
               const getTier = () => {
-                  if (evs && evs.length > 0) {
-                      const ev = evs.find(e => e.grain_id === berry.id);
-                      if (ev) return ev.tier;
-                  }
-                  if (recIds && recIds.length > 0) {
-                      const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                      const isVariantRecommended = recIds.some(rid =>
-                          berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
-                      );
-                      if (isVariantRecommended) return 'recommended';
-                  }
+                  const ev = evs[berry.id];
+                  if (ev) return ev.tier;
+
+                  const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                  if (recMap[berryNameSlug]) return 'recommended';
+
                   if (this.isIdealGrain && this.isIdealGrain(berry.name)) {
                       return 'recommended';
                   }
