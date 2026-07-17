@@ -141,19 +141,8 @@ class PastaEngine(BaseEngine):
         pasta_hyd = max(0.35, min(0.40, hydration))
         return pasta_hyd, fat, sugar
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Heavy mechanical dough compaction metrics:
-        # Strict zero-leavening calculation maps:
-        recipe["yeast_weight"] = 0.0
-        recipe["starter_weight"] = 0.0
-        
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            "Dense Pasta Compaction: Zero-leavening recipe. Hydration is locked to 35-40% for pasta structure.",
-            "Roller Passes: Sheet dough down using sequential passes (from Setting 0 to Setting 6/7) to align proteins."
-        ]
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 6

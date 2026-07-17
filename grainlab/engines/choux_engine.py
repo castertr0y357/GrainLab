@@ -111,22 +111,8 @@ class ChouxEngine(BaseEngine):
         },
     }
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Calculate egg weight (typically 110% of flour weight for classic choux paste)
-        flour_g = recipe["flour_weight"]
-        egg_g = round(flour_g * 1.10, 1)
-        
-        recipe["egg_weight"] = egg_g
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            f"Progressive Egg Integration: Prepare approximately {egg_g}g of beaten whole eggs (roughly 2-3 medium eggs). Add incrementally to check consistency.",
-            "Gelatinization Cook: Starch must be cooked in boiling water/butter before mixing in eggs to allow moisture-absorption."
-        ]
-        
-        recipe["yeast_weight"] = 0.0
-        recipe["starter_weight"] = 0.0
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Choux paste relies heavily on a high ratio of eggs for leavening puff. Ensure you include a substantial amount of whole eggs, and zero yeast."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         boil_min = 3

@@ -130,19 +130,8 @@ class BathEngine(BaseEngine):
         stiff_hyd = max(0.50, min(0.55, hydration))
         return stiff_hyd, fat, sugar
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Chemical solution concentration scaling:
-        # Pretzels typically use 3% lye bath (warm, no boil). Bagels use 1-3% barley malt syrup / soda boil.
-        preset_slug = kwargs.get("preset_slug", "")
-        if "pretzel" in preset_slug.lower():
-            bath_info = "Chemical Solution: Prepare a 3% active Lye dip (30g food-grade lye dissolved in 1L warm water). Handle with rubber gloves and safety goggles! Do NOT heat the lye bath."
-        else:
-            bath_info = "Chemical Solution: Prepare a 2-3% malted water boiling loop (20-30g barley malt syrup or baking soda in 1L boiling water)."
-            
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [bath_info]
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Instruct the user to prepare an alkaline bath (lye or malted water) to gelatinize starches prior to baking."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 6

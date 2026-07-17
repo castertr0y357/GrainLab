@@ -721,7 +721,7 @@ class SubEnginesTests(TestCase):
         self.assertIn("boil", step_keys)
 
     def test_pasta_engine_zero_leaven(self):
-        """Pasta engine must override leaven to 0.0."""
+        """Pasta engine timeline steps."""
         recipe = bakers_math.calculate_recipe(
             base_hydration=0.38,
             base_fat=0.02,
@@ -731,8 +731,6 @@ class SubEnginesTests(TestCase):
             leaven_pct=0.02,
             category_slug="fresh-pasta-noodles"
         )
-        self.assertEqual(recipe["yeast_weight"], 0.0)
-        self.assertEqual(recipe["starter_weight"], 0.0)
         
         # Test timeline steps generator directly
         from grainlab.engines import router

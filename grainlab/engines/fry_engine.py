@@ -129,19 +129,8 @@ class FryEngine(BaseEngine):
         },
     }
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Oil recovery temperature dip calculations:
-        # Frying target is 365°F. The oil temp drops ~10°F when cool dough is introduced.
-        fry_temp_target = 365.0
-        oil_preheat = fry_temp_target + 10.0
-        
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            f"Hydro-Convection Frying: Preheat frying oil to {oil_preheat}°F. Once dough is dropped, the active temperature recovery dip will stabilize near {fry_temp_target}°F.",
-            "Drainage rest: Drain fried pieces on a elevated wire rack rather than flat paper towels to prevent soggy skin condensation."
-        ]
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Provide the target frying oil pre-heat temperature (typically around 375°F to allow a drop to 365°F during frying)."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 8

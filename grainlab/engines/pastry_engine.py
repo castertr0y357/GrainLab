@@ -123,41 +123,14 @@ class PastryEngine(BaseEngine):
         },
     }
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Butter block roll-in fat ratio (butter block relative to dough sheet targeting a 25% to 30% boundary)
-        target_mass = recipe["target_mass"]
-        butter_block_g = round(target_mass * 0.28, 1)
-        
-        preset_slug = kwargs.get("preset_slug", "")
-        if "puff" in preset_slug.lower() or "danish" in preset_slug.lower():
-            fold_style = "[ Double Book Fold (4x) ]"
-            layers = 4 * 4 * 4  # 64 layers
-        elif "croissant" in preset_slug.lower() or "chocolat" in preset_slug.lower():
-            fold_style = "[ Single Letter Fold (3x) ]"
-            layers = 3 * 3 * 3  # 27 layers
-        else:
-            fold_style = "[ Rubbed Fat Crumble ]"
-            layers = 1
-            
-        recipe["butter_block_weight"] = butter_block_g
-        recipe["fold_style"] = fold_style
-        recipe["lamination_layers"] = layers
-        
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            f"Butter Block Roll-in: Prepare a separate cold butter block of {butter_block_g}g (targets 28% roll-in boundary relative to total dough).",
-            f"Layer Accumulation: Apply {fold_style} to achieve {layers} layers of fat and dough."
-        ]
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Specify the exact butter block weight required for lamination (around 28% of total dough mass), and detail the lamination fold style (e.g., book folds vs letter folds) and zero yeast if it is a shortcrust pastry."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
-        fold_style = recipe_data.get("fold_style", "[ Single Letter Fold (3x) ]")
-        layers = recipe_data.get("lamination_layers", 27)
-        
-        if "Book" in fold_style:
+        preset_slug = kwargs.get("preset_slug", "")
+        if "puff" in preset_slug.lower() or "danish" in preset_slug.lower():
             fold_desc = "Roll dough to a rectangle. Fold both outer edges to meet in the middle, then fold in half like a book (4 layers generated)."
-        elif "Letter" in fold_style:
+        elif "croissant" in preset_slug.lower() or "chocolat" in preset_slug.lower():
             fold_desc = "Roll dough to a rectangle. Fold one-third over the center, then the opposite third over that like a letter (3 layers generated)."
         else:
             fold_desc = "Rub cold butter chunks into flour until pea-sized. Keep cool; do not laminate."

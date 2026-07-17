@@ -160,36 +160,8 @@ class QuickEngine(BaseEngine):
         },
     }
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Acid-to-base chemical neutralization balancing:
-        # Standard: 1 tsp baking powder (acid+base) per cup of flour, or 1/4 tsp baking soda (base) per cup of sour liquid.
-        flour_g = recipe["flour_weight"]
-        # Baking powder estimate (1.5% of flour weight)
-        bp_g = round(flour_g * 0.015, 1)
-        # Baking soda estimate (0.5% of flour weight if acid present)
-        bs_g = round(flour_g * 0.005, 1)
-        
-        substitute = kwargs.get("substitution", {}).get("substitute", "") if kwargs.get("substitution") else ""
-        has_acid = recipe["liquid_label"] == "Whole Milk" or "milk" in substitute.lower()
-        
-        leaven_notes = []
-        if has_acid:
-            leaven_notes.append(f"Chemical Neutralization Balance: Add {bp_g}g Baking Powder AND {bs_g}g Baking Soda to neutralize liquid acids.")
-        else:
-            leaven_notes.append(f"Chemical Neutralization Balance: Add {bp_g}g Baking Powder to flour.")
-            
-        # Strict mixing threshold friction warning:
-        mixing_method = kwargs.get("mixing_method", "hand_knead")
-        if mixing_method in ["stand_mixer", "bread_machine"]:
-            leaven_notes.append("⚠️ Structural Warning: Mechanical mixing creates high friction and triggers early gluten activation, making quick breads tough. Hand mixing is strongly recommended!")
-
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + leaven_notes
-        # Yeast is zero for quick breads:
-        recipe["yeast_weight"] = 0.0
-        recipe["starter_weight"] = 0.0
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Quick breads require chemical leavening. Specify the correct amount of baking powder, and if acidic liquids are present, include baking soda. Zero yeast should be used."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         dry_min = 2

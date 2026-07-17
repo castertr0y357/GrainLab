@@ -163,35 +163,14 @@ class BatterEngine(BaseEngine):
         # Thus, no downward ceilings are applied here.
         return hydration, fat, sugar
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Emulsification style classification based on preset slug:
-        preset_slug = kwargs.get("preset_slug", "")
-        if "chiffon" in preset_slug.lower() or "angel" in preset_slug.lower():
-            emuls_style = "[ Whipped Egg Foam ]"
-        elif "cupcake" in preset_slug.lower() or "pancake" in preset_slug.lower() or "waffle" in preset_slug.lower():
-            emuls_style = "[ Two-Stage Paste ]"
-        else:
-            emuls_style = "[ Creamed Butter ]"
-            
-        recipe["emulsification_style"] = emuls_style
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            f"Emulsification Style: {emuls_style} logic applied. Focus on creating a stable, aerated fat-water emulsion.",
-            "High-Ratio Baking Override: Sugar, fat, and hydration percentages scale independently of flour base weight."
-        ]
-        
-        # Zero yeast for batters:
-        recipe["yeast_weight"] = 0.0
-        recipe["starter_weight"] = 0.0
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "This is a batter. Recommend a specific emulsification style (e.g. whipped egg foam, creamed butter) to aerate the dough, and ensure zero yeast is used."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
-        emuls_style = recipe_data.get("emulsification_style", "[ Creamed Butter ]")
-        
-        if emuls_style == "[ Whipped Egg Foam ]":
+        preset_slug = kwargs.get("preset_slug", "")
+        if "chiffon" in preset_slug.lower() or "angel" in preset_slug.lower():
             emuls_desc = "Whip egg whites/yolks with sugar to soft peaks. Creates the micro-bubbles needed for rise without chemical leavening."
-        elif emuls_style == "[ Two-Stage Paste ]":
+        elif "cupcake" in preset_slug.lower() or "pancake" in preset_slug.lower() or "waffle" in preset_slug.lower():
             emuls_desc = "Mix flour, sugar, leavening, and butter together first until sandy. Prevents excess gluten structure from forming when liquid is added."
         else:
             emuls_desc = "Cream softened butter and sugar at medium-high speed for 5-6 minutes until pale and fluffy. Traps air bubbles inside the fat crystals."

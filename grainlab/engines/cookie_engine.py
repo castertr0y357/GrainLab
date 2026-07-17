@@ -147,11 +147,8 @@ class CookieEngine(BaseEngine):
         }
     }
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        recipe["yeast_weight"] = 0.0
-        recipe["starter_weight"] = 0.0
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         cream_min = 5

@@ -130,6 +130,9 @@ class BaseEngine:
         weighted_absorption = sum(_get_val(b, 'moisture_absorption_coef', 1.0) for b in active_berries) / total_berries
         return shares, weighted_absorption, None
 
+    def get_ai_culinary_directive(self) -> str:
+        return ""
+
     def calculate_recipe(
         self,
         base_hydration: float,

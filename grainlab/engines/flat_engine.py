@@ -124,26 +124,8 @@ class FlatEngine(BaseEngine):
         },
     }
 
-    def calculate_recipe(self, **kwargs) -> dict:
-        recipe = super().calculate_recipe(**kwargs)
-        
-        # Determine mechanical rolling thickness targets
-        preset_slug = kwargs.get("preset_slug", "")
-        if "tortilla" in preset_slug.lower() or "roti" in preset_slug.lower() or "chapati" in preset_slug.lower():
-            thickness_mm = 1.0
-        elif "naan" in preset_slug.lower() or "pita" in preset_slug.lower():
-            thickness_mm = 3.0
-        elif "cracker" in preset_slug.lower() or "lavash" in preset_slug.lower() or "matzo" in preset_slug.lower():
-            thickness_mm = 0.8
-        else:
-            thickness_mm = 1.5
-            
-        recipe["mechanical_thickness_mm"] = thickness_mm
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            f"Mechanical thickness target: Roll dough out to exactly {thickness_mm} mm for proper crisp/puff balance.",
-            "High-velocity conduction: Pre-heat griddle/cast-iron skillet to 500°F before loading dough."
-        ]
-        return recipe
+    def get_ai_culinary_directive(self) -> str:
+        return "Specify the target mechanical rolling thickness in millimeters for this specific flatbread (e.g., 1.0mm for tortillas, 3.0mm for naan)."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 4

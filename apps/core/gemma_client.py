@@ -2336,6 +2336,13 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "3. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
         "4. RECOMMENDED GRAINS DETECTOR: You must identify which grains from the provided active selected grains list are recommended for this recipe and list their lowercase name slugs (e.g. ['soft_white_wheat', 'rye']) in the recommended_grain_ids key."
     )
+    
+    from grainlab.engines import router
+    engine = router.get_engine_for_preset(recipe_slug, category_slug)
+    culinary_directive = engine.get_ai_culinary_directive()
+    if culinary_directive:
+        system_prompt += f"\n\n🚨 [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
+
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
     else:
