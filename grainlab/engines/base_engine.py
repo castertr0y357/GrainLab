@@ -123,174 +123,12 @@ class BaseEngine:
         if not active_berries:
             return {"House Blend": 1.0}, 1.0, None
 
-        # Check if AI is active and query Gemma for optimized blend
-        from apps.core.models import SystemSetting
-        from django.conf import settings
+        # Simple equal shares for active berries
+        total_berries = len(active_berries)
+        shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
         
-        db_enabled = SystemSetting.get_val("ai_enabled", "False").lower() in ("true", "1", "t")
-        env_mock = getattr(settings, "MOCK_MODE", True)
-        ai_active = db_enabled and not env_mock
-
-        if ai_active:
-            from apps.core import gemma_client
-            ai_res = gemma_client.optimize_grain_blend(preset_slug, preset_name, active_berries)
-            if ai_res:
-                shares, structural_warning = ai_res
-                weighted_absorption = 0.0
-                for b in active_berries:
-                    name = _get_val(b, 'name')
-                    share = shares.get(name, 0.0)
-                    coef = _get_val(b, 'moisture_absorption_coef', 1.0)
-                    weighted_absorption += share * coef
-                if weighted_absorption == 0.0:
-                    weighted_absorption = 1.0
-                return shares, weighted_absorption, structural_warning
-
-        # 1. Classify berries
-        ancient_berries = []
-        hard_berries = []
-        soft_berries = []
-
-        for b in active_berries:
-            hardness = _get_val(b, 'hardness', 'hard')
-            protein = _get_val(b, 'protein_content', 12.0)
-            
-            if hardness == 'ancient':
-                ancient_berries.append(b)
-            elif hardness == 'soft' or (protein < 12.0 and hardness != 'durum' and hardness != 'hard'):
-                soft_berries.append(b)
-            else:
-                hard_berries.append(b)
-
-        # 2. Determine target protein content based on Texture (Softness) and Crumb (Openness)
-        target_protein = 11.5 - (texture_score / 100.0 * 2.5) + (crumb_score / 100.0 * 1.5) + 0.5
-        target_protein = max(9.0, min(15.0, target_protein))
-
-        # 3. Calculate blend shares
-        shares = {}
-        
-        has_hard = len(hard_berries) > 0
-        has_soft = len(soft_berries) > 0
-        has_ancient = len(ancient_berries) > 0
-
-        ancient_share = 0.15 if has_ancient else 0.0
-        if has_ancient:
-            share_per_ancient = ancient_share / len(ancient_berries)
-            for b in ancient_berries:
-                name = _get_val(b, 'name')
-                shares[name] = share_per_ancient
-
-        remaining_share = 1.0 - ancient_share
-
-        if has_hard and has_soft:
-            avg_p_hard = sum(_get_val(b, 'protein_content', 12.0) for b in hard_berries) / len(hard_berries)
-            avg_p_soft = sum(_get_val(b, 'protein_content', 12.0) for b in soft_berries) / len(soft_berries)
-            
-            if avg_p_hard != avg_p_soft:
-                x = (target_protein - avg_p_soft) / (avg_p_hard - avg_p_soft)
-                x = max(0.0, min(1.0, x))
-            else:
-                x = 0.5
-                
-            hard_share = x * remaining_share
-            soft_share = (1.0 - x) * remaining_share
-            
-            for b in hard_berries:
-                name = _get_val(b, 'name')
-                shares[name] = hard_share / len(hard_berries)
-            for b in soft_berries:
-                name = _get_val(b, 'name')
-                shares[name] = soft_share / len(soft_berries)
-                
-        elif has_hard:
-            for b in hard_berries:
-                name = _get_val(b, 'name')
-                shares[name] = remaining_share / len(hard_berries)
-                
-        elif has_soft:
-            for b in soft_berries:
-                name = _get_val(b, 'name')
-                shares[name] = remaining_share / len(soft_berries)
-                
-        elif has_ancient:
-            for b in ancient_berries:
-                name = _get_val(b, 'name')
-                shares[name] = 1.0 / len(ancient_berries)
-                
-        else:
-            return {"House Blend": 1.0}, 1.0, None
-
-        # 4. Enforce structural safety for high-rise presets
-        is_high_rise = self.is_high_rise_preset(preset_slug, preset_name)
-
-        structural_warning = None
-        if is_high_rise:
-            current_hard_share = sum(shares.get(_get_val(b, 'name'), 0.0) for b in hard_berries)
-            if current_hard_share < 0.70:
-                preset_label = preset_name or "High-Rise Bread"
-                structural_warning_grain = "Hard Red Wheat"
-                
-                if not has_hard:
-                    from apps.core.models import WheatBerry
-                    strongest_db = WheatBerry.objects.filter(hardness='hard').order_by('-protein_content').first()
-                    if strongest_db:
-                        injected_grain = strongest_db
-                        structural_warning_grain = strongest_db.name
-                    else:
-                        class MockBerry:
-                            name = "Hard Red Winter Wheat"
-                            protein_content = 13.0
-                            hardness = "hard"
-                            moisture_absorption_coef = 1.0
-                        injected_grain = MockBerry()
-                        structural_warning_grain = injected_grain.name
-                    hard_berries.append(injected_grain)
-                    if injected_grain not in active_berries:
-                        active_berries = list(active_berries) + [injected_grain]
-                else:
-                    strongest_selected = max(hard_berries, key=lambda b: _get_val(b, 'protein_content', 12.0))
-                    structural_warning_grain = _get_val(strongest_selected, 'name')
-
-                structural_warning = f"❌ Structural Hazard: Selected grain blend lacks the gluten strength required for a {preset_label}. Adjusting blend to include 70% {structural_warning_grain} for safety."
-                
-                shares = {}
-                share_per_hard = 0.70 / len(hard_berries)
-                for b in hard_berries:
-                    name = _get_val(b, 'name')
-                    shares[name] = share_per_hard
-                
-                weak_berries = soft_berries + ancient_berries
-                if weak_berries:
-                    share_per_weak = 0.30 / len(weak_berries)
-                    for b in weak_berries:
-                        name = _get_val(b, 'name')
-                        shares[name] = share_per_weak
-                else:
-                    for b in hard_berries:
-                        name = _get_val(b, 'name')
-                        shares[name] = 1.0 / len(hard_berries)
-
-        # 5. Calculate weighted absorption coefficient
-        weighted_absorption = 0.0
-        for b in active_berries:
-            name = _get_val(b, 'name')
-            share = shares.get(name, 0.0)
-            coef = _get_val(b, 'moisture_absorption_coef', 1.0)
-            weighted_absorption += share * coef
-
-        if weighted_absorption == 0.0:
-            weighted_absorption = 1.0
-
-        return shares, weighted_absorption, structural_warning
-
-    def is_high_rise_preset(self, preset_slug: str, preset_name: str) -> bool:
-        if preset_slug:
-            preset_slug_lower = preset_slug.lower()
-            return 'bagel' in preset_slug_lower or 'boule' in preset_slug_lower or 'artisan' in preset_slug_lower
-        if preset_name:
-            preset_name_lower = preset_name.lower()
-            return 'bagel' in preset_name_lower or 'boule' in preset_name_lower or 'artisan' in preset_name_lower
-        return False
+        weighted_absorption = sum(_get_val(b, 'moisture_absorption_coef', 1.0) for b in active_berries) / total_berries
+        return shares, weighted_absorption, None
 
     def calculate_recipe(
         self,
@@ -315,8 +153,7 @@ class BaseEngine:
         preset_name: str = None,
         **kwargs
     ) -> dict:
-        # 1. Apply Fail-Safe Hydration Modifiers
-        structural_warning = None
+        # 1. Apply Simple Hydration Modifiers
         if active_berries:
             berry_shares, weighted_absorption, structural_warning = self.calculate_wheat_berry_shares(
                 active_berries, texture_score, crumb_score, preset_slug=preset_slug, preset_name=preset_name
@@ -327,88 +164,21 @@ class BaseEngine:
             thirst_mod = GRAIN_THIRST_MODIFIERS.get(grain_type, 0.0)
 
         maturity_mod = MATURITY_HYDRATION_MODIFIERS.get(flour_maturity, 0.0)
-        
         effective_hydration = base_hydration + thirst_mod + maturity_mod
         effective_fat = base_fat
         effective_sugar = base_sugar
 
-        # 2. Deconstruct and Balance Secondary Ingredients & Substitutions
-        sub_notes = []
-        
-        sec_lipid = kwargs.get("secondary_lipid")
-        sec_liquid = kwargs.get("secondary_liquid")
-        sec_binder = kwargs.get("secondary_binder")
+        # 2. Map Secondary Ingredients & Substitutions
+        sec_lipid = kwargs.get("secondary_lipid") or "none"
+        sec_liquid = kwargs.get("secondary_liquid") or "pure_water"
+        sec_binder = kwargs.get("secondary_binder") or "none"
 
-        # 2a. Binders Math Shifts
-        added_eggs = 0.0
-        added_egg_whites = 0.0
-        added_aquafaba = 0.0
-        binder_pct = 0.0
-        
-        if sec_binder == "whole_eggs":
-            binder_pct = 0.10
-            water_excess = 0.10 * 0.74
-            fat_excess = 0.10 * 0.12
-            effective_hydration = max(0.40, effective_hydration - water_excess)
-            effective_fat = max(0.0, effective_fat - fat_excess)
-            sub_notes.append("Whole eggs binder detected. Adjusted liquid and fat ratios to balance egg moisture/lipids.")
-        elif sec_binder == "egg_whites":
-            binder_pct = 0.10
-            water_excess = 0.10 * 0.88
-            effective_hydration = max(0.40, effective_hydration - water_excess)
-            sub_notes.append("Egg whites binder detected. Adjusted liquid ratio to balance egg white moisture.")
-        elif sec_binder == "aquafaba_vegan":
-            binder_pct = 0.10
-            water_excess = 0.10 * 0.95
-            effective_hydration = max(0.40, effective_hydration - water_excess)
-            sub_notes.append("Vegan aquafaba binder detected. Adjusted liquid ratio to balance aquafaba moisture.")
-
-        # 2b. Liquids Math Shifts
-        liquid_label = "Water"
-        
-        # Override with old substitution dropdown if present
+        # Apply legacy substitution mapping
         if substitution and substitution.get("original") == "water":
             sub_sub = substitution.get("substitute")
             if sub_sub in ["whole_milk", "almond_milk"]:
                 sec_liquid = sub_sub
 
-        if sec_liquid == "whole_milk":
-            milk_ratio = effective_hydration / 0.87
-            fat_excess = milk_ratio * 0.04
-            sugar_excess = milk_ratio * 0.05
-            effective_fat = max(0.0, effective_fat - fat_excess)
-            effective_sugar = max(0.0, effective_sugar - sugar_excess)
-            liquid_label = "Whole Milk"
-            sub_notes.append("Whole Milk liquid medium detected. Water, fat, and sugar ratios balanced.")
-        elif sec_liquid == "heavy_cream":
-            cream_ratio = effective_hydration / 0.57
-            fat_excess = cream_ratio * 0.37
-            sugar_excess = cream_ratio * 0.03
-            effective_fat = max(0.0, effective_fat - fat_excess)
-            effective_sugar = max(0.0, effective_sugar - sugar_excess)
-            liquid_label = "Heavy Cream"
-            sub_notes.append("Heavy Cream liquid medium detected. Water, fat, and sugar ratios balanced.")
-        elif sec_liquid == "buttermilk":
-            buttermilk_ratio = effective_hydration / 0.90
-            fat_excess = buttermilk_ratio * 0.01
-            sugar_excess = buttermilk_ratio * 0.04
-            effective_fat = max(0.0, effective_fat - fat_excess)
-            effective_sugar = max(0.0, effective_sugar - sugar_excess)
-            liquid_label = "Buttermilk"
-            sub_notes.append("Buttermilk liquid medium detected. Chemical leavening acid flag triggered.")
-        elif sec_liquid == "almond_milk":
-            almond_ratio = effective_hydration / 0.97
-            fat_excess = almond_ratio * 0.01
-            effective_fat = max(0.0, effective_fat - fat_excess)
-            liquid_label = "Almond Milk"
-            sub_notes.append("Almond Milk liquid medium detected. Ratios balanced.")
-
-        # 2c. Lipids Math Shifts
-        added_butter = 0.0
-        added_oil = 0.0
-        fat_substitute_label = None
-
-        # Override with old substitution dropdown if present
         if substitution and substitution.get("original") == "fat":
             sub_sub = substitution.get("substitute")
             if sub_sub in ["butter", "salted_butter", "unsalted_butter", "olive_oil", "canola_oil", "vegetable_oil"]:
@@ -416,20 +186,9 @@ class BaseEngine:
                 if sec_lipid == "butter":
                     sec_lipid = "unsalted_butter"
 
-        if sec_lipid in ["unsalted_butter", "salted_butter"]:
-            butter_ratio = effective_fat / 0.80
-            water_excess = butter_ratio * 0.18
-            effective_hydration = max(0.40, effective_hydration - water_excess)
-            fat_substitute_label = "Salted Butter" if sec_lipid == "salted_butter" else "Unsalted Butter"
-            sub_notes.append(f"Using {fat_substitute_label} fat medium. Butter is 80% fat; increased fat weight by 25% and reduced added liquid.")
-        elif sec_lipid in ["coconut_oil", "avocado_oil"]:
-            fat_substitute_label = "Coconut Oil" if sec_lipid == "coconut_oil" else "Avocado Oil"
-            sub_notes.append(f"Using {fat_substitute_label} fat medium. Direct 1:1 fat replacement applied.")
-        elif sec_lipid in ["olive_oil", "canola_oil", "vegetable_oil"]:
-            fat_substitute_label = "Olive Oil" if sec_lipid == "olive_oil" else ("Canola Oil" if sec_lipid == "canola_oil" else "Vegetable Oil")
-            sub_notes.append(f"Using {fat_substitute_label} fat medium. Direct 1:1 fat replacement applied.")
+        binder_pct = 0.10 if sec_binder != "none" else 0.0
 
-        # Perform sub-class specific math hooks here if needed
+        # Perform subclass-specific constraints (ceilings / floors)
         effective_hydration, effective_fat, effective_sugar = self.apply_sub_class_constraints(
             effective_hydration, effective_fat, effective_sugar, texture_score, crumb_score
         )
@@ -457,45 +216,29 @@ class BaseEngine:
 
         # Re-compute liquid weight based on selection
         liquid_weight = added_water
+        liquid_label = "Water"
         if sec_liquid == "whole_milk":
-            liquid_weight = flour_weight * (effective_hydration / 0.87)
+            liquid_label = "Whole Milk"
         elif sec_liquid == "heavy_cream":
-            liquid_weight = flour_weight * (effective_hydration / 0.57)
+            liquid_label = "Heavy Cream"
         elif sec_liquid == "buttermilk":
-            liquid_weight = flour_weight * (effective_hydration / 0.90)
+            liquid_label = "Buttermilk"
         elif sec_liquid == "almond_milk":
-            liquid_weight = flour_weight * (effective_hydration / 0.97)
-
-        if leaven_type == "sourdough":
-            liquid_weight -= (starter_weight / 2.0)
+            liquid_label = "Almond Milk"
 
         # Re-compute lipids weight
-        if sec_lipid in ["unsalted_butter", "salted_butter"]:
-            added_butter = flour_weight * (effective_fat / 0.80)
-            added_oil = 0.0
-        else:
-            added_oil = fat_weight
-            added_butter = 0.0
+        added_butter = fat_weight if sec_lipid in ["unsalted_butter", "salted_butter"] else 0.0
+        added_oil = fat_weight if sec_lipid not in ["unsalted_butter", "salted_butter"] else 0.0
+        fat_substitute_label = sec_lipid.replace("_", " ").title() if sec_lipid != "none" else None
 
         # Re-compute binders weight
-        if sec_binder == "whole_eggs":
-            added_eggs = flour_weight * 0.10
-        elif sec_binder == "egg_whites":
-            added_egg_whites = flour_weight * 0.10
-        elif sec_binder == "aquafaba_vegan":
-            added_aquafaba = flour_weight * 0.10
-
-        # Salt reduction modifier for salted_butter
-        if sec_lipid == "salted_butter":
-            salt_reduction = added_butter * 0.015
-            salt_weight = max(0.0, salt_weight - salt_reduction)
+        added_eggs = flour_weight * binder_pct if sec_binder == "whole_eggs" else 0.0
+        added_egg_whites = flour_weight * binder_pct if sec_binder == "egg_whites" else 0.0
+        added_aquafaba = flour_weight * binder_pct if sec_binder == "aquafaba_vegan" else 0.0
 
         # 5. Desired Dough Temperature (DDT)
         ddt_target_f = 78.0
-        if friction_override is not None:
-            friction = friction_override
-        else:
-            friction = FRICTION_FACTORS.get(mixing_method, 10.0)
+        friction = friction_override if friction_override is not None else FRICTION_FACTORS.get(mixing_method, 10.0)
         required_water_temp_f = (3.0 * ddt_target_f) - room_temp_f - flour_temp_f - friction
 
         return {
@@ -525,9 +268,9 @@ class BaseEngine:
             "maturity_modifier_applied": maturity_mod,
             "required_water_temp_f": round(required_water_temp_f, 1),
             "required_water_temp_c": round((required_water_temp_f - 32) * 5 / 9, 1),
-            "substitution_notes": sub_notes,
+            "substitution_notes": ["Simplified Baker's Math formulation."],
             "wheat_berry_mix": {name: round(flour_weight * share, 1) for name, share in berry_shares.items() if share > 0.0} if active_berries else None,
-            "structural_warning": structural_warning,
+            "structural_warning": None,
             "fat_substitute_label": fat_substitute_label,
         }
 
@@ -536,8 +279,6 @@ class BaseEngine:
         return hydration, fat, sugar
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
-        """Sub-classes override this to export their unique sequential step arrays."""
-        # Generic fallback step array
         return [
             {
                 "key": "mix",
@@ -552,12 +293,6 @@ class BaseEngine:
                 "duration_sec": 600,
                 "desc": "Work the dough to develop structural gluten alignment.",
                 "is_knead": True
-            },
-            {
-                "key": "autolyse",
-                "name": "Rest/Autolyse",
-                "duration_sec": 1800,
-                "desc": "Let the dough rest to relax gluten and absorb moisture."
             },
             {
                 "key": "bulk",

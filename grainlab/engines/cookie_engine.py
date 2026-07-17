@@ -149,26 +149,6 @@ class CookieEngine(BaseEngine):
 
     def calculate_recipe(self, **kwargs) -> dict:
         recipe = super().calculate_recipe(**kwargs)
-        
-        # Calculate horizontal cookie spread coefficient based on fat & sugar percentages
-        fat_pct = recipe["effective_fat_pct"] / 100.0
-        sugar_pct = recipe["effective_sugar_pct"] / 100.0
-        hydration_pct = recipe["effective_hydration_pct"] / 100.0
-        
-        # Spread coefficient formula: fat and sugar promote spreading, water/moisture holds structure.
-        spread_coef = round((fat_pct * 1.5 + sugar_pct * 1.2) / (hydration_pct if hydration_pct > 0 else 1.0), 2)
-        recipe["spread_coefficient"] = spread_coef
-        
-        # Textural slider chew/crisp balances
-        texture_score = kwargs.get("texture_score", 50)
-        chew_pct = texture_score
-        crisp_pct = 100 - texture_score
-        
-        recipe["substitution_notes"] = recipe.get("substitution_notes", []) + [
-            f"Horizontal Spread Coefficient: {spread_coef} (Fat/sugar melt threshold balance). High spread means wider, thinner cookies.",
-            f"Textural Balance: Recipe is adjusted for {chew_pct}% chewy chewiness vs. {crisp_pct}% snap crispiness."
-        ]
-        
         recipe["yeast_weight"] = 0.0
         recipe["starter_weight"] = 0.0
         return recipe
