@@ -919,9 +919,9 @@ class GeometryEvaluationTests(TestCase):
         res = get_geometry_advisory("custom", "Custom Sourdough", "lean-crusty", "standard-9x5-pan")
         self.assertIn("geometry_evaluation", res)
         ge = res["geometry_evaluation"]
-        self.assertEqual(ge["status"], "sub-optimal")
-        self.assertEqual(ge["profile_adjustments"]["oven_temp_offset_f"], -25)
-        self.assertEqual(ge["profile_adjustments"]["bake_time_offset_m"], 5)
+        self.assertEqual(ge["status"], "recommended")
+        self.assertEqual(ge["profile_adjustments"]["oven_temp_offset_f"], 0)
+        self.assertEqual(ge["profile_adjustments"]["bake_time_offset_m"], 0)
 
 
 class SidebarInsightTests(TestCase):

@@ -1028,24 +1028,45 @@ def get_substitution_offset(original_ing: str, substitute_ing: str, current_reci
     """
     if _is_ai_enabled():
         system_prompt = (
-            "Analyze an ingredient swap (substitution) in baking. Deconstruct the substitute "
-            "into raw water, fat, and sugar contents. Return a JSON object with: "
-            "'water_offset_pct' (float, hydration coefficient offset), "
-            "'fat_offset_pct' (float, fat coefficient offset), "
-            "'sugar_offset_pct' (float, sugar coefficient offset), "
-            "and 'explanation' (string details)."
+            "Analyze an ingredient swap (substitution) in baking. You must determine the exact composition of the SUBSTITUTE ingredient. "
+            "Return a JSON object with: "
+            "'substitute_water_pct' (float, between 0.0 and 1.0, e.g., 0.87 for milk), "
+            "'substitute_fat_pct' (float, between 0.0 and 1.0, e.g., 0.04 for milk), "
+            "'substitute_sugar_pct' (float, between 0.0 and 1.0, e.g., 0.05 for milk), "
+            "and 'explanation' (string detailing the chemical makeup)."
         )
         user_prompt = json.dumps({
             "original": original_ing,
             "substitute": substitute_ing,
-            "current_hydration": current_recipe.get("effective_hydration_pct", 70.0) / 100.0,
-            "current_fat": current_recipe.get("effective_fat_pct", 0.0) / 100.0,
-            "current_sugar": current_recipe.get("effective_sugar_pct", 0.0) / 100.0,
         })
         
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["water_offset_pct", "fat_offset_pct"])
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["substitute_water_pct", "substitute_fat_pct"])
         if result:
-            return result
+            try:
+                water_pct = float(result.get("substitute_water_pct", 1.0))
+                fat_pct = float(result.get("substitute_fat_pct", 0.0))
+                sugar_pct = float(result.get("substitute_sugar_pct", 0.0))
+                explanation = result.get("explanation", "Calculated mathematically based on AI ingredient composition.")
+                
+                # Math logic for perfect dough hydration balance:
+                if original_ing == "water" and water_pct > 0:
+                    multiplier = 1.0 / water_pct
+                    return {
+                        "water_offset_pct": round(multiplier - 1.0, 3),
+                        "fat_offset_pct": -round(multiplier * fat_pct, 3),
+                        "sugar_offset_pct": -round(multiplier * sugar_pct, 3),
+                        "explanation": explanation
+                    }
+                elif original_ing == "fat" and fat_pct > 0:
+                    multiplier = 1.0 / fat_pct
+                    return {
+                        "water_offset_pct": -round(multiplier * water_pct, 3),
+                        "fat_offset_pct": round(multiplier - 1.0, 3),
+                        "sugar_offset_pct": -round(multiplier * sugar_pct, 3),
+                        "explanation": explanation
+                    }
+            except (ValueError, TypeError, ZeroDivisionError) as e:
+                logger.warning(f"[Gemma Client] - Warning - AI returned malformed composition numbers: {e}")
 
     # Fallback default math-based offset objects matching our local engine
     # In view layer, we process substitutions natively; gemma client returns standard defaults matching bakers_math
@@ -1788,159 +1809,13 @@ CATEGORY_TO_ENGINE = {
     "fresh-pasta-noodles": "pasta",
 }
 
-ENGINE_GEOMETRIES = {
-    "hearth": {
-        "cast-iron-dutch-oven": {
-            "status": "recommended",
-            "advisory_label": "Direct conductive high-heat radiant envelope.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "open-baking-stone-steel": {
-            "status": "recommended",
-            "advisory_label": "Maximum surface expansion; requires ambient steam injection.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-on"}
-        },
-        "standard-9x5-pan": {
-            "status": "sub-optimal",
-            "advisory_label": "Restricts lateral expansion; forces a tight, non-traditional crumb format.",
-            "profile_adjustments": {"oven_temp_offset_f": -25, "bake_time_offset_m": 5, "steam_override": "force-off"}
-        }
-    },
-    "pan": {
-        "standard-9x5-pan": {
-            "status": "recommended",
-            "advisory_label": "Provides essential sidewall support for fragile, high-rising enriched crumbs.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "pullman-pan-lidded": {
-            "status": "recommended",
-            "advisory_label": "Restricts vertical expansion to create perfectly square slice structures.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 5, "steam_override": "force-off"}
-        },
-        "individual-portion-sheet": {
-            "status": "recommended",
-            "advisory_label": "Optimal surface airflow for uniform bun/roll stabilization.",
-            "profile_adjustments": {"oven_temp_offset_f": 15, "bake_time_offset_m": -10, "steam_override": "no-change"}
-        }
-    },
-    "bath": {
-        "perforated-baking-sheet": {
-            "status": "recommended",
-            "advisory_label": "Maximizes bottom crust airflow to flash-set the gelatinized alkaline skin.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "standard-silicon-mat-sheet": {
-            "status": "sub-optimal",
-            "advisory_label": "Prevents sticking, but traps bottom moisture, softening the lower crust boundary.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 5, "steam_override": "no-change"}
-        }
-    },
-    "flat": {
-        "heavy-cast-iron-skillet": {
-            "status": "recommended",
-            "advisory_label": "High conduction intense floor-heat for rapid vapor-pocket puffing.",
-            "profile_adjustments": {"oven_temp_offset_f": 25, "bake_time_offset_m": -5, "steam_override": "force-off"}
-        },
-        "high-heat-oven-stone": {
-            "status": "recommended",
-            "advisory_label": "Radiant flash-bake capability.",
-            "profile_adjustments": {"oven_temp_offset_f": 50, "bake_time_offset_m": -8, "steam_override": "no-change"}
-        }
-    },
-    "quick": {
-        "standard-8x4-loaf-pan": {
-            "status": "recommended",
-            "advisory_label": "Direct core heat conduction for thick, chemically leavened batters.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "muffin-cupcake-tin": {
-            "status": "recommended",
-            "advisory_label": "Rapid perimeter setting, maximizing crumb tenderness.",
-            "profile_adjustments": {"oven_temp_offset_f": 15, "bake_time_offset_m": -15, "steam_override": "no-change"}
-        },
-        "individual-wedge-sheet": {
-            "status": "recommended",
-            "advisory_label": "Maximizes exterior flaky edge crusting for scones.",
-            "profile_adjustments": {"oven_temp_offset_f": 10, "bake_time_offset_m": -10, "steam_override": "no-change"}
-        }
-    },
-    "batter": {
-        "straight-sided-round-tin": {
-            "status": "recommended",
-            "advisory_label": "Even structural expansion and predictable vertical scaling.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "high-border-sheet-pan": {
-            "status": "recommended",
-            "advisory_label": "Uniform surface volume distribution for sheet slicing.",
-            "profile_adjustments": {"oven_temp_offset_f": 10, "bake_time_offset_m": -10, "steam_override": "no-change"}
-        },
-        "cupcake-liner-matrix": {
-            "status": "recommended",
-            "advisory_label": "High surface area deployment for rapid protein coagulation.",
-            "profile_adjustments": {"oven_temp_offset_f": 20, "bake_time_offset_m": -18, "steam_override": "no-change"}
-        }
-    },
-    "pastry": {
-        "perforated-sheet-air-mat": {
-            "status": "recommended",
-            "advisory_label": "Instant heat transfer to flash-vaporize layered butter sheets before melting occurs.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "fluted-ring-tart-pan": {
-            "status": "recommended",
-            "advisory_label": "Structural wall support for short-crust fat distribution layouts.",
-            "profile_adjustments": {"oven_temp_offset_f": -10, "bake_time_offset_m": 5, "steam_override": "force-off"}
-        }
-    },
-    "choux": {
-        "extrusion-piping-sheet": {
-            "status": "recommended",
-            "advisory_label": "Perfect non-stick release baseline matching thermal steam-lift dynamics.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        }
-    },
-    "cookie": {
-        "heavy-aluminum-sheet": {
-            "status": "recommended",
-            "advisory_label": "Balanced heat absorption preventing bottom scorching while driving uniform horizontal fat spread.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "no-change"}
-        },
-        "continuous-bar-pan": {
-            "status": "sub-optimal",
-            "advisory_label": "Concentrates perimeter mass into a continuous sheet block. Requires reduced bake temperature and extended duration to ensure the core sets fully without burning the edges.",
-            "profile_adjustments": {"oven_temp_offset_f": -25, "bake_time_offset_m": 15, "steam_override": "force-off"}
-        }
-    },
-    "fry": {
-        "high-volume-oil-vat": {
-            "status": "recommended",
-            "advisory_label": "Extreme thermal mass retention keeping liquid fats stable during dough injection.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-off"}
-        }
-    },
-    "pasta": {
-        "mechanical-sheeter": {
-            "status": "recommended",
-            "advisory_label": "Gradual reduction tracking to thin structural pasta film specifications.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-off"}
-        },
-        "high-pressure-dies": {
-            "status": "recommended",
-            "advisory_label": "High compaction shaping matrix.",
-            "profile_adjustments": {"oven_temp_offset_f": 0, "bake_time_offset_m": 0, "steam_override": "force-off"}
-        }
-    }
-}
-
 def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str, form_factor_slug: str) -> dict:
     """
     Evaluates form factor suitability for the given recipe preset and category using Gemma.
-    Falls back to a local heuristic dict if offline, disabled, or API error.
     """
     engine_slug = CATEGORY_TO_ENGINE.get(category_slug, "base")
     
-    fallback_data = ENGINE_GEOMETRIES.get(engine_slug, {}).get(form_factor_slug, {
+    fallback_data = {
         "status": "recommended",
         "advisory_label": f"Standard baking geometry for {preset_name or category_slug}.",
         "profile_adjustments": {
@@ -1948,7 +1823,7 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
             "bake_time_offset_m": 0,
             "steam_override": "no-change"
         }
-    })
+    }
     
     if not _is_ai_enabled():
         return {
@@ -1956,8 +1831,8 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
         }
 
     system_prompt = (
-        "You are an expert baking science assistant. Evaluate the suitability of the selected baking geometry (form factor) "
-        "for the active recipe type and return a structured JSON response.\n"
+        "You are an expert baking science assistant. Evaluate the suitability of the selected baking geometry (equipment form factor) "
+        "for the active recipe type and return a structured JSON response. Consider thermal mass, heat conduction, expansion, and steam dynamics.\n"
         "Your response MUST be pure JSON matching this schema exactly:\n"
         "{\n"
         "  \"geometry_evaluation\": {\n"
@@ -1977,9 +1852,7 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
         f"Active Recipe Category: {category_slug} (Sub-Engine: {engine_slug})\n"
         f"Selected Form Factor (Geometry): {form_factor_slug}\n"
         f"Generate the suitability status, a scientific advisory label, and the recommended oven temperature offset (°F), "
-        f"bake time offset (minutes), and steam override choice. The default baseline parameters for this form factor are: "
-        f"status = '{fallback_data['status']}', temp offset = {fallback_data['profile_adjustments']['oven_temp_offset_f']}°F, "
-        f"time offset = {fallback_data['profile_adjustments']['bake_time_offset_m']}m, steam override = '{fallback_data['profile_adjustments']['steam_override']}'. "
+        f"bake time offset (minutes), and steam override choice. Do not rely on any preset baselines; calculate the ideal offsets directly. "
         f"Output ONLY valid JSON."
     )
     
@@ -1994,11 +1867,11 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
             advisory_label = ge.get("advisory_label", fallback_data["advisory_label"])
             
             adjustments = ge.get("profile_adjustments", {})
-            oven_temp_offset = int(adjustments.get("oven_temp_offset_f", fallback_data["profile_adjustments"]["oven_temp_offset_f"]))
-            bake_time_offset = int(adjustments.get("bake_time_offset_m", fallback_data["profile_adjustments"]["bake_time_offset_m"]))
-            steam_override = adjustments.get("steam_override", fallback_data["profile_adjustments"]["steam_override"])
+            oven_temp_offset = int(adjustments.get("oven_temp_offset_f", 0))
+            bake_time_offset = int(adjustments.get("bake_time_offset_m", 0))
+            steam_override = adjustments.get("steam_override", "no-change")
             if steam_override not in ["no-change", "force-on", "force-off"]:
-                steam_override = fallback_data["profile_adjustments"]["steam_override"]
+                steam_override = "no-change"
                 
             return {
                 "geometry_evaluation": {
@@ -2315,16 +2188,16 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "  \"recommended_grain_ids\": [\"grain_name_slug\"],  // list of lowercase name slugs matching grains from the provided inventory that are recommended for this flavor profile\n"
         "  \"secondary_ingredients\": {\n"
         "    \"lipids\": {\n"
-        "      \"required\": \"One of: unsalted_butter, salted_butter, coconut_oil, avocado_oil (use underscore format)\",\n"
-        "      \"options\": [\"unsalted_butter\", \"salted_butter\", \"coconut_oil\", \"avocado_oil\"]\n"
+        "      \"required\": \"Primary recommended fat (e.g., unsalted_butter, extra_virgin_olive_oil)\",\n"
+        "      \"options\": [\"list\", \"of\", \"all\", \"acceptable\", \"fats\"]\n"
         "    },\n"
         "    \"liquids\": {\n"
-        "      \"required\": \"One of: pure_water, whole_milk, heavy_cream, buttermilk (use underscore format)\",\n"
-        "      \"options\": [\"pure_water\", \"whole_milk\", \"heavy_cream\", \"buttermilk\"]\n"
+        "      \"required\": \"Primary recommended liquid (e.g., pure_water, whole_milk, buttermilk)\",\n"
+        "      \"options\": [\"list\", \"of\", \"all\", \"acceptable\", \"liquids\"]\n"
         "    },\n"
         "    \"binders\": {\n"
-        "      \"required\": \"One of: none, whole_eggs, egg_whites, aquafaba_vegan (use underscore format)\",\n"
-        "      \"options\": [\"none\", \"whole_eggs\", \"egg_whites\", \"aquafaba_vegan\"]\n"
+        "      \"required\": \"Primary recommended binder (e.g., none, whole_eggs, aquafaba)\",\n"
+        "      \"options\": [\"list\", \"of\", \"all\", \"acceptable\", \"binders\"]\n"
         "    }\n"
         "  }\n"
         "}\n"
