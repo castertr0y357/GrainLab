@@ -1167,7 +1167,31 @@ def ai_sidebar_insight(request):
                 "labor_roi": "High Priority / Worth the Extra Step",
                 "last_10_percent_analysis": "Enables even heat circulation and steam escape around portioned dough, forming the signature shiny crust of bagels and pretzels."
             },
-            "butter": {
+                        "sifted_true": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Sifting removes the sharp, fibrous bran particles that slice through delicate gluten strands. Essential for achieving a lighter, more open artisan crumb structure at the cost of some fiber."
+            },
+            "sifted_false": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "Leaving the bran in maximizes nutritional yield and provides a rustic, hearty texture. Note that the bran will absorb more water and restrict maximum oven spring."
+            },
+            "sifted_true": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Sifting out the coarse bran results in a much finer, softer pastry flour. Critical for achieving a meltingly tender crumb in cookies and cakes without gritty mouthfeel."
+            },
+            "sifted_false": {
+                "labor_roi": "Low Priority / Flavor Shift",
+                "last_10_percent_analysis": "Retains all the whole-grain fiber and nutty flavor, but the bran particles can make delicate confections taste dense and gritty."
+            },
+            "sifted_true": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Sifting removes the sharp, fibrous bran particles that slice through delicate gluten strands. Essential for achieving a lighter, more open artisan crumb structure at the cost of some fiber."
+            },
+            "sifted_false": {
+                "labor_roi": "Standard Baseline",
+                "last_10_percent_analysis": "Leaving the bran in maximizes nutritional yield and provides a rustic, hearty texture. Note that the bran will absorb more water and restrict maximum oven spring."
+            },
+"butter": {
                 "labor_roi": "High Priority / Worth the Extra Step",
                 "last_10_percent_analysis": "Adds rich dairy fat to soften the crumb. Reduces gluten tensile strength, yielding a tender, melt-in-the-mouth brioche."
             },
@@ -1358,7 +1382,15 @@ def ai_sidebar_insight(request):
                 "labor_roi": "High Priority / Worth the Extra Step",
                 "last_10_percent_analysis": "Excellent for delicate macarons or eclairs, letting heat distribute evenly to dry out shells without warping."
             },
-            "butter": {
+                        "sifted_true": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Sifting out the coarse bran results in a much finer, softer pastry flour. Critical for achieving a meltingly tender crumb in cookies and cakes without gritty mouthfeel."
+            },
+            "sifted_false": {
+                "labor_roi": "Low Priority / Flavor Shift",
+                "last_10_percent_analysis": "Retains all the whole-grain fiber and nutty flavor, but the bran particles can make delicate confections taste dense and gritty."
+            },
+"butter": {
                 "labor_roi": "High Priority / Worth the Extra Step",
                 "last_10_percent_analysis": "Solid butter contains 18% water, which turns to steam and creates tiny layers during baking. Crucial for a flaky, melting texture."
             },
@@ -1549,7 +1581,15 @@ def ai_sidebar_insight(request):
                 "labor_roi": "Low Priority / Effortless Texture Shift",
                 "last_10_percent_analysis": "Used occasionally for drying cut noodles to prevent condensation buildup."
             },
-            "butter": {
+                        "sifted_true": {
+                "labor_roi": "High Priority / Worth the Extra Step",
+                "last_10_percent_analysis": "Sifting creates a smooth, silky pasta dough that is much easier to sheet thinly without tearing."
+            },
+            "sifted_false": {
+                "labor_roi": "Low Priority / Sub-Optimal Selection",
+                "last_10_percent_analysis": "Whole bran particles can cause the pasta sheet to tear easily when rolled thin, resulting in a rough, overly rustic noodle."
+            },
+"butter": {
                 "labor_roi": "Low Priority / Minor Textural Return",
                 "last_10_percent_analysis": "Occasionally added to filled pasta doughs for richness, but typically not a standard sheeting ingredient."
             },

@@ -322,13 +322,12 @@ def generate_dynamic_flavors(cat_slug: str, level: int, count: int = 8, exclude_
     gen_idx = 0
     tweak_count = 0
     while len(variants) < count and gen_idx < len(category_bases) * 2:
-        base_name = category_bases[gen_idx % len(category_bases)]
-        suffix = "Modern" if level == 2 else "Classic"
-        name = f"{base_name} {suffix}"
+        name = category_bases[gen_idx % len(category_bases)]
         if name.lower() not in exclude_set:
             variants.append({
                 "name": name,
-                "desc": f"{descriptions[tweak_count % len(descriptions)]} Perfect for pairing with active milled grains."
+                "desc": f"{descriptions[tweak_count % len(descriptions)]} Perfect for pairing with active milled grains.",
+                "menu_desc": f"{name} crafted to highlight the unique nuances of freshly milled flour."
             })
             tweak_count += 1
         gen_idx += 1
@@ -356,6 +355,7 @@ def get_fallback_creativity_recipes(engine_id: str, active_archetype_id: str, pr
                 "recipe_name": item["name"],
                 "creativity_level": lvl,
                 "description": item["desc"],
+                "menu_description": f"A delightful artisanal version of {item['name']}, baked fresh with heritage grains."
             })
     return {"recipes": recipes}
 
@@ -368,7 +368,7 @@ def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_l
                 cat_slug = k
                 break
                 
-    dynamic_items = generate_dynamic_flavors(cat_slug, creativity_level, count=8, exclude_names=exclude_names)
+    dynamic_items = generate_dynamic_flavors(cat_slug, creativity_level, count=5, exclude_names=exclude_names)
     
     variants = []
     for idx, item in enumerate(dynamic_items):
@@ -376,6 +376,7 @@ def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_l
             "variant_id": f"{active_archetype_id}_v{creativity_level}_alt{idx+1}",
             "variant_name": item["name"],
             "description": item["desc"],
+            "menu_description": item.get("menu_desc", f"A delicious, elevated take on {item['name']}.")
         })
     return {"generated_variants": variants}
 
@@ -719,6 +720,9 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
         "Rely SOLELY on your native baking science knowledge and real-world artisan baking physics. "
         "Do NOT apply standard/generic wheat constraints to ancient or non-standard grains (e.g., Rye, Spelt, Einkorn) if doing so contradicts artisan baking chemistry.\n"
         "2. Double Temperature Scale: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
+
+        "6. BE HIGHLY CRITICAL AND DISCERNING: Do NOT lazily categorize everything as 'High Priority' or 'Recommended'. Most options in a kitchen are 'Sub-Optimal', 'Low Priority', or 'Standard Baseline'. ONLY rate something as 'High Priority / Worth the Extra Step' or 'Recommended' if it provides a MASSIVE, noticeable improvement to the final texture or flavor for that specific recipe. You are a harsh, pragmatic critic. If it's a minor difference, rate it 'Low Priority'.\n"
+
         "3. Ingredient Naming: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g., 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
     )
     
@@ -921,8 +925,8 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         payload["reasoning_effort"] = ai_thinking_effort
 
     try:
-        # Enforce a 30-second timeout to allow the model sufficient time to load and generate responses
-        response = requests.post(url, headers=headers, json=payload, timeout=30.0)
+        # Enforce a 60-second timeout to allow the model sufficient time to load and generate responses
+        response = requests.post(url, headers=headers, json=payload, timeout=60.0)
         logger.info(f"[AI] - HTTP Response Code: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
@@ -1962,6 +1966,9 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "   - Suggest acquiring or activating a specific grain from this out-of-stock list if it would significantly enhance the flavor or yield a superior texture for the target preset. Give a clear explanation of its impact.\n"
         "4. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
         "5. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
+
+        "6. BE HIGHLY CRITICAL AND DISCERNING: Do NOT lazily categorize everything as 'High Priority' or 'Recommended'. Most options in a kitchen are 'Sub-Optimal', 'Low Priority', or 'Standard Baseline'. ONLY rate something as 'High Priority / Worth the Extra Step' or 'Recommended' if it provides a MASSIVE, noticeable improvement to the final texture or flavor for that specific recipe. You are a harsh, pragmatic critic. If it's a minor difference, rate it 'Low Priority'.\n"
+
         "\n"
         "Return a JSON object containing:\n"
         "- 'recommendation_tier': a string of 'recommended', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
@@ -2030,10 +2037,12 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
 
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
-        "generate exactly 8 distinct recipe variants optimized for fresh-milled whole grains.\n"
+        "generate exactly 5 distinct recipe variants optimized for fresh-milled whole grains.\n"
         f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
+        "CRITICAL: The variants MUST be 100% unique. Do NOT generate duplicate recipes.\n"
+        "CRITICAL: Do NOT append words like 'Classic', 'Modern', 'Variant', or 'Level' to the variant names. The names should be simple and natural.\n"
         "CRITICAL: The variants must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
         "\n"
         "Each variant must match this JSON schema:\n"
@@ -2043,6 +2052,7 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
         "      \"variant_id\": \"unique_slug\",\n"
         "      \"variant_name\": \"Human readable variant label (representing a culinary/flavor target)\",\n"
         "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\",\n"
+        "      \"menu_description\": \"A rich, descriptive flavor profile written in the style of a high-end restaurant menu item description.\",\n"
         "      \"recommended_grain_ids\": [\"grain_name_slug\"]\n"
         "    }\n"
         "  ]\n"
@@ -2085,6 +2095,8 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
         "- Creativity Level 1: Baseline Standard Profiles. (Simple, standard, reliable profiles).\n"
         "- Creativity Level 2: Advanced Modern Profiles. (More advanced hydration, techniques, or modern touches).\n"
         "\n"
+        "CRITICAL: The recipe profiles MUST be 100% unique. Do NOT generate duplicate recipes.\n"
+        "CRITICAL: Do NOT append words like 'Classic', 'Modern', 'Variant', or 'Level' to the variant names. The names should be simple and natural.\n"
         "CRITICAL: The recipe profiles must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard').\n"
         "\n"
         "Each recipe must match this JSON schema:\n"
@@ -2094,7 +2106,8 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
         "      \"recipe_id\": \"unique_slug\",\n"
         "      \"recipe_name\": \"Human readable title (representing a culinary/flavor target)\",\n"
         "      \"creativity_level\": 1,  // must be 1 or 2\n"
-        "      \"description\": \"1-2 sentence description explaining the flavor structure\"\n"
+        "      \"description\": \"1-2 sentence description explaining the flavor structure\",\n"
+        "      \"menu_description\": \"A rich, descriptive flavor profile written in the style of a high-end restaurant menu item description.\"\n"
         "    }\n"
         "  ]\n"
         "}\n"
@@ -2128,10 +2141,12 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
 
     system_prompt = (
         f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
-        f"generate exactly 8 alternative structural profile variations matching ONLY that creativity level.\n"
+        f"generate exactly 5 alternative structural profile variations matching ONLY that creativity level.\n"
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
+        "CRITICAL: The generated variations MUST be 100% unique. Do NOT generate duplicate recipes.\n"
+        "CRITICAL: Do NOT append words like 'Classic', 'Modern', 'Variant', or 'Level' to the variant names. The names should be simple and natural.\n"
         "CRITICAL: The variations must be defined by their culinary/flavor targets (e.g. Chocolate Chip, Snickerdoodle, Roasted Garlic Herb, Fig & Walnut, Cinnamon Swirl, Blueberry Lemon, etc.), NOT by the specific grains used (e.g. do not call them 'Spelt Cookie' or 'Rye Batard').\n"
         "\n"
         "Each variation must match this JSON schema:\n"
@@ -2140,7 +2155,8 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
         "    {\n"
         "      \"variant_id\": \"unique_slug\",\n"
         "      \"variant_name\": \"Human readable variant label (representing a culinary/flavor target)\",\n"
-        "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\"\n"
+        "      \"description\": \"1-2 sentence description explaining the structural/flavor tweak and how it pairs with the whole grain notes.\",\n"
+        "      \"menu_description\": \"A rich, descriptive flavor profile written in the style of a high-end restaurant menu item description.\"\n"
         "    }\n"
         "  ]\n"
         "}\n"
@@ -2183,31 +2199,34 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, recommended grain selections, and required secondary ingredients (including permissible substitutions).\n"
         "Each response must match this JSON schema:\n"
         "{\n"
-        "  \"menu_description\": \"A 1-2 sentence rich, descriptive flavor profile that highlights taste, aroma, and visual appeal, written in the style of a high-end restaurant menu item description (e.g., 'A decadent, dark chocolate cookie layered with rich malt undertones and finished with pockets of molten Valrhona fudge.').\",\n"
-        "  \"sidebar_science_profile\": \"1-2 sentence technical science analysis of the crumb, starch-lipid structure, or hydration of this specific recipe.\",\n"
         "  \"recommended_grain_ids\": [\"grain_name_slug\"],  // list of lowercase name slugs matching grains from the provided inventory that are recommended for this flavor profile\n"
         "  \"secondary_ingredients\": {\n"
         "    \"lipids\": {\n"
         "      \"required\": \"Primary recommended fat (e.g., unsalted_butter, extra_virgin_olive_oil)\",\n"
-        "      \"options\": [\"list\", \"of\", \"all\", \"acceptable\", \"fats\"]\n"
+        "      \"options\": [\"unsalted_butter\", \"avocado_oil\", \"coconut_oil\"]\n"
         "    },\n"
         "    \"liquids\": {\n"
         "      \"required\": \"Primary recommended liquid (e.g., pure_water, whole_milk, buttermilk)\",\n"
-        "      \"options\": [\"list\", \"of\", \"all\", \"acceptable\", \"liquids\"]\n"
+        "      \"options\": [\"pure_water\", \"whole_milk\", \"buttermilk\"]\n"
         "    },\n"
         "    \"binders\": {\n"
         "      \"required\": \"Primary recommended binder (e.g., none, whole_eggs, aquafaba)\",\n"
-        "      \"options\": [\"list\", \"of\", \"all\", \"acceptable\", \"binders\"]\n"
-        "    }\n"
+        "      \"options\": [\"none\", \"whole_eggs\", \"egg_whites\"]\n"
+        "    },\n"
+        "    \"flavor_inclusions\": [\n"
+        "      \"List 2-4 distinct flavor ingredients generated for this specific variant (e.g. Lemon Zest, Fresh Thyme, Toasted Walnuts, Cinnamon). Leave empty if plain.\"\n"
+        "    ]\n"
         "  }\n"
         "}\n"
         "Return ONLY raw JSON with no markdown fences.\n"
         "\n"
         "🚨 [CRITICAL PROMPT HARDENING]\n"
-        "1. FLAVOR-FIRST MENU DESCRIPTION: The `menu_description` MUST highlight and describe the specific flavor characteristics of the recipe name provided (for example: if the recipe is Snickerdoodle, focus on sweet cinnamon-sugar warmth; if it is Classic Chocolate Chip, focus on rich butter and chocolate pockets). Do NOT output generic templates or repeat the same description for different recipes.\n"
-        "2. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
-        "3. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
-        "4. RECOMMENDED GRAINS DETECTOR: You must identify which grains from the provided active selected grains list are recommended for this recipe and list their lowercase name slugs (e.g. ['soft_white_wheat', 'rye']) in the recommended_grain_ids key."
+        "1. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
+        "2. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
+
+        "6. BE HIGHLY CRITICAL AND DISCERNING: Do NOT lazily categorize everything as 'High Priority' or 'Recommended'. Most options in a kitchen are 'Sub-Optimal', 'Low Priority', or 'Standard Baseline'. ONLY rate something as 'High Priority / Worth the Extra Step' or 'Recommended' if it provides a MASSIVE, noticeable improvement to the final texture or flavor for that specific recipe. You are a harsh, pragmatic critic. If it's a minor difference, rate it 'Low Priority'.\n"
+
+        "3. RECOMMENDED GRAINS DETECTOR: You must identify which grains from the provided active selected grains list are recommended for this recipe and list their lowercase name slugs (e.g. ['soft_white_wheat', 'rye']) in the recommended_grain_ids key."
     )
     
     from grainlab.engines import router
@@ -2230,13 +2249,15 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "category_slug": category_slug
     })
 
+    logger.info(f"[Gemma Client] - Info - Calling generate_recipe_details for: {recipe_slug}")
+
     try:
         # Check if offline mock mode is active
         if getattr(settings, "MOCK_MODE", True):
             return get_local_recipe_details(recipe_slug, recipe_name, engine_id, active_archetype_id, selected_grains)
 
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["menu_description", "sidebar_science_profile", "secondary_ingredients", "recommended_grain_ids"])
-        if result and isinstance(result, dict) and "sidebar_science_profile" in result:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "recommended_grain_ids"])
+        if result and isinstance(result, dict) and "secondary_ingredients" in result:
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_details: {str(e)}")
@@ -2257,11 +2278,13 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     sec_lipids = {"required": "none", "options": ["none", "unsalted_butter", "avocado_oil", "coconut_oil"]}
     sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk", "buttermilk"]}
     sec_binders = {"required": "none", "options": ["none", "whole_eggs", "egg_whites"]}
+    flavor_inclusions = []
     
     if category in ["cookies-shortbread", "cakes-batters", "cookies_shortbread", "cakes_batters", "cookie", "batter"]:
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
         sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
         sec_binders = {"required": "whole_eggs", "options": ["none", "whole_eggs", "egg_whites"]}
+        flavor_inclusions = ["Dark Chocolate Chunks", "Maldon Sea Salt"]
     elif category in ["pastry-lamination", "pastry_lamination", "pastry", "choux-paste", "choux_paste", "choux", "fry", "fried-doughs"]:
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "salted_butter"]}
         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
@@ -2270,6 +2293,7 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil"]}
         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
         sec_binders = {"required": "none", "options": ["none", "whole_eggs"]}
+        flavor_inclusions = ["Cinnamon Sugar Swirl", "Raisins"]
     elif category in ["alkaline-bath", "alkaline_bath", "bath", "flatbreads-griddles", "flatbreads_griddles", "flat"]:
         sec_lipids = {"required": "none", "options": ["none", "unsalted_butter"]}
         sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk"]}
@@ -2282,12 +2306,11 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
         
     return {
         "menu_description": f"A balanced formulation of {recipe_name or slug} optimized for target mechanics.",
-        "sidebar_science_profile": f"Evaluates raw material specifications relative to physical targets of the {engine_id} engine.",
         "recommended_grain_ids": pref_slugs,
         "secondary_ingredients": {
             "lipids": sec_lipids,
             "liquids": sec_liquids,
-            "binders": sec_binders
+            "binders": sec_binders,
+            "flavor_inclusions": flavor_inclusions
         }
     }
-
