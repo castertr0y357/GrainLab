@@ -617,17 +617,17 @@
                             <div class="pill-btn-group">
                                 <button type="button" class="pill-btn" :class="!is_sifted ? 'active' : ''"
                                         @click="is_sifted = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('sifted_false')"
+                                        @mouseenter="setHoveredElement('whole_grain_unsifted_flour')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('sifted_false')"
+                                        @focusin="setHoveredElement('whole_grain_unsifted_flour')"
                                         @focusout="clearHoveredElement()">
                                     Whole Grain (Unsifted)
                                 </button>
                                 <button type="button" class="pill-btn" :class="is_sifted ? 'active' : ''"
                                         @click="is_sifted = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('sifted_true')"
+                                        @mouseenter="setHoveredElement('sifted_high_extraction_flour')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('sifted_true')"
+                                        @focusin="setHoveredElement('sifted_high_extraction_flour')"
                                         @focusout="clearHoveredElement()">
                                     Sifted (High Extraction)
                                 </button>
