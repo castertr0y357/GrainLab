@@ -55,6 +55,7 @@ def calculator(request):
     form_factors = FormFactor.objects.all().order_by('name')
     presets = BreadPreset.objects.all().order_by('name')
     mixers = Equipment.objects.filter(equipment_type='mixer').order_by('name')
+    mills = Equipment.objects.filter(equipment_type='mill').order_by('name')
     
     # Load settings
     ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
@@ -126,6 +127,7 @@ def calculator(request):
         "form_factors": form_factors,
         "presets": presets,
         "mixers": mixers,
+        "mills": mills,
         "active_berries": active_berries,
         "selected_preset": selected_preset,
         "selected_category": default_cat,
