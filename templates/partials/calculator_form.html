@@ -22,7 +22,7 @@
           secondary_binder: 'none',
           proofing_environment: 'ambient',
           mill_type: 'stoneground',
-          is_sifted: false,
+          is_sifted: null,
           form_factor_val: '{{ selected_form_factor.slug|default:'standard-9x5-pan' }}',
           recommended_ff_slug: '{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}{{ selected_form_factor.slug }}{% endif %}',
           yield_scale: 1.0,
@@ -616,7 +616,7 @@
                             <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Bran Separation</label>
                             <input type="hidden" name="is_sifted" :value="is_sifted ? 'on' : ''">
                             <div class="pill-btn-group">
-                                <button type="button" class="pill-btn" :class="!is_sifted ? 'active' : ''"
+                                <button type="button" class="pill-btn" :class="is_sifted === false ? 'active' : ''"
                                         @click="is_sifted = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
                                         @mouseenter="setHoveredElement('whole_grain_unsifted_flour')"
                                         @mouseleave="clearHoveredElement()"
@@ -624,7 +624,7 @@
                                         @focusout="clearHoveredElement()">
                                     Whole Grain (Unsifted)
                                 </button>
-                                <button type="button" class="pill-btn" :class="is_sifted ? 'active' : ''"
+                                <button type="button" class="pill-btn" :class="is_sifted === true ? 'active' : ''"
                                         @click="is_sifted = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
                                         @mouseenter="setHoveredElement('sifted_high_extraction_flour')"
                                         @mouseleave="clearHoveredElement()"
