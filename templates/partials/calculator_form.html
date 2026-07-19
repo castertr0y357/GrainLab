@@ -587,11 +587,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
                 
                 <!-- Component 4: Milling Profile Parameters (always visible — hardlocked to fresh-milled whole grain) -->
-                <div @mouseenter="setHoveredElement('milled')"
-                     @mouseleave="clearHoveredElement()"
-                     @focusin="setHoveredElement('milled')"
-                     @focusout="clearHoveredElement()"
-                     tabindex="0"
+                <div tabindex="0"
                      style="background-color: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;">
                     <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                         Milling Profile Parameters
@@ -603,7 +599,11 @@
                             <div class="pill-btn-group">
                                 {% for mill in mills %}
                                 <button type="button" class="pill-btn" :class="mill_type === '{{ mill.id|escapejs }}' ? 'active' : ''"
-                                        @click="mill_type = '{{ mill.id|escapejs }}'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        @click="mill_type = '{{ mill.id|escapejs }}'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
+                                        @mouseenter="setHoveredElement('{{ mill.name|escapejs }}')"
+                                        @mouseleave="clearHoveredElement()"
+                                        @focusin="setHoveredElement('{{ mill.name|escapejs }}')"
+                                        @focusout="clearHoveredElement()">
                                     {{ mill.name }}
                                 </button>
                                 {% empty %}
