@@ -1971,7 +1971,7 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
 
         "\n"
         "Return a JSON object containing:\n"
-        "- 'recommendation_tier': a string of 'recommended', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
+        "- 'recommendation_tier': a string of 'highly-recommended', 'recommended', 'standard', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
         "- 'labor_roi_rating': a string tag representing ranking (e.g., 'High Priority / Worth the Extra Step', 'Low Priority / Minor Textural Return', 'High Priority / Absolute Requirement')\n"
         "- 'last_10_percent_analysis': a tight 2-sentence conversational critique.\n"
         "- 'elevate_recipe': a 1-2 sentence recommendation on a potential way to elevate this recipe, suggesting a specific grain to mix in (regardless of inventory), a particular secondary ingredient (like a fat/liquid swap), or a specific method (like autolyse, cold proofing) to achieve greater results.\n"

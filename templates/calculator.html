@@ -270,6 +270,7 @@
             return bNameSlug.includes(key) || key.includes(bNameSlug);
         });
         if (!berry) return null;
+        
         return this.grainEvaluations.find(e => e.grain_id === berry.id);
     },
     
@@ -492,10 +493,18 @@
         fetch(url, { signal })
             .then(res => res.json())
             .then(data => {
+                // Normalize keys in case of AI returning capitalized keys
+                const normalized_recipes = (data.recipes || []).map(r => {
+                    const norm = {};
+                    for (const key in r) {
+                        norm[key.toLowerCase()] = r[key];
+                    }
+                    return norm;
+                });
                 this.recipe_gen_data = {
                     category_slug: category_slug,
                     archetype_id: archetype_id,
-                    recipes: data.recipes
+                    recipes: normalized_recipes
                 };
                 this.recipe_gen_resolved = true;
             })
@@ -596,9 +605,8 @@
                             this.sidebar_analysis = profile;
                             this.selectedRecipeScienceProfile = profile;
                             
-                            const menu = data.menu_description || 'Gathering flavor notes...';
-                            this.sidebar_menu_description = menu;
-                            this.selectedRecipeMenuDescription = menu;
+                            // The menu description was already set immediately upon recipe selection
+                            // using the pre-generated recipe.description
 
                             // Save recommended grains for highlighting in Phase 2
                             this.recommended_grain_ids = data.recommended_grain_ids || [];
@@ -727,7 +735,7 @@
         this.alternative_variants = [];
         this.variant_loading = true;
 
-        const concept_recipe = this.creativity_recipes.find(r => r.creativity_level === level);
+        const concept_recipe = this.creativity_recipes.find(r => r.creativity_level == level);
         if (!concept_recipe) {
             this.variant_loading = false;
             return;
@@ -748,7 +756,14 @@
             .then(res => res.json())
             .then(data => {
                 if (this.expanded_level === level) {
-                    this.alternative_variants = data.generated_variants || [];
+                    const normalized_variants = (data.generated_variants || []).map(v => {
+                        const norm = {};
+                        for (const key in v) {
+                            norm[key.toLowerCase()] = v[key];
+                        }
+                        return norm;
+                    });
+                    this.alternative_variants = normalized_variants;
                 }
                 this.variant_loading = false;
             })
@@ -766,7 +781,7 @@
     },
 
     getRecipesForLevel(level) {
-        return this.creativity_recipes.filter(r => r.creativity_level === level);
+        return this.creativity_recipes.filter(r => r.creativity_level == level);
     },
 
     onRecipeHover(recipe) {
@@ -787,37 +802,32 @@
         this.presetName = recipe_name;
         this.recommended_grain_ids = recipe.recommended_grain_ids || [];
         this.sidebar_analysis = '';
-        this.sidebar_menu_description = '';
+        this.sidebar_menu_description = recipe.menu_description || recipe.description || '';
         this.selectedRecipeScienceProfile = '';
-        this.selectedRecipeMenuDescription = '';
+        this.selectedRecipeMenuDescription = recipe.menu_description || recipe.description || '';
         this.selectedRecipeSecondaryIngredients = null;
         this.globalElevateRecipe = [];
         this.sidebar_labor_roi = '';
         this.recipe_selected = false;
-
-        // Trigger on-demand detailed lazy load call
-        this.fetchRecipeDetails(recipe_id);
     },
 
     confirmRecipeSelection() {
         if (!this.selected_recipe_id) return;
         this.recipe_selected = true;
+        this.advisoryLoading = true;
         this.activeBerries.forEach(b => {
             b.selected = false;
         });
+        
+        // Trigger on-demand detailed lazy load call only once confirmed
+        this.fetchRecipeDetails(this.selected_recipe_id);
+        
         this.fetchAdvisory(this.presetSlug);
         this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
     },
 
     getClassificationLabel(berry) {
-        const recMap = this.recommendedGrainsMap;
         const evs = this.grainEvaluationsMap;
-        const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        
-        if (recMap[berryNameSlug]) {
-            return 'Recommended';
-        }
-        
         const ev = evs[berry.id];
         if (!ev) return '';
         if (ev.tier === 'recommended') return 'Recommended';
@@ -827,27 +837,13 @@
     },
 
     getGrainReasoning(berry) {
-        const recMap = this.recommendedGrainsMap;
         const evs = this.grainEvaluationsMap;
-        const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        
-        if (recMap[berryNameSlug]) {
-            return 'Highly recommended starch/lipid balance for this specific formulation.';
-        }
-        
         const ev = evs[berry.id];
         return ev ? ev.reasoning : '';
     },
 
     getClassificationBadgeStyle(berry) {
-        const recMap = this.recommendedGrainsMap;
         const evs = this.grainEvaluationsMap;
-        const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        
-        if (recMap[berryNameSlug]) {
-            return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
-        }
-        
         const ev = evs[berry.id];
         if (!ev) return '';
         if (ev.tier === 'recommended') return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
@@ -916,23 +912,28 @@
                 this.fetchAdvisory(this.presetSlug);
             }
         });
-        this.$watch('active_archetype_id', () => {
-            this.cancelAllInFlightRequests();
-            this.flushStateToNull();
-        });
+
         this.$watch('current_phase', (value, oldValue) => {
             if (value < oldValue) {
                 this.cancelAllInFlightRequests();
                 this.flushStateToNull();
+            }
+            if (value === 3 && value !== oldValue) {
+                this.fetchElevateTips(this.presetSlug);
             }
         });
         this.$watch('grain_mode', value => {
             /* grain_mode is hardlocked to 'milled'. Watcher retained for compatibility. */
             this.selectIdealGrain();
             this.fetchAdvisory(this.presetSlug);
+            if (this.current_phase >= 3) {
+                this.fetchElevateTips(this.presetSlug);
+            }
         });
         this.$watch('activeBerries', () => {
-            this.fetchElevateTips(this.presetSlug);
+            if (this.current_phase >= 3) {
+                this.fetchElevateTips(this.presetSlug);
+            }
         }, { deep: true });
         this.activeBerries.forEach(b => { b.selected = false; });
         if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
@@ -966,6 +967,11 @@
         
         // Debounce for 750ms
         this.advisoryTimeout = setTimeout(() => {
+            if (this.recipe_details_loading) {
+                // Defer advisory evaluation until recipe details LLM call finishes
+                this.fetchAdvisory(slug);
+                return;
+            }
             this.fetchGrainEvaluations(slug);
         }, 750);
     },    fetchGrainEvaluations(slug) {
@@ -1015,7 +1021,7 @@
             .map(b => b.id)
             .join(',');
 
-        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName);
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_evaluations=true';
         if (selectedGrains) {
             url += '&selected_grains=' + encodeURIComponent(selectedGrains);
         }
@@ -1043,7 +1049,6 @@
             .then(res => res.json())
             .then(data => {
                 this.grainEvaluations = data.grain_evaluations || [];
-                this.globalElevateRecipe = data.elevate_recipe || '';
                 const rec = this.grainEvaluations.find(e => e.tier === 'recommended');
                 const risk = this.grainEvaluations.find(e => e.tier === 'not-recommended');
                 this.advisoryRecommendedName = rec ? this.getGrainNameById(rec.grain_id) : '';
@@ -1086,6 +1091,38 @@
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     this.sidebar_insight_loading = false;
                 }
+            });
+    },
+
+    fetchElevateTips(slug) {
+        if (!this.recipe_selected || !slug) return;
+        
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_elevate=true';
+        if (selectedGrains) {
+            url += '&selected_grains=' + encodeURIComponent(selectedGrains);
+        }
+        if (this.selected_master && this.selected_master !== 'null') {
+            url += '&category_slug=' + encodeURIComponent(this.selected_master);
+        }
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        this.globalElevateRecipe = [];
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.elevate_recipe) {
+                    this.globalElevateRecipe = data.elevate_recipe;
+                }
+            })
+            .catch(err => {
+                console.error('Failed to fetch elevate tips:', err);
             });
     },
 
@@ -1730,15 +1767,23 @@
                                 <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Recommendation Tier</span>
                                 <span style="display: inline-block; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;"
                                       :style="
-                                         sidebar_tier === 'recommended' 
+                                         sidebar_tier === 'highly-recommended'
+                                              ? 'background-color: rgba(76, 175, 80, 0.1); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.2);'
+                                              : sidebar_tier === 'recommended' 
                                               ? 'background-color: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2);' 
+                                              : sidebar_tier === 'standard'
+                                              ? 'background-color: rgba(33, 150, 243, 0.1); color: #2196f3; border: 1px solid rgba(33, 150, 243, 0.2);'
                                               : sidebar_tier === 'not-recommended'
                                               ? 'background-color: rgba(244, 67, 54, 0.1); color: var(--danger); border: 1px solid rgba(244, 67, 54, 0.2);'
                                               : 'background-color: rgba(158, 158, 158, 0.1); color: #9e9e9e; border: 1px solid rgba(158, 158, 158, 0.2);'
                                        "
                                       x-text="
-                                         sidebar_tier === 'recommended'
+                                         sidebar_tier === 'highly-recommended'
+                                              ? 'HIGHLY RECOMMENDED'
+                                              : sidebar_tier === 'recommended'
                                               ? 'RECOMMENDED'
+                                              : sidebar_tier === 'standard'
+                                              ? 'STANDARD / BASELINE'
                                               : sidebar_tier === 'not-recommended'
                                               ? 'NOT RECOMMENDED'
                                               : 'SUB-OPTIMAL'
@@ -1777,42 +1822,7 @@
                                 
                                 <!-- Menu Description Card -->
                                 <div style="font-style: italic; font-size: 0.95rem; color: var(--text-primary); line-height: 1.5; padding: 0.5rem 0.25rem 0.25rem 0.25rem; border-left: 3px solid var(--accent); padding-left: 0.75rem; margin-bottom: 0.5rem;">
-                                    <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span class="spinner" style="width: 12px; height: 12px;"></span>
-                                        <span style="font-size: 0.8rem; color: var(--text-muted); font-style: normal;">Crafting flavor description...</span>
-                                    </div>
-                                    <span x-show="!sidebar_insight_loading" x-text="selectedRecipeMenuDescription || 'Gathering flavor notes...'"></span>
-                                </div>
-                                
-                                <!-- Science Profile Card -->
-                                <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
-                                    <span style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🔬 Technical Science Profile</span>
-                                    <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
-                                        <span class="spinner" style="width: 12px; height: 12px;"></span>
-                                        <span style="font-size: 0.8rem; color: var(--text-muted);">Compiling analysis...</span>
-                                    </div>
-                                    <p x-show="!sidebar_insight_loading" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="selectedRecipeScienceProfile || 'Generating science analysis...'"></p>
-                                </div>
-                                
-                                <!-- Ways to Elevate Card -->
-                                <div x-show="global_ai_enabled && recipe_selected" x-transition style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
-                                    <span style="font-size: 0.75rem; color: #ff9800; text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🤖 AI Craft Elevators</span>
-                                    <div x-show="sidebar_insight_loading" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
-                                        <span class="spinner" style="width: 12px; height: 12px;"></span>
-                                        <span style="font-size: 0.8rem; color: var(--text-muted);">Analyzing grain matrix...</span>
-                                    </div>
-                                    <div x-show="!sidebar_insight_loading">
-                                        <template x-if="globalElevateRecipe.length === 0">
-                                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45; font-style: italic;">Generating ways to elevate...</p>
-                                        </template>
-                                        <template x-if="globalElevateRecipe.length > 0">
-                                            <ul style="margin: 0; padding-left: 1.15rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; list-style-type: disc;">
-                                                <template x-for="(tip, index) in globalElevateRecipe" :key="index">
-                                                    <li style="margin-bottom: 0.4rem;" x-text="tip"></li>
-                                                </template>
-                                            </ul>
-                                        </template>
-                                    </div>
+                                    <span x-text="selectedRecipeMenuDescription"></span>
                                 </div>
                             </div>
                         </div>
