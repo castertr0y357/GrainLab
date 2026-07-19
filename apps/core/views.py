@@ -1766,6 +1766,11 @@ def generate_variants(request):
     creativity_level_raw = request.GET.get("creativity_level", "").strip()
     exclude_names_raw = request.GET.get("exclude_names", "").strip()
     exclude_names = [n.strip() for n in exclude_names_raw.split(",") if n.strip()]
+    limit_raw = request.GET.get("limit", "5").strip()
+    try:
+        limit = int(limit_raw)
+    except:
+        limit = 5
 
     # Sanitize archetype_id from any recipe or level suffix
     if active_archetype_id:
@@ -1804,12 +1809,12 @@ def generate_variants(request):
     if creativity_level_raw:
         try:
             creativity_level = int(creativity_level_raw)
-            result = gemma_client.generate_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names)
+            result = gemma_client.generate_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
         except Exception as e:
             logger.error(f"[Views] Failed generating creativity variants: {e}")
             result = None
     else:
-        result = gemma_client.generate_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names)
+        result = gemma_client.generate_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
 
     if result is None:
         return JsonResponse({"generated_variants": []}, status=200)

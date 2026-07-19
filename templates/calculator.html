@@ -731,6 +731,8 @@
             this.alternative_variants = [];
             return;
         }
+        // If we are opening a different level or reopening, clear alternative variants entirely
+        this.alternative_variants = [];
         this.expanded_level = level;
         this.alternative_variants = [];
         this.variant_loading = true;
@@ -764,6 +766,57 @@
                         return norm;
                     });
                     this.alternative_variants = normalized_variants;
+                }
+                this.variant_loading = false;
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching alternative variants:', err);
+                }
+                this.variant_loading = false;
+            })
+            .finally(() => {
+                if (this.alternativeVariantsAbortController && this.alternativeVariantsAbortController.signal === signal) {
+                    this.alternativeVariantsAbortController = null;
+                }
+            });
+    },
+
+    generateMoreOptions(level) {
+        const pinned = this.alternative_variants.filter(v => v.pinned);
+        const limit = 5 - pinned.length;
+        if (limit <= 0) return; // Full of pinned options
+
+        this.variant_loading = true;
+
+        if (this.alternativeVariantsAbortController) {
+            this.alternativeVariantsAbortController.abort();
+            this.alternativeVariantsAbortController = null;
+        }
+        this.alternativeVariantsAbortController = new AbortController();
+        const signal = this.alternativeVariantsAbortController.signal;
+
+        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
+        
+        // Exclude original 5 recipes plus any pinned variants to avoid duplicates
+        const exclude_names_arr = this.getRecipesForLevel(level).map(r => r.recipe_name);
+        pinned.forEach(v => exclude_names_arr.push(v.variant_name || v.recipe_name));
+        const exclude_names = exclude_names_arr.join(',');
+
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}&exclude_names=${encodeURIComponent(exclude_names)}&limit=${limit}`;
+
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                if (this.expanded_level === level) {
+                    const normalized_variants = (data.generated_variants || []).map(v => {
+                        const norm = {};
+                        for (const key in v) {
+                            norm[key.toLowerCase()] = v[key];
+                        }
+                        return norm;
+                    });
+                    this.alternative_variants = [...pinned, ...normalized_variants];
                 }
                 this.variant_loading = false;
             })

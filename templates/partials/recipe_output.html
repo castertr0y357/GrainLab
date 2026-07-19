@@ -263,6 +263,19 @@
         <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.5;">{{ sensory_description }}</p>
     </div>
 
+    <!-- AI CRAFT ELEVATORS -->
+    <div x-show="globalElevateRecipe && globalElevateRecipe.length > 0" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">AI Craft Elevators</div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <template x-for="(tip, index) in globalElevateRecipe" :key="index">
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; background-color: rgba(255, 255, 255, 0.03); padding: 0.75rem; border-radius: var(--radius-sm);">
+                    <div style="color: var(--accent); font-size: 1.1rem; margin-top: -2px;">✨</div>
+                    <div style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.4;" x-text="tip"></div>
+                </div>
+            </template>
+        </div>
+    </div>
+
     <!-- PITFALL ALERTS -->
     {% if pitfalls %}
         <div style="margin-top: 1.5rem;">

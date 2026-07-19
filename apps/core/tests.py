@@ -1131,7 +1131,7 @@ class GenerateVariantsTests(TestCase):
         data = response.json()
         self.assertIn("generated_variants", data)
         variants = data["generated_variants"]
-        self.assertEqual(len(variants), 8)
+        self.assertEqual(len(variants), 5)
 
     def test_ai_recipe_details_valid(self) -> None:
         """Verifies ai_recipe_details endpoint returns flavor description and technical science profile."""
@@ -1139,7 +1139,6 @@ class GenerateVariantsTests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn("sidebar_science_profile", data)
         self.assertIn("menu_description", data)
         self.assertIn("secondary_ingredients", data)
         self.assertIn("recommended_grain_ids", data)

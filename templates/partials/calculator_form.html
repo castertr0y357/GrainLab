@@ -437,12 +437,21 @@
                                 <div class="card" 
                                      :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
                                      @click="selectRecipe(alt)"
-                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                                     style="position: relative; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                                      :style="selected_recipe_id === alt.variant_id ? 'border-color: #81c784; background: rgba(129, 199, 132, 0.06); box-shadow: 0 0 10px rgba(129, 199, 132, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
-                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <button type="button" @click.stop="alt.pinned = !alt.pinned" style="position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;" :style="alt.pinned ? 'color: #81c784;' : 'color: var(--text-muted);'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="alt.pinned ? 'feather feather-paperclip' : 'feather feather-paperclip'" style="transform: rotate(45deg);"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                    </button>
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem; padding-right: 1.5rem;" x-text="alt.variant_name"></strong>
                                     <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.description"></p>
                                 </div>
                             </template>
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                            <button type="button" @click="generateMoreOptions(1)" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--text-primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-secondary)';">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                                Generate More Options
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -487,12 +496,21 @@
                                 <div class="card" 
                                      :class="selected_recipe_id === alt.variant_id ? 'active' : ''"
                                      @click="selectRecipe(alt)"
-                                     style="padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
+                                     style="position: relative; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                                      :style="selected_recipe_id === alt.variant_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
-                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="alt.variant_name"></strong>
+                                    <button type="button" @click.stop="alt.pinned = !alt.pinned" style="position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;" :style="alt.pinned ? 'color: #64b5f6;' : 'color: var(--text-muted);'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="alt.pinned ? 'feather feather-paperclip' : 'feather feather-paperclip'" style="transform: rotate(45deg);"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                    </button>
+                                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem; padding-right: 1.5rem;" x-text="alt.variant_name"></strong>
                                     <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="alt.description"></p>
                                 </div>
                             </template>
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                            <button type="button" @click="generateMoreOptions(1)" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--text-primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-secondary)';">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                                Generate More Options
+                            </button>
                         </div>
                     </div>
                 </template>

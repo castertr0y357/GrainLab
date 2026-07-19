@@ -2027,7 +2027,7 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     return None
 
 
-def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list, exclude_names: list = None) -> dict | None:
+def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list, exclude_names: list = None, count: int = 5) -> dict | None:
     """
     Given the active engine slug, selected archetype ID, and inventory grain list,
     asks the LLM to generate a list of recipe variants with descriptions
@@ -2037,7 +2037,7 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
 
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
-        "generate exactly 5 distinct recipe variants optimized for fresh-milled whole grains.\n"
+        f"generate exactly {count} distinct recipe variants optimized for fresh-milled whole grains.\n"
         f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
@@ -2132,7 +2132,7 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
     return mock
 
 
-def generate_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list, exclude_names: list = None) -> dict | None:
+def generate_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list, exclude_names: list = None, count: int = 5) -> dict | None:
     """
     Given the engine, target creativity level, parent recipe, and inventory grain list,
     asks the LLM to generate 8 alternative recipe variations matching ONLY that creativity level.
@@ -2141,7 +2141,7 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
 
     system_prompt = (
         f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
-        f"generate exactly 5 alternative structural profile variations matching ONLY that creativity level.\n"
+        f"generate exactly {count} alternative structural profile variations matching ONLY that creativity level.\n"
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
