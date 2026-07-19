@@ -22,6 +22,7 @@
           secondary_binder: 'none',
           proofing_environment: 'ambient',
           mill_type: 'stoneground',
+          is_sifted: false,
           form_factor_val: '{{ selected_form_factor.slug|default:'standard-9x5-pan' }}',
           recommended_ff_slug: '{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}{{ selected_form_factor.slug }}{% endif %}',
           yield_scale: 1.0,
