@@ -2200,6 +2200,13 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "Each response must match this JSON schema:\n"
         "{\n"
         "  \"recommended_grain_ids\": [\"grain_name_slug\"],  // list of lowercase name slugs matching grains from the provided inventory that are recommended for this flavor profile\n"
+        "  \"flour_blend\": {\n"
+        "    \"grain_name_slug\": 80, // percentage of the flour blend\n"
+        "    \"another_grain_slug\": 20\n"
+        "  },\n"
+        "  \"fat_starting_temp\": \"room_temp\", // 'cold', 'room_temp', 'melted', or 'liquid' if it's an oil that doesn't change\n"
+        "  \"required_actions\": [\"knead\", \"fold\"], // mechanical actions needed for this dough\n"
+        "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"], // hardware that can be used\n"
         "  \"secondary_ingredients\": {\n"
         "    \"lipids\": {\n"
         "      \"required\": \"Primary recommended fat (e.g., unsalted_butter, extra_virgin_olive_oil)\",\n"
@@ -2284,6 +2291,21 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     sec_binders = {"required": "none", "options": ["none", "whole_eggs", "egg_whites"]}
     flavor_inclusions = []
     
+    # Grains ratio defaults
+    flour_blend = {}
+    if selected_grains:
+        grains = [g.strip() for g in selected_grains.split(",") if g.strip()]
+        if grains:
+            equal_share = round(100.0 / len(grains), 2)
+            for g in grains:
+                slug = g.lower().replace(" ", "_").replace("-", "_")
+                flour_blend[slug] = equal_share
+            flour_blend[slug] += round(100.0 - sum(flour_blend.values()), 2)
+    
+    fat_starting_temp = "room_temp"
+    required_actions = ["knead"]
+    required_hardware = ["stand_mixer"]
+    
     if category in ["cookies-shortbread", "cakes-batters", "cookies_shortbread", "cakes_batters", "cookie", "batter"]:
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
         sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
@@ -2317,6 +2339,10 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     return {
         "menu_description": f"A balanced formulation of {recipe_name or slug} optimized for target mechanics.",
         "recommended_grain_ids": pref_slugs,
+        "flour_blend": flour_blend,
+        "fat_starting_temp": fat_starting_temp,
+        "required_actions": required_actions,
+        "required_hardware": required_hardware,
         "secondary_ingredients": {
             "lipids": sec_lipids,
             "liquids": sec_liquids,

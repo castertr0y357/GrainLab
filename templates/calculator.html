@@ -616,7 +616,7 @@
                             
                             // Broadcast the recipe-details-updated event to update the inner form component!
                             window.dispatchEvent(new CustomEvent('recipe-details-updated', {
-                                detail: { secondary_ingredients: data.secondary_ingredients }
+                                detail: data
                             }));
                         }
 

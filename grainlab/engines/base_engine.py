@@ -119,13 +119,20 @@ class BaseEngine:
         }
     }
 
-    def calculate_wheat_berry_shares(self, active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None) -> tuple[dict[str, float], float, str | None]:
+    def calculate_wheat_berry_shares(self, active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None, flour_blend: dict = None) -> tuple[dict[str, float], float, str | None]:
         if not active_berries:
             return {"House Blend": 1.0}, 1.0, None
 
-        # Simple equal shares for active berries
         total_berries = len(active_berries)
-        shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
+        shares = {}
+        if flour_blend:
+            for b in active_berries:
+                name = _get_val(b, 'name')
+                slug = name.lower().replace(" ", "_").replace("-", "_")
+                pct = flour_blend.get(slug, 0.0)
+                shares[name] = float(pct) / 100.0
+        else:
+            shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
         
         weighted_absorption = sum(_get_val(b, 'moisture_absorption_coef', 1.0) for b in active_berries) / total_berries
         return shares, weighted_absorption, None
@@ -157,9 +164,10 @@ class BaseEngine:
         **kwargs
     ) -> dict:
         # 1. Apply Simple Hydration Modifiers
+        flour_blend = kwargs.get('flour_blend', {})
         if active_berries:
             berry_shares, weighted_absorption, structural_warning = self.calculate_wheat_berry_shares(
-                active_berries, texture_score, crumb_score, preset_slug=preset_slug, preset_name=preset_name
+                active_berries, texture_score, crumb_score, preset_slug=preset_slug, preset_name=preset_name, flour_blend=flour_blend
             )
             thirst_mod = weighted_absorption - 1.0
         else:

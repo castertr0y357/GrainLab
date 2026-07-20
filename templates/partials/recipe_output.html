@@ -163,6 +163,22 @@
                 </div>
             </div>
             
+            <!-- Flavor Inclusions Row -->
+            {% if recipe.flavor_inclusions %}
+                {% for inclusion in recipe.flavor_inclusions %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">{{ inclusion.name }} ({{ inclusion.percentage }}%)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ inclusion.weight }}g</span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ {{ inclusion.volume_description }}</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ inclusion.weight }}g</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
             <!-- Total Scaled Weight Row -->
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
