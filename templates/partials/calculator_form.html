@@ -55,6 +55,9 @@
           recommended_ff_slug: '{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}{{ selected_form_factor.slug }}{% endif %}',
           yield_scale: 1.0,
           fat_starting_temp: 'room_temp',
+          required_actions: [],
+          required_hardware: [],
+          flour_blend: {},
           workspace_temp: 65,
           liquid_temp: 40,
           active_action: 'knead',
@@ -75,6 +78,9 @@
               };
           },
           get filteredTools() {
+              if (this.required_hardware && this.required_hardware.length > 0) {
+                  return this.hardware_registry.filter(t => this.required_hardware.includes(t.id));
+              }
               const threshold = this.activeProductionProfile.mechanical_energy_threshold;
               if (threshold === 'high_kneading' || threshold === 'moderate_shearing' || threshold === 'mechanical_compaction') {
                   return this.hardware_registry.filter(t => t.category === 'high_torque' || t.category === 'zero_friction');
@@ -186,16 +192,31 @@
       }"
       x-init="
           window.addEventListener('recipe-details-updated', (e) => {
-              const sec = e.detail.secondary_ingredients;
-              if (sec) {
-                  if (sec.lipids && sec.lipids.required) {
-                      this.secondary_lipid = sec.lipids.required;
+              const data = e.detail;
+              if (data) {
+                  const sec = data.secondary_ingredients;
+                  if (sec) {
+                      if (sec.lipids && sec.lipids.required) {
+                          this.secondary_lipid = sec.lipids.required;
+                      }
+                      if (sec.liquids && sec.liquids.required) {
+                          this.secondary_liquid = sec.liquids.required;
+                      }
+                      if (sec.binders && sec.binders.required) {
+                          this.secondary_binder = sec.binders.required;
+                      }
                   }
-                  if (sec.liquids && sec.liquids.required) {
-                      this.secondary_liquid = sec.liquids.required;
+                  if (data.fat_starting_temp) {
+                      this.fat_starting_temp = data.fat_starting_temp;
                   }
-                  if (sec.binders && sec.binders.required) {
-                      this.secondary_binder = sec.binders.required;
+                  if (data.required_actions) {
+                      this.required_actions = data.required_actions;
+                  }
+                  if (data.required_hardware) {
+                      this.required_hardware = data.required_hardware;
+                  }
+                  if (data.flour_blend) {
+                      this.flour_blend = data.flour_blend;
                   }
               }
           });
@@ -551,7 +572,7 @@
             </div>
 
             <!-- Select Recipe & Proceed Button -->
-            <div x-show="selected_recipe_id" x-transition style="margin-top: 2rem;">
+            <div x-show="selected_recipe_id" style="margin-top: 2rem;">
                 <button type="button" 
                         class="nav-btn primary"
                         style="width: 100%; height: 50px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition);"
@@ -566,7 +587,7 @@
         </div> <!-- Closes x-show="!recipe_selected" -->
 
         <!-- Deferred configurations wrapper -->
-        <div x-show="recipe_selected" x-transition>
+        <div x-show="recipe_selected">
 
         <!-- Grain Bin Optimizer (deferred — system hardlocked to fresh-milled whole grain) -->
         <div style="margin-top: 1.5rem;">
@@ -747,14 +768,29 @@
                     <div x-show="activeProductionProfile.thermodynamic_focus === 'lipid_emulsification'">
                         <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Fat Starting Temperature Target</h4>
                         <input type="hidden" name="fat_starting_temp" :value="fat_starting_temp">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'room_temp' ? 'active' : ''"
-                                    @click="fat_starting_temp = 'room_temp'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Room Temperature (Creaming)
+                        <div class="pill-btn-group" x-show="['unsalted_butter', 'salted_butter', 'vegan_butter'].includes(secondary_lipid)">
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'cold' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'cold'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Cold (Solid)
+                            </button>
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'soft' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'soft'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Soft (Room Temp)
                             </button>
                             <button type="button" class="pill-btn" :class="fat_starting_temp === 'melted' ? 'active' : ''"
                                     @click="fat_starting_temp = 'melted'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Melted / Liquid State
+                                Melted
+                            </button>
+                        </div>
+                        <div class="pill-btn-group" x-show="!['unsalted_butter', 'salted_butter', 'vegan_butter'].includes(secondary_lipid) && secondary_lipid !== 'none'">
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'liquid' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'liquid'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                Liquid
+                            </button>
+                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'solid' ? 'active' : ''"
+                                    @click="fat_starting_temp = 'solid'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" 
+                                    x-show="secondary_lipid === 'coconut_oil'">
+                                Solid (Room Temp)
                             </button>
                         </div>
                     </div>
@@ -861,6 +897,7 @@
                             <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.lipids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
                                 <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
                                 <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
+                                <input type="hidden" name="flour_blend" :value="JSON.stringify(flour_blend)">
                                 <div class="pill-btn-group">
                                     <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
                                         <button type="button"
@@ -969,7 +1006,7 @@
                     <h4 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Required Mechanical Action</h4>
                     <input type="hidden" name="primary_action" :value="active_action">
                     <div class="pill-btn-group">
-                        <template x-for="action in activeProductionProfile.permissible_action_types" :key="action">
+                        <template x-for="action in (required_actions && required_actions.length > 0 ? required_actions : (activeProductionProfile.permissible_action_types || []))" :key="action">
                             <button type="button" 
                                     class="pill-btn" 
                                     :class="active_action === action ? 'active' : ''"

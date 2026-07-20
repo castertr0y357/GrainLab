@@ -83,7 +83,8 @@
 - [x] Add /generate-variants/ JSON endpoint with polymorphic data contract (variant_id, variant_name, recommended_grain_ids, sidebar_science_profile, sidebar_ai_insight)
 - [x] Add GenerateVariantsTests test class (5 tests) verifying 400 on missing params, 200 on valid params, and full data contract schema compliance
 - [x] Fix route scanner test to pass required query params for generate_variants endpoint
-- [x] Fix Alpine.js initialization error by using `escapejs` and `JSON.parse` for injecting `enginesArchetypes` JSON in `calculator.html`
+- [x] Debug and fix `TypeError: u is not a function` in Phase 2 caused by outer Alpine.js scoping conflicts.
+- [x] Fix AI Grain Advisory fetching in Phase 2 by removing shadowed functions in `calculator_form.html` that prevented `fetchGrainEvaluations` from triggering and correctly utilizing `escapejs` / `JSON.parse` for `enginesArchetypes` injection.
 - [x] Fix Alpine.js `x-data` double quote comment truncation bug that broke HTML attribute parsing and caused widespread ReferenceErrors
 - [x] Fix grain card sorting/borders by prefixing `this.` to parent property references in child helper functions (`sortedBerriesFor`, `getGrainStyle`)
 - [x] Fix grain hover evaluation matching and duplicate AJAX calls by removing redundant/invalid `fetchAdvisory(recipe_name)` call from `selectRecipe`
