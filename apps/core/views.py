@@ -1774,6 +1774,66 @@ def ai_sidebar_insight(request):
     return JsonResponse(insight)
 
 
+def ai_optimize_shares(request):
+    from django.http import JsonResponse
+    from apps.core import gemma_client
+    from apps.core.models import WheatBerry
+    import json
+    
+    preset_slug = request.GET.get("preset_slug", "").strip()
+    preset_name = request.GET.get("preset_name", "").strip()
+    selected_grains = request.GET.get("selected_grains", "").strip()
+    
+    selected_ids = [s.strip() for s in selected_grains.split(",") if s.strip()] if selected_grains else []
+    active_berries = []
+    if selected_ids:
+        active_berries = list(WheatBerry.objects.filter(id__in=selected_ids))
+    
+    if not active_berries or not preset_slug:
+        return JsonResponse({"shares": {}})
+        
+    result = gemma_client.optimize_grain_blend(preset_slug, preset_name, active_berries)
+    if result:
+        shares, warning = result
+        return JsonResponse({"shares": shares, "warning": warning})
+    return JsonResponse({"shares": {}})
+
+def ai_batch_insights(request):
+    from django.http import JsonResponse
+    from apps.core import gemma_client
+    import json
+    from django.http import HttpRequest
+    
+    elements_raw = request.GET.get("elements", "[]")
+    try:
+        elements = json.loads(elements_raw)
+    except:
+        elements = []
+        
+    category_slug = request.GET.get("category_slug", "").strip()
+    preset_slug = request.GET.get("preset_slug", "").strip()
+    active_archetype_id = request.GET.get("active_archetype_id", "").strip() or None
+    
+    results = {}
+    
+    for el in elements:
+        # Construct mock request to re-use ai_sidebar_insight logic directly
+        req = HttpRequest()
+        req.GET = {
+            "element": el,
+            "category_slug": category_slug,
+            "preset_slug": preset_slug,
+            "active_archetype_id": active_archetype_id or ""
+        }
+        res = ai_sidebar_insight(req)
+        try:
+            results[el] = json.loads(res.content)
+        except Exception as e:
+            results[el] = {}
+            
+    return JsonResponse({"batch_insights": results})
+
+
 def generate_variants(request):
     """
     Polymorphic Tier 2 variant generator.

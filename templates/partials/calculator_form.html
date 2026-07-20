@@ -718,7 +718,7 @@
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition); margin-bottom: 1.5rem;"
                     onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
                     onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                    @click="current_phase = 3; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                    @click="startPhase3Optimization()">
                 GENERATE FORMULA &amp; PROCEED →
             </button>
         </div> <!-- Closes x-show="recipe_selected" -->
@@ -726,7 +726,11 @@
 </div>
 
     <!-- PHASE 3: Contextual Variance Sliders & Baking Configuration -->
-    <div x-show="current_phase === 3" x-transition>
+    <div x-show="current_phase === 3" x-transition style="position: relative;">
+        <div x-show="phase3Loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 23, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: var(--radius-md);">
+            <div class="spinner" style="width: 50px; height: 50px; border-top-color: var(--accent); margin-bottom: 1.5rem;"></div>
+            <div style="color: var(--accent); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.05em; text-align: center; text-transform: uppercase;" x-text="phase3LoadingMessage"></div>
+        </div>
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
             Phase 3: Recipe Fine-Tuning
         </div>

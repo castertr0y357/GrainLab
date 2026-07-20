@@ -185,49 +185,21 @@
             return;
         }
         
-        // Debounce the fetching for secondary/other elements to avoid spamming the LLM
-        if (this.hoverTimeout) {
-            clearTimeout(this.hoverTimeout);
-        }
-        if (this.hoverAbortController) {
-            this.hoverAbortController.abort();
-            this.hoverAbortController = null;
-        }
+        // Use pre-fetched batch insights instead of lazily fetching
         this.sidebar_insight_loading = true;
-        this.hoverTimeout = setTimeout(() => {
-            if (this.hovered_element !== key) return;
-            
-            this.hoverAbortController = new AbortController();
-            const signal = this.hoverAbortController.signal;
-            
-            let url = `/ai-sidebar-insight/?element=${encodeURIComponent(key)}&category_slug=${encodeURIComponent(this.selected_master || '')}&preset_slug=${encodeURIComponent(this.presetSlug || '')}`;
-            if (this.active_archetype_id) {
-                url += `&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}`;
-            }
-            fetch(url, { signal })
-                .then(res => res.json())
-                .then(data => {
-                    if (this.hovered_element === key) {
-                        this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
-                        this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
-                        this.sidebar_tier = data.recommendation_tier || '';
-                        this.sidebar_insight_loading = false;
-                    }
-                })
-                .catch(err => {
-                    if (err.name !== 'AbortError') {
-                        console.error('Failed fetching sidebar insight:', err);
-                    }
-                    if (this.hovered_element === key) {
-                        this.sidebar_insight_loading = false;
-                    }
-                })
-                .finally(() => {
-                    if (this.hoverAbortController && this.hoverAbortController.signal === signal) {
-                        this.hoverAbortController = null;
-                    }
-                });
-        }, 300);
+        if (this.batchInsightsMap[key]) {
+            const data = this.batchInsightsMap[key];
+            this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
+            this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
+            this.sidebar_tier = data.recommendation_tier || '';
+            this.sidebar_insight_loading = false;
+        } else {
+            // Fallback if not loaded
+            this.sidebar_labor_roi = 'Low Priority / Minor Textural Return';
+            this.sidebar_analysis = 'Loading insight... Please wait.';
+            this.sidebar_tier = '';
+            this.sidebar_insight_loading = false;
+        }
     },
 
     clearHoveredElement() {
@@ -285,6 +257,9 @@
     advisoryHighRiskReason: '',
     advisoryLoading: false,
     advisoryLoadingMessage: '',
+    batchInsightsMap: {},
+    phase3Loading: false,
+    phase3LoadingMessage: '',
     grainEvaluations: [],
     get grainEvaluationsMap() {
         const map = {};
@@ -1111,6 +1086,10 @@
                 this.advisory_resolved = true;
                 this.advisoryAbortController = null;
                 
+                // Fetch batch insights concurrently once the basic advisory fetches
+                this.fetchBatchInsights(signal);
+                
+                
                 // Update hovered grain details dynamically once advisory resolves
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     const key_clean = this.hovered_element.toLowerCase().replace('grain_', '');
@@ -1144,6 +1123,89 @@
                 if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
                     this.sidebar_insight_loading = false;
                 }
+            });
+    },
+
+    fetchBatchInsights(signal) {
+        // Collect standard elements to fetch insights for
+        const elements = [
+            'refined', 'milled', 'stand_mixer', 'bread_machine', 'food_processor', 'hand_beaters', 'whisk', 'spatula_bowl', 'knead', 'cream', 'fold', 'cut_in', 'sheet', 'extrude',
+            'ambient', 'mat', 'box', 'refrigerator', 'bench_rest', 'cast-iron-dutch-oven', 'open-baking-stone-steel', 'standard-9x5-pan', 'perforated-baking-sheet',
+            'butter', 'unsalted_butter', 'salted_butter', 'olive_oil', 'canola_oil', 'vegetable_oil', 'whole_milk', 'almond_milk', 'coconut_oil', 'avocado_oil', 'pure_water', 'heavy_cream', 'buttermilk', 'none', 'whole_eggs', 'egg_whites', 'aquafaba_vegan',
+            'sifted_high_extraction_flour', 'whole_grain_unsifted_flour'
+        ];
+        
+        let url = '/ai-batch-insights/?elements=' + encodeURIComponent(JSON.stringify(elements)) + 
+            '&preset_slug=' + encodeURIComponent(this.presetSlug || '') + 
+            '&category_slug=' + encodeURIComponent(this.selected_master || '');
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                if (data.batch_insights) {
+                    this.batchInsightsMap = data.batch_insights;
+                }
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('Failed fetching batch insights:', err);
+                }
+            });
+    },
+
+    startPhase3Optimization() {
+        // If AI is disabled or we don't have enough data, just skip to phase 3
+        if (!this.presetSlug) {
+            this.current_phase = 3;
+            this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+            return;
+        }
+        
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+            
+        if (!selectedGrains) {
+            this.current_phase = 3;
+            this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+            return;
+        }
+
+        this.phase3Loading = true;
+        this.phase3LoadingMessage = 'Calculating Optimal Flour Blend...';
+        
+        let url = `/ai-optimize-shares/?preset_slug=${encodeURIComponent(this.presetSlug)}&preset_name=${encodeURIComponent(this.presetName)}&selected_grains=${encodeURIComponent(selectedGrains)}`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.shares && Object.keys(data.shares).length > 0) {
+                    // Update flour blend with optimal AI splits!
+                    const newBlend = {};
+                    // Match returned shares names to berry IDs
+                    for (const b of this.activeBerries.filter(b => b.selected)) {
+                        const nameKey = Object.keys(data.shares).find(k => k === b.name || k.includes(b.name) || b.name.includes(k));
+                        if (nameKey) {
+                            newBlend[b.id] = data.shares[nameKey];
+                        } else {
+                            // fallback
+                            newBlend[b.id] = 1.0 / this.activeBerries.filter(b => b.selected).length;
+                        }
+                    }
+                    this.flour_blend = newBlend;
+                }
+            })
+            .catch(err => {
+                console.error("Optimization failed:", err);
+            })
+            .finally(() => {
+                this.phase3Loading = false;
+                this.current_phase = 3;
+                this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
             });
     },
 

@@ -83,7 +83,11 @@
 - [x] Add /generate-variants/ JSON endpoint with polymorphic data contract (variant_id, variant_name, recommended_grain_ids, sidebar_science_profile, sidebar_ai_insight)
 - [x] Add GenerateVariantsTests test class (5 tests) verifying 400 on missing params, 200 on valid params, and full data contract schema compliance
 - [x] Fix route scanner test to pass required query params for generate_variants endpoint
-- [x] Debug and fix `TypeError: u is not a function` in Phase 2 caused by outer Alpine.js scoping conflicts.
+- [x] `urls.py` and `views.py` expanded with AI endpoints for Tier 2 and advisory.
+- [x] Implemented `ai_optimize_shares` in `views.py` to support LLM-driven flour ratio calculation.
+- [x] Implemented `ai_batch_insights` in `views.py` to front-load component evaluations for the sidebar.
+- [x] `calculator.html` uses Alpine.js for interactive state, including asynchronous data fetching, dynamic tier rendering, and one-shot batch insights loading.
+- [x] Phase 3 loader overlay added for flour ratio processing time.
 - [x] Fix AI Grain Advisory fetching in Phase 2 by removing shadowed functions in `calculator_form.html` that prevented `fetchGrainEvaluations` from triggering and correctly utilizing `escapejs` / `JSON.parse` for `enginesArchetypes` injection.
 - [x] Fix Alpine.js `x-data` double quote comment truncation bug that broke HTML attribute parsing and caused widespread ReferenceErrors
 - [x] Fix grain card sorting/borders by prefixing `this.` to parent property references in child helper functions (`sortedBerriesFor`, `getGrainStyle`)
