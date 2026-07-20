@@ -2214,7 +2214,11 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "      \"options\": [\"none\", \"whole_eggs\", \"egg_whites\"]\n"
         "    },\n"
         "    \"flavor_inclusions\": [\n"
-        "      \"List 2-4 distinct flavor ingredients generated for this specific variant (e.g. Lemon Zest, Fresh Thyme, Toasted Walnuts, Cinnamon). Leave empty if plain.\"\n"
+        "      {\n"
+        "        \"name\": \"Ingredient name (e.g. Lemon Zest)\",\n"
+        "        \"bakers_percentage\": 2.5, // Float representing baker's percentage relative to flour weight\n"
+        "        \"volume_description\": \"Human-readable volume (e.g. 1 tbsp)\"\n"
+        "      }\n"
         "    ]\n"
         "  }\n"
         "}\n"
@@ -2284,7 +2288,10 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
         sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
         sec_binders = {"required": "whole_eggs", "options": ["none", "whole_eggs", "egg_whites"]}
-        flavor_inclusions = ["Dark Chocolate Chunks", "Maldon Sea Salt"]
+        flavor_inclusions = [
+            {"name": "Dark Chocolate Chunks", "bakers_percentage": 15.0, "volume_description": "1/2 cup"},
+            {"name": "Maldon Sea Salt", "bakers_percentage": 0.5, "volume_description": "1 tsp flaky"}
+        ]
     elif category in ["pastry-lamination", "pastry_lamination", "pastry", "choux-paste", "choux_paste", "choux", "fry", "fried-doughs"]:
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "salted_butter"]}
         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
@@ -2293,7 +2300,10 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil"]}
         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
         sec_binders = {"required": "none", "options": ["none", "whole_eggs"]}
-        flavor_inclusions = ["Cinnamon Sugar Swirl", "Raisins"]
+        flavor_inclusions = [
+            {"name": "Cinnamon Sugar Swirl", "bakers_percentage": 10.0, "volume_description": "3 tbsp"},
+            {"name": "Raisins", "bakers_percentage": 20.0, "volume_description": "1/2 cup"}
+        ]
     elif category in ["alkaline-bath", "alkaline_bath", "bath", "flatbreads-griddles", "flatbreads_griddles", "flat"]:
         sec_lipids = {"required": "none", "options": ["none", "unsalted_butter"]}
         sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk"]}

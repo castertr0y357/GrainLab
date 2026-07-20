@@ -922,9 +922,10 @@
                     <!-- Flavor Inclusions -->
                     <div x-show="selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.flavor_inclusions && selectedRecipeSecondaryIngredients.flavor_inclusions.length > 0" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
                         <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Flavor Inclusions</h4>
+                        <input type="hidden" name="flavor_inclusions" :value="JSON.stringify(selectedRecipeSecondaryIngredients?.flavor_inclusions || [])">
                         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            <template x-for="flavor in selectedRecipeSecondaryIngredients?.flavor_inclusions || []" :key="flavor">
-                                <span style="background-color: hsla(38, 92%, 50%, 0.15); color: var(--accent); border: 1px solid var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;" x-text="flavor"></span>
+                            <template x-for="flavor in selectedRecipeSecondaryIngredients?.flavor_inclusions || []" :key="flavor.name">
+                                <span style="background-color: hsla(38, 92%, 50%, 0.15); color: var(--accent); border: 1px solid var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;" x-text="`${flavor.name} (${flavor.volume_description || (flavor.bakers_percentage + '%')})`"></span>
                             </template>
                         </div>
                     </div>
@@ -932,6 +933,8 @@
             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
                 <!-- Component 2: Semantic Appliance Filtering & Contextual Actions -->
                 <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div>
                     <!-- Appliance selection deck -->
                     <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Hardware &amp; Appliance Selector</h4>
                     <input type="hidden" name="mixing_method" :value="mixing_method">
@@ -1159,6 +1162,7 @@
         </div>
 
         <!-- Chemical Substitutions -->
+        {% if not ai_enabled %}
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
              x-init="$watch('subOriginal', val => { subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change')); })">
             <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Chemical Substitutions</h4>
@@ -1166,8 +1170,9 @@
             <input type="hidden" name="sub_original" :value="subOriginal">
             <input type="hidden" name="sub_substitute" :value="subSubstitute">
 
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
             <!-- Original Ingredient Pill Row -->
-            <div style="margin-bottom: 1rem;">
+            <div>
                 <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Original Ingredient</label>
                 <div class="pill-btn-group">
                     <button type="button" class="pill-btn" :class="subOriginal === 'water' ? 'active' : ''"

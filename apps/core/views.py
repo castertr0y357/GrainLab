@@ -335,6 +335,15 @@ def calculate_recipe_ajax(request):
         secondary_lipid = request.POST.get("secondary_lipid") or None
         secondary_liquid = request.POST.get("secondary_liquid") or None
         secondary_binder = request.POST.get("secondary_binder") or None
+        
+        flavor_inclusions_json = request.POST.get("flavor_inclusions")
+        flavor_inclusions = []
+        if flavor_inclusions_json:
+            try:
+                import json
+                flavor_inclusions = json.loads(flavor_inclusions_json)
+            except Exception as ex:
+                logger.error(f"Failed to parse flavor_inclusions: {ex}")
 
         recipe = bakers_math.calculate_recipe(
             base_hydration=hydration_pct,
@@ -359,7 +368,8 @@ def calculate_recipe_ajax(request):
             category_slug=cat.slug,
             secondary_lipid=secondary_lipid,
             secondary_liquid=secondary_liquid,
-            secondary_binder=secondary_binder
+            secondary_binder=secondary_binder,
+            flavor_inclusions=flavor_inclusions
         )
         
         # Override AI explanations if AI offsets were loaded

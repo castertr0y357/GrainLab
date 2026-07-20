@@ -197,7 +197,16 @@ class BaseEngine:
         )
 
         # 3. Calculate Baker's Math Scaling
-        total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct + binder_pct
+        flavor_inclusions = kwargs.get("flavor_inclusions", [])
+        inclusion_pct = 0.0
+        for inc in flavor_inclusions:
+            if isinstance(inc, dict) and "bakers_percentage" in inc:
+                try:
+                    inclusion_pct += float(inc["bakers_percentage"]) / 100.0
+                except (ValueError, TypeError):
+                    pass
+        
+        total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct + binder_pct + inclusion_pct
         flour_weight = target_mass / total_ratios
         water_weight = flour_weight * effective_hydration
         fat_weight = flour_weight * effective_fat
@@ -244,9 +253,28 @@ class BaseEngine:
         friction = friction_override if friction_override is not None else FRICTION_FACTORS.get(mixing_method, 10.0)
         required_water_temp_f = (3.0 * ddt_target_f) - room_temp_f - flour_temp_f - friction
 
+        processed_inclusions = []
+        for inc in flavor_inclusions:
+            if isinstance(inc, dict) and "name" in inc:
+                name = inc["name"]
+                vol = inc.get("volume_description", "")
+                pct = 0.0
+                try:
+                    pct = float(inc.get("bakers_percentage", 0)) / 100.0
+                except (ValueError, TypeError):
+                    pass
+                weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
+                processed_inclusions.append({
+                    "name": name,
+                    "weight": weight,
+                    "volume_description": vol,
+                    "percentage": round(pct * 100, 1)
+                })
+
         return {
             "target_mass": round(target_mass, 1),
             "flour_weight": round(flour_weight, 1),
+            "flavor_inclusions": processed_inclusions,
             "water_weight": round(water_weight, 1),
             "effective_hydration_pct": round(effective_hydration * 100, 1),
             "effective_fat_pct": round(effective_fat * 100, 1),
