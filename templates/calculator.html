@@ -798,9 +798,9 @@
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
         
-        // Exclude original 5 recipes plus any pinned variants to avoid duplicates
+        // Exclude original 5 recipes plus ALL current alternative variants (pinned or not) to avoid duplicating the ones currently on screen
         const exclude_names_arr = this.getRecipesForLevel(level).map(r => r.recipe_name);
-        pinned.forEach(v => exclude_names_arr.push(v.variant_name || v.recipe_name));
+        this.alternative_variants.forEach(v => exclude_names_arr.push(v.variant_name || v.recipe_name));
         const exclude_names = exclude_names_arr.join(',');
 
         const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}&exclude_names=${encodeURIComponent(exclude_names)}&limit=${limit}`;
