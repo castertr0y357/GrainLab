@@ -775,164 +775,8 @@
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
             Phase 3: Recipe Fine-Tuning
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
-            <!-- Component 1: Dynamic Temperature Calibration Node -->
-                <div class="card" 
-                     @mouseenter="
-                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
-                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
-                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
-                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
-                     "
-                     @mouseleave="clearHoveredElement()"
-                     @focusin="
-                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
-                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
-                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
-                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
-                     "
-                     @focusout="clearHoveredElement()"
-                     tabindex="0"
-                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
-                    <!-- Case A: biological_yeast_activity -->
-                    <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity'">
-                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="input-group">
-                                <label for="room_temp">Room Temp (°F)</label>
-                                <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
-                            </div>
-                            <div class="input-group">
-                                <label for="flour_temp">Flour Temp (°F)</label>
-                                <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Case B: lipid_emulsification -->
-                    <div x-show="activeProductionProfile.thermodynamic_focus === 'lipid_emulsification'">
-                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Fat Starting Temperature Target</h4>
-                        <input type="hidden" name="fat_starting_temp" :value="fat_starting_temp">
-                        <div class="pill-btn-group" x-show="['unsalted_butter', 'salted_butter', 'vegan_butter'].includes(secondary_lipid)">
-                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'cold' ? 'active' : ''"
-                                    @click="fat_starting_temp = 'cold'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Cold (Solid)
-                            </button>
-                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'soft' ? 'active' : ''"
-                                    @click="fat_starting_temp = 'soft'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Soft (Room Temp)
-                            </button>
-                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'melted' ? 'active' : ''"
-                                    @click="fat_starting_temp = 'melted'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Melted
-                            </button>
-                        </div>
-                        <div class="pill-btn-group" x-show="!['unsalted_butter', 'salted_butter', 'vegan_butter'].includes(secondary_lipid) && secondary_lipid !== 'none'">
-                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'liquid' ? 'active' : ''"
-                                    @click="fat_starting_temp = 'liquid'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                                Liquid
-                            </button>
-                            <button type="button" class="pill-btn" :class="fat_starting_temp === 'solid' ? 'active' : ''"
-                                    @click="fat_starting_temp = 'solid'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" 
-                                    x-show="secondary_lipid === 'coconut_oil'">
-                                Solid (Room Temp)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Case C: crystalline_fat_preservation -->
-                    <div x-show="activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation'">
-                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Workspace Temperature Target</h4>
-                        <div class="input-group">
-                            <label for="workspace_temp">Enforced Ambient Limit (°F)</label>
-                            <input type="number" name="workspace_temp" id="workspace_temp" class="num-input" x-model.number="workspace_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                        </div>
-                    </div>
-
-                    <!-- Case D: hydration_binding_shock -->
-                    <div x-show="activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock'">
-                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Liquid Medium Temperature Target</h4>
-                        <div class="input-group">
-                            <label for="liquid_temp">Target Liquid Temp (°F)</label>
-                            <input type="number" name="liquid_temp" id="liquid_temp" class="num-input" x-model.number="liquid_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                        </div>
-                    </div>
-                </div>
-
-                
-            <!-- Component 3: Adaptive Environment Mapping -->
-                <div class="card" 
-                     @mouseenter="
-                        if (activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation') setHoveredElement('bench_rest');
-                        else if (activeProductionProfile.environmental_rest_strategy !== 'gas_proofing') setHoveredElement('refrigerator');
-                     "
-                     @mouseleave="clearHoveredElement()"
-                     @focusin="
-                        if (activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation') setHoveredElement('bench_rest');
-                        else if (activeProductionProfile.environmental_rest_strategy !== 'gas_proofing') setHoveredElement('refrigerator');
-                     "
-                     @focusout="clearHoveredElement()"
-                     tabindex="0"
-                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
-                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Rest &amp; Environment Strategy</h4>
-                    
-                    <!-- Case A: gas_proofing strategy -->
-                    <div x-show="activeProductionProfile.environmental_rest_strategy === 'gas_proofing'">
-                        <input type="hidden" name="proofing_environment" :value="proofing_environment">
-                        <div class="pill-btn-group">
-                            <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''"
-                                    @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                    @mouseenter="setHoveredElement('ambient'); event.stopPropagation();"
-                                    @mouseleave="clearHoveredElement()"
-                                    @focusin="setHoveredElement('ambient'); event.stopPropagation();"
-                                    @focusout="clearHoveredElement()">
-                                Ambient Room
-                            </button>
-                            <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''"
-                                    @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                    @mouseenter="setHoveredElement('mat'); event.stopPropagation();"
-                                    @mouseleave="clearHoveredElement()"
-                                    @focusin="setHoveredElement('mat'); event.stopPropagation();"
-                                    @focusout="clearHoveredElement()">
-                                Open Proofing Mat
-                            </button>
-                            <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''"
-                                    @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                    @mouseenter="setHoveredElement('box'); event.stopPropagation();"
-                                    @mouseleave="clearHoveredElement()"
-                                    @focusin="setHoveredElement('box'); event.stopPropagation();"
-                                    @focusout="clearHoveredElement()">
-                                Enclosed Proofing Box
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Case B: structural_retardation / fat_solidification -->
-                    <div x-show="['structural_retardation', 'fat_solidification'].includes(activeProductionProfile.environmental_rest_strategy)">
-                        <input type="hidden" name="proofing_environment" value="refrigerator">
-                        <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-                            <span style="font-weight: 700; color: var(--accent); display: block; margin-bottom: 0.25rem;">[ FORCED REFRIGERATION REST ]</span>
-                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
-                                A cold retardation cycle is required for this engine strategy to stabilize fat dispersion and control whole-grain cellular hydration rates.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Case C: gluten_relaxation -->
-                    <div x-show="activeProductionProfile.environmental_rest_strategy === 'gluten_relaxation'">
-                        <input type="hidden" name="proofing_environment" value="bench_rest">
-                        <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-                            <span style="font-weight: 700; color: var(--accent); display: block; margin-bottom: 0.25rem;">[ DAMP-COVERED BENCH REST ]</span>
-                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
-                                An ambient bench rest under a damp cloth is enforced to allow the gluten sheet matrix to relax, preventing elasticity snap-back during subsequent shaping or extrusion operations.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                
-        </div>
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+        
+<div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
             <!-- Secondary Ingredient Configuration Deck -->
                     <div x-show="(selectedRecipeSecondaryIngredients && Object.keys(selectedRecipeSecondaryIngredients).length > 0) || (engines_ff?.[selected_master]?.secondary_ingredients && Object.keys(engines_ff?.[selected_master].secondary_ingredients).length > 0)"
                          style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
@@ -1068,185 +912,7 @@
             </div>
         </div>
         </div>
-
-
-        <!-- Client-side Formula Ratios Readout Panel -->
-        <div class="card" style="padding: 1.25rem; border-color: var(--border-glow); margin-bottom: 1.5rem; background: var(--bg-card);">
-            <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Real-Time Formula Estimates</div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center;">
-                <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round(45 + (crumb/100)*40) + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Hydration</div>
-                </div>
-                <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*15) + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Fats / Oil</div>
-                </div>
-                <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*12) + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Sugar</div>
-                </div>
-                <div>
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="starter + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Starter</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Geometry Constraints & Form Factor Selection -->
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Geometry Constraints &amp; Yield Scale</h4>
-            
-            <!-- Form Factor Pill Grid Selector -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Baking Form Factor</label>
-                <div class="pill-btn-group">
-                    <template x-for="(ff_data, ff_slug) in (engines_ff?.[selected_master]?.permissible_form_factors || {})" :key="ff_slug">
-                        <button type="button"
-                                class="pill-btn"
-                                :class="{'active': form_factor_val === ff_slug}"
-                                :style="form_factor_val === ff_slug && ff_data.tier === 'sub-optimal' ? 'background-color: rgba(255, 159, 28, 0.1); border-color: var(--warning); color: var(--warning); box-shadow: 0 0 10px hsla(38, 92%, 50%, 0.4);' : ''"
-                                @click="form_factor_val = ff_slug;"
-                                @mouseenter="setHoveredElement(ff_slug)"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement(ff_slug)"
-                                @focusout="clearHoveredElement()">
-                            <span x-text="ff_data.name + ' (' + (ff_data.tier === 'recommended' ? 'Recommended' : 'Sub-Optimal') + ')'"></span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Tactile Yield Stepper Control -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Batch Yield Scale</label>
-                <div style="display: inline-flex; align-items: center; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem;">
-                    <button type="button" 
-                            style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
-                            @click="if (yield_scale > 0.5) { yield_scale = parseFloat((yield_scale - 0.5).toFixed(1)); }"
-                            :disabled="yield_scale <= 0.5"
-                            :style="yield_scale <= 0.5 ? 'opacity: 0.3; cursor: not-allowed;' : ''">
-                        &minus;
-                    </button>
-                    <span style="font-size: 1.25rem; font-weight: 800; min-width: 48px; text-align: center; color: var(--accent);" x-text="yield_scale.toFixed(1)"></span>
-                    <button type="button" 
-                            style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
-                            @click="yield_scale = parseFloat((yield_scale + 0.5).toFixed(1))">
-                        &plus;
-                    </button>
-                </div>
-                
-                <!-- Helper Text String -->
-                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4; border-left: 3px solid var(--accent); padding-left: 0.75rem;" 
-                     x-text="yieldHelperString">
-                </div>
-            </div>
-        </div>
-
-        <!-- Sliders -->
-        <div class="slider-group" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Texture Variance</span>
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="texture + '%'"></span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Softness (' + texture + '%)'"></span>
-                <input type="range" name="texture_score" min="0" max="100" x-model="texture" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Crusty (' + (100 - texture) + '%)'"></span>
-            </div>
-        </div>
-
-        <div class="slider-group" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Hydration Variance</span>
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="'Crumb: ' + crumb + '% | Effective Hydration: ' + Math.round(45 + (crumb / 100) * 40) + '%'"></span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Dense (' + (100 - crumb) + '%)'"></span>
-                <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Open (' + crumb + '%)'"></span>
-            </div>
-            <template x-if="(weightedAbsorption() - 1.0) >= 0.05">
-                <div style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4;">
-                    ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
-                </div>
-            </template>
-        </div>
-
-        <!-- Leavening Biology -->
-        <div style="margin-bottom: 1.5rem;">
-            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Leavening Biology</label>
-            <div class="chip-container">
-                <span class="chip" :class="leaven === 'yeast' ? 'active' : ''" @click="leaven = 'yeast'">
-                    Commercial Yeast (1.5%)
-                </span>
-                <span class="chip" :class="leaven === 'sourdough' ? 'active' : ''" @click="leaven = 'sourdough'">
-                    Sourdough Starter (Wild Yeast)
-                </span>
-                <input type="hidden" name="leaven_type" :value="leaven">
-            </div>
-        </div>
-
-        <div class="slider-group" x-show="leavening_type === 'sourdough'" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Sourdough Starter Percentage</span>
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="starter + '%'"></span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;">Mild (5%)</span>
-                <input type="range" name="starter_pct" min="5" max="40" x-model="starter" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;">Sour (40%)</span>
-            </div>
-        </div>
-
-        <!-- Flour Maturity -->
-        <div style="margin-bottom: 1.5rem;">
-            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Milling Maturity</label>
-            <div class="chip-container">
-                <span class="chip" :class="maturity === 'just_milled' ? 'active' : ''" @click="maturity = 'just_milled'">Fresh Milled (Today)</span>
-                <span class="chip" :class="maturity === 'dead_zone' ? 'active' : ''" @click="maturity = 'dead_zone'">1-2 Weeks Dead Zone (-2%)</span>
-                <span class="chip" :class="maturity === 'matured' ? 'active' : ''" @click="maturity = 'matured'">Matured (2+ Weeks)</span>
-                <input type="hidden" name="flour_maturity" :value="maturity">
-            </div>
-        </div>
-
-        <!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
-        <div x-show="leavening_type === 'sourdough'"
-             style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
-            <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
-                Sourdough Starter Diagnostics
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="input-group">
-                    <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
-                    <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
-                            hx-post="{% url 'sourdough_calibrate' %}" 
-                            hx-target="#sourdough-diagnostic-output"
-                            hx-trigger="change">
-                        <option value="4_8">Active Feed (4-8 hours ago)</option>
-                        <option value="8_12">Matured Feed (8-12 hours ago)</option>
-                        <option value="12_18">Hungry starter (12-18 hours ago)</option>
-                        <option value="18_plus">Starved starter (18+ hours ago)</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label for="flow_rise_speed">Starter activity speed</label>
-                    <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
-                            hx-post="{% url 'sourdough_calibrate' %}" 
-                            hx-target="#sourdough-diagnostic-output"
-                            hx-trigger="change">
-                        <option value="fast">Explosive (Doubles in &lt;4 hours)</option>
-                        <option value="normal">Normal (Doubles in 4-8 hours)</option>
-                        <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
-                    </select>
-                </div>
-            </div>
-            <!-- Calibration box target -->
-            <div id="sourdough-diagnostic-output" style="margin-top: 1rem;"></div>
-        </div>
-
-        <!-- Chemical Substitutions -->
+<!-- Chemical Substitutions --><!-- Chemical Substitutions -->
         {% if not ai_enabled %}
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
              x-init="$watch('subOriginal', val => { subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change')); })">
@@ -1368,8 +1034,229 @@
         </div>
         </div>
         {% endif %}
+<!-- Leavening Biology --><!-- Leavening Biology -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Leavening Biology</label>
+            <div class="chip-container">
+                <span class="chip" :class="leaven === 'yeast' ? 'active' : ''" @click="leaven = 'yeast'">
+                    Commercial Yeast (1.5%)
+                </span>
+                <span class="chip" :class="leaven === 'sourdough' ? 'active' : ''" @click="leaven = 'sourdough'">
+                    Sourdough Starter (Wild Yeast)
+                </span>
+                <input type="hidden" name="leaven_type" :value="leaven">
+            </div>
+        </div>
+<!-- Flour Maturity --><!-- Flour Maturity -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Milling Maturity</label>
+            <div class="chip-container">
+                <span class="chip" :class="maturity === 'just_milled' ? 'active' : ''" @click="maturity = 'just_milled'">Fresh Milled (Today)</span>
+                <span class="chip" :class="maturity === 'dead_zone' ? 'active' : ''" @click="maturity = 'dead_zone'">1-2 Weeks Dead Zone (-2%)</span>
+                <span class="chip" :class="maturity === 'matured' ? 'active' : ''" @click="maturity = 'matured'">Matured (2+ Weeks)</span>
+                <input type="hidden" name="flour_maturity" :value="maturity">
+            </div>
+        </div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
+            <!-- Component 1: Dynamic Temperature Calibration Node -->
+                <div class="card" 
+                     @mouseenter="
+                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
+                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
+                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
+                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
+                     "
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="
+                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
+                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
+                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
+                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
+                     "
+                     @focusout="clearHoveredElement()"
+                     tabindex="0"
+                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
+                    <!-- Case A: biological_yeast_activity -->
+                    <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity'">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="room_temp">Room Temp (°F)</label>
+                                <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+                            </div>
+                            <div class="input-group">
+                                <label for="flour_temp">Flour Temp (°F)</label>
+                                <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Start Bake Action Button -->
+        <!-- Proceed to Phase 4 Button -->
+        <button type="button" 
+                class="nav-btn primary"
+                style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"
+                @click="current_phase = 4; window.scrollTo({top: 0, behavior: 'smooth'});">
+            PROCEED TO REFINEMENT &amp; YIELD →
+        </button>
+    </div>
+
+    <!-- PHASE 4: Yield & Refinement -->
+    <div x-show="current_phase === 4" x-transition style="position: relative;">
+        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
+            Phase 4: Yield &amp; Refinement
+        </div>
+
+<!-- Client-side Formula Ratios Readout Panel --><!-- Client-side Formula Ratios Readout Panel -->
+        <div class="card" style="padding: 1.25rem; border-color: var(--border-glow); margin-bottom: 1.5rem; background: var(--bg-card);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Real-Time Formula Estimates</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center;">
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round(45 + (crumb/100)*40) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Hydration</div>
+                </div>
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*15) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Fats / Oil</div>
+                </div>
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*12) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Sugar</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="starter + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Starter</div>
+                </div>
+            </div>
+        </div>
+
+<!-- Geometry Constraints & Form Factor Selection --><!-- Geometry Constraints & Form Factor Selection -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Geometry Constraints &amp; Yield Scale</h4>
+            
+            <!-- Form Factor Pill Grid Selector -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Baking Form Factor</label>
+                <div class="pill-btn-group">
+                    <template x-for="(ff_data, ff_slug) in (engines_ff?.[selected_master]?.permissible_form_factors || {})" :key="ff_slug">
+                        <button type="button"
+                                class="pill-btn"
+                                :class="{'active': form_factor_val === ff_slug}"
+                                :style="form_factor_val === ff_slug && ff_data.tier === 'sub-optimal' ? 'background-color: rgba(255, 159, 28, 0.1); border-color: var(--warning); color: var(--warning); box-shadow: 0 0 10px hsla(38, 92%, 50%, 0.4);' : ''"
+                                @click="form_factor_val = ff_slug;"
+                                @mouseenter="setHoveredElement(ff_slug)"
+                                @mouseleave="clearHoveredElement()"
+                                @focusin="setHoveredElement(ff_slug)"
+                                @focusout="clearHoveredElement()">
+                            <span x-text="ff_data.name + ' (' + (ff_data.tier === 'recommended' ? 'Recommended' : 'Sub-Optimal') + ')'"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Tactile Yield Stepper Control -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">Batch Yield Scale</label>
+                <div style="display: inline-flex; align-items: center; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem;">
+                    <button type="button" 
+                            style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
+                            @click="if (yield_scale > 0.5) { yield_scale = parseFloat((yield_scale - 0.5).toFixed(1)); }"
+                            :disabled="yield_scale <= 0.5"
+                            :style="yield_scale <= 0.5 ? 'opacity: 0.3; cursor: not-allowed;' : ''">
+                        &minus;
+                    </button>
+                    <span style="font-size: 1.25rem; font-weight: 800; min-width: 48px; text-align: center; color: var(--accent);" x-text="yield_scale.toFixed(1)"></span>
+                    <button type="button" 
+                            style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
+                            @click="yield_scale = parseFloat((yield_scale + 0.5).toFixed(1))">
+                        &plus;
+                    </button>
+                </div>
+                
+                <!-- Helper Text String -->
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4; border-left: 3px solid var(--accent); padding-left: 0.75rem;" 
+                     x-text="yieldHelperString">
+                </div>
+            </div>
+        </div>
+
+<!-- Sliders --><!-- Sliders -->
+        <div class="slider-group" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Texture Variance</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="texture + '%'"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Softness (' + texture + '%)'"></span>
+                <input type="range" name="texture_score" min="0" max="100" x-model="texture" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Crusty (' + (100 - texture) + '%)'"></span>
+            </div>
+        </div>
+
+        <div class="slider-group" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Hydration Variance</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="'Crumb: ' + crumb + '% | Effective Hydration: ' + Math.round(45 + (crumb / 100) * 40) + '%'"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Dense (' + (100 - crumb) + '%)'"></span>
+                <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Open (' + crumb + '%)'"></span>
+            </div>
+            <template x-if="(weightedAbsorption() - 1.0) >= 0.05">
+                <div style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4;">
+                    ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
+                </div>
+            </template>
+        </div>
+
+<div class="slider-group" x-show="leavening_type === 'sourdough'"<div class="slider-group" x-show="leavening_type === 'sourdough'" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Sourdough Starter Percentage</span>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="starter + '%'"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;">Mild (5%)</span>
+                <input type="range" name="starter_pct" min="5" max="40" x-model="starter" style="flex: 1; margin: 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;">Sour (40%)</span>
+            </div>
+        </div>
+
+<!-- Sourdough Starter Diagnostics<!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
+        <div x-show="leavening_type === 'sourdough'"
+             style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
+                Sourdough Starter Diagnostics
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="input-group">
+                    <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
+                    <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
+                            hx-post="{% url 'sourdough_calibrate' %}" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="4_8">Active Feed (4-8 hours ago)</option>
+                        <option value="8_12">Matured Feed (8-12 hours ago)</option>
+                        <option value="12_18">Hungry starter (12-18 hours ago)</option>
+                        <option value="18_plus">Starved starter (18+ hours ago)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="flow_rise_speed">Starter activity speed</label>
+                    <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
+                            hx-post="{% url 'sourdough_calibrate' %}" 
+                            hx-target="#sourdough-diagnostic-output"
+                            hx-trigger="change">
+                        <option value="fast">Explosive (Doubles in &lt;4 hours)</option>
+                        <option value="normal">Normal (Doubles in 4-8 hours)</option>
+                        <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Calibration box target -->
+            <div id="sourdough-diagnostic-output" style="margin-top: 1rem;"></div>
+        </div>
+<!-- Start Bake Action Button -->
         <button type="button" 
                 class="nav-btn primary"
                 style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"

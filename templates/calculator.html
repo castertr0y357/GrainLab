@@ -1764,7 +1764,9 @@
                                 class="nav-btn" 
                                 style="height: 36px; padding: 0 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center;"
                                 @click="
-                                    if (current_phase === 3) {
+                                    if (current_phase === 4) {
+                                        current_phase = 3;
+                                    } else if (current_phase === 3) {
                                         current_phase = 2;
                                     } else if (current_phase === 2 && recipe_selected) {
                                         recipe_selected = false;
