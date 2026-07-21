@@ -142,6 +142,8 @@
 - [x] Implement `evaluate_grains_batch` in `gemma_client.py` to evaluate inactive grains in bulk.
 - [x] Refactor `get_inactive_grain_recommendations` in `views.py` to use `evaluate_grains_batch`.
 - [x] Implement Modular System Prompt Assembly compiling Global Master Shell, Nuance Injection, and Logic instructions.
+- [x] Fix AI Flavor Explorations (Tier 2) recipe generator button to correctly invoke Creativity Level 2 instead of Level 1.
+- [x] Revise LLM prompt to heavily enforce dichotomy between Baseline Standard Profiles (highly traditional) and AI Flavor Explorations (wildly creative/avant-garde).
 
 ## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
