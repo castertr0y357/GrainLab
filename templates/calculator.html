@@ -184,6 +184,44 @@
             this.sidebar_insight_loading = false;
             return;
         }
+
+        if (key.startsWith('mill_')) {
+            const millId = key.replace('mill_', '');
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            if (this.mill_recommendation && this.mill_recommendation.mill_id === millId) {
+                this.sidebar_tier = 'recommended';
+                this.sidebar_analysis = this.mill_recommendation.reasoning;
+            } else if (this.mill_recommendation) {
+                this.sidebar_tier = 'not-recommended';
+                this.sidebar_analysis = `The AI specifically recommended a different mill instead. Reason: ${this.mill_recommendation.reasoning}`;
+            } else {
+                this.sidebar_tier = 'not-recommended';
+                this.sidebar_analysis = 'Not selected as the optimal mill for this archetype. The AI recommended a different approach.';
+            }
+            return;
+        }
+
+        if (key.startsWith('sifted_')) {
+            const isSiftedStr = key.replace('sifted_', '');
+            const isSifted = isSiftedStr === 'true';
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            if (this.sifted_recommendation) {
+                if (this.sifted_recommendation.should_sift === isSifted) {
+                    this.sidebar_tier = 'recommended';
+                    this.sidebar_analysis = this.sifted_recommendation.reasoning;
+                } else {
+                    this.sidebar_tier = 'not-recommended';
+                    const optimalName = this.sifted_recommendation.should_sift ? 'Sifted (High Extraction)' : 'Whole Grain (Unsifted)';
+                    this.sidebar_analysis = `The AI specifically recommended ${optimalName} instead. Reason: ${this.sifted_recommendation.reasoning}`;
+                }
+            } else {
+                this.sidebar_tier = '';
+                this.sidebar_analysis = 'No specific AI critique for this selection.';
+            }
+            return;
+        }
         
         // Use pre-fetched batch insights instead of lazily fetching
         this.sidebar_insight_loading = true;
@@ -260,6 +298,7 @@
     batchInsightsMap: {},
     phase3Loading: false,
     phase3LoadingMessage: '',
+    phase3_generation_steps: [],
     grainEvaluations: [],
     get grainEvaluationsMap() {
         const map = {};
@@ -305,6 +344,8 @@
     active_archetype_id: null,
     generated_variants: [],
     recommended_grain_ids: [],
+    mill_recommendation: null,
+    sifted_recommendation: null,
     variant_loading: false,
     hovered_variant: null,
     /* Engine archetypes map keyed by category slug */
@@ -944,10 +985,9 @@
         this.$watch('current_phase', (value, oldValue) => {
             if (value < oldValue) {
                 this.cancelAllInFlightRequests();
-                this.flushStateToNull();
-            }
-            if (value === 3 && value !== oldValue) {
-                this.fetchElevateTips(this.presetSlug);
+                if (value === 1) {
+                    this.flushStateToNull();
+                }
             }
         });
         this.$watch('grain_mode', value => {
@@ -976,6 +1016,10 @@
                 this.geometry_time_offset = parseInt(meta.getAttribute('data-geometry-time-offset') || '0', 10);
                 this.geometry_steam_override = meta.getAttribute('data-geometry-steam-override') || 'no-change';
             }
+        });
+        // Cross-scope bridge: form dispatches this event to reach startPhase3Optimization
+        this.$el.addEventListener('phase3-start', () => {
+            this.startPhase3Optimization();
         });
         window.addEventListener('beforeunload', () => {
             this.cancelAllInFlightRequests();
@@ -1083,6 +1127,17 @@
                 this.advisoryRecommendedReason = rec ? rec.reasoning : '';
                 this.advisoryHighRiskName = risk ? this.getGrainNameById(risk.grain_id) : '';
                 this.advisoryHighRiskReason = risk ? risk.reasoning : '';
+                // Store mill and sifted recommendations from the advisory
+                if (data.mill_recommendation) {
+                    this.mill_recommendation = data.mill_recommendation;
+                }
+                if (data.sifted_recommendation) {
+                    this.sifted_recommendation = data.sifted_recommendation;
+                    // Dispatch event so inner form can react
+                    window.dispatchEvent(new CustomEvent('sifted-advisory-updated', {
+                        detail: { sifted_recommendation: data.sifted_recommendation, mill_recommendation: data.mill_recommendation }
+                    }));
+                }
                 this.advisory_resolved = true;
                 this.advisoryAbortController = null;
                 
@@ -1157,7 +1212,6 @@
     },
 
     startPhase3Optimization() {
-        // If AI is disabled or we don't have enough data, just skip to phase 3
         if (!this.presetSlug) {
             this.current_phase = 3;
             this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
@@ -1175,37 +1229,83 @@
             return;
         }
 
+        this.current_phase = 3;
         this.phase3Loading = true;
-        this.phase3LoadingMessage = 'Calculating Optimal Flour Blend...';
         
-        let url = `/ai-optimize-shares/?preset_slug=${encodeURIComponent(this.presetSlug)}&preset_name=${encodeURIComponent(this.presetName)}&selected_grains=${encodeURIComponent(selectedGrains)}`;
+        // Reset checklist
+        this.phase3_generation_steps = [
+            { text: 'Analyzing Dough Thermodynamic Requirements', active: true, completed: false },
+            { text: 'Determining Optimal Flour Blend Ratios', active: false, completed: false },
+            { text: 'Compiling Contextual Configuration Matrix', active: false, completed: false }
+        ];
+
+        let elevateUrl = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(this.presetSlug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_elevate=true';
+        if (selectedGrains) elevateUrl += '&selected_grains=' + encodeURIComponent(selectedGrains);
+        if (this.selected_master && this.selected_master !== 'null') elevateUrl += '&category_slug=' + encodeURIComponent(this.selected_master);
+        if (this.active_archetype_id) elevateUrl += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
         
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.shares && Object.keys(data.shares).length > 0) {
-                    // Update flour blend with optimal AI splits!
-                    const newBlend = {};
-                    // Match returned shares names to berry IDs
-                    for (const b of this.activeBerries.filter(b => b.selected)) {
-                        const nameKey = Object.keys(data.shares).find(k => k === b.name || k.includes(b.name) || b.name.includes(k));
-                        if (nameKey) {
-                            newBlend[b.id] = data.shares[nameKey];
-                        } else {
-                            // fallback
-                            newBlend[b.id] = 1.0 / this.activeBerries.filter(b => b.selected).length;
-                        }
+        const p1 = fetch(elevateUrl).then(res => res.json()).then(data => {
+            if (data.evaluations && data.evaluations.length > 0) {
+                this.globalElevateRecipe = data.evaluations;
+            }
+            this.phase3_generation_steps[0].active = false;
+            this.phase3_generation_steps[0].completed = true;
+            this.phase3_generation_steps[1].active = true;
+        });
+
+        let sharesUrl = `/ai-optimize-shares/?preset_slug=${encodeURIComponent(this.presetSlug)}&preset_name=${encodeURIComponent(this.presetName)}&selected_grains=${encodeURIComponent(selectedGrains)}`;
+        const p2 = fetch(sharesUrl).then(res => res.json()).then(data => {
+            if (data.shares && Object.keys(data.shares).length > 0) {
+                const newBlend = {};
+                for (const b of this.activeBerries.filter(b => b.selected)) {
+                    const nameKey = Object.keys(data.shares).find(k => k === b.name || k.includes(b.name) || b.name.includes(k));
+                    if (nameKey) {
+                        newBlend[b.id] = data.shares[nameKey];
+                    } else {
+                        newBlend[b.id] = 1.0 / this.activeBerries.filter(b => b.selected).length;
                     }
-                    this.flour_blend = newBlend;
                 }
-            })
+                this.flour_blend = newBlend;
+            }
+            this.phase3_generation_steps[1].active = false;
+            this.phase3_generation_steps[1].completed = true;
+            this.phase3_generation_steps[2].active = true;
+        });
+
+        const elements = [
+            'refined', 'milled', 'stand_mixer', 'bread_machine', 'food_processor', 'hand_beaters', 'whisk', 'spatula_bowl', 'knead', 'cream', 'fold', 'cut_in', 'sheet', 'extrude',
+            'ambient', 'mat', 'box', 'refrigerator', 'bench_rest', 'cast-iron-dutch-oven', 'open-baking-stone-steel', 'standard-9x5-pan', 'perforated-baking-sheet',
+            'butter', 'unsalted_butter', 'salted_butter', 'olive_oil', 'canola_oil', 'vegetable_oil', 'whole_milk', 'almond_milk', 'coconut_oil', 'avocado_oil', 'pure_water', 'heavy_cream', 'buttermilk', 'none', 'whole_eggs', 'egg_whites', 'aquafaba_vegan',
+            'sifted_high_extraction_flour', 'whole_grain_unsifted_flour'
+        ];
+        let batchUrl = '/ai-batch-insights/?elements=' + encodeURIComponent(JSON.stringify(elements)) + 
+            '&preset_slug=' + encodeURIComponent(this.presetSlug || '') + 
+            '&category_slug=' + encodeURIComponent(this.selected_master || '');
+        if (this.active_archetype_id) {
+            batchUrl += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        const p3 = fetch(batchUrl).then(res => res.json()).then(data => {
+            if (data.batch_insights) {
+                this.batchInsightsMap = data.batch_insights;
+                for (const [k, v] of Object.entries(data.batch_insights)) {
+                    this.factual_dictionary[k.toLowerCase()] = v;
+                }
+            }
+            this.phase3_generation_steps[2].active = false;
+            this.phase3_generation_steps[2].completed = true;
+        });
+
+        Promise.all([p1, p2, p3])
             .catch(err => {
-                console.error("Optimization failed:", err);
+                console.error('Phase 3 Optimization failed:', err);
             })
             .finally(() => {
-                this.phase3Loading = false;
-                this.current_phase = 3;
-                this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                setTimeout(() => {
+                    this.phase3Loading = false;
+                    this.current_phase = 3;
+                    this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                }, 500);
             });
     },
 
@@ -1663,7 +1763,20 @@
                         <button type="button" 
                                 class="nav-btn" 
                                 style="height: 36px; padding: 0 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center;"
-                                @click="if (current_phase === 2 && recipe_selected) { recipe_selected = false; selected_recipe_id = null; presetSlug = ''; presetName = ''; } else { current_phase--; } $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                @click="
+                                    if (current_phase === 3) {
+                                        current_phase = 2;
+                                    } else if (current_phase === 2 && recipe_selected) {
+                                        recipe_selected = false;
+                                        selected_recipe_id = null;
+                                        presetSlug = '';
+                                        presetName = '';
+                                        cancelAllInFlightRequests();
+                                    } else if (current_phase === 2 && !recipe_selected) {
+                                        current_phase = 1;
+                                    }
+                                    $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                ">
                             ← STEP BACK
                         </button>
                         

@@ -568,10 +568,15 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         if not berries:
             return {"shares": {}, "structural_warning": None}
             
-        equal_share = round(1.0 / len(berries), 2)
-        for b in berries:
-            shares[b["name"]] = equal_share
-        shares[berries[-1]["name"]] += round(1.0 - sum(shares.values()), 2)
+        if len(berries) == 2:
+            shares[berries[0]["name"]] = 0.70
+            shares[berries[1]["name"]] = 0.30
+            warning = "This split is optimized to balance the strong gluten of the first grain with the extensibility or flavor profile of the second."
+        else:
+            equal_share = round(1.0 / len(berries), 2)
+            for b in berries:
+                shares[b["name"]] = equal_share
+            shares[berries[-1]["name"]] += round(1.0 - sum(shares.values()), 2)
         return {"shares": shares, "structural_warning": warning}
 
     elif expected_keys and ("grain_evaluations" in expected_keys or "elevate_recipe" in expected_keys):
@@ -606,7 +611,15 @@ def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys:
         
         return {
             "grain_evaluations": evaluations,
-            "elevate_recipe": elevate_recipe
+            "elevate_recipe": elevate_recipe,
+            "mill_recommendation": {
+                "mill_id": "mock-mill",
+                "reasoning": "[MOCK] A stone mill is ideal to retain volatile aromatics for this category."
+            },
+            "sifted_recommendation": {
+                "should_sift": False,
+                "reasoning": "[MOCK] Whole grain bran provides essential structure and flavor depth."
+            }
         }
 
     elif expected_keys and "recipes" in expected_keys:
@@ -1402,6 +1415,10 @@ def get_grain_advisory_ai(
         expected_keys = ["grain_evaluations", "elevate_recipe"]
 
         if only_evaluations:
+            from apps.core.models import Equipment
+            mills = Equipment.objects.filter(equipment_type='mill').order_by('name')
+            mills_text = "\n".join([f"- {m.id} ({m.name})" for m in mills])
+            
             data_context = (
                 f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
                 f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
@@ -1409,9 +1426,12 @@ def get_grain_advisory_ai(
                 f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
                 f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
                 f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+                f"\n[AVAILABLE MILL MACHINERY]\n{mills_text}\n"
             )
             task_instructions = (
-                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification."
+                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
+                "Also evaluate the milling setup: recommend whether bran separation (sifted high-extraction flour) or whole grain (unsifted) is optimal for this archetype, and explain why in 1 sentence.\n"
+                "Also recommend the best mill type from the list provided (if any), with a 1-sentence reason."
             )
             response_schema = (
                 "{\n"
@@ -1421,7 +1441,15 @@ def get_grain_advisory_ai(
                 "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
                 "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
                 "    }\n"
-                "  ]\n"
+                "  ],\n"
+                "  \"mill_recommendation\": {\n"
+                "    \"mill_id\": \"string (ID of the recommended mill, or null if no preference)\",\n"
+                "    \"reasoning\": \"1 sentence explaining why this mill is best for the archetype.\"\n"
+                "  },\n"
+                "  \"sifted_recommendation\": {\n"
+                "    \"should_sift\": true,\n"
+                "    \"reasoning\": \"1 sentence explaining whether bran separation helps or hurts this recipe type.\"\n"
+                "  }\n"
                 "}"
             )
             system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
@@ -1462,6 +1490,8 @@ def get_grain_advisory_ai(
             task_instructions = (
                 "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
                 "Also suggest 3 to 5 distinct ways to enhance the physical and chemical outcome of the formulation.\n"
+                "Also evaluate the milling setup: recommend whether bran separation (sifted high-extraction flour) or whole grain (unsifted) is optimal for this archetype, and explain why in 1 sentence.\n"
+                "Also recommend the best mill type from the 'mills' list provided (if any), with a 1-sentence reason.\n"
                 "🚨 [CRITICAL INPUT CONTEXT SANITY CHECK]\n"
                 "When generating the `elevate_recipe` suggestions, you are STRICTLY PROHIBITED from mentioning, recommending, or referencing any grains, modifiers, or specialty ingredients "
                 "that are not explicitly provided in the 'grains' and 'specialty_ingredients' lists of the user prompt payload. For example, if rye is not in 'grains', "
@@ -1479,17 +1509,28 @@ def get_grain_advisory_ai(
                 "  \"elevate_recipe\": [\n"
                 "    \"string suggestion 1\",\n"
                 "    \"string suggestion 2\"\n"
-                "  ]\n"
+                "  ],\n"
+                "  \"mill_recommendation\": {\n"
+                "    \"mill_id\": \"string (ID of the recommended mill, or null if no preference)\",\n"
+                "    \"reasoning\": \"1 sentence explaining why this mill is best for the archetype.\"\n"
+                "  },\n"
+                "  \"sifted_recommendation\": {\n"
+                "    \"should_sift\": true,\n"
+                "    \"reasoning\": \"1 sentence explaining whether bran separation helps or hurts this recipe type.\"\n"
+                "  }\n"
                 "}"
             )
             system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
 
+        from apps.core.models import Equipment
+        mills_qs = Equipment.objects.filter(equipment_type='mill', deleted_at__isnull=True)
         payload = {
             "engine_id": engine.slug if engine else "default",
             "active_archetype_id": active_archetype_id,
             "selected_grains": selected_names,
             "grains": active_grains_list,
             "specialty_ingredients": specialty_ingredients,
+            "mills": [{"id": str(m.id), "name": m.name} for m in mills_qs],
             "inventory": [
                 {
                     "id": str(wb.id),

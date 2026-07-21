@@ -51,6 +51,8 @@
           proofing_environment: 'ambient',
           mill_type: 'stoneground',
           is_sifted: null,
+          millAdvisory: typeof mill_recommendation !== 'undefined' ? mill_recommendation : null,
+          siftedAdvisory: typeof sifted_recommendation !== 'undefined' ? sifted_recommendation : null,
           form_factor_val: '{{ selected_form_factor.slug|default:'standard-9x5-pan' }}',
           recommended_ff_slug: '{% if selected_preset %}{{ selected_preset.form_factor.slug }}{% else %}{{ selected_form_factor.slug }}{% endif %}',
           yield_scale: 1.0,
@@ -218,6 +220,15 @@
                   if (data.flour_blend) {
                       this.flour_blend = data.flour_blend;
                   }
+              }
+          });
+          window.addEventListener('sifted-advisory-updated', (e) => {
+              const data = e.detail;
+              if (data && data.mill_recommendation) {
+                  this.millAdvisory = data.mill_recommendation;
+              }
+              if (data && data.sifted_recommendation) {
+                  this.siftedAdvisory = data.sifted_recommendation;
               }
           });
           $watch('leaven', value => { if (value === 'yeast') { this.starter = 0; } else if (this.starter === 0) { this.starter = 20; } });
@@ -654,8 +665,6 @@
                     <h4 style="color: var(--text-primary); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">❌ Structural Safety Warning</h4>
                     <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;" x-text="getWarningMessage()"></p>
                 </div>
-            </div>
-
             <input type="hidden" name="custom_mixer" value="static">
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
@@ -674,9 +683,9 @@
                                 {% for mill in mills %}
                                 <button type="button" class="pill-btn" :class="mill_type === '{{ mill.id|escapejs }}' ? 'active' : ''"
                                         @click="mill_type = '{{ mill.id|escapejs }}'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('{{ mill.name|escapejs }}')"
+                                        @mouseenter="setHoveredElement('mill_{{ mill.id|escapejs }}')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('{{ mill.name|escapejs }}')"
+                                        @focusin="setHoveredElement('mill_{{ mill.id|escapejs }}')"
                                         @focusout="clearHoveredElement()">
                                     {{ mill.name }}
                                 </button>
@@ -691,22 +700,35 @@
                             <div class="pill-btn-group">
                                 <button type="button" class="pill-btn" :class="is_sifted === false ? 'active' : ''"
                                         @click="is_sifted = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('whole_grain_unsifted_flour')"
+                                        @mouseenter="setHoveredElement('sifted_false')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('whole_grain_unsifted_flour')"
+                                        @focusin="setHoveredElement('sifted_false')"
                                         @focusout="clearHoveredElement()">
                                     Whole Grain (Unsifted)
                                 </button>
                                 <button type="button" class="pill-btn" :class="is_sifted === true ? 'active' : ''"
                                         @click="is_sifted = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('sifted_high_extraction_flour')"
+                                        @mouseenter="setHoveredElement('sifted_true')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('sifted_high_extraction_flour')"
+                                        @focusin="setHoveredElement('sifted_true')"
                                         @focusout="clearHoveredElement()">
                                     Sifted (High Extraction)
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- AI Milling Advisory Hints -->
+                <div x-show="siftedAdvisory || millAdvisory" style="margin-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+                    <div style="font-size: 0.7rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem;">🤖 AI Milling Advisory</div>
+                    <div x-show="siftedAdvisory" style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.35rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <span style="flex-shrink: 0; color: var(--accent);">⚗</span>
+                        <span x-text="siftedAdvisory?.reasoning"></span>
+                    </div>
+                    <div x-show="millAdvisory" style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <span style="flex-shrink: 0; color: var(--text-muted);">⚙</span>
+                        <span x-text="millAdvisory?.reasoning"></span>
                     </div>
                 </div>
 
@@ -718,9 +740,10 @@
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition); margin-bottom: 1.5rem;"
                     onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
                     onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                    @click="startPhase3Optimization()">
+                    @click="$dispatch('phase3-start')">
                 GENERATE FORMULA &amp; PROCEED →
             </button>
+            </div> <!-- Closes x-show="!advisoryLoading" -->
         </div> <!-- Closes x-show="recipe_selected" -->
     </div>
 </div>
@@ -729,7 +752,25 @@
     <div x-show="current_phase === 3" x-transition style="position: relative;">
         <div x-show="phase3Loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 23, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: var(--radius-md);">
             <div class="spinner" style="width: 50px; height: 50px; border-top-color: var(--accent); margin-bottom: 1.5rem;"></div>
-            <div style="color: var(--accent); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.05em; text-align: center; text-transform: uppercase;" x-text="phase3LoadingMessage"></div>
+            <div style="color: var(--accent); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.05em; text-align: center; text-transform: uppercase; margin-bottom: 2rem;" x-text="phase3LoadingMessage"></div>
+            <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 0.75rem;">
+                <template x-for="step in phase3_generation_steps">
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                            <template x-if="step.completed">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </template>
+                            <template x-if="step.active">
+                                <div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>
+                            </template>
+                            <template x-if="!step.completed && !step.active">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--text-muted);"></div>
+                            </template>
+                        </div>
+                        <div style="font-size: 0.9rem;" :style="step.completed ? 'color: var(--text-primary);' : (step.active ? 'color: var(--accent); font-weight: 600;' : 'color: var(--text-muted);')" x-text="step.text"></div>
+                    </div>
+                </template>
+            </div>
         </div>
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
             Phase 3: Recipe Fine-Tuning

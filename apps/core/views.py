@@ -989,13 +989,19 @@ def ai_grain_advisory(request):
         advisory = {}
         
     if only_evaluations:
-        return JsonResponse({"grain_evaluations": advisory.get("grain_evaluations", [])})
+        return JsonResponse({
+            "grain_evaluations": advisory.get("grain_evaluations", []),
+            "mill_recommendation": advisory.get("mill_recommendation", None),
+            "sifted_recommendation": advisory.get("sifted_recommendation", None)
+        })
     elif only_elevate:
         return JsonResponse({"elevate_recipe": advisory.get("elevate_recipe", [])})
     else:
         return JsonResponse({
             "grain_evaluations": advisory.get("grain_evaluations", []),
-            "elevate_recipe": advisory.get("elevate_recipe", [])
+            "elevate_recipe": advisory.get("elevate_recipe", []),
+            "mill_recommendation": advisory.get("mill_recommendation", None),
+            "sifted_recommendation": advisory.get("sifted_recommendation", None)
         })
 
 def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None, active_archetype_id: str = None) -> list[dict]:
@@ -1949,8 +1955,9 @@ def generate_creativity_recipes(request):
             })
 
     result = gemma_client.generate_creativity_recipes(engine_id, active_archetype_id, inventory)
-    if result is None:
-        return JsonResponse({"recipes": []}, status=200)
+    if not result or not result.get("recipes"):
+        fallback = gemma_client.get_fallback_creativity_recipes(engine_id, active_archetype_id, pref_slugs=[])
+        return JsonResponse(fallback, status=200)
 
     return JsonResponse(result, status=200)
 
