@@ -222,6 +222,27 @@
             }
             return;
         }
+
+        if (key.startsWith('secondary_')) {
+            const type = key.replace('secondary_', ''); // 'lipid', 'liquid', or 'binder'
+            const typeKey = type + 's';
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            
+            const source = (this.selectedRecipeSecondaryIngredients && this.selectedRecipeSecondaryIngredients[typeKey]) ? 
+                            this.selectedRecipeSecondaryIngredients : 
+                           (this.engines_ff?.[this.selected_master]?.secondary_ingredients);
+                           
+            if (source && source[typeKey] && source[typeKey].ai_recommendation) {
+                this.sidebar_tier = 'recommended';
+                this.sidebar_analysis = source[typeKey].ai_recommendation;
+            } else {
+                this.sidebar_tier = '';
+                this.sidebar_analysis = 'No specific AI advisory available for this category.';
+            }
+            return;
+        }
+
         
         // Use pre-fetched batch insights instead of lazily fetching
         this.sidebar_insight_loading = true;
@@ -245,7 +266,7 @@
         this.sidebar_labor_roi = '';
         this.sidebar_tier = '';
         this.sidebar_insight_loading = false;
-        if (this.current_phase === 2 && this.selected_recipe_id) {
+        if (this.current_phase >= 2 && this.selected_recipe_id) {
             this.sidebar_analysis = this.selectedRecipeScienceProfile;
             this.sidebar_menu_description = this.selectedRecipeMenuDescription;
         } else {

@@ -137,7 +137,7 @@ button:disabled, .nav-btn:disabled {
     margin-top: 1.5rem;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
     }

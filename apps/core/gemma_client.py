@@ -2238,47 +2238,60 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
         "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, recommended grain selections, and required secondary ingredients (including permissible substitutions).\n"
-        "Each response must match this JSON schema:\n"
+        "CRITICAL RULE FOR SECONDARY INGREDIENTS:\n"
+        "You MUST provide AT LEAST 3 overarching categories for lipids (e.g., 'Butter', 'Oil', 'Shortening'), liquids, and binders.\n"
+        "You MUST also provide categories and options for sweeteners, leaveners, and additives ONLY IF they are required for the target dough archetype. If they are not needed (e.g., no leaveners in pasta), omit them entirely or return empty lists.\n"
+        "Inside EACH category, you MUST provide AT LEAST 3-4 specific options.\n"
+        "Do NOT just return a single ingredient. You must populate the JSON with a wide variety of valid alternatives.\n"
+        "Here is an EXACT EXAMPLE of the structure expected for lipids. You must replicate this high level of variety for all required categories:\n"
         "{\n"
-        "  \"recommended_grain_ids\": [\"grain_name_slug\"],  // list of lowercase name slugs matching grains from the provided inventory that are recommended for this flavor profile\n"
-        "  \"flour_blend\": {\n"
-        "    \"grain_name_slug\": 80, // percentage of the flour blend\n"
-        "    \"another_grain_slug\": 20\n"
-        "  },\n"
-        "  \"fat_starting_temp\": \"room_temp\", // 'cold', 'room_temp', 'melted', or 'liquid' if it's an oil that doesn't change\n"
-        "  \"required_actions\": [\"knead\", \"fold\"], // mechanical actions needed for this dough\n"
-        "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"], // hardware that can be used\n"
+        "  \"required_category\": \"Butter or Neutral Oil\",\n"
+        "  \"ai_recommendation\": \"A brief explanation of why this specific fat category is recommended for this recipe's crumb structure.\",\n"
+        "  \"categories\": [\n"
+        "    {\n"
+        "      \"name\": \"Dairy Butter\",\n"
+        "      \"options\": [\n"
+        "        {\"name\": \"unsalted_butter\", \"temperature_options\": [\"Room Temp\", \"Melted\", \"Browned\"]},\n"
+        "        {\"name\": \"salted_butter\", \"temperature_options\": [\"Room Temp\", \"Melted\", \"Browned\"]},\n"
+        "        {\"name\": \"cultured_butter\", \"temperature_options\": [\"Room Temp\", \"Melted\"]}\n"
+        "      ]\n"
+        "    },\n"
+        "    {\n"
+        "      \"name\": \"Plant Oils\",\n"
+        "      \"options\": [\n"
+        "        {\"name\": \"olive_oil\", \"temperature_options\": [\"Liquid\"]},\n"
+        "        {\"name\": \"avocado_oil\", \"temperature_options\": [\"Liquid\"]},\n"
+        "        {\"name\": \"coconut_oil\", \"temperature_options\": [\"Solid\", \"Melted\"]}\n"
+        "      ]\n"
+        "    },\n"
+        "    {\n"
+        "      \"name\": \"Solid Plant Fats\",\n"
+        "      \"options\": [\n"
+        "        {\"name\": \"vegetable_shortening\", \"temperature_options\": [\"Room Temp\", \"Melted\"]},\n"
+        "        {\"name\": \"vegan_butter_block\", \"temperature_options\": [\"Room Temp\", \"Melted\"]},\n"
+        "        {\"name\": \"margarine\", \"temperature_options\": [\"Room Temp\", \"Melted\"]}\n"
+        "      ]\n"
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "Each response must match this JSON schema exactly:\n"
+        "{\n"
+        "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+        "  \"flour_blend\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20},\n"
+        "  \"fat_starting_temp\": \"room_temp\",\n"
+        "  \"required_actions\": [\"knead\", \"fold\"],\n"
+        "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"],\n"
         "  \"secondary_ingredients\": {\n"
-        "    \"lipids\": {\n"
-        "      \"required\": \"Primary recommended fat (e.g., unsalted_butter, extra_virgin_olive_oil)\",\n"
-        "      \"options\": [\"unsalted_butter\", \"avocado_oil\", \"coconut_oil\"]\n"
-        "    },\n"
-        "    \"liquids\": {\n"
-        "      \"required\": \"Primary recommended liquid (e.g., pure_water, whole_milk, buttermilk)\",\n"
-        "      \"options\": [\"pure_water\", \"whole_milk\", \"buttermilk\"]\n"
-        "    },\n"
-        "    \"binders\": {\n"
-        "      \"required\": \"Primary recommended binder (e.g., none, whole_eggs, aquafaba)\",\n"
-        "      \"options\": [\"none\", \"whole_eggs\", \"egg_whites\"]\n"
-        "    },\n"
-        "    \"flavor_inclusions\": [\n"
-        "      {\n"
-        "        \"name\": \"Ingredient name (e.g. Lemon Zest)\",\n"
-        "        \"bakers_percentage\": 2.5, // Float representing baker's percentage relative to flour weight\n"
-        "        \"volume_description\": \"Human-readable volume (e.g. 1 tbsp)\"\n"
-        "      }\n"
-        "    ]\n"
+        "    \"lipids\": { \"required_category\": \"string\", \"ai_recommendation\": \"string\", \"categories\": [{ \"name\": \"string\", \"options\": [{\"name\": \"string\", \"temperature_options\": [\"string\"]}] }] },\n"
+        "    \"liquids\": { \"required_category\": \"string\", \"ai_recommendation\": \"string\", \"categories\": [{ \"name\": \"string\", \"options\": [{\"name\": \"string\", \"temperature_options\": [\"string\"]}] }] },\n"
+        "    \"binders\": { \"required_category\": \"string\", \"ai_recommendation\": \"string\", \"categories\": [{ \"name\": \"string\", \"options\": [{\"name\": \"string\", \"temperature_options\": [\"string\"]}] }] },\n"
+        "    \"sweeteners\": { \"required_category\": \"string\", \"ai_recommendation\": \"string\", \"categories\": [{ \"name\": \"string\", \"options\": [{\"name\": \"string\", \"temperature_options\": [\"string\"]}] }] },\n"
+        "    \"leaveners\": { \"required_category\": \"string\", \"ai_recommendation\": \"string\", \"categories\": [{ \"name\": \"string\", \"options\": [{\"name\": \"string\", \"temperature_options\": [\"string\"]}] }] },\n"
+        "    \"additives\": { \"required_category\": \"string\", \"ai_recommendation\": \"string\", \"categories\": [{ \"name\": \"string\", \"options\": [{\"name\": \"string\", \"temperature_options\": [\"string\"]}] }] },\n"
+        "    \"flavor_inclusions\": [{ \"name\": \"string\", \"bakers_percentage\": 2.5, \"volume_description\": \"string\" }]\n"
         "  }\n"
         "}\n"
         "Return ONLY raw JSON with no markdown fences.\n"
-        "\n"
-        "🚨 [CRITICAL PROMPT HARDENING]\n"
-        "1. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
-        "2. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
-
-        "6. BE HIGHLY CRITICAL AND DISCERNING: Do NOT lazily categorize everything as 'High Priority' or 'Recommended'. Most options in a kitchen are 'Sub-Optimal', 'Low Priority', or 'Standard Baseline'. ONLY rate something as 'High Priority / Worth the Extra Step' or 'Recommended' if it provides a MASSIVE, noticeable improvement to the final texture or flavor for that specific recipe. You are a harsh, pragmatic critic. If it's a minor difference, rate it 'Low Priority'.\n"
-
-        "3. RECOMMENDED GRAINS DETECTOR: You must identify which grains from the provided active selected grains list are recommended for this recipe and list their lowercase name slugs (e.g. ['soft_white_wheat', 'rye']) in the recommended_grain_ids key."
     )
     
     from grainlab.engines import router
@@ -2327,9 +2340,108 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     category = (engine_id or "").lower()
     
     # Defaults
-    sec_lipids = {"required": "none", "options": ["none", "unsalted_butter", "avocado_oil", "coconut_oil"]}
-    sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk", "buttermilk"]}
-    sec_binders = {"required": "none", "options": ["none", "whole_eggs", "egg_whites"]}
+    sec_lipids = {
+        "required_category": "Butter",
+        "ai_recommendation": "Butter is recommended for its rich dairy notes and tenderizing effects on the crumb structure, which is ideal for this formula.",
+        "categories": [
+            {
+                "name": "Butter",
+                "options": [
+                    {"name": "unsalted_butter", "temperature_options": ["Cold (Solid)", "Soft (Room Temp)", "Melted"]}
+                ]
+            },
+            {
+                "name": "Oil",
+                "options": [
+                    {"name": "avocado_oil", "temperature_options": ["Liquid (Room Temp)"]},
+                    {"name": "coconut_oil", "temperature_options": ["Solid (Cold)", "Liquid (Melted)"]}
+                ]
+            }
+        ]
+    }
+    sec_liquids = {
+        "required_category": "Whole Milk",
+        "ai_recommendation": "Whole milk provides the perfect balance of hydration, fats, and milk sugars for a soft and supple dough.",
+        "categories": [
+            {
+                "name": "Water",
+                "options": [
+                    {"name": "pure_water", "temperature_options": ["Cold", "Warm", "Hot"]}
+                ]
+            },
+            {
+                "name": "Milk",
+                "options": [
+                    {"name": "whole_milk", "temperature_options": ["Cold", "Room Temp", "Warm"]},
+                    {"name": "buttermilk", "temperature_options": ["Cold", "Room Temp"]}
+                ]
+            }
+        ]
+    }
+    sec_binders = {
+        "required_category": "Whole Eggs",
+        "ai_recommendation": "Whole eggs offer structural binding and additional fat, creating a sturdy yet pillowy crumb that holds its shape.",
+        "categories": [
+            {
+                "name": "None",
+                "options": [
+                    {"name": "none", "temperature_options": ["N/A"]}
+                ]
+            },
+            {
+                "name": "Egg",
+                "options": [
+                    {"name": "whole_eggs", "temperature_options": ["Cold", "Room Temp"]},
+                    {"name": "egg_whites", "temperature_options": ["Cold", "Room Temp"]}
+                ]
+            }
+        ]
+    }
+    sec_sweeteners = {
+        "required_category": "Granulated Sugar",
+        "ai_recommendation": "Sugar provides both sweetness and crucial tenderization, while also assisting in the Maillard reaction for a golden crust.",
+        "categories": [
+            {
+                "name": "Dry Sugars",
+                "options": [
+                    {"name": "granulated_sugar", "temperature_options": ["Room Temp"]},
+                    {"name": "brown_sugar", "temperature_options": ["Room Temp"]}
+                ]
+            },
+            {
+                "name": "Liquid Sweeteners",
+                "options": [
+                    {"name": "honey", "temperature_options": ["Room Temp"]},
+                    {"name": "maple_syrup", "temperature_options": ["Room Temp"]}
+                ]
+            }
+        ]
+    }
+    sec_leaveners = {
+        "required_category": "Chemical Leavener",
+        "ai_recommendation": "Baking soda and baking powder provide immediate lift without requiring fermentation time, ideal for this dough archetype.",
+        "categories": [
+            {
+                "name": "Baking Sodas/Powders",
+                "options": [
+                    {"name": "baking_soda", "temperature_options": ["Room Temp"]},
+                    {"name": "baking_powder", "temperature_options": ["Room Temp"]}
+                ]
+            },
+            {
+                "name": "Yeast",
+                "options": [
+                    {"name": "instant_dry_yeast", "temperature_options": ["Room Temp"]},
+                    {"name": "active_dry_yeast", "temperature_options": ["Room Temp"]}
+                ]
+            }
+        ]
+    }
+    sec_additives = {
+        "required_category": "None",
+        "ai_recommendation": "No special additives are required for this dough structure.",
+        "categories": []
+    }
     flavor_inclusions = []
     
     # Grains ratio defaults
@@ -2348,28 +2460,31 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
     required_hardware = ["stand_mixer"]
     
     if category in ["cookies-shortbread", "cakes-batters", "cookies_shortbread", "cakes_batters", "cookie", "batter"]:
-        sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
-        sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
-        sec_binders = {"required": "whole_eggs", "options": ["none", "whole_eggs", "egg_whites"]}
+#         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
+#         sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
+#         sec_binders = {"required": "whole_eggs", "options": ["none", "whole_eggs", "egg_whites"]}
         flavor_inclusions = [
             {"name": "Dark Chocolate Chunks", "bakers_percentage": 15.0, "volume_description": "1/2 cup"},
             {"name": "Maldon Sea Salt", "bakers_percentage": 0.5, "volume_description": "1 tsp flaky"}
         ]
     elif category in ["pastry-lamination", "pastry_lamination", "pastry", "choux-paste", "choux_paste", "choux", "fry", "fried-doughs"]:
-        sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "salted_butter"]}
-        sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
-        sec_binders = {"required": "whole_eggs", "options": ["whole_eggs", "egg_whites"]}
+        pass
+#         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "salted_butter"]}
+#         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
+#         sec_binders = {"required": "whole_eggs", "options": ["whole_eggs", "egg_whites"]}
     elif category in ["enriched-soft", "enriched_soft", "pan"]:
-        sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil"]}
-        sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
-        sec_binders = {"required": "none", "options": ["none", "whole_eggs"]}
+        pass
+#         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil"]}
+#         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
+#         sec_binders = {"required": "none", "options": ["none", "whole_eggs"]}
         flavor_inclusions = [
             {"name": "Cinnamon Sugar Swirl", "bakers_percentage": 10.0, "volume_description": "3 tbsp"},
             {"name": "Raisins", "bakers_percentage": 20.0, "volume_description": "1/2 cup"}
         ]
     elif category in ["alkaline-bath", "alkaline_bath", "bath", "flatbreads-griddles", "flatbreads_griddles", "flat"]:
-        sec_lipids = {"required": "none", "options": ["none", "unsalted_butter"]}
-        sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk"]}
+        pass
+#         sec_lipids = {"required": "none", "options": ["none", "unsalted_butter"]}
+#         sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk"]}
         
     pref_slugs = []
     if selected_grains:
@@ -2388,6 +2503,9 @@ def get_local_recipe_details(recipe_slug: str, recipe_name: str, engine_id: str,
             "lipids": sec_lipids,
             "liquids": sec_liquids,
             "binders": sec_binders,
+            "sweeteners": sec_sweeteners,
+            "leaveners": sec_leaveners,
+            "additives": sec_additives,
             "flavor_inclusions": flavor_inclusions
         }
     }

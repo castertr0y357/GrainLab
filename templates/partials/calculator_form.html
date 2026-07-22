@@ -45,9 +45,15 @@
           category_slug: '{{ selected_category.slug|default:'lean-crusty' }}',
           custom_mixer: 'static',
           mixing_method: 'stand_mixer',
-          secondary_lipid: 'unsalted_butter',
-          secondary_liquid: 'pure_water',
-          secondary_binder: 'none',
+          secondary_lipid_category: 'Butter',
+          secondary_lipid_option: 'unsalted_butter',
+          secondary_lipid_temp: 'Soft (Room Temp)',
+          secondary_liquid_category: 'Water',
+          secondary_liquid_option: 'pure_water',
+          secondary_liquid_temp: 'Cold',
+          secondary_binder_category: 'None',
+          secondary_binder_option: 'none',
+          secondary_binder_temp: 'N/A',
           proofing_environment: 'ambient',
           mill_type: 'stoneground',
           is_sifted: null,
@@ -198,15 +204,21 @@
               if (data) {
                   const sec = data.secondary_ingredients;
                   if (sec) {
-                      if (sec.lipids && sec.lipids.required) {
-                          this.secondary_lipid = sec.lipids.required;
-                      }
-                      if (sec.liquids && sec.liquids.required) {
-                          this.secondary_liquid = sec.liquids.required;
-                      }
-                      if (sec.binders && sec.binders.required) {
-                          this.secondary_binder = sec.binders.required;
-                      }
+                      const setIngredient = (type, statePrefix) => {
+                          if (sec[type] && sec[type].required_category) {
+                              this[statePrefix + '_category'] = sec[type].required_category;
+                              const cat = (sec[type].categories || []).find(c => c.name === sec[type].required_category);
+                              if (cat && cat.options && cat.options.length > 0) {
+                                  this[statePrefix + '_option'] = cat.options[0].name;
+                                  if (cat.options[0].temperature_options && cat.options[0].temperature_options.length > 0) {
+                                      this[statePrefix + '_temp'] = cat.options[0].temperature_options[0];
+                                  }
+                              }
+                          }
+                      };
+                      setIngredient('lipids', 'secondary_lipid');
+                      setIngredient('liquids', 'secondary_liquid');
+                      setIngredient('binders', 'secondary_binder');
                   }
                   if (data.fat_starting_temp) {
                       this.fat_starting_temp = data.fat_starting_temp;
@@ -748,7 +760,7 @@
     </div>
 </div>
 
-    <!-- PHASE 3: Contextual Variance Sliders & Baking Configuration -->
+    <!-- PHASE 3: Core Configuration -->
     <div x-show="current_phase === 3" x-transition style="position: relative;">
         <div x-show="phase3Loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 23, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: var(--radius-md);">
             <div class="spinner" style="width: 50px; height: 50px; border-top-color: var(--accent); margin-bottom: 1.5rem;"></div>
@@ -772,95 +784,416 @@
                 </template>
             </div>
         </div>
+
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
-            Phase 3: Recipe Fine-Tuning
+            Phase 3: Core Configuration
         </div>
         
-<div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
-            <!-- Secondary Ingredient Configuration Deck -->
-                    <div x-show="(selectedRecipeSecondaryIngredients && Object.keys(selectedRecipeSecondaryIngredients).length > 0) || (engines_ff?.[selected_master]?.secondary_ingredients && Object.keys(engines_ff?.[selected_master].secondary_ingredients).length > 0)"
-                         style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                        <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Secondary Ingredient Configuration Deck</h4>
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <!-- Lipids Selector -->
-                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.lipids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Lipid Fat Selection</label>
-                                <input type="hidden" name="secondary_lipid" :value="secondary_lipid">
-                                <input type="hidden" name="flour_blend" :value="JSON.stringify(flour_blend)">
-                                <div class="pill-btn-group">
-                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.options : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.options || []))" :key="option">
-                                        <button type="button"
-                                                class="pill-btn"
-                                                :class="secondary_lipid === option ? 'active' : ''"
-                                                @click="secondary_lipid = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                                @mouseenter="setHoveredElement(option)"
-                                                @mouseleave="clearHoveredElement()"
-                                                @focusin="setHoveredElement(option)"
-                                                @focusout="clearHoveredElement()">
-                                            <span x-text="option.replace(/_/g, ' ')"></span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
-                            <!-- Liquids Selector -->
-                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.liquids)" style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Liquid Medium Selection</label>
-                                <input type="hidden" name="secondary_liquid" :value="secondary_liquid">
-                                <div class="pill-btn-group">
-                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.options : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.options || []))" :key="option">
-                                        <button type="button"
-                                                class="pill-btn"
-                                                :class="secondary_liquid === option ? 'active' : ''"
-                                                @click="secondary_liquid = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                                @mouseenter="setHoveredElement(option)"
-                                                @mouseleave="clearHoveredElement()"
-                                                @focusin="setHoveredElement(option)"
-                                                @focusout="clearHoveredElement()">
-                                            <span x-text="option.replace(/_/g, ' ')"></span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
-                            <!-- Binders Selector -->
-                            <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.binders)" style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Binder Selection</label>
-                                <input type="hidden" name="secondary_binder" :value="secondary_binder">
-                                <div class="pill-btn-group">
-                                    <template x-for="option in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.options : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.options || []))" :key="option">
-                                        <button type="button"
-                                                class="pill-btn"
-                                                :class="secondary_binder === option ? 'active' : ''"
-                                                @click="secondary_binder = option; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                                @mouseenter="setHoveredElement(option)"
-                                                @mouseleave="clearHoveredElement()"
-                                                @focusin="setHoveredElement(option)"
-                                                @focusout="clearHoveredElement()">
-                                            <span x-text="option.replace(/_/g, ' ')"></span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Component 1: Secondary Ingredient Configuration Deck -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
+             x-show="(selectedRecipeSecondaryIngredients && Object.keys(selectedRecipeSecondaryIngredients).length > 0) || (engines_ff?.[selected_master]?.secondary_ingredients && Object.keys(engines_ff?.[selected_master].secondary_ingredients).length > 0)">
+            <h4 style="font-size: 1.05rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">Secondary Ingredients</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                
+                <!-- Lipids Selector -->
+                <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.lipids)" 
+                     style="display: flex; flex-direction: column; gap: 0.75rem;"
+                     @mouseenter="setHoveredElement('secondary_lipid')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('secondary_lipid')"
+                     @focusout="clearHoveredElement()">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">Fat / Lipid Category</label>
+                    <input type="hidden" name="secondary_lipid_category" :value="secondary_lipid_category">
+                    <input type="hidden" name="secondary_lipid_option" :value="secondary_lipid_option">
+                    <input type="hidden" name="secondary_lipid_temp" :value="secondary_lipid_temp">
+                    
+                    <div class="pill-btn-group">
+                        <template x-for="cat in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.categories || []))" :key="cat.name">
+                            <button type="button" class="pill-btn" :class="secondary_lipid_category === cat.name ? 'active' : ''"
+                                    @click="
+                                        secondary_lipid_category = cat.name;
+                                        if (cat.options.length > 0) {
+                                            secondary_lipid_option = cat.options[0].name;
+                                            secondary_lipid_temp = cat.options[0].temperature_options.length > 0 ? cat.options[0].temperature_options[0] : 'N/A';
+                                        }
+                                        $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                    ">
+                                <span x-text="cat.name.replace(/_/g, ' ')"></span>
+                            </button>
+                        </template>
                     </div>
 
-                    
-            
-                    <!-- Flavor Inclusions -->
-                    <div x-show="selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.flavor_inclusions && selectedRecipeSecondaryIngredients.flavor_inclusions.length > 0" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                        <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Flavor Inclusions</h4>
-                        <input type="hidden" name="flavor_inclusions" :value="JSON.stringify(selectedRecipeSecondaryIngredients?.flavor_inclusions || [])">
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            <template x-for="flavor in selectedRecipeSecondaryIngredients?.flavor_inclusions || []" :key="flavor.name">
-                                <span style="background-color: hsla(38, 92%, 50%, 0.15); color: var(--accent); border: 1px solid var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;" x-text="`${flavor.name} (${flavor.volume_description || (flavor.bakers_percentage + '%')})`"></span>
+                    <!-- Lipid Options within Category -->
+                    <div x-show="secondary_lipid_category !== 'None' && ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.categories || [])).find(c => c.name === secondary_lipid_category)?.options?.length > 0" 
+                         style="margin-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Specific Option</label>
+                        <div class="pill-btn-group" style="gap: 0.25rem;">
+                            <template x-for="opt in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.categories || [])).find(c => c.name === secondary_lipid_category)?.options || []" :key="opt.name">
+                                <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_lipid_option === opt.name ? 'active' : ''"
+                                        @click="
+                                            secondary_lipid_option = opt.name;
+                                            secondary_lipid_temp = opt.temperature_options.length > 0 ? opt.temperature_options[0] : 'N/A';
+                                            $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                        ">
+                                    <span x-text="opt.name.replace(/_/g, ' ')"></span>
+                                </button>
                             </template>
                         </div>
+                        
+                        <!-- Lipid Temperature -->
+                        <div x-show="((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.categories || [])).find(c => c.name === secondary_lipid_category)?.options?.find(o => o.name === secondary_lipid_option)?.temperature_options?.length > 0" 
+                             style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Temperature Target</label>
+                            <div class="pill-btn-group" style="gap: 0.25rem;">
+                                <template x-for="temp in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.lipids) ? selectedRecipeSecondaryIngredients.lipids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.lipids?.categories || [])).find(c => c.name === secondary_lipid_category)?.options?.find(o => o.name === secondary_lipid_option)?.temperature_options || []" :key="temp">
+                                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_lipid_temp === temp ? 'active' : ''"
+                                            @click="secondary_lipid_temp = temp; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        <span x-text="temp"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liquids Selector -->
+                <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.liquids)" 
+                     style="display: flex; flex-direction: column; gap: 0.75rem;"
+                     @mouseenter="setHoveredElement('secondary_liquid')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('secondary_liquid')"
+                     @focusout="clearHoveredElement()">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">Liquid Medium Category</label>
+                    <input type="hidden" name="secondary_liquid_category" :value="secondary_liquid_category">
+                    <input type="hidden" name="secondary_liquid_option" :value="secondary_liquid_option">
+                    <input type="hidden" name="secondary_liquid_temp" :value="secondary_liquid_temp">
+                    
+                    <div class="pill-btn-group">
+                        <template x-for="cat in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.categories || []))" :key="cat.name">
+                            <button type="button" class="pill-btn" :class="secondary_liquid_category === cat.name ? 'active' : ''"
+                                    @click="
+                                        secondary_liquid_category = cat.name;
+                                        if (cat.options.length > 0) {
+                                            secondary_liquid_option = cat.options[0].name;
+                                            secondary_liquid_temp = cat.options[0].temperature_options.length > 0 ? cat.options[0].temperature_options[0] : 'N/A';
+                                        }
+                                        $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                    ">
+                                <span x-text="cat.name.replace(/_/g, ' ')"></span>
+                            </button>
+                        </template>
                     </div>
 
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                <!-- Component 2: Semantic Appliance Filtering & Contextual Actions -->
-                <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                    <div>
+                    <!-- Liquid Options within Category -->
+                    <div x-show="secondary_liquid_category !== 'None' && ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.categories || [])).find(c => c.name === secondary_liquid_category)?.options?.length > 0" 
+                         style="margin-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Specific Option</label>
+                        <div class="pill-btn-group" style="gap: 0.25rem;">
+                            <template x-for="opt in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.categories || [])).find(c => c.name === secondary_liquid_category)?.options || []" :key="opt.name">
+                                <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_liquid_option === opt.name ? 'active' : ''"
+                                        @click="
+                                            secondary_liquid_option = opt.name;
+                                            secondary_liquid_temp = opt.temperature_options.length > 0 ? opt.temperature_options[0] : 'N/A';
+                                            $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                        ">
+                                    <span x-text="opt.name.replace(/_/g, ' ')"></span>
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <!-- Liquid Temperature -->
+                        <div x-show="((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.categories || [])).find(c => c.name === secondary_liquid_category)?.options?.find(o => o.name === secondary_liquid_option)?.temperature_options?.length > 0" 
+                             style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Temperature Target</label>
+                            <div class="pill-btn-group" style="gap: 0.25rem;">
+                                <template x-for="temp in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.liquids) ? selectedRecipeSecondaryIngredients.liquids.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.liquids?.categories || [])).find(c => c.name === secondary_liquid_category)?.options?.find(o => o.name === secondary_liquid_option)?.temperature_options || []" :key="temp">
+                                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_liquid_temp === temp ? 'active' : ''"
+                                            @click="secondary_liquid_temp = temp; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        <span x-text="temp"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Binders Selector -->
+                <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.binders)" 
+                     style="display: flex; flex-direction: column; gap: 0.75rem;"
+                     @mouseenter="setHoveredElement('secondary_binder')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('secondary_binder')"
+                     @focusout="clearHoveredElement()">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">Binder Category</label>
+                    <input type="hidden" name="secondary_binder_category" :value="secondary_binder_category">
+                    <input type="hidden" name="secondary_binder_option" :value="secondary_binder_option">
+                    <input type="hidden" name="secondary_binder_temp" :value="secondary_binder_temp">
+                    
+                    <div class="pill-btn-group">
+                        <template x-for="cat in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.categories || []))" :key="cat.name">
+                            <button type="button" class="pill-btn" :class="secondary_binder_category === cat.name ? 'active' : ''"
+                                    @click="
+                                        secondary_binder_category = cat.name;
+                                        if (cat.options.length > 0) {
+                                            secondary_binder_option = cat.options[0].name;
+                                            secondary_binder_temp = cat.options[0].temperature_options.length > 0 ? cat.options[0].temperature_options[0] : 'N/A';
+                                        }
+                                        $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                    ">
+                                <span x-text="cat.name.replace(/_/g, ' ')"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Binder Options within Category -->
+                    <div x-show="secondary_binder_category !== 'None' && ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.categories || [])).find(c => c.name === secondary_binder_category)?.options?.length > 0" 
+                         style="margin-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Specific Option</label>
+                        <div class="pill-btn-group" style="gap: 0.25rem;">
+                            <template x-for="opt in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.categories || [])).find(c => c.name === secondary_binder_category)?.options || []" :key="opt.name">
+                                <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_binder_option === opt.name ? 'active' : ''"
+                                        @click="
+                                            secondary_binder_option = opt.name;
+                                            secondary_binder_temp = opt.temperature_options.length > 0 ? opt.temperature_options[0] : 'N/A';
+                                            $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                        ">
+                                    <span x-text="opt.name.replace(/_/g, ' ')"></span>
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <!-- Binder Temperature -->
+                        <div x-show="((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.categories || [])).find(c => c.name === secondary_binder_category)?.options?.find(o => o.name === secondary_binder_option)?.temperature_options?.length > 0" 
+                             style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Temperature Target</label>
+                            <div class="pill-btn-group" style="gap: 0.25rem;">
+                                <template x-for="temp in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.binders) ? selectedRecipeSecondaryIngredients.binders.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.binders?.categories || [])).find(c => c.name === secondary_binder_category)?.options?.find(o => o.name === secondary_binder_option)?.temperature_options || []" :key="temp">
+                                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_binder_temp === temp ? 'active' : ''"
+                                            @click="secondary_binder_temp = temp; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        <span x-text="temp"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        
+<!-- Sweeteners Selector -->
+                <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.sweeteners) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.sweeteners)" 
+                     style="display: flex; flex-direction: column; gap: 0.75rem;"
+                     @mouseenter="setHoveredElement('secondary_sweetener')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('secondary_sweetener')"
+                     @focusout="clearHoveredElement()">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">Sweeteners Category</label>
+                    <input type="hidden" name="secondary_sweetener_category" :value="secondary_sweetener_category">
+                    <input type="hidden" name="secondary_sweetener_option" :value="secondary_sweetener_option">
+                    <input type="hidden" name="secondary_sweetener_temp" :value="secondary_sweetener_temp">
+                    
+                    <div class="pill-btn-group">
+                        <template x-for="cat in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.sweeteners) ? selectedRecipeSecondaryIngredients.sweeteners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.sweeteners?.categories || []))" :key="cat.name">
+                            <button type="button" class="pill-btn" :class="secondary_sweetener_category === cat.name ? 'active' : ''"
+                                    @click="
+                                        secondary_sweetener_category = cat.name;
+                                        if (cat.options.length > 0) {
+                                            secondary_sweetener_option = cat.options[0].name;
+                                            secondary_sweetener_temp = cat.options[0].temperature_options.length > 0 ? cat.options[0].temperature_options[0] : 'N/A';
+                                        }
+                                        $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                    ">
+                                <span x-text="cat.name.replace(/_/g, ' ')"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Binder Options within Category -->
+                    <div x-show="secondary_sweetener_category !== 'None' && ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.sweeteners) ? selectedRecipeSecondaryIngredients.sweeteners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.sweeteners?.categories || [])).find(c => c.name === secondary_sweetener_category)?.options?.length > 0" 
+                         style="margin-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Specific Option</label>
+                        <div class="pill-btn-group" style="gap: 0.25rem;">
+                            <template x-for="opt in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.sweeteners) ? selectedRecipeSecondaryIngredients.sweeteners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.sweeteners?.categories || [])).find(c => c.name === secondary_sweetener_category)?.options || []" :key="opt.name">
+                                <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_sweetener_option === opt.name ? 'active' : ''"
+                                        @click="
+                                            secondary_sweetener_option = opt.name;
+                                            secondary_sweetener_temp = opt.temperature_options.length > 0 ? opt.temperature_options[0] : 'N/A';
+                                            $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                        ">
+                                    <span x-text="opt.name.replace(/_/g, ' ')"></span>
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <!-- Binder Temperature -->
+                        <div x-show="((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.sweeteners) ? selectedRecipeSecondaryIngredients.sweeteners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.sweeteners?.categories || [])).find(c => c.name === secondary_sweetener_category)?.options?.find(o => o.name === secondary_sweetener_option)?.temperature_options?.length > 0" 
+                             style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Temperature Target</label>
+                            <div class="pill-btn-group" style="gap: 0.25rem;">
+                                <template x-for="temp in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.sweeteners) ? selectedRecipeSecondaryIngredients.sweeteners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.sweeteners?.categories || [])).find(c => c.name === secondary_sweetener_category)?.options?.find(o => o.name === secondary_sweetener_option)?.temperature_options || []" :key="temp">
+                                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_sweetener_temp === temp ? 'active' : ''"
+                                            @click="secondary_sweetener_temp = temp; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        <span x-text="temp"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        
+<!-- Leaveners Selector -->
+                <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.leaveners) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.leaveners)" 
+                     style="display: flex; flex-direction: column; gap: 0.75rem;"
+                     @mouseenter="setHoveredElement('secondary_leavener')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('secondary_leavener')"
+                     @focusout="clearHoveredElement()">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">Leaveners Category</label>
+                    <input type="hidden" name="secondary_leavener_category" :value="secondary_leavener_category">
+                    <input type="hidden" name="secondary_leavener_option" :value="secondary_leavener_option">
+                    <input type="hidden" name="secondary_leavener_temp" :value="secondary_leavener_temp">
+                    
+                    <div class="pill-btn-group">
+                        <template x-for="cat in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.leaveners) ? selectedRecipeSecondaryIngredients.leaveners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.leaveners?.categories || []))" :key="cat.name">
+                            <button type="button" class="pill-btn" :class="secondary_leavener_category === cat.name ? 'active' : ''"
+                                    @click="
+                                        secondary_leavener_category = cat.name;
+                                        if (cat.options.length > 0) {
+                                            secondary_leavener_option = cat.options[0].name;
+                                            secondary_leavener_temp = cat.options[0].temperature_options.length > 0 ? cat.options[0].temperature_options[0] : 'N/A';
+                                        }
+                                        $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                    ">
+                                <span x-text="cat.name.replace(/_/g, ' ')"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Binder Options within Category -->
+                    <div x-show="secondary_leavener_category !== 'None' && ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.leaveners) ? selectedRecipeSecondaryIngredients.leaveners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.leaveners?.categories || [])).find(c => c.name === secondary_leavener_category)?.options?.length > 0" 
+                         style="margin-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Specific Option</label>
+                        <div class="pill-btn-group" style="gap: 0.25rem;">
+                            <template x-for="opt in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.leaveners) ? selectedRecipeSecondaryIngredients.leaveners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.leaveners?.categories || [])).find(c => c.name === secondary_leavener_category)?.options || []" :key="opt.name">
+                                <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_leavener_option === opt.name ? 'active' : ''"
+                                        @click="
+                                            secondary_leavener_option = opt.name;
+                                            secondary_leavener_temp = opt.temperature_options.length > 0 ? opt.temperature_options[0] : 'N/A';
+                                            $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                        ">
+                                    <span x-text="opt.name.replace(/_/g, ' ')"></span>
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <!-- Binder Temperature -->
+                        <div x-show="((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.leaveners) ? selectedRecipeSecondaryIngredients.leaveners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.leaveners?.categories || [])).find(c => c.name === secondary_leavener_category)?.options?.find(o => o.name === secondary_leavener_option)?.temperature_options?.length > 0" 
+                             style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Temperature Target</label>
+                            <div class="pill-btn-group" style="gap: 0.25rem;">
+                                <template x-for="temp in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.leaveners) ? selectedRecipeSecondaryIngredients.leaveners.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.leaveners?.categories || [])).find(c => c.name === secondary_leavener_category)?.options?.find(o => o.name === secondary_leavener_option)?.temperature_options || []" :key="temp">
+                                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_leavener_temp === temp ? 'active' : ''"
+                                            @click="secondary_leavener_temp = temp; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        <span x-text="temp"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        
+<!-- Additives Selector -->
+                <div x-show="(selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.additives) || (engines_ff?.[selected_master]?.secondary_ingredients && engines_ff?.[selected_master].secondary_ingredients.additives)" 
+                     style="display: flex; flex-direction: column; gap: 0.75rem;"
+                     @mouseenter="setHoveredElement('secondary_additive')"
+                     @mouseleave="clearHoveredElement()"
+                     @focusin="setHoveredElement('secondary_additive')"
+                     @focusout="clearHoveredElement()">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">Additives Category</label>
+                    <input type="hidden" name="secondary_additive_category" :value="secondary_additive_category">
+                    <input type="hidden" name="secondary_additive_option" :value="secondary_additive_option">
+                    <input type="hidden" name="secondary_additive_temp" :value="secondary_additive_temp">
+                    
+                    <div class="pill-btn-group">
+                        <template x-for="cat in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.additives) ? selectedRecipeSecondaryIngredients.additives.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.additives?.categories || []))" :key="cat.name">
+                            <button type="button" class="pill-btn" :class="secondary_additive_category === cat.name ? 'active' : ''"
+                                    @click="
+                                        secondary_additive_category = cat.name;
+                                        if (cat.options.length > 0) {
+                                            secondary_additive_option = cat.options[0].name;
+                                            secondary_additive_temp = cat.options[0].temperature_options.length > 0 ? cat.options[0].temperature_options[0] : 'N/A';
+                                        }
+                                        $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                    ">
+                                <span x-text="cat.name.replace(/_/g, ' ')"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Binder Options within Category -->
+                    <div x-show="secondary_additive_category !== 'None' && ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.additives) ? selectedRecipeSecondaryIngredients.additives.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.additives?.categories || [])).find(c => c.name === secondary_additive_category)?.options?.length > 0" 
+                         style="margin-left: 1rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Specific Option</label>
+                        <div class="pill-btn-group" style="gap: 0.25rem;">
+                            <template x-for="opt in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.additives) ? selectedRecipeSecondaryIngredients.additives.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.additives?.categories || [])).find(c => c.name === secondary_additive_category)?.options || []" :key="opt.name">
+                                <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_additive_option === opt.name ? 'active' : ''"
+                                        @click="
+                                            secondary_additive_option = opt.name;
+                                            secondary_additive_temp = opt.temperature_options.length > 0 ? opt.temperature_options[0] : 'N/A';
+                                            $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                        ">
+                                    <span x-text="opt.name.replace(/_/g, ' ')"></span>
+                                </button>
+                            </template>
+                        </div>
+                        
+                        <!-- Binder Temperature -->
+                        <div x-show="((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.additives) ? selectedRecipeSecondaryIngredients.additives.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.additives?.categories || [])).find(c => c.name === secondary_additive_category)?.options?.find(o => o.name === secondary_additive_option)?.temperature_options?.length > 0" 
+                             style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase;">Temperature Target</label>
+                            <div class="pill-btn-group" style="gap: 0.25rem;">
+                                <template x-for="temp in ((selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.additives) ? selectedRecipeSecondaryIngredients.additives.categories : (engines_ff?.[selected_master]?.secondary_ingredients?.additives?.categories || [])).find(c => c.name === secondary_additive_category)?.options?.find(o => o.name === secondary_additive_option)?.temperature_options || []" :key="temp">
+                                    <button type="button" class="pill-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" :class="secondary_additive_temp === temp ? 'active' : ''"
+                                            @click="secondary_additive_temp = temp; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                                        <span x-text="temp"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        
+        <!-- Flavor Inclusions -->
+        <div class="card" x-show="selectedRecipeSecondaryIngredients && selectedRecipeSecondaryIngredients.flavor_inclusions && selectedRecipeSecondaryIngredients.flavor_inclusions.length > 0" style="margin-bottom: 1.5rem; padding: 1.25rem; background-color: var(--bg-card);">
+            <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Flavor Inclusions</h4>
+            <input type="hidden" name="flavor_inclusions" :value="JSON.stringify(selectedRecipeSecondaryIngredients?.flavor_inclusions || [])">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <template x-for="flavor in selectedRecipeSecondaryIngredients?.flavor_inclusions || []" :key="flavor.name">
+                    <span style="background-color: hsla(38, 92%, 50%, 0.15); color: var(--accent); border: 1px solid var(--accent); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;" x-text="`${flavor.name} (${flavor.volume_description || (flavor.bakers_percentage + '%')})`"></span>
+                </template>
+            </div>
+        </div>
+
+        <!-- PHASE 4: Yield & Refinement -->
+
+<!-- Component 2: Semantic Appliance Filtering & Contextual Actions -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div>
                     <!-- Appliance selection deck -->
                     <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Hardware &amp; Appliance Selector</h4>
                     <input type="hidden" name="mixing_method" :value="mixing_method">
@@ -880,22 +1213,21 @@
                     </div>
 
                     <!-- Gluten prevention warning banner -->
-                    <div class="warning-box" x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding'"
-                         style="background-color: hsla(38, 92%, 50%, 0.1); border-color: var(--warning); border-left-width: 4px; padding: 0.75rem; margin-top: 1rem;">
-                        <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 0.95rem;">⚠️ Gluten Prevention Alert</h4>
-                        <p style="font-size: 0.85rem; margin: 0; color: var(--text-primary); line-height: 1.4;">
-                            Minimal folding threshold active. Use zero-friction tools only (Manual Spatula & Bowl) to prevent accidental gluten development and preserve tender structures.
+                    <div x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding' && ['stand_mixer', 'bread_machine', 'food_processor'].includes(mixing_method)" 
+                         style="background-color: rgba(255, 159, 28, 0.1); border-left: 4px solid var(--warning); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-top: 1rem;">
+                        <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-weight: 700; font-size: 0.85rem; text-transform: uppercase;">⚠️ Shear Force Warning</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
+                            Intensive mixing will over-develop gluten and destroy the tender structure required for <span x-text="engines_ff?.[selected_master]?.title"></span>. Use a spatula or fold gently.
                         </p>
                     </div>
                 </div>
 
-                    </div>
-                    <div>
-<!-- Contextual Action deck -->
-                    <h4 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Required Mechanical Action</h4>
-                    <input type="hidden" name="primary_action" :value="active_action">
+                <div>
+                    <!-- Action Sequence Configurator -->
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Primary Action Sequence</h4>
+                    <input type="hidden" name="active_action" :value="active_action">
                     <div class="pill-btn-group">
-                        <template x-for="action in (required_actions && required_actions.length > 0 ? required_actions : (activeProductionProfile.permissible_action_types || []))" :key="action">
+                        <template x-for="action in (required_actions.length > 0 ? required_actions : activeProductionProfile.permissible_action_types)" :key="action">
                             <button type="button" 
                                     class="pill-btn" 
                                     :class="active_action === action ? 'active' : ''"
@@ -904,232 +1236,105 @@
                                     @mouseleave="clearHoveredElement()"
                                     @focusin="setHoveredElement(action)"
                                     @focusout="clearHoveredElement()">
-                                <span x-text="action.toUpperCase().replace('_', ' ')"></span>
+                                <span style="text-transform: capitalize;" x-text="action.replace('_', ' ')"></span>
                             </button>
                         </template>
                     </div>
-            </div>
-            </div>
-        </div>
-        </div>
-<!-- Chemical Substitutions --><!-- Chemical Substitutions -->
-        {% if not ai_enabled %}
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
-             x-init="$watch('subOriginal', val => { subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change')); })">
-            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent);">Chemical Substitutions</h4>
-            
-            <input type="hidden" name="sub_original" :value="subOriginal">
-            <input type="hidden" name="sub_substitute" :value="subSubstitute">
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-            <!-- Original Ingredient Pill Row -->
-            <div>
-                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Original Ingredient</label>
-                <div class="pill-btn-group">
-                    <button type="button" class="pill-btn" :class="subOriginal === 'water' ? 'active' : ''"
-                            @click="subOriginal = 'water'; subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                        Water
-                    </button>
-                    <button type="button" class="pill-btn" :class="subOriginal === 'fat' ? 'active' : ''"
-                            @click="subOriginal = 'fat'; subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
-                        Oil / Fats
-                    </button>
-                </div>
-            </div>
-
-            <!-- Alternative Swap Pill Row -->
-            <div>
-                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Alternative Swap</label>
-                
-                <!-- If Water selected -->
-                <div x-show="subOriginal === 'water'" class="pill-btn-group">
-                    <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
-                            @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                            @mouseenter="setHoveredElement('refined')"
-                            @mouseleave="clearHoveredElement()"
-                            @focusin="setHoveredElement('refined')"
-                            @focusout="clearHoveredElement()">
-                        No Swap
-                    </button>
-                    <button type="button" class="pill-btn" :class="subSubstitute === 'whole_milk' ? 'active' : ''"
-                            @click="subSubstitute = 'whole_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                            @mouseenter="setHoveredElement('whole_milk')"
-                            @mouseleave="clearHoveredElement()"
-                            @focusin="setHoveredElement('whole_milk')"
-                            @focusout="clearHoveredElement()">
-                        Whole Milk
-                    </button>
-                    <button type="button" class="pill-btn" :class="subSubstitute === 'almond_milk' ? 'active' : ''"
-                            @click="subSubstitute = 'almond_milk'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                            @mouseenter="setHoveredElement('almond_milk')"
-                            @mouseleave="clearHoveredElement()"
-                            @focusin="setHoveredElement('almond_milk')"
-                            @focusout="clearHoveredElement()">
-                        Almond Milk
-                    </button>
-                </div>
-
-                <!-- If Fat selected -->
-                <div x-show="subOriginal === 'fat'">
-                    <div class="pill-btn-group">
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'none' ? 'active' : ''"
-                                @click="subSubstitute = 'none'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('refined')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('refined')"
-                                @focusout="clearHoveredElement()">
-                            No Swap
-                        </button>
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'butter' ? 'active' : ''"
-                                @click="subSubstitute = 'butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('butter')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('butter')"
-                                @focusout="clearHoveredElement()">
-                            Butter
-                        </button>
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'unsalted_butter' ? 'active' : ''"
-                                @click="subSubstitute = 'unsalted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('unsalted_butter')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('unsalted_butter')"
-                                @focusout="clearHoveredElement()">
-                            Unsalted Butter
-                        </button>
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'salted_butter' ? 'active' : ''"
-                                @click="subSubstitute = 'salted_butter'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('salted_butter')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('salted_butter')"
-                                @focusout="clearHoveredElement()">
-                            Salted Butter
-                        </button>
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'olive_oil' ? 'active' : ''"
-                                @click="subSubstitute = 'olive_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('olive_oil')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('olive_oil')"
-                                @focusout="clearHoveredElement()">
-                            Olive Oil
-                        </button>
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'canola_oil' ? 'active' : ''"
-                                @click="subSubstitute = 'canola_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('canola_oil')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('canola_oil')"
-                                @focusout="clearHoveredElement()">
-                            Canola Oil
-                        </button>
-                        <button type="button" class="pill-btn" :class="subSubstitute === 'vegetable_oil' ? 'active' : ''"
-                                @click="subSubstitute = 'vegetable_oil'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                @mouseenter="setHoveredElement('vegetable_oil')"
-                                @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('vegetable_oil')"
-                                @focusout="clearHoveredElement()">
-                            Vegetable Oil
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
-        </div>
-        {% endif %}
-<!-- Leavening Biology --><!-- Leavening Biology -->
-        <div style="margin-bottom: 1.5rem;">
-            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Leavening Biology</label>
-            <div class="chip-container">
-                <span class="chip" :class="leaven === 'yeast' ? 'active' : ''" @click="leaven = 'yeast'">
-                    Commercial Yeast (1.5%)
-                </span>
-                <span class="chip" :class="leaven === 'sourdough' ? 'active' : ''" @click="leaven = 'sourdough'">
-                    Sourdough Starter (Wild Yeast)
-                </span>
-                <input type="hidden" name="leaven_type" :value="leaven">
-            </div>
-        </div>
-<!-- Flour Maturity --><!-- Flour Maturity -->
-        <div style="margin-bottom: 1.5rem;">
-            <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Milling Maturity</label>
-            <div class="chip-container">
-                <span class="chip" :class="maturity === 'just_milled' ? 'active' : ''" @click="maturity = 'just_milled'">Fresh Milled (Today)</span>
-                <span class="chip" :class="maturity === 'dead_zone' ? 'active' : ''" @click="maturity = 'dead_zone'">1-2 Weeks Dead Zone (-2%)</span>
-                <span class="chip" :class="maturity === 'matured' ? 'active' : ''" @click="maturity = 'matured'">Matured (2+ Weeks)</span>
-                <input type="hidden" name="flour_maturity" :value="maturity">
-            </div>
-        </div>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
-            <!-- Component 1: Dynamic Temperature Calibration Node -->
-                <div class="card" 
-                     @mouseenter="
-                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
-                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
-                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
-                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
-                     "
-                     @mouseleave="clearHoveredElement()"
-                     @focusin="
-                        if (activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity') setHoveredElement('ambient');
-                        else if (activeProductionProfile.thermodynamic_focus === 'lipid_emulsification') setHoveredElement('butter');
-                        else if (activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation') setHoveredElement('refrigerator');
-                        else if (activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock') setHoveredElement('ambient');
-                     "
-                     @focusout="clearHoveredElement()"
-                     tabindex="0"
-                     style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 0;">
-                    <!-- Case A: biological_yeast_activity -->
-                    <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity'">
-                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Dough Temperature Calibration (DDT = 78°F)</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="input-group">
-                                <label for="room_temp">Room Temp (°F)</label>
-                                <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
-                            </div>
-                            <div class="input-group">
-                                <label for="flour_temp">Flour Temp (°F)</label>
-                                <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
-                            </div>
-                        </div>
-                    </div>
-
-        <!-- Proceed to Phase 4 Button -->
-        <button type="button" 
-                class="nav-btn primary"
-                style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"
-                @click="current_phase = 4; window.scrollTo({top: 0, behavior: 'smooth'});">
-            PROCEED TO REFINEMENT &amp; YIELD →
-        </button>
     </div>
 
-    <!-- PHASE 4: Yield & Refinement -->
+    
     <div x-show="current_phase === 4" x-transition style="position: relative;">
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
-            Phase 4: Yield &amp; Refinement
+            Phase 4: Calibration & Yield Refinement
         </div>
 
-<!-- Client-side Formula Ratios Readout Panel --><!-- Client-side Formula Ratios Readout Panel -->
-        <div class="card" style="padding: 1.25rem; border-color: var(--border-glow); margin-bottom: 1.5rem; background: var(--bg-card);">
-            <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Real-Time Formula Estimates</div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center;">
-                <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round(45 + (crumb/100)*40) + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Hydration</div>
+        <!-- Dynamic Temperature Calibration Node -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Environmental Calibration</h4>
+            <!-- Case A: biological_yeast_activity -->
+            <div x-show="activeProductionProfile.thermodynamic_focus === 'biological_yeast_activity' || activeProductionProfile.thermodynamic_focus === 'hydration_binding_shock'">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">Dough Temperature Target (DDT = 78°F)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="room_temp">Room Temp (°F)</label>
+                        <input type="number" name="room_temp" id="room_temp" class="num-input" value="72">
+                    </div>
+                    <div class="input-group">
+                        <label for="flour_temp">Flour Temp (°F)</label>
+                        <input type="number" name="flour_temp" id="flour_temp" class="num-input" value="70">
+                    </div>
                 </div>
-                <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*15) + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Fats / Oil</div>
+            </div>
+
+            <!-- Case C: crystalline_fat_preservation -->
+            <div x-show="activeProductionProfile.thermodynamic_focus === 'crystalline_fat_preservation'">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">Workspace Temperature Target</h4>
+                <div class="input-group">
+                    <label for="workspace_temp">Enforced Ambient Limit (°F)</label>
+                    <input type="number" name="workspace_temp" id="workspace_temp" class="num-input" x-model.number="workspace_temp" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));">
                 </div>
-                <div style="border-right: 1px solid var(--border);">
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*12) + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Sugar</div>
-                </div>
-                <div>
-                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="starter + '%'"></div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Starter</div>
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">Rest & Environment Strategy</h4>
+                <input type="hidden" name="proofing_environment" :value="proofing_environment">
+                <div class="pill-btn-group">
+                    <button type="button" class="pill-btn" :class="proofing_environment === 'ambient' ? 'active' : ''" @click="proofing_environment = 'ambient'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">Ambient (Countertop)</button>
+                    <button type="button" class="pill-btn" :class="proofing_environment === 'mat' ? 'active' : ''" @click="proofing_environment = 'mat'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" x-show="activeProductionProfile.environmental_rest_strategy === 'gas_proofing'">Heated Mat</button>
+                    <button type="button" class="pill-btn" :class="proofing_environment === 'box' ? 'active' : ''" @click="proofing_environment = 'box'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" x-show="activeProductionProfile.environmental_rest_strategy === 'gas_proofing'">Proofing Box</button>
+                    <button type="button" class="pill-btn" :class="proofing_environment === 'refrigerator' ? 'active' : ''" @click="proofing_environment = 'refrigerator'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));">Refrigerator (Retard)</button>
+                    <button type="button" class="pill-btn" :class="proofing_environment === 'bench_rest' ? 'active' : ''" @click="proofing_environment = 'bench_rest'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" x-show="activeProductionProfile.environmental_rest_strategy === 'protein_relaxation'">Bench Rest</button>
                 </div>
             </div>
         </div>
 
-<!-- Geometry Constraints & Form Factor Selection --><!-- Geometry Constraints & Form Factor Selection -->
+        <!-- Contextual Variance Sliders -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;" x-show="!selectedRecipeSecondaryIngredients">
+            <h4 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">Formula Tweaking (Optional)</h4>
+            
+            <!-- Texture Profile Matrix -->
+            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="['enriched-soft', 'cakes-batters', 'pastry-lamination', 'cookies-shortbread'].includes(category_slug)">
+                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Enrichment & Tenderness</span>
+                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="texture"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;">Lean</span>
+                    <input type="range" class="range-slider" x-model.number="texture" min="0" max="100" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="flex-grow: 1;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;">Brioche</span>
+                </div>
+            </div>
+
+            <!-- Crumb Hydration Matrix -->
+            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="!['cakes-batters', 'pastry-lamination', 'cookies-shortbread'].includes(category_slug)">
+                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Crumb Hydration Matrix</span>
+                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="crumb"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;">Tight</span>
+                    <input type="range" class="range-slider" x-model.number="crumb" min="0" max="100" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="flex-grow: 1;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;">Open</span>
+                </div>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 0;">
+                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Leavening Inoculation</span>
+                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="starter + '%'"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;" x-text="leaven === 'yeast' ? 'Yeast' : '0%'"></span>
+                    <input type="range" class="range-slider" x-model.number="starter" :min="leaven === 'yeast' ? 0 : 5" :max="40" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));" :disabled="leaven === 'yeast'" style="flex-grow: 1;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;" x-text="leaven === 'yeast' ? 'Yeast' : '40%'"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geometry Constraints & Form Factor Selection -->
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
             <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Geometry Constraints &amp; Yield Scale</h4>
             
@@ -1160,109 +1365,60 @@
                     <button type="button" 
                             style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
                             @click="if (yield_scale > 0.5) { yield_scale = parseFloat((yield_scale - 0.5).toFixed(1)); }"
-                            :disabled="yield_scale <= 0.5"
-                            :style="yield_scale <= 0.5 ? 'opacity: 0.3; cursor: not-allowed;' : ''">
-                        &minus;
-                    </button>
-                    <span style="font-size: 1.25rem; font-weight: 800; min-width: 48px; text-align: center; color: var(--accent);" x-text="yield_scale.toFixed(1)"></span>
+                            onmouseover="this.style.color='var(--accent)'" 
+                            onmouseout="this.style.color='var(--text-primary)'">-</button>
+                    
+                    <div style="padding: 0 1.5rem; font-size: 1.25rem; font-weight: 700; color: var(--accent); min-width: 80px; text-align: center;">
+                        <span x-text="yield_scale + 'x'"></span>
+                    </div>
+                    
                     <button type="button" 
                             style="border: none; background: transparent; color: var(--text-primary); font-size: 1.5rem; font-weight: 700; width: 48px; height: 48px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
-                            @click="yield_scale = parseFloat((yield_scale + 0.5).toFixed(1))">
-                        &plus;
-                    </button>
+                            @click="if (yield_scale < 5.0) { yield_scale = parseFloat((yield_scale + 0.5).toFixed(1)); }"
+                            onmouseover="this.style.color='var(--accent)'" 
+                            onmouseout="this.style.color='var(--text-primary)'">+</button>
                 </div>
-                
-                <!-- Helper Text String -->
-                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4; border-left: 3px solid var(--accent); padding-left: 0.75rem;" 
-                     x-text="yieldHelperString">
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted);" x-text="yieldHelperString"></div>
+                <!-- Yield override for form submission -->
+                <input type="hidden" name="yield_scale" :value="yield_scale">
+                <input type="hidden" name="form_factor" :value="form_factor_val">
+            </div>
+        </div>
+        
+        <!-- Client-side Formula Ratios Readout Panel -->
+        <div class="card" style="padding: 1.25rem; border-color: var(--border-glow); margin-bottom: 1.5rem; background: var(--bg-card);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Real-Time Formula Estimates</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center;">
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round(45 + (crumb/100)*40) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Hydration</div>
+                </div>
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*15) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Fats / Oil</div>
+                </div>
+                <div style="border-right: 1px solid var(--border);">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="Math.round((texture/100)*12) + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Sugar</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);" x-text="starter + '%'"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Starter</div>
                 </div>
             </div>
         </div>
 
-<!-- Sliders --><!-- Sliders -->
-        <div class="slider-group" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Texture Variance</span>
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="texture + '%'"></span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Softness (' + texture + '%)'"></span>
-                <input type="range" name="texture_score" min="0" max="100" x-model="texture" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Crusty (' + (100 - texture) + '%)'"></span>
-            </div>
-        </div>
 
-        <div class="slider-group" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Hydration Variance</span>
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="'Crumb: ' + crumb + '% | Effective Hydration: ' + Math.round(45 + (crumb / 100) * 40) + '%'"></span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;" x-text="'Dense (' + (100 - crumb) + '%)'"></span>
-                <input type="range" name="crumb_score" :min="crumbMin" :max="crumbMax" x-model="crumb" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;" x-text="'Open (' + crumb + '%)'"></span>
-            </div>
-            <template x-if="(weightedAbsorption() - 1.0) >= 0.05">
-                <div style="color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4;">
-                    ⚠️ Custom fresh-milled constraints locked (Ceiling: 72% Hydration, Baseline: <span x-text="Math.round(45 + (crumbMin/100)*40) + '%'"></span>).
-                </div>
-            </template>
-        </div>
 
-<div class="slider-group" x-show="leavening_type === 'sourdough'"<div class="slider-group" x-show="leavening_type === 'sourdough'" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">Sourdough Starter Percentage</span>
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--accent);" x-text="starter + '%'"></span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px;">Mild (5%)</span>
-                <input type="range" name="starter_pct" min="5" max="40" x-model="starter" style="flex: 1; margin: 0;">
-                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); min-width: 120px; text-align: right;">Sour (40%)</span>
-            </div>
-        </div>
+    
 
-<!-- Sourdough Starter Diagnostics<!-- Sourdough Starter Diagnostics (Moved to Phase 4) -->
-        <div x-show="leavening_type === 'sourdough'"
-             style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
-            <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
-                Sourdough Starter Diagnostics
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="input-group">
-                    <label for="flow_starter_feed_hours">Starter Feeding Schedule</label>
-                    <select name="starter_feed_hours" id="flow_starter_feed_hours" class="form-select"
-                            hx-post="{% url 'sourdough_calibrate' %}" 
-                            hx-target="#sourdough-diagnostic-output"
-                            hx-trigger="change">
-                        <option value="4_8">Active Feed (4-8 hours ago)</option>
-                        <option value="8_12">Matured Feed (8-12 hours ago)</option>
-                        <option value="12_18">Hungry starter (12-18 hours ago)</option>
-                        <option value="18_plus">Starved starter (18+ hours ago)</option>
-                    </select>
-                </div>
+    <!-- Start Bake Action Button -->
+    <button type="button" 
+            class="nav-btn primary"
+            style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"
+            @click="startBake()">
+        🚀 INITIALIZE BAKE: LAUNCH COUNTERTOP VIEW
+    </button>
 
-                <div class="input-group">
-                    <label for="flow_rise_speed">Starter activity speed</label>
-                    <select name="flow_rise_speed" id="flow_rise_speed" class="form-select"
-                            hx-post="{% url 'sourdough_calibrate' %}" 
-                            hx-target="#sourdough-diagnostic-output"
-                            hx-trigger="change">
-                        <option value="fast">Explosive (Doubles in &lt;4 hours)</option>
-                        <option value="normal">Normal (Doubles in 4-8 hours)</option>
-                        <option value="slow">Sluggish (Doubles in 8+ hours / flat)</option>
-                    </select>
-                </div>
-            </div>
-            <!-- Calibration box target -->
-            <div id="sourdough-diagnostic-output" style="margin-top: 1rem;"></div>
-        </div>
-<!-- Start Bake Action Button -->
-        <button type="button" 
-                class="nav-btn primary"
-                style="width: 100%; height: 54px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: var(--transition);"
-                @click="startBake()">
-            🚀 INITIALIZE BAKE: LAUNCH COUNTERTOP VIEW
-        </button>
-    </div>
-
+</div>
 </form>
