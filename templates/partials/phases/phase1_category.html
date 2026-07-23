@@ -1,0 +1,62 @@
+    <!-- PHASE 1: Master Category Selector -->
+    <div x-show="current_phase === 1" x-transition>
+        <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
+            Phase 1: Choose Dough Category
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            {% for category in categories %}
+                <div class="card" 
+                     style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem; text-align: center; border-width: 2px; min-height: 110px; transition: var(--transition); margin-bottom: 0;"
+                     :style="{ borderColor: selected_master === '{{ category.slug }}' ? 'var(--accent)' : 'var(--border)', backgroundColor: selected_master === '{{ category.slug }}' ? 'rgba(255, 136, 0, 0.05)' : 'var(--bg-secondary)' }"
+                     @click="selected_master = '{{ category.slug }}';">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem; width: 100%; text-align: center;">
+                        {% if category.slug == 'lean-crusty' %}🌾
+                        {% elif category.slug == 'enriched-soft' %}🍞
+                        {% elif category.slug == 'alkaline-bath' %}🥨
+                        {% elif category.slug == 'flatbreads-griddles' %}🫓
+                        {% elif category.slug == 'quick-breads-scones' %}🧁
+                        {% elif category.slug == 'cakes-batters' %}🥞
+                        {% elif category.slug == 'pastry-lamination' %}🥐
+                        {% elif category.slug == 'choux-paste' %}🥯
+                        {% elif category.slug == 'cookies-shortbread' %}🍪
+                        {% elif category.slug == 'fried-doughs' %}🍩
+                        {% elif category.slug == 'fresh-pasta-noodles' %}🍝
+                        {% else %}🍞
+                        {% endif %}
+                    </span>
+                    <strong style="font-size: 1rem; display: block; color: var(--text-primary); text-align: center; width: 100%;">{{ category.name }}</strong>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Autocomplete search relocated prominently to Phase 1 -->
+        <div style="background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 1rem; color: var(--text-secondary);">
+                Or Search Preset Target
+            </label>
+            <div class="search-container">
+                <input type="text" 
+                       name="q" 
+                       placeholder="Search all recipes (e.g. Bagel, Focaccia, Naan)..." 
+                       class="search-input"
+                       x-model="query"
+                       @input="searchOpen = query.length >= 2"
+                       @click.away="searchOpen = false"
+                       hx-get="{% url 'search_presets' %}" 
+                       hx-trigger="keyup changed delay:300ms" 
+                       hx-target="#search-suggestions-flow"
+                       hx-indicator="#search-indicator-flow"
+                       style="height: 48px;">
+                
+                <div id="search-indicator-flow" class="htmx-indicator" style="position: absolute; right: 15px; top: 12px;">
+                    <span class="spinner"></span>
+                </div>
+                
+                <div id="search-suggestions-flow" 
+                     class="search-results" 
+                     x-show="searchOpen" 
+                     style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>

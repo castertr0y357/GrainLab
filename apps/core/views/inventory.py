@@ -1,0 +1,121 @@
+import logging
+import math
+import uuid
+import json
+from concurrent.futures import ThreadPoolExecutor
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.views import View
+
+from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
+from apps.core import bakers_math
+from apps.core import gemma_client
+from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+
+logger = logging.getLogger("grainlab.views")
+executor = ThreadPoolExecutor(max_workers=2)
+
+class InventoryPageView(View):
+    def get(self, request):
+        """
+        Renders inventory page listing wheat berries and equipment.
+        """
+        wheat_berries = WheatBerry.objects.all().order_by('name')
+        equipment = Equipment.objects.all().order_by('name')
+        context = {
+            "wheat_berries": wheat_berries,
+            "equipment": equipment,
+        }
+        return render(request, "inventory.html", context)
+
+
+class AddWheatBerryView(View):
+    def post(self, request):
+        """
+        Creates a new wheat berry record in the inventory.
+        """
+        name = request.POST.get("name", "").strip()
+        protein = float(request.POST.get("protein_content", 12.0) or 12.0)
+        hardness = request.POST.get("hardness", "hard")
+        absorption = float(request.POST.get("moisture_absorption_coef", 1.0) or 1.0)
+        notes = request.POST.get("notes", "").strip()
+        is_active = request.POST.get("is_active") in ("on", "true", "True")
+
+        if name:
+            WheatBerry.objects.create(
+                name=name,
+                protein_content=protein,
+                hardness=hardness,
+                moisture_absorption_coef=absorption,
+                notes=notes,
+                is_active=is_active
+            )
+
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response
+
+
+class ToggleWheatBerryActiveView(View):
+    def get(self, request: HttpRequest, id: uuid.UUID):
+        """
+        Toggles the active state of a wheat berry.
+        """
+        wb = get_object_or_404(WheatBerry, id=id)
+        wb.is_active = not wb.is_active
+        wb.save()
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response
+
+
+class DeleteWheatBerryView(View):
+    def get(self, request: HttpRequest, id: uuid.UUID):
+        """
+        Deletes a wheat berry from inventory.
+        """
+        wb = get_object_or_404(WheatBerry, id=id)
+        wb.delete()
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response
+
+
+class AddEquipmentView(View):
+    def post(self, request: HttpRequest):
+        """
+        Creates a new equipment record in the inventory.
+        """
+        name = request.POST.get("name", "").strip()
+        eq_type = request.POST.get("equipment_type", "other")
+        friction = float(request.POST.get("friction_heat_factor", 0.0) or 0.0)
+        notes = request.POST.get("notes", "").strip()
+
+        if name:
+            Equipment.objects.create(
+                name=name,
+                equipment_type=eq_type,
+                friction_heat_factor=friction,
+                notes=notes
+            )
+
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response
+
+
+class DeleteEquipmentView(View):
+    def get(self, request: HttpRequest, id: uuid.UUID):
+        """
+        Deletes equipment from inventory.
+        """
+        eq = get_object_or_404(Equipment, id=id)
+        eq.delete()
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response
+
+

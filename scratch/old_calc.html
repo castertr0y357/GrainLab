@@ -1,0 +1,2149 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div x-data="{
+    current_phase: {% if selected_preset %}3{% else %}1{% endif %},
+    grain_mode: 'milled',
+    selected_master: '{% if selected_preset %}{{ selected_preset.dough_category.slug }}{% else %}null{% endif %}',
+    searchOpen: false,
+    query: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
+    
+    phase1_categories: {
+        'lean-crusty': {
+            title: 'Lean & Crusty',
+            definition: 'High-hydration dough systems relying entirely on flour, water, salt, and yeast. Focuses on long fermentation and intense thermal heat to gelatinize starches and form a thick, crisp crust.',
+            presets: ['Sourdough Boule', 'Baguette', 'Artisan Pizza', 'Ciabatta']
+        },
+        'enriched-soft': {
+            title: 'Enriched & Soft',
+            definition: 'Dough systems enriched with fats, dairy, or sugar to tenderize the crumb. Inhibits gluten development to yield soft, pillowy, highly extensible structures.',
+            presets: ['Everyday Sandwich', 'Brioche', 'Challah', 'Burger Buns', 'Cinnamon Rolls']
+        },
+        'alkaline-bath': {
+            title: 'Alkaline Bath',
+            definition: 'Doughs that undergo a hot alkaline water dip (using lye or baking soda) before baking. This alters surface pH, accelerating the Maillard reaction for a shiny, deep-brown crust and a distinct chew.',
+            presets: ['Soft Pretzels', 'Boiled Bagels']
+        },
+        'flatbreads-griddles': {
+            title: 'Flatbreads & Griddles',
+            definition: 'Highly extensible dough systems, often cooked on hot stone or steel griddles. Emphasizes steam expansion or minimal rise for flexible, pocketed, or thin flatbreads.',
+            presets: ['Naan', 'Flour Tortillas', 'Pita Bread', 'Crackers']
+        },
+        'quick-breads-scones': {
+            title: 'Quick Breads & Scones',
+            definition: 'Chemically leavened doughs that rely on baking powder or baking soda rather than yeast. Features minimal mechanical mixing to prevent gluten strength and preserve crumbly, tender textures.',
+            presets: ['Southern Buttermilk Biscuits', 'Scones', 'Muffins', 'Irish Soda Bread']
+        },
+        'cakes-batters': {
+            title: 'Cakes & Batters',
+            definition: 'Fluid batter systems featuring highly aerated emulsions of fat, sugar, and eggs. Emphasizes low-protein flour to maximize tenderness, support structure, and control crumb cell size.',
+            presets: ['Yellow Layer Cake', 'Pancakes', 'Waffles', 'Sponge Cake']
+        },
+        'pastry-lamination': {
+            title: 'Pastry & Lamination',
+            definition: 'Dough systems that layer cold fat (typically butter) between dough sheets. The water inside the fat vaporizes during baking, pushing the layers apart to create hundreds of flaky, crisp leaves.',
+            presets: ['Classic Croissants', 'Puff Pastry', 'Flaky Pie Crust']
+        },
+        'choux-paste': {
+            title: 'Choux Paste',
+            definition: 'A unique pre-cooked dough system where flour is cooked in boiling liquid to gelatinize starches before egg integration. Relies entirely on intense steam expansion to inflate into hollow, crisp-shelled pastries.',
+            presets: ['Chocolate ├ëclairs', 'Cream Puffs', 'Goug├¿res', 'Churros']
+        },
+        'cookies-shortbread': {
+            title: 'Cookies & Shortbread',
+            definition: 'Low-moisture, high-fat confections engineered for controlled horizontal spread. Focuses on fat and sugar melting thresholds before the structural crumb sets in the oven.',
+            presets: ['Chocolate Chip Cookies', 'Shortbread Wedges', 'Biscotti', 'Macarons']
+        },
+        'fried-doughs': {
+            title: 'Fried Doughs',
+            definition: 'Yeast or chemically leavened doughs designed for rapid immersion frying. Relies on instant heat transfer to expand the leavened gas bubbles while cooking a thin, crisp, non-greasy crust.',
+            presets: ['Yeast-Raised Donuts', 'Beignets', 'Fritters']
+        },
+        'fresh-pasta-noodles': {
+            title: 'Fresh Pasta & Noodles',
+            definition: 'Unfermented, dense flour and egg systems mixed under high compaction. Emphasizes protein alignment and gluten density for a resilient, firm bite (al dente) after boiling.',
+            presets: ['Fresh Egg Tagliatelle', 'Ramen', 'Lasagna Sheets']
+        }
+    },
+    
+    global_ai_enabled: {% if ai_enabled %}true{% else %}false{% endif %},
+    hovered_element: null,
+    sidebar_insight_loading: false,
+    sidebar_labor_roi: '',
+    sidebar_analysis: '',
+    sidebar_tier: '',
+    sidebar_elevate: '',
+    sidebar_menu_description: '',
+    selectedRecipeScienceProfile: '',
+    selectedRecipeMenuDescription: '',
+    selectedRecipeSecondaryIngredients: null,
+    
+    // Factual science profiles
+    factual_dictionary: {
+        'refined': 'Store refined commercial flour. High shelf stability and consistent protein levels, but stripped of bran and germ.',
+        'milled': 'Freshly milled whole grain. Retains 100% of germ and bran oils. High enzyme activity and complex rustic flavor profile.',
+        
+        // Grains
+        'grain_hard_red_spring': 'High-protein hard wheat. Strong, elastic gluten structure.',
+        'grain_hard_red_winter': 'Moderate-high protein wheat. Balanced gluten elasticity and extensibility.',
+        'grain_soft_white': 'Low-protein soft wheat. Weak, tender gluten structure.',
+        'grain_hard_white': 'Mild, light-colored hard wheat. Structural strength without bitter red wheat tannins.',
+        'grain_spelt': 'Ancient hulled wheat species. Extensible but weak gluten strength; water-absorbent.',
+        'grain_kamut': 'Ancient Khorasan wheat. High protein, lower elasticity; absorbs water slowly.',
+        'grain_rye': 'Ancient rye grass grain. High pentosan concentration and weak gluten strength.',
+
+        // Tools
+        'stand_mixer': 'Planetary stand mixer. Delivers intensive mechanical shearing, building fast gluten structures but adding heat.',
+        'bread_machine': 'Automated high-torque chamber mixer. Fully enclosed, creating high friction heat and rapid development.',
+        'food_processor': 'High-velocity steel blade shearing. Forces hydration and gluten alignment rapidly but risks blade damage.',
+        'hand_beaters': 'Light whipping beaters. Aerates liquid and fat emulsions without building strong gluten networks.',
+        'whisk': 'Manual aerating whisk. Incorporates gas bubbles into fluid batters to support leavening lift.',
+        'spatula_bowl': 'Zero-friction manual mixing. Minimal mechanical energy transfer to prevent any accidental gluten formation.',
+
+        // Actions
+        'knead': 'Mechanical folding and stretching of dough to align glutenin and gliadin proteins into a structural matrix.',
+        'cream': 'Aeration of solid fat and sugar. Traps micro-bubbles to form the foundation of crumb leavening.',
+        'fold': 'Gentle folding layers the dough and develops structure without degassing. Crucial for retaining large, irregular open crumb cells.',
+        'cut_in': 'Distribution of cold fat pieces into dry flour. Forms flat fat pockets for flaky pastry lamination.',
+        'sheet': 'Compressing dough through rollers to achieve a uniform thin sheet, aligning starch and gluten strands.',
+        'extrude': 'Forcing dense dough through a shaped die to form structured shapes under high compaction pressure.',
+
+        // Environments
+        'ambient': 'Countertop proofing. Relies on local ambient room temperature (70-75┬░F) for steady biological activity.',
+        'mat': 'Open heated proofing mat. Warms the bottom of the vessel to accelerate yeast and lactic acid production.',
+        'box': 'Warm, humid enclosed proofing chamber. Maximizes biological activity while preventing surface skin drying.',
+        'refrigerator': 'Cold retardation (34-40┬░F). Solidifies fats and slows yeast while enzymes continue developing complex sugars.',
+        'bench_rest': 'Relaxation rest under a damp cloth. Releases elastic tension in the gluten matrix to allow final shaping.',
+
+        // Form Factors
+        'cast-iron-dutch-oven': 'Heavy cast iron pot. Retains heat and traps steam released from the dough. Ensures optimal starch gelatinization and maximum oven spring.',
+        'open-baking-stone-steel': 'High-conduction hearth surface. Transports heat immediately into the base of the loaf for maximum oven spring.',
+        'standard-9x5-pan': 'Metal loaf pan. Restricts lateral movement, forcing the rising dough vertically into a uniform sandwich shape.',
+        'perforated-baking-sheet': 'Airflow baking tray. Promotes dry skin dehydration on all sides, crucial for crispy pretzels or bagels.',
+        
+        // Substitutions
+        'butter': 'Emulsified fat containing 80% fat, 18% water, and milk solids. Adds rich dairy flavor and tender crumb structures.',
+        'unsalted_butter': 'Pure unsalted cream butter. Allows precise salt control while introducing emulsified dairy fats.',
+        'salted_butter': 'Salted cream butter. Contributes dairy fats and adds a baseline salinity to the dough mixture.',
+        'olive_oil': '100% monounsaturated plant fat. Highly fluid liquid state, coats gluten strands for a moist, extensible crumb.',
+        'canola_oil': 'Neutral plant seed oil. Provides 100% pure fat coating to tenderize structures without clashing flavors.',
+        'vegetable_oil': 'Clean liquid plant fat. Retains moisture in baked goods by keeping fat phase fluid at room temperature.',
+        'whole_milk': 'Milky liquid containing 87% water, fat, sugar, and proteins. Enhances caramelization and softens crumb structures.',
+        'almond_milk': 'Nut-based dairy substitute. Adds water and micro-solids, requiring slight liquid adjustments due to lack of animal fats.',
+        'coconut_oil': 'Plant-based solid lipid. Solidifies at cooler room temperatures, imparting a faint tropical aroma and a melt-in-the-mouth crumb.',
+        'avocado_oil': 'Neutral liquid lipid that remains fluid at room temperature. Coats gluten strands completely for a soft and long-lasting crumb.',
+        'pure_water': 'Clean, zero-interference hydration. The absolute optimal choice for lean hearth loaves to keep the crumb airy and the crust crispy.',
+        'heavy_cream': 'Immense dairy fat richness (37% fat) and milk sugars. Tenderizes the crumb dramatically, yielding an ultra-soft slice.',
+        'buttermilk': 'Acidic dairy medium. Tenderizes gluten chemically and reacts with chemical leaveners for a flaky, tender structure.',
+        'none': 'No binder. Relies purely on the gluten network and hydration matrix to establish structural integrity.',
+        'whole_eggs': 'Rich binder contributing fat, moisture, and lecithin. Promotes rich browning and a soft, custard-like crumb.',
+        'egg_whites': 'Pure albumin protein and hydration. Dries and solidifies during baking to create a taller, lighter, and crisper crust.',
+        'aquafaba_vegan': 'Vegan binder made from legume starch liquid. Mimics the foam stability of egg whites but lacks animal protein fats.'
+    },
+
+    setHoveredElement(key) {
+        if (!key) return;
+        this.hovered_element = key;
+        
+        if (key.startsWith('archetype_')) {
+            const archId = key.replace('archetype_', '');
+            const arch = this.enginesArchetypes[this.selected_master]?.[archId];
+            this.sidebar_tier = '';
+            this.sidebar_labor_roi = '';
+            this.sidebar_analysis = arch ? (arch.description || `Recipes belonging to the ${arch.label || archId} archetype.`) : '';
+            this.sidebar_insight_loading = false;
+            return;
+        }
+        
+        if (key.startsWith('grain_')) {
+            if (this.advisoryLoading) {
+                this.sidebar_insight_loading = true;
+                this.sidebar_tier = '';
+                this.sidebar_analysis = '';
+                return;
+            }
+            const key_clean = key.toLowerCase().replace('grain_', '');
+            const berry = this.activeBerries.find(b => {
+                const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                return bNameSlug.includes(key_clean) || key_clean.includes(bNameSlug);
+            });
+            if (berry) {
+                const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+                if (ev) {
+                    this.sidebar_tier = ev.tier;
+                    this.sidebar_analysis = ev.reasoning;
+                    this.sidebar_labor_roi = ''; // Grains do not show labor ROI
+                    this.sidebar_insight_loading = false;
+                    return;
+                }
+            }
+            // Fallback if not found in parent array
+            this.sidebar_tier = '';
+            this.sidebar_analysis = this.getFactualProfile();
+            this.sidebar_insight_loading = false;
+            return;
+        }
+
+        if (key.startsWith('mill_')) {
+            const millId = key.replace('mill_', '');
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            if (this.mill_recommendation && this.mill_recommendation.mill_id === millId) {
+                this.sidebar_tier = 'recommended';
+                this.sidebar_analysis = this.mill_recommendation.reasoning;
+            } else if (this.mill_recommendation) {
+                this.sidebar_tier = 'not-recommended';
+                this.sidebar_analysis = `The AI specifically recommended a different mill instead. Reason: ${this.mill_recommendation.reasoning}`;
+            } else {
+                this.sidebar_tier = 'not-recommended';
+                this.sidebar_analysis = 'Not selected as the optimal mill for this archetype. The AI recommended a different approach.';
+            }
+            return;
+        }
+
+        if (key.startsWith('sifted_')) {
+            const isSiftedStr = key.replace('sifted_', '');
+            const isSifted = isSiftedStr === 'true';
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            if (this.sifted_recommendation) {
+                if (this.sifted_recommendation.should_sift === isSifted) {
+                    this.sidebar_tier = 'recommended';
+                    this.sidebar_analysis = this.sifted_recommendation.reasoning;
+                } else {
+                    this.sidebar_tier = 'not-recommended';
+                    const optimalName = this.sifted_recommendation.should_sift ? 'Sifted (High Extraction)' : 'Whole Grain (Unsifted)';
+                    this.sidebar_analysis = `The AI specifically recommended ${optimalName} instead. Reason: ${this.sifted_recommendation.reasoning}`;
+                }
+            } else {
+                this.sidebar_tier = '';
+                this.sidebar_analysis = 'No specific AI critique for this selection.';
+            }
+            return;
+        }
+
+        if (key.startsWith('secondary_')) {
+            const type = key.replace('secondary_', ''); // 'lipid', 'liquid', or 'binder'
+            const typeKey = type + 's';
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            
+            const source = (this.selectedRecipeSecondaryIngredients && this.selectedRecipeSecondaryIngredients[typeKey]) ? 
+                            this.selectedRecipeSecondaryIngredients : 
+                           (this.engines_ff?.[this.selected_master]?.secondary_ingredients);
+                           
+            if (source && source[typeKey] && source[typeKey].ai_recommendation) {
+                this.sidebar_tier = 'recommended';
+                this.sidebar_analysis = source[typeKey].ai_recommendation;
+            } else {
+                this.sidebar_tier = '';
+                this.sidebar_analysis = 'No specific AI advisory available for this category.';
+            }
+            return;
+        }
+
+        
+        // Use pre-fetched batch insights instead of lazily fetching
+        this.sidebar_insight_loading = true;
+        if (this.batchInsightsMap[key]) {
+            const data = this.batchInsightsMap[key];
+            this.sidebar_labor_roi = data.labor_roi || 'Low Priority / Minor Textural Return';
+            this.sidebar_analysis = data.last_10_percent_analysis || 'No detailed analysis returned.';
+            this.sidebar_tier = data.recommendation_tier || '';
+            this.sidebar_insight_loading = false;
+        } else {
+            // Fallback if not loaded
+            this.sidebar_labor_roi = 'Low Priority / Minor Textural Return';
+            this.sidebar_analysis = 'Loading insight... Please wait.';
+            this.sidebar_tier = '';
+            this.sidebar_insight_loading = false;
+        }
+    },
+
+    clearHoveredElement() {
+        this.hovered_element = null;
+        this.sidebar_labor_roi = '';
+        this.sidebar_tier = '';
+        this.sidebar_insight_loading = false;
+        if (this.current_phase >= 2 && this.selected_recipe_id) {
+            this.sidebar_analysis = this.selectedRecipeScienceProfile;
+            this.sidebar_menu_description = this.selectedRecipeMenuDescription;
+        } else {
+            this.sidebar_analysis = '';
+            this.sidebar_menu_description = '';
+        }
+    },
+
+    getFactualProfile() {
+        if (!this.hovered_element) return '';
+        const key = this.hovered_element.toLowerCase();
+        
+        if (this.factual_dictionary[key]) {
+            return this.factual_dictionary[key];
+        }
+        
+        for (const k in this.factual_dictionary) {
+            if (key.includes(k) || k.includes(key)) {
+                return this.factual_dictionary[k];
+            }
+        }
+        return 'Factual profile description currently compiling. Evaluates starch/lipid interaction, gluten density ceiling, or thermal absorption properties relative to the active engine.';
+    },
+
+    getHoveredGrainEval() {
+        if (!this.hovered_element || !this.hovered_element.startsWith('grain_')) {
+            return null;
+        }
+        const key = this.hovered_element.toLowerCase().replace('grain_', '');
+        const berry = this.activeBerries.find(b => {
+            const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            return bNameSlug.includes(key) || key.includes(bNameSlug);
+        });
+        if (!berry) return null;
+        
+        return this.grainEvaluations.find(e => e.grain_id === berry.id);
+    },
+    
+    /* Auto-correction and warning computed on client side */
+    presetName: '{% if selected_preset %}{{ selected_preset.name }}{% endif %}',
+    presetSlug: '{% if selected_preset %}{{ selected_preset.slug }}{% endif %}',
+    presetModified: false,
+    
+    advisoryRecommendedName: '',
+    advisoryRecommendedReason: '',
+    advisoryHighRiskName: '',
+    advisoryHighRiskReason: '',
+    advisoryLoading: false,
+    advisoryLoadingMessage: '',
+    batchInsightsMap: {},
+    phase3Loading: false,
+    phase3LoadingMessage: '',
+    phase3_generation_steps: [],
+    grainEvaluations: [],
+    get grainEvaluationsMap() {
+        const map = {};
+        (this.grainEvaluations || []).forEach(e => {
+            if (e.grain_id) {
+                map[e.grain_id] = e;
+            }
+        });
+        return map;
+    },
+    get recommendedGrainsMap() {
+        const map = {};
+        (this.recommended_grain_ids || []).forEach(id => {
+            map[id] = true;
+        });
+        return map;
+    },
+    globalElevateRecipe: '',
+    advisoryTimeout: null,
+    advisoryAbortController: null,
+    hoverAbortController: null,
+    creativityRecipesAbortController: null,
+    recipeDetailsAbortController: null,
+    alternativeVariantsAbortController: null,
+    get elevateWays() {
+        if (Array.isArray(this.globalElevateRecipe)) {
+            return this.globalElevateRecipe;
+        }
+        if (typeof this.globalElevateRecipe === 'string' && this.globalElevateRecipe.trim()) {
+            return [this.globalElevateRecipe];
+        }
+        return [];
+    },
+    
+    // Geometry evaluation and profile adjustments
+    geometry_status: 'recommended',
+    geometry_advisory: '',
+    geometry_temp_offset: 0,
+    geometry_time_offset: 0,
+    geometry_steam_override: 'no-change',
+
+    /* === POLYMORPHIC RECIPE GENERATION STATE === */
+    active_archetype_id: null,
+    generated_variants: [],
+    recommended_grain_ids: [],
+    mill_recommendation: null,
+    sifted_recommendation: null,
+    variant_loading: false,
+    hovered_variant: null,
+    /* Engine archetypes map keyed by category slug */
+    enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}'),
+
+    creativity_recipes: [],
+    creativity_loading: false,
+    expanded_level: null,
+    alternative_variants: [],
+    selected_recipe_id: null,
+    recipe_selected: {% if selected_preset %}true{% else %}false{% endif %},
+    recipe_details_loading: false,
+    recipe_gen_interval: null,
+    recipe_details_interval: null,
+    recipe_gen_resolved: false,
+    recipe_gen_data: null,
+    recipe_details_resolved: false,
+    recipe_details_data: null,
+    recipe_generation_steps: [
+        { text: 'Initializing workspace sub-engines...', active: false, completed: false },
+        { text: 'Analyzing active whole grain profiles...', active: false, completed: false },
+        { text: 'Computing thermodynamic heat margins...', active: false, completed: false },
+        { text: 'Calibrating water temperature target...', active: false, completed: false },
+        { text: 'Synthesizing custom baker\'s formulas...', active: false, completed: false },
+        { text: 'Drafting artisan recipe variants...', active: false, completed: false }
+    ],
+    recipe_details_steps: [
+        { text: 'Deconstructing grain protein specs...', active: false, completed: false },
+        { text: 'Simulating starch-lipid hydration...', active: false, completed: false },
+        { text: 'Formulating artisanal baking tips...', active: false, completed: false }
+    ],
+    advisory_resolved: false,
+    advisory_interval: null,
+    advisory_steps: [
+        { text: 'Deconstructing grain protein specs...', active: false, completed: false },
+        { text: 'Simulating starch-lipid hydration...', active: false, completed: false },
+        { text: 'Formulating artisanal baking tips...', active: false, completed: false }
+    ],
+
+    cancelAllInFlightRequests() {
+        if (this.advisoryAbortController) {
+            this.advisoryAbortController.abort();
+            this.advisoryAbortController = null;
+        }
+        if (this.hoverAbortController) {
+            this.hoverAbortController.abort();
+            this.hoverAbortController = null;
+        }
+        if (this.creativityRecipesAbortController) {
+            this.creativityRecipesAbortController.abort();
+            this.creativityRecipesAbortController = null;
+        }
+        if (this.recipeDetailsAbortController) {
+            this.recipeDetailsAbortController.abort();
+            this.recipeDetailsAbortController = null;
+        }
+        if (this.alternativeVariantsAbortController) {
+            this.alternativeVariantsAbortController.abort();
+            this.alternativeVariantsAbortController = null;
+        }
+    },
+
+    flushStateToNull() {
+        this.grainEvaluations = [];
+        this.recommended_grain_ids = [];
+        this.creativity_recipes = [];
+        this.alternative_variants = [];
+        this.selected_recipe_id = null;
+        this.recipe_selected = false;
+        this.hovered_variant = null;
+        
+        this.sidebar_tier = '';
+        this.sidebar_labor_roi = '';
+        this.sidebar_analysis = '';
+        this.sidebar_menu_description = '';
+        this.selectedRecipeScienceProfile = '';
+        this.selectedRecipeMenuDescription = '';
+        this.selectedRecipeSecondaryIngredients = null;
+        this.globalElevateRecipe = [];
+        this.advisoryRecommendedName = '';
+        this.advisoryRecommendedReason = '';
+        this.advisoryHighRiskName = '';
+        this.advisoryHighRiskReason = '';
+        
+        // Clear timers and intervals
+        if (this.advisory_interval) {
+            clearTimeout(this.advisory_interval);
+            this.advisory_interval = null;
+        }
+        if (this.recipe_gen_interval) {
+            clearTimeout(this.recipe_gen_interval);
+            this.recipe_gen_interval = null;
+        }
+        if (this.recipe_details_interval) {
+            clearTimeout(this.recipe_details_interval);
+            this.recipe_details_interval = null;
+        }
+    },
+
+    purgeArchetypeState() {
+        this.cancelAllInFlightRequests();
+        this.flushStateToNull();
+        this.generated_variants = [];
+        this.alternative_variants = [];
+        this.grainEvaluations = [];
+        this.recommended_grain_ids = [];
+        this.creativity_recipes = [];
+        this.selected_recipe_id = null;
+        this.recipe_selected = false;
+        this.expanded_level = null;
+        this.hovered_variant = null;
+        if (this.recipe_gen_interval) {
+            clearInterval(this.recipe_gen_interval);
+            this.recipe_gen_interval = null;
+        }
+        if (this.recipe_details_interval) {
+            clearInterval(this.recipe_details_interval);
+            this.recipe_details_interval = null;
+        }
+    },
+
+    selectArchetype(archetype_id, engine_id) {
+        this.purgeArchetypeState();
+        if (this.active_archetype_id === archetype_id) {
+            this.active_archetype_id = null;
+            return;
+        }
+        this.active_archetype_id = archetype_id;
+        
+        // Fetch 5 recipes per creativity level for this archetype!
+        this.fetchCreativityRecipes(engine_id, archetype_id);
+    },
+
+    fetchCreativityRecipes(category_slug, archetype_id) {
+        if (!category_slug || category_slug === 'null' || !archetype_id) {
+            this.creativity_recipes = [];
+            this.creativity_loading = false;
+            return;
+        }
+        this.creativity_loading = true;
+        this.recipe_selected = false;
+        this.selected_recipe_id = null;
+        this.expanded_level = null;
+        this.alternative_variants = [];
+        this.grainEvaluations = [];
+        this.resetAdvisory();
+        
+        this.recipe_gen_resolved = false;
+        this.recipe_gen_data = null;
+        this.startRecipeGenerationProgress();
+
+        if (this.creativityRecipesAbortController) {
+            this.creativityRecipesAbortController.abort();
+            this.creativityRecipesAbortController = null;
+        }
+        this.creativityRecipesAbortController = new AbortController();
+        const signal = this.creativityRecipesAbortController.signal;
+
+        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
+        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                // Normalize keys in case of AI returning capitalized keys
+                const normalized_recipes = (data.recipes || []).map(r => {
+                    const norm = {};
+                    for (const key in r) {
+                        norm[key.toLowerCase()] = r[key];
+                    }
+                    return norm;
+                });
+                this.recipe_gen_data = {
+                    category_slug: category_slug,
+                    archetype_id: archetype_id,
+                    recipes: normalized_recipes
+                };
+                this.recipe_gen_resolved = true;
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching creativity recipes:', err);
+                }
+                this.creativity_loading = false;
+                if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
+            })
+            .finally(() => {
+                if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {
+                    this.creativityRecipesAbortController = null;
+                }
+            });
+    },
+
+    startRecipeGenerationProgress() {
+        if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
+        
+        // Reset steps
+        this.recipe_generation_steps.forEach(s => {
+            s.active = false;
+            s.completed = false;
+        });
+        
+        // Set first step active
+        this.recipe_generation_steps[0].active = true;
+        let stepIdx = 0;
+        
+        const tick = () => {
+            if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
+            
+            if (stepIdx < this.recipe_generation_steps.length - 1) {
+                this.recipe_generation_steps[stepIdx].active = false;
+                this.recipe_generation_steps[stepIdx].completed = true;
+                stepIdx++;
+                this.recipe_generation_steps[stepIdx].active = true;
+                
+                // Rapidly complete if resolved (200ms), else standard pacing (2000ms)
+                const nextDelay = this.recipe_gen_resolved ? 200 : 2000;
+                this.recipe_gen_interval = setTimeout(tick, nextDelay);
+            } else {
+                if (this.recipe_gen_resolved) {
+                    this.recipe_generation_steps[stepIdx].active = false;
+                    this.recipe_generation_steps[stepIdx].completed = true;
+                    
+                    setTimeout(() => {
+                        if (this.recipe_gen_data && this.selected_master === this.recipe_gen_data.category_slug && this.active_archetype_id === this.recipe_gen_data.archetype_id) {
+                            this.creativity_recipes = this.recipe_gen_data.recipes || [];
+                        }
+                        this.creativity_loading = false;
+                    }, 300);
+                } else {
+                    // Stay on the last step until resolved
+                    this.recipe_gen_interval = setTimeout(tick, 400);
+                }
+            }
+        };
+        
+        this.recipe_gen_interval = setTimeout(tick, 2000);
+    },
+
+    startRecipeDetailsProgress() {
+        if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
+        
+        // Reset steps
+        this.recipe_details_steps.forEach(s => {
+            s.active = false;
+            s.completed = false;
+        });
+        
+        // Set first step active
+        this.recipe_details_steps[0].active = true;
+        let stepIdx = 0;
+        
+        const tick = () => {
+            if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
+            
+            if (stepIdx < this.recipe_details_steps.length - 1) {
+                this.recipe_details_steps[stepIdx].active = false;
+                this.recipe_details_steps[stepIdx].completed = true;
+                stepIdx++;
+                this.recipe_details_steps[stepIdx].active = true;
+                
+                // Rapidly complete if resolved (150ms), else standard pacing (1000ms)
+                const nextDelay = this.recipe_details_resolved ? 150 : 1000;
+                this.recipe_details_interval = setTimeout(tick, nextDelay);
+            } else {
+                if (this.recipe_details_resolved) {
+                    this.recipe_details_steps[stepIdx].active = false;
+                    this.recipe_details_steps[stepIdx].completed = true;
+                    
+                    setTimeout(() => {
+                        const data = this.recipe_details_data;
+                        if (data) {
+                            const profile = data.sidebar_science_profile || 'No technical analysis compiled.';
+                            this.sidebar_analysis = profile;
+                            this.selectedRecipeScienceProfile = profile;
+                            
+                            // The menu description was already set immediately upon recipe selection
+                            // using the pre-generated recipe.description
+
+                            // Save recommended grains for highlighting in Phase 2
+                            this.recommended_grain_ids = data.recommended_grain_ids || [];
+
+                            // Pre-select required secondary ingredients if returned by LLM
+                            this.selectedRecipeSecondaryIngredients = data.secondary_ingredients || null;
+                            
+                            // Broadcast the recipe-details-updated event to update the inner form component!
+                            window.dispatchEvent(new CustomEvent('recipe-details-updated', {
+                                detail: data
+                            }));
+                        }
+
+                        this.recipe_details_loading = false;
+                        this.sidebar_insight_loading = false;
+                    }, 200);
+                } else {
+                    // Stay on the last step until resolved
+                    this.recipe_details_interval = setTimeout(tick, 300);
+                }
+            }
+        };
+        
+        this.recipe_details_interval = setTimeout(tick, 1000);
+    },
+
+    startAdvisoryProgress() {
+        if (this.advisory_interval) clearTimeout(this.advisory_interval);
+        
+        // Reset steps
+        this.advisory_steps.forEach(s => {
+            s.active = false;
+            s.completed = false;
+        });
+        
+        // Set first step active
+        this.advisory_steps[0].active = true;
+        let stepIdx = 0;
+        
+        const tick = () => {
+            if (this.advisory_interval) clearTimeout(this.advisory_interval);
+            
+            if (stepIdx < this.advisory_steps.length - 1) {
+                this.advisory_steps[stepIdx].active = false;
+                this.advisory_steps[stepIdx].completed = true;
+                stepIdx++;
+                this.advisory_steps[stepIdx].active = true;
+                
+                // Rapidly complete if resolved (150ms), else standard pacing (1000ms)
+                const nextDelay = this.advisory_resolved ? 150 : 1000;
+                this.advisory_interval = setTimeout(tick, nextDelay);
+            } else {
+                if (this.advisory_resolved) {
+                    this.advisory_steps[stepIdx].active = false;
+                    this.advisory_steps[stepIdx].completed = true;
+                    // Allow the user to see 100% completion briefly before resolving loading state
+                    setTimeout(() => {
+                        this.advisoryLoading = false;
+                    }, 200);
+                } else {
+                    // Stay on the last step until resolved
+                    this.advisory_interval = setTimeout(tick, 300);
+                }
+            }
+        };
+        
+        this.advisory_interval = setTimeout(tick, 1000);
+    },
+
+    fetchRecipeDetails(recipe_slug) {
+        if (!recipe_slug) {
+            this.sidebar_analysis = '';
+            this.globalElevateRecipe = [];
+            this.recipe_details_loading = false;
+            return;
+        }
+        
+        this.recipe_details_loading = true;
+        this.sidebar_insight_loading = true;
+        this.recipe_details_resolved = false;
+        this.recipe_details_data = null;
+        this.startRecipeDetailsProgress();
+
+        if (this.recipeDetailsAbortController) {
+            this.recipeDetailsAbortController.abort();
+            this.recipeDetailsAbortController = null;
+        }
+        this.recipeDetailsAbortController = new AbortController();
+        const signal = this.recipeDetailsAbortController.signal;
+
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = `/ai-recipe-details/?recipe_slug=${encodeURIComponent(recipe_slug)}&recipe_name=${encodeURIComponent(this.presetName)}&engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&selected_grains=${encodeURIComponent(selectedGrains)}&category_slug=${encodeURIComponent(this.selected_master)}`;
+
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                this.recipe_details_data = data;
+                this.recipe_details_resolved = true;
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching recipe details:', err);
+                }
+                this.recipe_details_loading = false;
+                this.sidebar_insight_loading = false;
+                if (this.recipe_details_interval) clearTimeout(this.recipe_details_interval);
+            })
+            .finally(() => {
+                if (this.recipeDetailsAbortController && this.recipeDetailsAbortController.signal === signal) {
+                    this.recipeDetailsAbortController = null;
+                }
+            });
+    },
+
+    toggleExpandLevel(level) {
+        if (this.expanded_level === level) {
+            this.expanded_level = null;
+            this.alternative_variants = [];
+            return;
+        }
+        // If we are opening a different level or reopening, clear alternative variants entirely
+        this.alternative_variants = [];
+        this.expanded_level = level;
+        this.alternative_variants = [];
+        this.variant_loading = true;
+
+        const concept_recipe = this.creativity_recipes.find(r => r.creativity_level == level);
+        if (!concept_recipe) {
+            this.variant_loading = false;
+            return;
+        }
+
+        if (this.alternativeVariantsAbortController) {
+            this.alternativeVariantsAbortController.abort();
+            this.alternativeVariantsAbortController = null;
+        }
+        this.alternativeVariantsAbortController = new AbortController();
+        const signal = this.alternativeVariantsAbortController.signal;
+
+        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
+        const exclude_names = this.getRecipesForLevel(level).map(r => r.recipe_name).join(',');
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}&exclude_names=${encodeURIComponent(exclude_names)}`;
+
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                if (this.expanded_level === level) {
+                    const normalized_variants = (data.generated_variants || []).map(v => {
+                        const norm = {};
+                        for (const key in v) {
+                            norm[key.toLowerCase()] = v[key];
+                        }
+                        return norm;
+                    });
+                    this.alternative_variants = normalized_variants;
+                }
+                this.variant_loading = false;
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching alternative variants:', err);
+                }
+                this.variant_loading = false;
+            })
+            .finally(() => {
+                if (this.alternativeVariantsAbortController && this.alternativeVariantsAbortController.signal === signal) {
+                    this.alternativeVariantsAbortController = null;
+                }
+            });
+    },
+
+    generateMoreOptions(level) {
+        const pinned = this.alternative_variants.filter(v => v.pinned);
+        const limit = 5 - pinned.length;
+        if (limit <= 0) return; // Full of pinned options
+
+        this.variant_loading = true;
+
+        if (this.alternativeVariantsAbortController) {
+            this.alternativeVariantsAbortController.abort();
+            this.alternativeVariantsAbortController = null;
+        }
+        this.alternativeVariantsAbortController = new AbortController();
+        const signal = this.alternativeVariantsAbortController.signal;
+
+        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
+        
+        // Exclude original 5 recipes plus ALL current alternative variants (pinned or not) to avoid duplicating the ones currently on screen
+        const exclude_names_arr = this.getRecipesForLevel(level).map(r => r.recipe_name);
+        this.alternative_variants.forEach(v => exclude_names_arr.push(v.variant_name || v.recipe_name));
+        const exclude_names = exclude_names_arr.join(',');
+
+        const url = `/generate-variants/?engine_id=${encodeURIComponent(this.selected_master)}&active_archetype_id=${encodeURIComponent(this.active_archetype_id)}&creativity_level=${level}&inventory_ids=${encodeURIComponent(inventory_ids)}&exclude_names=${encodeURIComponent(exclude_names)}&limit=${limit}`;
+
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                if (this.expanded_level === level) {
+                    const normalized_variants = (data.generated_variants || []).map(v => {
+                        const norm = {};
+                        for (const key in v) {
+                            norm[key.toLowerCase()] = v[key];
+                        }
+                        return norm;
+                    });
+                    this.alternative_variants = [...pinned, ...normalized_variants];
+                }
+                this.variant_loading = false;
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('[GrainLab] Failed fetching alternative variants:', err);
+                }
+                this.variant_loading = false;
+            })
+            .finally(() => {
+                if (this.alternativeVariantsAbortController && this.alternativeVariantsAbortController.signal === signal) {
+                    this.alternativeVariantsAbortController = null;
+                }
+            });
+    },
+
+    getRecipesForLevel(level) {
+        return this.creativity_recipes.filter(r => r.creativity_level == level);
+    },
+
+    onRecipeHover(recipe) {
+        if (!recipe) return;
+        this.hovered_variant = recipe.recipe_id || recipe.variant_id || null;
+        this.sidebar_tier = 'recommended';
+        this.sidebar_analysis = recipe.sidebar_science_profile || '';
+        this.sidebar_labor_roi = (recipe.sidebar_ai_insight && recipe.sidebar_ai_insight.labor_roi) || '';
+        this.sidebar_insight_loading = false;
+    },
+
+    selectRecipe(recipe) {
+        if (!recipe) return;
+        const recipe_id = recipe.recipe_id || recipe.variant_id;
+        const recipe_name = recipe.recipe_name || recipe.variant_name;
+        this.selected_recipe_id = recipe_id;
+        this.presetSlug = recipe_id;
+        this.presetName = recipe_name;
+        this.recommended_grain_ids = recipe.recommended_grain_ids || [];
+        this.sidebar_analysis = '';
+        this.sidebar_menu_description = recipe.menu_description || recipe.description || '';
+        this.selectedRecipeScienceProfile = '';
+        this.selectedRecipeMenuDescription = recipe.menu_description || recipe.description || '';
+        this.selectedRecipeSecondaryIngredients = null;
+        this.globalElevateRecipe = [];
+        this.sidebar_labor_roi = '';
+        this.recipe_selected = false;
+    },
+
+    confirmRecipeSelection() {
+        if (!this.selected_recipe_id) return;
+        this.recipe_selected = true;
+        this.advisoryLoading = true;
+        this.activeBerries.forEach(b => {
+            b.selected = false;
+        });
+        
+        // Trigger on-demand detailed lazy load call only once confirmed
+        this.fetchRecipeDetails(this.selected_recipe_id);
+        
+        this.fetchAdvisory(this.presetSlug);
+        this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+    },
+
+    getClassificationLabel(berry) {
+        const evs = this.grainEvaluationsMap;
+        const ev = evs[berry.id];
+        if (!ev) return '';
+        if (ev.tier === 'recommended') return 'Recommended';
+        if (ev.tier === 'sub-optimal') return 'Sub-Optimal';
+        if (ev.tier === 'not-recommended') return 'Not Recommended';
+        return '';
+    },
+
+    getGrainReasoning(berry) {
+        const evs = this.grainEvaluationsMap;
+        const ev = evs[berry.id];
+        return ev ? ev.reasoning : '';
+    },
+
+    getClassificationBadgeStyle(berry) {
+        const evs = this.grainEvaluationsMap;
+        const ev = evs[berry.id];
+        if (!ev) return '';
+        if (ev.tier === 'recommended') return 'color: #ffd700; font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        if (ev.tier === 'sub-optimal') return 'color: var(--warning); font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        if (ev.tier === 'not-recommended') return 'color: var(--danger); font-weight: bold; text-transform: uppercase; font-size: 0.65rem;';
+        return '';
+    },
+
+    /* Grains inventory data mapped from django context */
+    activeBerries: [
+        {% for wb in active_berries %}
+        {
+            id: '{{ wb.id }}',
+            name: '{{ wb.name|escapejs }}',
+            hardness: '{{ wb.hardness }}',
+            protein: {{ wb.protein_content }},
+            absorption: {{ wb.moisture_absorption_coef }},
+            selected: false
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+
+    /* Countertop View Timers & Sequential Timeline */
+    countertopMode: false,
+    steps: [
+        { key: 'mix', name: 'Mix', desc: 'Combine ingredients into a cohesive shaggy mass.' },
+        { key: 'knead', name: 'Knead', desc: 'Work the dough to develop structural gluten alignment.' },
+        { key: 'autolyse', name: 'Rest/Autolyse', desc: 'Let the dough rest to relax gluten and absorb moisture.' },
+        { key: 'bulk', name: 'Bulk Ferment', desc: 'Primary fermentation: allow yeast/sourdough to aerate the dough.' },
+        { key: 'proof', name: 'Proof', desc: 'Final proofing: shape and rise in baking pan/mat.' },
+        { key: 'bake', name: 'Bake', desc: 'Oven bake: target internal temp and crisp crust development.' }
+    ],
+    currentStepIndex: 0,
+    stepTimeRemaining: 0,
+    stepTotalTime: 1,
+    timerInterval: null,
+    timerRunning: false,
+    durations: { mix: 5, knead: 10, autolyse: 30, bulk: 240, proof: 120, bake: 45 },
+    isAlarm: false,
+    elapsedOvertime: 0,
+    audioCtx: null,
+    alarmInterval: null,
+    bakeTemp: '',
+    bakeSteam: '',
+    donenessTemp: '',
+    waterTemp: '',
+
+    init() {
+        this.$watch('presetSlug', value => {
+            this.activeBerries.forEach(b => { b.selected = false; });
+            this.fetchAdvisory(value);
+            if (value) {
+                this.presetModified = false;
+            }
+        });
+        this.$watch('selected_master', value => {
+            this.cancelAllInFlightRequests();
+            this.flushStateToNull();
+            this.active_archetype_id = null;
+            this.creativity_recipes = [];
+            this.recipe_selected = false;
+            this.selected_recipe_id = null;
+            this.expanded_level = null;
+            this.alternative_variants = [];
+            if (value && value !== 'null') {
+                this.fetchAdvisory(this.presetSlug);
+            }
+        });
+
+        this.$watch('current_phase', (value, oldValue) => {
+            if (value < oldValue) {
+                this.cancelAllInFlightRequests();
+                if (value === 1) {
+                    this.flushStateToNull();
+                }
+            }
+        });
+        this.$watch('grain_mode', value => {
+            /* grain_mode is hardlocked to 'milled'. Watcher retained for compatibility. */
+            this.selectIdealGrain();
+            this.fetchAdvisory(this.presetSlug);
+            if (this.current_phase >= 3) {
+                this.fetchElevateTips(this.presetSlug);
+            }
+        });
+        this.$watch('activeBerries', () => {
+            if (this.current_phase >= 3) {
+                this.fetchElevateTips(this.presetSlug);
+            }
+        }, { deep: true });
+        this.activeBerries.forEach(b => { b.selected = false; });
+        if (this.presetSlug || (this.selected_master && this.selected_master !== 'null')) {
+            this.fetchAdvisory(this.presetSlug);
+        }
+        document.body.addEventListener('htmx:afterSwap', (e) => {
+            const meta = document.getElementById('geometry-metadata');
+            if (meta) {
+                this.geometry_status = meta.getAttribute('data-geometry-status') || 'recommended';
+                this.geometry_advisory = meta.getAttribute('data-geometry-advisory') || '';
+                this.geometry_temp_offset = parseInt(meta.getAttribute('data-geometry-temp-offset') || '0', 10);
+                this.geometry_time_offset = parseInt(meta.getAttribute('data-geometry-time-offset') || '0', 10);
+                this.geometry_steam_override = meta.getAttribute('data-geometry-steam-override') || 'no-change';
+            }
+        });
+        // Cross-scope bridge: form dispatches this event to reach startPhase3Optimization
+        this.$el.addEventListener('phase3-start', () => {
+            this.startPhase3Optimization();
+        });
+        window.addEventListener('beforeunload', () => {
+            this.cancelAllInFlightRequests();
+        });
+    },
+
+    fetchAdvisory(slug) {
+        if (!this.recipe_selected) {
+            this.resetAdvisory();
+            return;
+        }
+        
+        // Clear any existing debounce timeout
+        if (this.advisoryTimeout) {
+            clearTimeout(this.advisoryTimeout);
+        }
+        
+        // Debounce for 750ms
+        this.advisoryTimeout = setTimeout(() => {
+            if (this.recipe_details_loading) {
+                // Defer advisory evaluation until recipe details LLM call finishes
+                this.fetchAdvisory(slug);
+                return;
+            }
+            this.fetchGrainEvaluations(slug);
+        }, 750);
+    },    fetchGrainEvaluations(slug) {
+        if (!this.recipe_selected || !slug) {
+            this.resetAdvisory();
+            return;
+        }
+
+        // Abort active HTTP request if there is one
+        if (this.advisoryAbortController) {
+            this.advisoryAbortController.abort();
+        }
+
+        // Create a new controller for this request
+        this.advisoryAbortController = new AbortController();
+        const signal = this.advisoryAbortController.signal;
+
+        this.advisoryLoading = true;
+        this.advisory_resolved = false;
+        this.startAdvisoryProgress();
+        if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
+            this.sidebar_insight_loading = true;
+            this.sidebar_tier = '';
+            this.sidebar_analysis = '';
+        }
+        
+        // Start premium themed loading messages
+        const messages = [
+            'Consulting Bakers Almanac...',
+            'Evaluating Gluten Matrices...',
+            'Optimizing Crumb Profiles...',
+            'Synthesizing Food Chemistry...'
+        ];
+        let idx = 0;
+        this.advisoryLoadingMessage = messages[0];
+        const timer = setInterval(() => {
+            if (!this.advisoryLoading) {
+                clearInterval(timer);
+                return;
+            }
+            idx = (idx + 1) % messages.length;
+            this.advisoryLoadingMessage = messages[idx];
+        }, 750);
+
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_evaluations=true';
+        if (selectedGrains) {
+            url += '&selected_grains=' + encodeURIComponent(selectedGrains);
+        }
+        if (this.selected_master && this.selected_master !== 'null') {
+            url += '&category_slug=' + encodeURIComponent(this.selected_master);
+        }
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        const lipidEl = document.querySelector('select[name=secondary_lipid]');
+        const liquidEl = document.querySelector('select[name=secondary_liquid]');
+        const binderEl = document.querySelector('select[name=secondary_binder]');
+        if (lipidEl && lipidEl.value) {
+            url += '&lipid=' + encodeURIComponent(lipidEl.value);
+        }
+        if (liquidEl && liquidEl.value) {
+            url += '&liquid=' + encodeURIComponent(liquidEl.value);
+        }
+        if (binderEl && binderEl.value) {
+            url += '&binder=' + encodeURIComponent(binderEl.value);
+        }
+
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                this.grainEvaluations = data.grain_evaluations || [];
+                const rec = this.grainEvaluations.find(e => e.tier === 'recommended');
+                const risk = this.grainEvaluations.find(e => e.tier === 'not-recommended');
+                this.advisoryRecommendedName = rec ? this.getGrainNameById(rec.grain_id) : '';
+                this.advisoryRecommendedReason = rec ? rec.reasoning : '';
+                this.advisoryHighRiskName = risk ? this.getGrainNameById(risk.grain_id) : '';
+                this.advisoryHighRiskReason = risk ? risk.reasoning : '';
+                // Store mill and sifted recommendations from the advisory
+                if (data.mill_recommendation) {
+                    this.mill_recommendation = data.mill_recommendation;
+                }
+                if (data.sifted_recommendation) {
+                    this.sifted_recommendation = data.sifted_recommendation;
+                    // Dispatch event so inner form can react
+                    window.dispatchEvent(new CustomEvent('sifted-advisory-updated', {
+                        detail: { sifted_recommendation: data.sifted_recommendation, mill_recommendation: data.mill_recommendation }
+                    }));
+                }
+                this.advisory_resolved = true;
+                this.advisoryAbortController = null;
+                
+                // Fetch batch insights concurrently once the basic advisory fetches
+                this.fetchBatchInsights(signal);
+                
+                
+                // Update hovered grain details dynamically once advisory resolves
+                if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
+                    const key_clean = this.hovered_element.toLowerCase().replace('grain_', '');
+                    const berry = this.activeBerries.find(b => {
+                        const bNameSlug = b.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        return bNameSlug.includes(key_clean) || key_clean.includes(bNameSlug);
+                    });
+                    if (berry) {
+                        const ev = this.grainEvaluations.find(e => e.grain_id === berry.id);
+                        if (ev) {
+                            this.sidebar_tier = ev.tier;
+                            this.sidebar_analysis = ev.reasoning;
+                            this.sidebar_insight_loading = false;
+                        }
+                    }
+                }
+                
+                /* Broadcast to child <form x-data> scope for cross-boundary reactivity */
+                window.dispatchEvent(new CustomEvent('grain-advisory-updated', {
+                    detail: { grain_evaluations: this.grainEvaluations }
+                }));
+            })
+            .catch(err => {
+                if (err.name === 'AbortError') {
+                    console.log('Advisory fetch aborted.');
+                    return;
+                }
+                console.error('Failed fetching advisory evaluations:', err);
+                this.advisory_resolved = true;
+                this.advisoryAbortController = null;
+                if (this.hovered_element && this.hovered_element.startsWith('grain_')) {
+                    this.sidebar_insight_loading = false;
+                }
+            });
+    },
+
+    fetchBatchInsights(signal) {
+        // Collect standard elements to fetch insights for
+        const elements = [
+            'refined', 'milled', 'stand_mixer', 'bread_machine', 'food_processor', 'hand_beaters', 'whisk', 'spatula_bowl', 'knead', 'cream', 'fold', 'cut_in', 'sheet', 'extrude',
+            'ambient', 'mat', 'box', 'refrigerator', 'bench_rest', 'cast-iron-dutch-oven', 'open-baking-stone-steel', 'standard-9x5-pan', 'perforated-baking-sheet',
+            'butter', 'unsalted_butter', 'salted_butter', 'olive_oil', 'canola_oil', 'vegetable_oil', 'whole_milk', 'almond_milk', 'coconut_oil', 'avocado_oil', 'pure_water', 'heavy_cream', 'buttermilk', 'none', 'whole_eggs', 'egg_whites', 'aquafaba_vegan',
+            'sifted_high_extraction_flour', 'whole_grain_unsifted_flour'
+        ];
+        
+        let url = '/ai-batch-insights/?elements=' + encodeURIComponent(JSON.stringify(elements)) + 
+            '&preset_slug=' + encodeURIComponent(this.presetSlug || '') + 
+            '&category_slug=' + encodeURIComponent(this.selected_master || '');
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        fetch(url, { signal })
+            .then(res => res.json())
+            .then(data => {
+                if (data.batch_insights) {
+                    this.batchInsightsMap = data.batch_insights;
+                }
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('Failed fetching batch insights:', err);
+                }
+            });
+    },
+
+    startPhase3Optimization() {
+        if (!this.presetSlug) {
+            this.current_phase = 3;
+            this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+            return;
+        }
+        
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+            
+        if (!selectedGrains) {
+            this.current_phase = 3;
+            this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+            return;
+        }
+
+        this.current_phase = 3;
+        this.phase3Loading = true;
+        
+        // Reset checklist
+        this.phase3_generation_steps = [
+            { text: 'Analyzing Dough Thermodynamic Requirements', active: true, completed: false },
+            { text: 'Determining Optimal Flour Blend Ratios', active: false, completed: false },
+            { text: 'Compiling Contextual Configuration Matrix', active: false, completed: false }
+        ];
+
+        let elevateUrl = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(this.presetSlug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_elevate=true';
+        if (selectedGrains) elevateUrl += '&selected_grains=' + encodeURIComponent(selectedGrains);
+        if (this.selected_master && this.selected_master !== 'null') elevateUrl += '&category_slug=' + encodeURIComponent(this.selected_master);
+        if (this.active_archetype_id) elevateUrl += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        
+        const p1 = fetch(elevateUrl).then(res => res.json()).then(data => {
+            if (data.evaluations && data.evaluations.length > 0) {
+                this.globalElevateRecipe = data.evaluations;
+            }
+            this.phase3_generation_steps[0].active = false;
+            this.phase3_generation_steps[0].completed = true;
+            this.phase3_generation_steps[1].active = true;
+        });
+
+        let sharesUrl = `/ai-optimize-shares/?preset_slug=${encodeURIComponent(this.presetSlug)}&preset_name=${encodeURIComponent(this.presetName)}&selected_grains=${encodeURIComponent(selectedGrains)}`;
+        const p2 = fetch(sharesUrl).then(res => res.json()).then(data => {
+            if (data.shares && Object.keys(data.shares).length > 0) {
+                const newBlend = {};
+                for (const b of this.activeBerries.filter(b => b.selected)) {
+                    const nameKey = Object.keys(data.shares).find(k => k === b.name || k.includes(b.name) || b.name.includes(k));
+                    if (nameKey) {
+                        newBlend[b.id] = data.shares[nameKey];
+                    } else {
+                        newBlend[b.id] = 1.0 / this.activeBerries.filter(b => b.selected).length;
+                    }
+                }
+                this.flour_blend = newBlend;
+            }
+            this.phase3_generation_steps[1].active = false;
+            this.phase3_generation_steps[1].completed = true;
+            this.phase3_generation_steps[2].active = true;
+        });
+
+        const elements = [
+            'refined', 'milled', 'stand_mixer', 'bread_machine', 'food_processor', 'hand_beaters', 'whisk', 'spatula_bowl', 'knead', 'cream', 'fold', 'cut_in', 'sheet', 'extrude',
+            'ambient', 'mat', 'box', 'refrigerator', 'bench_rest', 'cast-iron-dutch-oven', 'open-baking-stone-steel', 'standard-9x5-pan', 'perforated-baking-sheet',
+            'butter', 'unsalted_butter', 'salted_butter', 'olive_oil', 'canola_oil', 'vegetable_oil', 'whole_milk', 'almond_milk', 'coconut_oil', 'avocado_oil', 'pure_water', 'heavy_cream', 'buttermilk', 'none', 'whole_eggs', 'egg_whites', 'aquafaba_vegan',
+            'sifted_high_extraction_flour', 'whole_grain_unsifted_flour'
+        ];
+        let batchUrl = '/ai-batch-insights/?elements=' + encodeURIComponent(JSON.stringify(elements)) + 
+            '&preset_slug=' + encodeURIComponent(this.presetSlug || '') + 
+            '&category_slug=' + encodeURIComponent(this.selected_master || '');
+        if (this.active_archetype_id) {
+            batchUrl += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        const p3 = fetch(batchUrl).then(res => res.json()).then(data => {
+            if (data.batch_insights) {
+                this.batchInsightsMap = data.batch_insights;
+                for (const [k, v] of Object.entries(data.batch_insights)) {
+                    this.factual_dictionary[k.toLowerCase()] = v;
+                }
+            }
+            this.phase3_generation_steps[2].active = false;
+            this.phase3_generation_steps[2].completed = true;
+        });
+
+        Promise.all([p1, p2, p3])
+            .catch(err => {
+                console.error('Phase 3 Optimization failed:', err);
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    this.phase3Loading = false;
+                    this.current_phase = 3;
+                    this.$nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                }, 500);
+            });
+    },
+
+    fetchElevateTips(slug) {
+        if (!this.recipe_selected || !slug) return;
+        
+        const selectedGrains = this.activeBerries
+            .filter(b => b.selected)
+            .map(b => b.id)
+            .join(',');
+
+        let url = '/ai-grain-advisory/?preset_slug=' + encodeURIComponent(slug) + '&preset_name=' + encodeURIComponent(this.presetName) + '&only_elevate=true';
+        if (selectedGrains) {
+            url += '&selected_grains=' + encodeURIComponent(selectedGrains);
+        }
+        if (this.selected_master && this.selected_master !== 'null') {
+            url += '&category_slug=' + encodeURIComponent(this.selected_master);
+        }
+        if (this.active_archetype_id) {
+            url += '&active_archetype_id=' + encodeURIComponent(this.active_archetype_id);
+        }
+        
+        this.globalElevateRecipe = [];
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.elevate_recipe) {
+                    this.globalElevateRecipe = data.elevate_recipe;
+                }
+            })
+            .catch(err => {
+                console.error('Failed to fetch elevate tips:', err);
+            });
+    },
+
+    resetAdvisory() {
+        this.advisoryRecommendedName = '';
+        this.advisoryRecommendedReason = '';
+        this.advisoryHighRiskName = '';
+        this.advisoryHighRiskReason = '';
+        this.grainEvaluations = [];
+        this.globalElevateRecipe = '';
+        if (this.advisory_interval) {
+            clearTimeout(this.advisory_interval);
+            this.advisory_interval = null;
+        }
+    },
+
+    getGrainNameById(id) {
+        const b = this.activeBerries.find(x => x.id === id);
+        return b ? b.name : 'Unknown Grain';
+    },
+
+    getGrainStyle(berry) {
+        /* === Tier 2 variant recommended_grain_ids golden ring check === */
+        if (this.recommended_grain_ids && this.recommended_grain_ids.length > 0) {
+            const berryNameSlug = berry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const isVariantRecommended = this.recommended_grain_ids.some(rid =>
+                berryNameSlug === rid || berryNameSlug.includes(rid) || rid.includes(berryNameSlug)
+            );
+            if (isVariantRecommended) {
+                return berry.selected
+                    ? 'border-color: #ffd700; box-shadow: 0 0 18px rgba(255, 215, 0, 0.9); background-color: rgba(255, 215, 0, 0.12); outline: 2px solid rgba(255, 215, 0, 0.6);'
+                    : 'border-color: #ffd700; box-shadow: 0 0 14px rgba(255, 215, 0, 0.7); background-color: rgba(255, 215, 0, 0.06); outline: 1px solid rgba(255, 215, 0, 0.4);';
+            }
+        }
+        if (this.grainEvaluations && this.grainEvaluations.length > 0) {
+            const evaluation = this.grainEvaluations.find(e => e.grain_id === berry.id);
+            if (evaluation) {
+                if (evaluation.tier === 'recommended') {
+                    return berry.selected 
+                        ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.08);' 
+                        : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.02);';
+                } else if (evaluation.tier === 'not-recommended') {
+                    return berry.selected 
+                        ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220, 53, 69, 0.6); background-color: rgba(220, 53, 69, 0.08);' 
+                        : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220, 53, 69, 0.3); background-color: rgba(220, 53, 69, 0.02);';
+                }
+            }
+        }
+        if (this.advisoryRecommendedName && berry.name === this.advisoryRecommendedName) {
+            return berry.selected 
+                ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.08);' 
+                : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.02);';
+        } else if (this.advisoryHighRiskName && berry.name === this.advisoryHighRiskName) {
+            return berry.selected 
+                ? 'border-color: var(--danger); box-shadow: 0 0 12px rgba(220, 53, 69, 0.6); background-color: rgba(220, 53, 69, 0.08);' 
+                : 'border-color: var(--danger); box-shadow: 0 0 8px rgba(220, 53, 69, 0.3); background-color: rgba(220, 53, 69, 0.02);';
+        } else {
+            return berry.selected 
+                ? 'border-color: var(--accent); background-color: rgba(255, 136, 0, 0.05);' 
+                : '';
+        }
+    },
+
+    get sortedBerries() {
+        if (!this.grainEvaluations || this.grainEvaluations.length === 0) {
+            return this.activeBerries;
+        }
+        return [...this.activeBerries].sort((a, b) => {
+            const evalA = this.grainEvaluations.find(e => e.grain_id === a.id);
+            const evalB = this.grainEvaluations.find(e => e.grain_id === b.id);
+            
+            const tierA = evalA ? evalA.tier : 'indifferent';
+            const tierB = evalB ? evalB.tier : 'indifferent';
+            
+            const score = {
+                'recommended': 1,
+                'sub-optimal': 2,
+                'indifferent': 3,
+                'not-recommended': 4
+            };
+            
+            const scoreA = score[tierA] || 3;
+            const scoreB = score[tierB] || 3;
+            
+            if (scoreA !== scoreB) {
+                return scoreA - scoreB;
+            }
+            return a.name.localeCompare(b.name);
+        });
+    },
+
+    selectIdealGrain() {
+        if (!this.presetSlug) {
+            this.activeBerries.forEach(b => {
+                b.selected = false;
+            });
+            return;
+        }
+        let idealName = 'Hard Red Winter Wheat';
+        let s = this.presetSlug.toLowerCase();
+        if (['baguette', 'sourdough-boule', 'ciabatta', 'artisan-pizza', 'bagel', 'eclairs'].includes(s)) {
+            idealName = 'Hard Red Spring Wheat';
+        } else if (['french-loaf', 'brioche', 'pretzel', 'croissants'].includes(s)) {
+            idealName = 'Hard Red Winter Wheat';
+        } else if (['everyday-sandwich', 'challah', 'cinnamon-rolls', 'burger-buns', 'naan', 'donuts', 'tagliatelle'].includes(s)) {
+            idealName = 'Hard White Wheat';
+        } else if (['biscuits', 'cookies', 'yellow-cake'].includes(s)) {
+            idealName = 'Soft White Wheat';
+        }
+        this.activeBerries.forEach(b => {
+            b.selected = (b.name === idealName);
+        });
+    },
+
+    isIdealGrain(berryName) {
+        if (!this.selected_master || this.selected_master === 'null') {
+            return false;
+        }
+        let idealName = '';
+        let cat = this.selected_master.toLowerCase();
+        if (['cookies-shortbread', 'cakes-batters', 'quick-breads-scones'].includes(cat)) {
+            idealName = 'Soft White Wheat';
+        } else if (['lean-crusty', 'alkaline-bath', 'choux-paste', 'fresh-pasta-noodles'].includes(cat)) {
+            idealName = 'Hard Red Spring Wheat';
+        } else if (['enriched-soft'].includes(cat)) {
+            idealName = 'Hard White Wheat';
+        } else if (['flatbreads-griddles', 'pastry-lamination', 'fried-doughs'].includes(cat)) {
+            idealName = 'Hard Red Winter Wheat';
+        }
+        return berryName === idealName;
+    },
+
+
+    startBake() {
+        let el = document.getElementById('countertop-data');
+        if (el) {
+            let stepsData = el.getAttribute('data-steps');
+            if (stepsData) {
+                try {
+                    this.steps = JSON.parse(stepsData);
+                } catch (e) {
+                    console.error('Failed to parse countertop steps:', e);
+                }
+            }
+            this.bakeTemp = el.getAttribute('data-bake-temp') || '';
+            this.bakeSteam = el.getAttribute('data-bake-steam') || '';
+            this.donenessTemp = el.getAttribute('data-doneness-temp') || '';
+            this.waterTemp = el.getAttribute('data-water-temp') || '';
+        }
+        this.countertopMode = true;
+        this.currentStepIndex = 0;
+        this.stepTimeRemaining = this.steps[0] ? this.steps[0].duration_sec : 0;
+        this.stepTotalTime = this.stepTimeRemaining;
+        
+        this.stopAlarm();
+        this.pauseTimer();
+        
+        /* Unlock AudioContext on user gesture */
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
+            }
+        }
+    },
+
+    startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerRunning = true;
+        
+        /* Unlock/resume AudioContext on user gesture */
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
+            }
+        } else if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
+        this.timerInterval = setInterval(() => {
+            if (!this.isAlarm) {
+                if (this.stepTimeRemaining > 0) {
+                    this.stepTimeRemaining--;
+                } else {
+                    this.isAlarm = true;
+                    this.elapsedOvertime = 0;
+                    this.playAlarm();
+                }
+            } else {
+                this.elapsedOvertime++;
+            }
+        }, 1000);
+    },
+
+    pauseTimer() {
+        this.timerRunning = false;
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    },
+
+    toggleTimer() {
+        if (this.isAlarm) {
+            this.stopAlarm();
+            this.pauseTimer();
+        } else if (this.timerRunning) {
+            this.pauseTimer();
+        } else {
+            this.startTimer();
+        }
+    },
+
+    nextStep() {
+        this.stopAlarm();
+        this.pauseTimer();
+        if (this.currentStepIndex < this.steps.length - 1) {
+            this.currentStepIndex++;
+            this.stepTimeRemaining = this.steps[this.currentStepIndex].duration_sec;
+            this.stepTotalTime = this.stepTimeRemaining;
+        } else {
+            alert('≡ƒÄë Baking process completed!');
+        }
+    },
+
+    prevStep() {
+        this.stopAlarm();
+        this.pauseTimer();
+        if (this.currentStepIndex > 0) {
+            this.currentStepIndex--;
+            this.stepTimeRemaining = this.steps[this.currentStepIndex].duration_sec;
+            this.stepTotalTime = this.stepTimeRemaining;
+        }
+    },
+
+    playAlarm() {
+        if (this.alarmInterval) return;
+        if (!this.audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                this.audioCtx = new AudioContextClass();
+            }
+        }
+        const playBeep = () => {
+            if (!this.audioCtx) return;
+            if (this.audioCtx.state === 'suspended') {
+                this.audioCtx.resume();
+            }
+            const osc = this.audioCtx.createOscillator();
+            const gainNode = this.audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(this.audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gainNode.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.3);
+            osc.start(this.audioCtx.currentTime);
+            osc.stop(this.audioCtx.currentTime + 0.3);
+        };
+        playBeep();
+        this.alarmInterval = setInterval(playBeep, 1000);
+    },
+
+    stopAlarm() {
+        if (this.alarmInterval) {
+            clearInterval(this.alarmInterval);
+            this.alarmInterval = null;
+        }
+        this.isAlarm = false;
+        this.elapsedOvertime = 0;
+    },
+
+    formatTime(seconds) {
+        let hrs = Math.floor(seconds / 3600);
+        let mins = Math.floor((seconds % 3600) / 60);
+        let secs = seconds % 60;
+        let parts = [];
+        if (hrs > 0) {
+            parts.push(hrs.toString().padStart(2, '0'));
+        }
+        parts.push(mins.toString().padStart(2, '0'));
+        parts.push(secs.toString().padStart(2, '0'));
+        return parts.join(':');
+    },
+
+    get progressPercent() {
+        if (this.isAlarm) return 100;
+        if (!this.stepTotalTime) return 0;
+        return Math.round(((this.stepTotalTime - this.stepTimeRemaining) / this.stepTotalTime) * 100);
+    },
+
+    getStepDescription(key) {
+        if (key === 'mix') {
+            let method = 'stand_mixer';
+            const methodInput = document.querySelector('input[name=mixing_method]');
+            if (methodInput) {
+                method = methodInput.value;
+            }
+            if (method === 'stand_mixer') {
+                return 'Combine ingredients in the mixer bowl. Fit the mixer with the Dough Hook attachment. Mix on low speed (Speed 1-2) for 5 minutes until a cohesive shaggy mass forms and no dry flour remains.';
+            } else if (method === 'bread_machine') {
+                return 'Place all ingredients into the bread machine pan in the order recommended by the manufacturer. Set the machine to the dough cycle to begin the initial mixing sequence.';
+            } else {
+                return 'Combine all ingredients in a large mixing bowl using a sturdy spatula or your hands. Work the mixture until all dry flour is fully hydrated and a rough, shaggy dough mass is formed.';
+            }
+        }
+        if (key === 'knead') {
+            let method = 'stand_mixer';
+            const methodInput = document.querySelector('input[name=mixing_method]');
+            if (methodInput) {
+                method = methodInput.value;
+            }
+            if (method === 'stand_mixer') {
+                return 'Increase speed to medium-low (Speed 2-3). Knead for 8-10 minutes until the dough clears the sides of the bowl, clings to the hook, and passes the windowpane elasticity test.';
+            } else if (method === 'bread_machine') {
+                return 'Allow the bread machine to run its programmed kneading cycle. The paddle will develop the gluten structure dynamically until the dough is smooth, elastic, and non-sticky.';
+            } else {
+                return 'Turn the dough out onto a clean work surface. Hand-knead using a rhythmic fold-and-roll motion. Knead for 10-15 minutes until the dough surface is smooth, supple, and passes the windowpane test.';
+            }
+        }
+        const step = this.steps.find(s => s.key === key);
+        return step ? step.desc : '';
+    },
+    
+    /* Helpers */
+    isHighRise() {
+        if (!this.presetSlug) return false;
+        let slug = this.presetSlug.toLowerCase();
+        return slug.includes('bagel') || slug.includes('boule') || slug.includes('artisan');
+    },
+    hasStructuralGrain() {
+        return this.activeBerries.some(b => b.selected && b.hardness === 'hard');
+    },
+    showStructuralWarning() {
+        if (!this.isHighRise() || this.grain_mode !== 'milled') return false;
+        let selectedCount = this.activeBerries.filter(b => b.selected).length;
+        if (selectedCount === 0) return true;
+        
+        let hardCount = this.activeBerries.filter(b => b.selected && b.hardness === 'hard').length;
+        return hardCount === 0 || (hardCount / selectedCount < 0.70 && selectedCount > 1);
+    },
+    getWarningMessage() {
+        let presetLabel = this.presetName || 'High-Rise Bread';
+        let strongest = this.activeBerries.filter(b => b.hardness === 'hard').sort((a,b) => b.protein - a.protein)[0];
+        let grainName = strongest ? strongest.name : 'Hard Red Wheat';
+        return `Γ¥î Structural Hazard: Selected grain blend lacks the gluten strength required for a ${presetLabel}. Adjusting blend to include 70% ${grainName} for safety.`;
+    },
+    weightedAbsorption() {
+        let selected = this.activeBerries.filter(b => b.selected);
+        if (selected.length === 0) return 1.0;
+        
+        let shares = {};
+        let hard = selected.filter(b => b.hardness === 'hard');
+        let weak = selected.filter(b => b.hardness !== 'hard');
+        
+        if (this.isHighRise() && this.showStructuralWarning()) {
+            let hardGrains = hard.length > 0 ? hard : [ { name: 'Hard Red Winter Wheat', absorption: 1.0 } ];
+            let weakGrains = weak;
+            
+            let hardShare = 0.70 / hardGrains.length;
+            hardGrains.forEach(g => { shares[g.name] = hardShare; });
+            
+            if (weakGrains.length > 0) {
+                let weakShare = 0.30 / weakGrains.length;
+                weakGrains.forEach(g => { shares[g.name] = weakShare; });
+            } else {
+                let fullShare = 1.0 / hardGrains.length;
+                hardGrains.forEach(g => { shares[g.name] = fullShare; });
+            }
+        } else {
+            let share = 1.0 / selected.length;
+            selected.forEach(g => { shares[g.name] = share; });
+        }
+        
+        let sumAbs = 0.0;
+        selected.forEach(g => {
+            sumAbs += (shares[g.name] || 0.0) * g.absorption;
+        });
+        return sumAbs || 1.0;
+    },
+    hasAncientOrWeakGrains() {
+        return this.activeBerries.some(b => b.selected && (b.hardness === 'ancient' || b.hardness === 'soft'));
+    },
+    get crumbMin() {
+        if (this.grain_mode === 'milled') {
+            let thirstMod = this.weightedAbsorption() - 1.0;
+            if (thirstMod >= 0.05) {
+                let minHyd = 0.45 + thirstMod;
+                return Math.max(0, Math.min(100, Math.round(((minHyd - 0.45) / 0.40) * 100)));
+            }
+        }
+        return 0;
+    },
+    get crumbMax() {
+        if (this.grain_mode === 'milled') {
+            let thirstMod = this.weightedAbsorption() - 1.0;
+            if (thirstMod >= 0.05) {
+                let maxHyd = 0.72;
+                return Math.max(0, Math.min(100, Math.round(((maxHyd - 0.45) / 0.40) * 100)));
+            }
+        }
+        return 100;
+    }
+}">
+    <!-- Main Workspace Dashboard Grid -->
+    <div class="dashboard-grid">
+        
+        <!-- Left: Formulas and Parameters Panel -->
+        <div>
+            <!-- Wizard Configuration View -->
+            <div class="card" x-show="!countertopMode" x-transition>
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span>Formula Ratios</span>
+                        <span id="calc-indicator" class="htmx-indicator">
+                            <span class="spinner" style="width: 16px; height: 16px;"></span>
+                        </span>
+                    </div>
+                    
+                    <!-- Relocated Navigation Buttons -->
+                    <div style="display: flex; gap: 0.5rem;" x-show="current_phase > 1">
+                        <button type="button" 
+                                class="nav-btn" 
+                                style="height: 36px; padding: 0 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center;"
+                                @click="
+                                    if (current_phase === 4) {
+                                        current_phase = 3;
+                                    } else if (current_phase === 3) {
+                                        current_phase = 2;
+                                    } else if (current_phase === 2 && recipe_selected) {
+                                        recipe_selected = false;
+                                        selected_recipe_id = null;
+                                        presetSlug = '';
+                                        presetName = '';
+                                        cancelAllInFlightRequests();
+                                    } else if (current_phase === 2 && !recipe_selected) {
+                                        current_phase = 1;
+                                    }
+                                    $nextTick(() => htmx.trigger('#calculator-form', 'change'));
+                                ">
+                            ΓåÉ STEP BACK
+                        </button>
+                        
+                        <button type="button" 
+                                class="nav-btn" 
+                                style="height: 36px; padding: 0 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center;"
+                                hx-get="{% url 'calculator' %}" 
+                                hx-target="#calculator-form-container" 
+                                hx-select="#calculator-form" 
+                                hx-swap="innerHTML" 
+                                hx-push-url="/"
+                                @click="localStorage.clear(); sessionStorage.clear(); current_phase = 1; grain_mode = 'milled'; selected_master = 'null'; presetSlug = ''; presetName = ''; query = ''; active_archetype_id = null; generated_variants = []; recommended_grain_ids = []; hovered_variant = null; creativity_recipes = []; creativity_loading = false; expanded_level = null; alternative_variants = []; selected_recipe_id = null; recipe_selected = false; activeBerries.forEach(b => b.selected = false); $nextTick(() => htmx.trigger('#calculator-form', 'change'));">
+                            ≡ƒùæ∩╕Å HARD RESET
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="calculator-form-container">
+                    {% include "partials/calculator_form.html" %}
+                </div>
+            </div>
+
+            <!-- Countertop Active Timeline View -->
+            <div class="card" x-show="countertopMode" x-transition style="display: none; padding: 1.5rem; min-height: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+                    <span style="font-weight: 700; font-size: 1.15rem; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase;">
+                        ≡ƒÜÇ Countertop Live Timeline
+                    </span>
+                    <button type="button" 
+                            style="background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-weight: 600; font-size: 0.85rem;"
+                            @click="stopAlarm(); pauseTimer(); countertopMode = false;">
+                        EXIT BAKE Γ£ò
+                    </button>
+                              <!-- Sequential Timeline Progress Blocks -->
+                <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+                    <template x-for="(step, idx) in steps" :key="step.key">
+                        <div style="flex: 1; min-width: 90px; text-align: center; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);"
+                             :style="idx === currentStepIndex ? 'background-color: rgba(255, 136, 0, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 700;' : (idx < currentStepIndex ? 'color: var(--success); opacity: 0.6;' : 'color: var(--text-muted); opacity: 0.4; border: 1px solid transparent;')">
+                            <div style="font-size: 1.15rem;" x-text="idx < currentStepIndex ? 'Γ£à' : (idx === currentStepIndex ? 'ΓÅ▒∩╕Å' : '≡ƒÆñ')"></div>
+                            <div style="font-size: 0.8rem; text-transform: uppercase; margin-top: 0.25rem;" x-text="step.name"></div>
+                            <div style="font-size: 0.7rem; margin-top: 0.1rem;" x-text="step.duration_sec >= 60 ? Math.round(step.duration_sec / 60) + 'm' : step.duration_sec + 's'"></div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Active Step Showcase -->
+                <div :class="isAlarm ? 'flash-alarm' : ''"
+                     style="border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;"
+                     :style="isAlarm ? 'border-left: 4px solid var(--danger);' : 'background-color: #1a1a1f; border-left: 4px solid var(--accent);'">
+                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;" :style="isAlarm ? 'color: var(--danger);' : 'color: var(--accent);'">Active Step</div>
+                     <h3 style="margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);" x-text="steps[currentStepIndex].name"></h3>
+                     <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="steps[currentStepIndex].desc || ''"></p>
+
+                     <!-- Water Temperature Calibration dynamic readout during Mix/Knead steps -->
+                     <div x-show="steps[currentStepIndex].is_mix || steps[currentStepIndex].is_knead" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 1rem; align-items: center;">
+                         <div style="background-color: rgba(255, 136, 0, 0.1); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); flex: 1;">
+                             <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Water Temp Calibration</div>
+                             <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="waterTemp + '┬░F'"></div>
+                             <div style="font-size: 0.75rem; color: var(--text-secondary);">Target DDT is 78┬░F</div>
+                         </div>
+                     </div>
+
+                     <!-- Baking Profile and Target Doneness dynamic readouts during Bake step -->
+                     <div x-show="steps[currentStepIndex].is_bake" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                         <div style="background-color: rgba(255, 136, 0, 0.1); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
+                             <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Baking Profile</div>
+                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTemp + '┬░F | ' + Math.round(steps[currentStepIndex].duration_sec / 60) + 'm'"></div>
+                             <div style="font-size: 0.75rem; color: var(--text-secondary);" x-text="'Steam: ' + bakeSteam"></div>
+                         </div>
+                         <div style="background-color: rgba(255, 193, 7, 0.1); border-left: 3px solid var(--warning); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
+                             <div style="font-size: 0.75rem; font-weight: 600; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em;">Target Doneness</div>
+                             <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" x-text="donenessTemp + '┬░F'"></div>
+                             <div style="font-size: 0.75rem; color: var(--text-secondary);">Internal probe temperature</div>
+                         </div>
+                     </div>
+
+                     <!-- Preheat Alert during Proof Step under 45 minutes -->
+                     <div x-show="steps[currentStepIndex].is_proof && stepTimeRemaining <= 2700" 
+                          style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-top: 1rem;">
+                         <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 700; font-size: 0.95rem;">≡ƒöÑ OVEN PREHEAT TRIGGER WARNING</h4>
+                         <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
+                             Launch preheating sequence immediately! Turn oven to <span x-text="bakeTemp"></span>┬░F with your Dutch oven, baking stone, or pan hardware inside. The final bake step starts in <span x-text="Math.round(stepTimeRemaining / 60)"></span> minutes.
+                         </p>
+                     </div>
+                </div>
+                </div>
+
+                <!-- Live Countdown Digital Timer Card -->
+                <div style="background: radial-gradient(circle at top left, #1a1a1f, #111115); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.5rem; box-shadow: var(--shadow-lg);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Time Remaining</div>
+                    
+                    <!-- High-contrast Digital Readout -->
+                    <div style="font-size: 4rem; font-family: monospace; font-weight: 800; letter-spacing: 0.05em; line-height: 1; margin-bottom: 1rem; transition: color 0.3s;"
+                         :style="isAlarm ? 'color: var(--danger);' : 'color: var(--text-primary);'"
+                         x-text="isAlarm ? '+' + formatTime(elapsedOvertime) : formatTime(stepTimeRemaining)">
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div style="width: 100%; height: 8px; background-color: var(--border); border-radius: 9999px; overflow: hidden; margin-bottom: 0.5rem;">
+                        <div style="height: 100%; background-color: var(--accent); transition: width 0.3s linear;"
+                             :style="isAlarm ? 'width: 100%; background-color: var(--danger);' : 'width: ' + progressPercent + '%;'">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="isAlarm ? 'Milestone Concluded' : progressPercent + '% Completed'"></div>
+                </div>
+
+                <!-- Timer Controls & Navigation -->
+                <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <!-- Step Back -->
+                    <button type="button" 
+                            style="height: 52px; flex: 1; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; transition: var(--transition);"
+                            :disabled="currentStepIndex === 0"
+                            :style="currentStepIndex === 0 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+                            @click="prevStep()">
+                        ΓùÇ STEP BACK
+                    </button>
+
+                    <!-- Play/Pause/Silence -->
+                    <button type="button" 
+                            style="height: 52px; flex: 2; font-weight: 700; cursor: pointer; border-radius: 9999px; transition: var(--transition); border: none;"
+                            :style="isAlarm ? 'background-color: var(--danger); color: #fff; box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);' : (timerRunning ? 'background-color: rgba(220, 53, 69, 0.2); border: 1px solid var(--danger); color: var(--danger);' : 'background-color: var(--accent); color: #000;')"
+                            @click="toggleTimer()">
+                        <span x-text="isAlarm ? '≡ƒöò SILENCE ALARM' : (timerRunning ? 'ΓÅ╕ PAUSE STEP' : 'Γû╢ START STEP')"></span>
+                    </button>
+
+                    <!-- Skip Step -->
+                    <button type="button" 
+                            style="height: 52px; flex: 1; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); cursor: pointer; border-radius: 9999px; transition: var(--transition);"
+                            :disabled="currentStepIndex === steps.length - 1"
+                            :style="currentStepIndex === steps.length - 1 ? 'opacity: 0.3; cursor: not-allowed;' : ''"
+                            @click="nextStep()">
+                        SKIP STEP Γû╢
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Compiled Recipe Outputs & AI Recommendations -->
+        <div style="position: sticky; top: 90px; align-self: start; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="card" style="margin-bottom: 0; min-height: 380px; height: auto;">
+                <!-- Unified persistent recipe header -->
+                <div x-show="presetName" style="font-size: 0.95rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <span x-text="presetName"></span> <span x-show="presetModified" style="color: var(--warning); font-size: 0.8rem; text-transform: uppercase; margin-left: 0.25rem;">(Modified)</span>
+                </div>
+                
+                <!-- Contextual Hover Details Panel (Replaces standard cards on hover/focus) -->
+                <div x-show="hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- Panel A: Factual Science Profile (StaticInspectorCard) -->
+                    <div x-show="!global_ai_enabled && hovered_element && hovered_element.startsWith('grain_')" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <h3 style="color: var(--accent); margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ≡ƒö¼ Factual Science Profile
+                        </h3>
+                        <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500; margin-bottom: 0.5rem; text-transform: capitalize;">
+                            Element: <span x-text="(hovered_element || '').replace('grain_', '').replace(/_/g, ' ')"></span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="getFactualProfile()"></p>
+                    </div>
+
+                    <!-- Panel A2: AI Grain Advisory (AI version for grains) -->
+                    <div x-show="global_ai_enabled && hovered_element && hovered_element.startsWith('grain_')" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                        <h3 style="color: #ff9800; margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 136, 0, 0.1); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ≡ƒñû AI Grain Advisory
+                        </h3>
+                        <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500; margin-bottom: 0.5rem; text-transform: capitalize;">
+                            Stock: <span x-text="(hovered_element || '').replace('grain_', '').replace(/_/g, ' ')"></span>
+                        </div>
+                        
+                        <template x-if="getHoveredGrainEval()">
+                            <div style="margin-top: 0.5rem; padding-top: 0.5rem;">
+                                <span style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.3rem;"
+                                      :style="
+                                         getHoveredGrainEval().tier === 'recommended' 
+                                             ? 'color: #ffc107;' 
+                                             : getHoveredGrainEval().tier === 'not-recommended'
+                                             ? 'color: var(--danger);'
+                                             : 'color: #9e9e9e;'
+                                      "
+                                      x-text="
+                                         getHoveredGrainEval().tier === 'recommended'
+                                             ? '[ RECOMMENDED STOCK ]'
+                                             : getHoveredGrainEval().tier === 'not-recommended'
+                                             ? '[ NOT RECOMMENDED STOCK ]'
+                                             : '[ SUB-OPTIMAL STOCK ]'
+                                      ">
+                                </span>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" 
+                                   x-text="getHoveredGrainEval().reasoning"></p>
+                            </div>
+                        </template>
+                        <template x-if="!getHoveredGrainEval()">
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+                                No analysis available. Select a recipe and confirm to compile AI advice.
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Panel B: Pragmatic Magic Layer (AIInsightCard for non-grain items when AI active) -->
+                    <div x-show="global_ai_enabled && hovered_element && !hovered_element.startsWith('grain_')" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
+                        <h3 style="color: #ff9800; margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 136, 0, 0.1); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ≡ƒñû Pragmatic Magic Layer
+                        </h3>
+                        
+                        <!-- Insight Loading State -->
+                        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <span class="spinner" style="width: 10px; height: 10px;"></span>
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Insight Content -->
+                        <div x-show="!sidebar_insight_loading">
+                            <!-- Recommendation Tier -->
+                            <div style="margin-bottom: 0.5rem;" x-show="sidebar_tier">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Recommendation Tier</span>
+                                <span style="display: inline-block; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;"
+                                      :style="
+                                         sidebar_tier === 'highly-recommended'
+                                              ? 'background-color: rgba(76, 175, 80, 0.1); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.2);'
+                                              : sidebar_tier === 'recommended' 
+                                              ? 'background-color: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2);' 
+                                              : sidebar_tier === 'standard'
+                                              ? 'background-color: rgba(33, 150, 243, 0.1); color: #2196f3; border: 1px solid rgba(33, 150, 243, 0.2);'
+                                              : sidebar_tier === 'not-recommended'
+                                              ? 'background-color: rgba(244, 67, 54, 0.1); color: var(--danger); border: 1px solid rgba(244, 67, 54, 0.2);'
+                                              : 'background-color: rgba(158, 158, 158, 0.1); color: #9e9e9e; border: 1px solid rgba(158, 158, 158, 0.2);'
+                                       "
+                                      x-text="
+                                         sidebar_tier === 'highly-recommended'
+                                              ? 'HIGHLY RECOMMENDED'
+                                              : sidebar_tier === 'recommended'
+                                              ? 'RECOMMENDED'
+                                              : sidebar_tier === 'standard'
+                                              ? 'STANDARD / BASELINE'
+                                              : sidebar_tier === 'not-recommended'
+                                              ? 'NOT RECOMMENDED'
+                                              : 'SUB-OPTIMAL'
+                                       "></span>
+                            </div>
+                            <div style="margin-bottom: 0.5rem;" x-show="hovered_element && !hovered_element.startsWith('grain_') && !hovered_element.startsWith('archetype_')">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Labor ROI Matrix</span>
+                                <span style="display: inline-block; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);"
+                                      x-text="sidebar_labor_roi"></span>
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">AI Critique &amp; Reasoning</span>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" x-text="sidebar_analysis"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Standard Display Panels (Hidden when hovering to avoid clutter/stacking) -->
+                <div x-show="!hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- Phase 2 Sidebar Inspector -->
+                    <div x-show="current_phase === 2" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+                        <!-- Idle State: No Recipe Selected -->
+                        <div x-show="!selected_recipe_id" 
+                             style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+                            <div>
+                                <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">≡ƒì░</span>
+                                Select a recipe profile to view technical science details...
+                            </div>
+                        </div>
+                        
+                        <!-- Active State: Recipe Selected -->
+                        <div x-show="selected_recipe_id" style="display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+                            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                
+                                <!-- Menu Description Card -->
+                                <div style="font-style: italic; font-size: 0.95rem; color: var(--text-primary); line-height: 1.5; padding: 0.5rem 0.25rem 0.25rem 0.25rem; border-left: 3px solid var(--accent); padding-left: 0.75rem; margin-bottom: 0.5rem;">
+                                    <span x-text="selectedRecipeMenuDescription"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 1 Sidebar Inspector -->
+                    <div x-show="current_phase === 1" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+                        <!-- Idle State: No Category Selected -->
+                        <div x-show="!selected_master || selected_master === 'null'" 
+                             style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+                            <div>
+                                <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">≡ƒÄ¢∩╕Å</span>
+                                Select a dough or confection category to initialize workspace...
+                            </div>
+                        </div>
+                        
+                        <!-- Active State: Category Selected -->
+                        <div x-show="selected_master && selected_master !== 'null'" 
+                             style="display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; min-height: 350px;">
+                            
+                            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                <!-- Top Header -->
+                                <h3 style="color: var(--accent); margin: 0; font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;"
+                                    x-text="phase1_categories[selected_master]?.title">
+                                </h3>
+                                
+                                <!-- The Science Profile Card -->
+                                <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                    <span style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">≡ƒö¼ The Science Profile</span>
+                                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" 
+                                       x-text="phase1_categories[selected_master]?.definition"></p>
+                                </div>
+                                
+                                <!-- Included Targets Array -->
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">INCLUDED TARGETS:</span>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                        <template x-for="preset in phase1_categories[selected_master]?.presets" :key="preset">
+                                            <span style="font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-primary); cursor: default;" x-text="preset"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Base Anchor (Proceed Button) -->
+                            <div style="margin-top: 2rem;">
+                                <button type="button" 
+                                        class="nav-btn primary"
+                                        style="width: 100%; height: 50px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #ff9800; border-radius: var(--radius-sm); background: rgba(255, 152, 0, 0.05); color: #ff9800; box-shadow: 0 0 10px rgba(255, 152, 0, 0.1); transition: var(--transition);"
+                                        onmouseover="this.style.background='#ff9800'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(255, 152, 0, 0.3)';"
+                                        onmouseout="this.style.background='rgba(255, 152, 0, 0.05)'; this.style.color='#ff9800'; this.style.boxShadow='0 0 10px rgba(255, 152, 0, 0.1)';"
+                                        @click="const el = document.getElementById('id_dough_category'); if (el) { el.value = selected_master; el.dispatchEvent(new Event('change')); } current_phase = 2;">
+                                    INITIALIZE CATEGORY ΓåÆ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="recipe-output-container" x-show="current_phase >= 3">
+                        <!-- Swapped in dynamically by HTMX -->
+                        <div style="text-align: center; padding: 6rem 1.5rem; color: var(--text-muted);">
+                            <span class="spinner" style="width: 40px; height: 40px;"></span>
+                            <p style="margin-top: 1rem;">Compiling baking matrix...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</div>
+{% endblock %}
