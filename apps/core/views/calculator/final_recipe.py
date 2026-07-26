@@ -48,3 +48,31 @@ class FinalRecipeView(View):
             return redirect('calculator_phase1')
             
         return redirect('calculator_final_recipe', category=category, archetype=archetype)
+
+from django.http import JsonResponse
+
+class FinalRecipeAIView(View):
+    def get(self, request, category, archetype):
+        from apps.core.services.calculator_session import get_calculator_state
+        from apps.core.services.calculation import calculate_final_recipe
+        state = get_calculator_state(request)
+        try:
+            recipe_context = calculate_final_recipe(state, run_ai=True)
+            response_data = {
+                'recipe': recipe_context.get('recipe', {}),
+                'sensory_description': recipe_context.get('sensory_description'),
+                'pitfalls': recipe_context.get('pitfalls'),
+                'bake_temp_f': recipe_context.get('bake_temp_f'),
+                'bake_time_min': recipe_context.get('bake_time_min'),
+                'estimated_bulk_minutes': recipe_context.get('estimated_bulk_minutes'),
+                'estimated_proof_minutes': recipe_context.get('estimated_proof_minutes'),
+                'countertop_steps_json': recipe_context.get('countertop_steps_json'),
+                'steam_required': recipe_context.get('steam_required'),
+                'geometry_evaluation': recipe_context.get('geometry_evaluation'),
+            }
+            return JsonResponse({'status': 'success', 'data': response_data})
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"AI FETCH ERROR: {e}")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

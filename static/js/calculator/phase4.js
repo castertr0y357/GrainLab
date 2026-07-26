@@ -53,6 +53,7 @@ document.addEventListener('alpine:init', () => {
         waterTemp: 75,
         timerInterval: null,
         recipeCompiled: initialData.recipeCompiled || false,
+        aiLoading: initialData.current_phase === 5 && (initialData.global_ai_enabled || true),
         globalElevateRecipe: [],
         geometry_evaluation: null,
         sensory_description: '',
@@ -259,7 +260,7 @@ document.addEventListener('alpine:init', () => {
         closeProcessAlternatives() {
             this.activeProcessCategory = null;
         },
-loadCompiledData() {
+        loadCompiledData() {
             const dataEl = document.getElementById('countertop-data');
             if (dataEl) {
                 try {
@@ -271,6 +272,49 @@ loadCompiledData() {
                 } catch (e) {
                     console.error("Failed to parse countertop data", e);
                 }
+            }
+        },
+
+        async fetchAIInsights() {
+            if (!this.global_ai_enabled || this.current_phase !== 5) return;
+            
+            this.aiLoading = true;
+            try {
+                // Determine category and archetype from current path
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                let cat = this.selected_master || pathParts[1];
+                let arch = this.preset_slug || pathParts[2];
+                if (!cat || !arch) {
+                    this.aiLoading = false;
+                    return;
+                }
+                
+                const response = await fetch(`/recipe-final/${cat}/${arch}/ai/`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                
+                const json = await response.json();
+                if (json.status === 'success' && json.data) {
+                    const d = json.data;
+                    this.recipe = d.recipe || {};
+                    this.sensory_description = d.sensory_description || '';
+                    this.pitfalls = d.pitfalls || [];
+                    this.geometry_evaluation = d.geometry_evaluation || null;
+                    
+                    if (d.bake_temp_f) this.bakeTemp = d.bake_temp_f;
+                    if (d.bake_time_min) this.bakeTimeMin = d.bake_time_min;
+                    if (d.steam_required !== undefined) this.bakeSteam = d.steam_required ? 'Yes' : 'No';
+                    
+                    if (d.countertop_steps_json) {
+                        try {
+                            this.steps = JSON.parse(d.countertop_steps_json);
+                        } catch (e) {}
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch AI insights", err);
+            } finally {
+                this.aiLoading = false;
             }
         },
         

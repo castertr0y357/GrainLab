@@ -12,7 +12,7 @@ from grainlab.engines import router
 logger = logging.getLogger("grainlab.services")
 executor = ThreadPoolExecutor(max_workers=2)
 
-def calculate_final_recipe(state: dict) -> dict:
+def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     """
     Main calculation route adapted for multi-phase state.
     Processes Baker's Math and fail-safes, runs the Classifier Engine, 
@@ -163,7 +163,7 @@ def calculate_final_recipe(state: dict) -> dict:
 
     try:
         ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
-        if ai_enabled and substitution:
+        if ai_enabled and substitution and run_ai:
             recipe_state = {
                 "effective_hydration_pct": hydration_pct * 100,
                 "effective_fat_pct": fat_pct * 100,
@@ -246,8 +246,12 @@ def calculate_final_recipe(state: dict) -> dict:
     eff_hyd = recipe["effective_hydration_pct"] / 100.0
     preset_slug_resolved = preset_slug or (classified_preset.slug if classified_preset else None)
 
-    sensory_desc = gemma.get_sensory_benchmark(grain_type, flour_maturity, eff_hyd, cat.slug, preset_slug_resolved)
-    pitfalls = gemma.get_contextual_pitfalls(cat.slug, eff_hyd, grain_type, preset_slug_resolved)
+    if run_ai:
+        sensory_desc = gemma.get_sensory_benchmark(grain_type, flour_maturity, eff_hyd, cat.slug, preset_slug_resolved)
+        pitfalls = gemma.get_contextual_pitfalls(cat.slug, eff_hyd, grain_type, preset_slug_resolved)
+    else:
+        sensory_desc = None
+        pitfalls = []
 
     # 6. Core Thermal Doneness Temperature
     doneness_temp_f = 190 if ff_config.get("is_enriched_profile", ff.is_enriched_profile) else 205
@@ -272,9 +276,13 @@ def calculate_final_recipe(state: dict) -> dict:
             scaled_temp = base_temp + 10
         
     # 7b. Query geometry advisory and apply offsets
-    geom_advisory = gemma.get_geometry_advisory(preset_slug_resolved, preset_name, cat.slug, ff.slug)
-    geom_eval = geom_advisory.get("geometry_evaluation", {})
-    profile_adjustments = geom_eval.get("profile_adjustments", {})
+    if run_ai:
+        geom_advisory = gemma.get_geometry_advisory(preset_slug_resolved, preset_name, cat.slug, ff.slug)
+        geom_eval = geom_advisory.get("geometry_evaluation", {})
+        profile_adjustments = geom_eval.get("profile_adjustments", {})
+    else:
+        geom_eval = {}
+        profile_adjustments = {}
 
     temp_offset = int(profile_adjustments.get("oven_temp_offset_f", 0))
     time_offset = int(profile_adjustments.get("bake_time_offset_m", 0))
@@ -300,9 +308,13 @@ def calculate_final_recipe(state: dict) -> dict:
         mill_type = state.get("mill_type", "stoneground")
         is_sifted = state.get("is_sifted") in ("on", "true", "True", True)
     
-        calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
-        estimated_bulk_hours = calibration.get("estimated_bulk_fermentation_hours", 4.0)
-        estimated_proof_hours = 2.0
+        if run_ai:
+            calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
+            estimated_bulk_hours = calibration.get("estimated_bulk_fermentation_hours", 4.0)
+            estimated_proof_hours = 2.0
+        else:
+            estimated_bulk_hours = 4.0
+            estimated_proof_hours = 2.0
     
     if room_temp < 70:
         estimated_bulk_hours += 1.0

@@ -4,7 +4,7 @@ from apps.core.views.calculator.phase1 import Phase1View
 from apps.core.views.calculator.phase2 import Phase2View
 from apps.core.views.calculator.phase3 import Phase3View
 from apps.core.views.calculator.phase4 import Phase4View
-from apps.core.views.calculator.final_recipe import FinalRecipeView
+from apps.core.views.calculator.final_recipe import FinalRecipeView, FinalRecipeAIView
 from apps.core.views.calculator.shared import save_recipe, shared_recipe, tweak_recipe
 
 urlpatterns = [
@@ -14,6 +14,7 @@ urlpatterns = [
     path('phase-3/<slug:category>/<slug:archetype>/', Phase3View.as_view(), name='calculator_phase3'),
     path('phase-4/<slug:category>/<slug:archetype>/', Phase4View.as_view(), name='calculator_phase4'),
     path('recipe-final/<slug:category>/<slug:archetype>/', FinalRecipeView.as_view(), name='calculator_final_recipe'),
+    path('recipe-final/<slug:category>/<slug:archetype>/ai/', FinalRecipeAIView.as_view(), name='calculator_final_recipe_ai'),
     
     # Formula Sharing Routes
     path('recipe/save/', save_recipe, name='save_recipe'),

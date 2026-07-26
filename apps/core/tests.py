@@ -315,6 +315,8 @@ class DynamicRouteScannerTests(TestCase):
                 args = ['lean-crusty', 'classic_sourdough']
             elif name == 'calculator_final_recipe':
                 args = ['lean-crusty', 'classic_sourdough']
+            elif name == 'calculator_final_recipe_ai':
+                args = ['lean-crusty', 'classic_sourdough']
 
             url = reverse(name, args=args)
             
