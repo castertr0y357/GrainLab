@@ -44,6 +44,8 @@ class Phase3View(View):
             'fat_pct': request.POST.get('fat_pct', 0),
             'sugar_pct': request.POST.get('sugar_pct', 0),
             'target_weight': request.POST.get('target_weight', 1000),
+            'secondary_ingredients': request.POST.get('secondary_ingredients', '{}'),
+            'flavor_inclusions': request.POST.get('flavor_inclusions', '[]'),
         }
         
         # Additional processing if any before phase 4 calculations

@@ -143,15 +143,24 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         except (ValueError, Equipment.DoesNotExist):
             pass
 
-    selected_grain_ids = state.get("selected_grains", [])
-    if isinstance(selected_grain_ids, str):
-        # if it's a comma separated string for some reason
-        selected_grain_ids = [s.strip() for s in selected_grain_ids.split(',')]
-        
+    active_berries_state = state.get("active_berries", state.get("selected_grains", []))
+    if isinstance(active_berries_state, str) and active_berries_state.strip():
+        try:
+            active_berries_state = json.loads(active_berries_state)
+        except Exception:
+            active_berries_state = []
+            
+    selected_grain_ids = []
+    for b in active_berries_state:
+        if isinstance(b, dict) and "id" in b:
+            selected_grain_ids.append(str(b["id"]))
+        else:
+            selected_grain_ids.append(str(b))
+            
     if selected_grain_ids:
         active_berries = list(WheatBerry.objects.filter(id__in=selected_grain_ids))
     else:
-        active_berries = list(WheatBerry.objects.filter(is_active=True))
+        active_berries = []
 
     preset_name = None
     if preset_slug:
@@ -175,9 +184,16 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
                 fat_pct = max(0.0, fat_pct + offset.get("fat_offset_pct", 0.0))
                 sugar_pct = max(0.0, sugar_pct + offset.get("sugar_offset_pct", 0.0))
             
-        secondary_lipid = state.get("secondary_lipid") or None
-        secondary_liquid = state.get("secondary_liquid") or None
-        secondary_binder = state.get("secondary_binder") or None
+        secondary_ingredients = state.get("secondary_ingredients", "{}")
+        if isinstance(secondary_ingredients, str) and secondary_ingredients.strip():
+            try:
+                secondary_ingredients = json.loads(secondary_ingredients)
+            except Exception:
+                secondary_ingredients = {}
+                
+        secondary_lipid = secondary_ingredients.get("secondary_lipid", {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_liquid = secondary_ingredients.get("secondary_liquid", {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_binder = secondary_ingredients.get("secondary_binder", {}).get("name") if isinstance(secondary_ingredients, dict) else None
 
         flavor_inclusions = state.get("flavor_inclusions", [])
         if isinstance(flavor_inclusions, str) and flavor_inclusions.strip():

@@ -195,6 +195,8 @@ x-init="init()"
         <input type="hidden" name="leaven_pct" :value="starter">
         <input type="hidden" name="fat_pct" :value="fat">
         <input type="hidden" name="sugar_pct" :value="sugar">
+        <input type="hidden" name="secondary_ingredients" :value="JSON.stringify(selectedRecipeSecondaryIngredients || {})">
+        <input type="hidden" name="flavor_inclusions" :value="JSON.stringify(flavor_inclusions || [])">
     </form>
 {% endblock %}
 

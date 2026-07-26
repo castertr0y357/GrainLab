@@ -18,7 +18,7 @@ x-data="phase2App({
     <form id="phase2-form" action="{% url 'calculator_phase2' category=state.selected_master %}" method="POST" style="display: none;">
         {% csrf_token %}
         <input type="hidden" name="active_archetype_id" :value="active_archetype_id">
-        <input type="hidden" name="active_berries" :value="JSON.stringify(activeBerries)">
+        <input type="hidden" name="active_berries" :value="JSON.stringify(activeBerries.filter(b => b.selected))">
         <input type="hidden" name="global_ai_enabled" :value="global_ai_enabled">
         <input type="hidden" name="mill_type" :value="mill_type">
         <input type="hidden" name="is_sifted" :value="is_sifted ? 'true' : 'false'">
