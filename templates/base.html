@@ -11,16 +11,17 @@
     
     <!-- HTMX & Alpine.js CDNs -->
     <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+    {% block head_scripts %}{% endblock %}
     <script src="https://unpkg.com/alpinejs@3.13.10" defer></script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <header>
         <div class="header-inner">
-            <a href="{% url 'calculator' %}" class="logo">
+            <a href="{% url 'calculator_phase1' %}" class="logo">
                 🌾 Grain<span>Lab</span>
             </a>
             <div class="nav-links">
-                <a href="{% url 'calculator' %}" class="nav-btn">Compiler</a>
+                <a href="{% url 'calculator_phase1' %}" class="nav-btn">Compiler</a>
                 <a href="{% url 'inventory_page' %}" class="nav-btn">Inventory</a>
                 <a href="{% url 'settings_page' %}" class="nav-btn">AI Settings</a>
             </div>

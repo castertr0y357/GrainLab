@@ -1,5 +1,54 @@
+{% extends "calculator/phase_base.html" %}
+{% load static %}
+
+{% block title %}Phase 2: Formula Initialization - GrainLab{% endblock %}
+
+{% block phase_x_data %}
+x-data="phase2App({
+    current_phase: 2,
+    selected_master: '{{ state.selected_master|escapejs }}',
+    global_ai_enabled: {{ state.global_ai_enabled|yesno:"true,false" }},
+    enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}' || '{}'),
+    engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}' || '{}'),
+    berries: JSON.parse('{{ berries_json|escapejs }}' || '[]')
+})"
+{% endblock %}
+
+{% block phase_hidden_forms %}
+    <form id="phase2-form" action="{% url 'calculator_phase2' category=state.selected_master %}" method="POST" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="active_archetype_id" :value="active_archetype_id">
+        <input type="hidden" name="active_berries" :value="JSON.stringify(activeBerries)">
+        <input type="hidden" name="global_ai_enabled" :value="global_ai_enabled">
+        <input type="hidden" name="mill_type" :value="mill_type">
+        <input type="hidden" name="is_sifted" :value="is_sifted ? 'true' : 'false'">
+        <input type="hidden" name="custom_mixer" :value="custom_mixer">
+        <input type="hidden" name="recipe_name" :value="recipe_name">
+        <input type="hidden" name="secondary_ingredients" :value="JSON.stringify(selectedRecipeSecondaryIngredients || {})">
+    </form>
+{% endblock %}
+
+{% block phase_x_init %}
+{% endblock %}
+
+{% block phase_left_panel %}
     <!-- PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION -->
-    <div x-show="current_phase === 2" x-transition>
+    <div x-show="current_phase === 2" x-transition style="position: relative;">
+        <!-- Error Overlay -->
+        <div x-show="phase2Error" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 23, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: var(--radius-md); display: none;" :style="phase2Error ? 'display: flex;' : 'display: none;'">
+            <div style="color: #ff5252; font-weight: 600; font-size: 1.1rem; letter-spacing: 0.05em; text-align: center; text-transform: uppercase; margin-bottom: 1rem;">AI Generation Failed</div>
+            <div style="color: var(--text-muted); font-size: 0.95rem; text-align: center; max-width: 400px; margin-bottom: 2rem;" x-text="phase2Error"></div>
+            <button class="btn btn-primary" @click="
+                phase2Error = null;
+                if (!creativity_recipes.length) { fetchCreativityRecipes(selected_master, active_archetype_id); }
+                else if (expanded_level && !alternative_variants.length) { fetchAlternativeVariants(expanded_level); }
+                else if (selected_recipe_id) { fetchRecipeDetails(creativity_recipes.find(r => r.id === selected_recipe_id) || alternative_variants.find(v => v.id === selected_recipe_id)); }
+            " style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Retry Generation
+            </button>
+        </div>
+
         <div style="display: block; margin-bottom: 1.25rem; font-weight: 600; font-size: 1.15rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">
             PHASE 2: FORMULA INITIALIZATION & STOCK SELECTION
         </div>
@@ -16,19 +65,19 @@
              style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
             <template x-if="selected_master && enginesArchetypes[selected_master] && Object.keys(enginesArchetypes[selected_master]).length > 0">
                 <div style="display: contents;">
-                    <template x-for="[archetype_id, arch_data] in Object.entries(enginesArchetypes[selected_master] || {})" :key="archetype_id">
+                    <template x-for="entry in Object.entries(enginesArchetypes[selected_master] || {})" :key="entry[0]">
                         <button type="button"
                                 class="chip"
-                                :class="active_archetype_id === archetype_id ? 'active' : ''"
-                                @click="selectArchetype(archetype_id, selected_master)"
-                                @mouseenter="setHoveredElement('archetype_' + archetype_id)"
+                                :class="active_archetype_id === entry[0] ? 'active' : ''"
+                                @click="selectArchetype(entry[0], selected_master)"
+                                @mouseenter="setHoveredElement('archetype_' + entry[0])"
                                 @mouseleave="clearHoveredElement()"
-                                @focusin="setHoveredElement('archetype_' + archetype_id)"
+                                @focusin="setHoveredElement('archetype_' + entry[0])"
                                 @focusout="clearHoveredElement()"
                                 tabindex="0"
                                 style="height: 48px; min-width: 120px; padding: 0 1.25rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; letter-spacing: 0.03em; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); border: none;">
-                            <span x-text="arch_data.icon || '🧬'"></span>
-                            <span x-text="arch_data.label || archetype_id.replace(/_/g, ' ')"></span>
+                            <span x-text="entry[1].icon || '🧬'"></span>
+                            <span x-text="entry[1].label || entry[0].replace(/_/g, ' ')"></span>
                         </button>
                     </template>
                 </div>
@@ -145,8 +194,7 @@
                              @click="selectRecipe(recipe)"
                              style="min-width: 250px; max-width: 300px; flex-shrink: 0; padding: 1rem; cursor: pointer; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0;"
                              :style="selected_recipe_id === recipe.recipe_id ? 'border-color: #64b5f6; background: rgba(100, 181, 246, 0.06); box-shadow: 0 0 10px rgba(100, 181, 246, 0.2);' : 'border-color: var(--border); background: var(--bg-card);'">
-                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 0.4rem;" x-text="recipe.recipe_name"></strong>
-                            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0;" x-text="recipe.description"></p>
+                            <strong style="color: var(--text-primary); font-size: 0.9rem; display: block;" x-text="recipe.recipe_name"></strong>
                         </div>
                     </template>
                 </div>
@@ -207,8 +255,7 @@
 
         <!-- Grain Bin Optimizer (deferred — system hardlocked to fresh-milled whole grain) -->
         <div style="margin-top: 1.5rem;">
-            <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;"
-                 @mouseenter="setHoveredElement('milled')" @mouseleave="clearHoveredElement()">
+            <div style="font-weight: 600; font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
                 🌾 Grain Bin Optimizer (Stock Selection)
             </div>
             <!-- Hidden input for hardlocked milled grain type -->
@@ -245,7 +292,7 @@
                                tabindex="0"
                                style="cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 0; border-width: 2px; transition: var(--transition);"
                                :style="getGrainStyle(berry)">
-                            <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="display: none;">
+                            <input type="checkbox" name="selected_grains" :value="berry.id" x-model="berry.selected" @change="presetModified = true; $nextTick(() => htmx.trigger('#phase2-form', 'change'));" style="display: none;">
                             
                             <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
                                 <span style="font-size: 1.25rem; flex-shrink: 0;">🌾</span>
@@ -255,10 +302,9 @@
                                 </div>
                             </div>
 
-                            <!-- Classification & Reasoning inline display -->
-                            <div x-show="getClassificationLabel(berry)" style="margin-top: 0.25rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.4rem; width: 100%;">
-                                <span :style="getClassificationBadgeStyle(berry)" x-text="getClassificationLabel(berry)" style="display: block; margin-bottom: 0.2rem;"></span>
-                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.35; white-space: normal;" x-text="getGrainReasoning(berry)"></p>
+                            <!-- Classification inline display (Reasoning moved to sidebar) -->
+                            <div x-show="getClassificationLabel(berry)" style="margin-top: 0.25rem; width: 100%;">
+                                <span :style="getClassificationBadgeStyle(berry)" x-text="getClassificationLabel(berry)" style="display: inline-block;"></span>
                             </div>
                         </label>
                     </template>
@@ -287,10 +333,11 @@
                             <div class="pill-btn-group">
                                 {% for mill in mills %}
                                 <button type="button" class="pill-btn" :class="mill_type === '{{ mill.id|escapejs }}' ? 'active' : ''"
-                                        @click="mill_type = '{{ mill.id|escapejs }}'; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('mill_{{ mill.id|escapejs }}')"
+                                        :style="getMillStyle('{{ mill.id|escapejs }}')"
+                                        @click="mill_type = '{{ mill.id|escapejs }}'; $nextTick(() => htmx.trigger('#phase2-form', 'change'));"
+                                        @mouseenter="setHoveredElement('mill_{{ mill.id|escapejs }}', '{{ mill.name|escapejs }}')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('mill_{{ mill.id|escapejs }}')"
+                                        @focusin="setHoveredElement('mill_{{ mill.id|escapejs }}', '{{ mill.name|escapejs }}')"
                                         @focusout="clearHoveredElement()">
                                     {{ mill.name }}
                                 </button>
@@ -304,36 +351,25 @@
                             <input type="hidden" name="is_sifted" :value="is_sifted ? 'on' : ''">
                             <div class="pill-btn-group">
                                 <button type="button" class="pill-btn" :class="is_sifted === false ? 'active' : ''"
-                                        @click="is_sifted = false; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('sifted_false')"
+                                        :style="getSifterStyle(false)"
+                                        @mouseenter="setHoveredElement('sifter_unsifted')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('sifted_false')"
-                                        @focusout="clearHoveredElement()">
+                                        @focusin="setHoveredElement('sifter_unsifted')"
+                                        @focusout="clearHoveredElement()"
+                                        @click="is_sifted = false; $nextTick(() => htmx.trigger('#phase2-form', 'change'));">
                                     Whole Grain (Unsifted)
                                 </button>
                                 <button type="button" class="pill-btn" :class="is_sifted === true ? 'active' : ''"
-                                        @click="is_sifted = true; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                        @mouseenter="setHoveredElement('sifted_true')"
+                                        :style="getSifterStyle(true)"
+                                        @mouseenter="setHoveredElement('sifter_sifted')"
                                         @mouseleave="clearHoveredElement()"
-                                        @focusin="setHoveredElement('sifted_true')"
-                                        @focusout="clearHoveredElement()">
+                                        @focusin="setHoveredElement('sifter_sifted')"
+                                        @focusout="clearHoveredElement()"
+                                        @click="is_sifted = true; $nextTick(() => htmx.trigger('#phase2-form', 'change'));">
                                     Sifted (High Extraction)
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- AI Milling Advisory Hints -->
-                <div x-show="siftedAdvisory || millAdvisory" style="margin-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
-                    <div style="font-size: 0.7rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem;">🤖 AI Milling Advisory</div>
-                    <div x-show="siftedAdvisory" style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.35rem; display: flex; gap: 0.5rem; align-items: flex-start;">
-                        <span style="flex-shrink: 0; color: var(--accent);">⚗</span>
-                        <span x-text="siftedAdvisory?.reasoning"></span>
-                    </div>
-                    <div x-show="millAdvisory" style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; display: flex; gap: 0.5rem; align-items: flex-start;">
-                        <span style="flex-shrink: 0; color: var(--text-muted);">⚙</span>
-                        <span x-text="millAdvisory?.reasoning"></span>
                     </div>
                 </div>
 
@@ -345,10 +381,87 @@
                     style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition); margin-bottom: 1.5rem;"
                     onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
                     onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                    @click="$dispatch('phase3-start')">
+                    @click="document.getElementById('phase2-form').submit()">
                 GENERATE FORMULA &amp; PROCEED →
             </button>
             </div> <!-- Closes x-show="!advisoryLoading" -->
+        </div> <!-- Closes div style="margin-top: 1.5rem;" -->
         </div> <!-- Closes x-show="recipe_selected" -->
     </div>
-</div>
+{% endblock %}
+
+{% block phase_right_panel %}
+    <div x-show="current_phase === 2" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: auto;">
+        
+        <!-- Active Selected Recipe -->
+        <div x-show="recipe_selected" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
+            <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+        </div>
+
+        <!-- Archetype Hover Info -->
+        <div x-show="hovered_element && hovered_element.startsWith('archetype_')" 
+             style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div>
+                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>🧬</span> Archetype Details
+                </div>
+                <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);" 
+                     x-text="(hovered_element && enginesArchetypes[selected_master] && enginesArchetypes[selected_master][hovered_element.replace('archetype_', '')]) ? enginesArchetypes[selected_master][hovered_element.replace('archetype_', '')].description : ''">
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Grain / Mill / Sifter Hover Info -->
+        <div x-show="hovered_element && (hovered_element.startsWith('grain_') || hovered_element.startsWith('mill_') || hovered_element.startsWith('sifter_'))"
+             style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <template x-if="getHoverInfo()">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span x-text="getHoverInfo().icon"></span> <span x-text="getHoverInfo().title"></span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <span style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);"
+                              :style="getHoverInfo().status === 'recommended' ? 'color: #ffd700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.1);' : 
+                                      (getHoverInfo().status === 'sub-optimal' ? 'color: var(--warning); border-color: rgba(255,193,7,0.3); background: rgba(255,193,7,0.1);' : 
+                                      (getHoverInfo().status === 'not-recommended' ? 'color: var(--danger); border-color: rgba(220,53,69,0.3); background: rgba(220,53,69,0.1);' : 'color: var(--accent); border-color: rgba(255,136,0,0.3); background: rgba(255,136,0,0.1);'))"
+                              x-text="getHoverInfo().status === 'recommended' ? 'Recommended' : (getHoverInfo().status === 'sub-optimal' ? 'Sub-Optimal' : (getHoverInfo().status === 'not-recommended' ? 'Not Recommended' : 'Optimal'))">
+                        </span>
+                    </div>
+                    <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);" x-text="getHoverInfo().reason"></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Idle State: No Recipe Selected -->
+        <div x-show="!selected_recipe_id && !hovered_element" 
+             style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+            <div>
+                <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🍰</span>
+                Select a recipe profile to view technical science details...
+            </div>
+        </div>
+
+        <!-- Selected Recipe Details (Not yet proceeded) -->
+        <div x-show="selected_recipe_id && !recipe_selected && !hovered_element" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <!-- Menu Description -->
+            <div>
+                <div style="font-size: 1rem; line-height: 1.6; color: var(--text-primary);" x-text="sidebar_menu_description"></div>
+            </div>
+        </div>
+
+        <!-- Selected Recipe Details (Proceeded to Grain Bin, No Hover) -->
+        <div x-show="recipe_selected && !hovered_element" 
+             style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 150px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+            <div>
+                <span style="font-size: 1.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🌾</span>
+                Hover over an ingredient below to see AI recommendations and technical reasoning.
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block head_scripts %}
+<script src="{% static 'js/calculator/core.js' %}"></script>
+<script src="{% static 'js/calculator/phase2.js' %}"></script>
+{% endblock %}

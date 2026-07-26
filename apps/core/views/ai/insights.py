@@ -12,7 +12,7 @@ from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core import bakers_math
-from apps.core import gemma_client
+from apps.core import gemma
 from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 from apps.core.views.ai.advisory import get_inactive_grain_recommendations
 
@@ -26,7 +26,7 @@ class AiSidebarInsightView(View):
         Returns dynamic labor ROI and critique analysis for the hovered element.
         """
         from django.http import JsonResponse
-        from apps.core import gemma_client
+        from apps.core import gemma
     
         element = request.GET.get("element", "").strip()
         category_slug = request.GET.get("category_slug", "").strip()
@@ -671,7 +671,7 @@ class AiSidebarInsightView(View):
         insight = None
         if ai_enabled:
             try:
-                insight = gemma_client.get_sidebar_insight_ai(element, category_slug, preset_slug)
+                insight = gemma.get_sidebar_insight_ai(element, category_slug, preset_slug)
             except Exception as e:
                 logger.error(f"[AI] - Sidebar - Failed querying Gemma: {e}")
             
@@ -681,7 +681,7 @@ class AiSidebarInsightView(View):
             if not ai_enabled and element.startswith("grain_"):
                 from apps.core.models import WheatBerry, BreadPreset
                 from grainlab.engines import router
-                from apps.core.gemma_client import evaluate_single_grain
+                from apps.core.gemma import evaluate_single_grain
 
                 preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
                 category_slug = category_slug or (preset.dough_category.slug if preset and preset.dough_category else None)
@@ -764,7 +764,7 @@ class AiSidebarInsightView(View):
 class AiBatchInsightsView(View):
     def get(self, request):
         from django.http import JsonResponse
-        from apps.core import gemma_client
+        from apps.core import gemma
         import json
         from django.http import HttpRequest
     
@@ -789,7 +789,7 @@ class AiBatchInsightsView(View):
                 "preset_slug": preset_slug,
                 "active_archetype_id": active_archetype_id or ""
             }
-            res = ai_sidebar_insight(req)
+            res = AiSidebarInsightView().get(req)
             try:
                 results[el] = json.loads(res.content)
             except Exception as e:

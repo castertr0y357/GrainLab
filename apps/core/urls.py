@@ -1,11 +1,27 @@
 from django.urls import path
 from apps.core import views
+from apps.core.views.calculator.phase1 import Phase1View
+from apps.core.views.calculator.phase2 import Phase2View
+from apps.core.views.calculator.phase3 import Phase3View
+from apps.core.views.calculator.phase4 import Phase4View
+from apps.core.views.calculator.final_recipe import FinalRecipeView
+from apps.core.views.calculator.shared import save_recipe, shared_recipe, tweak_recipe
 
 urlpatterns = [
-    path('', views.CalculatorView.as_view(), name='calculator'),
+    # Calculator Routes (Phases 1-4)
+    path('', Phase1View.as_view(), name='calculator_phase1'),
+    path('phase-2/<slug:category>/', Phase2View.as_view(), name='calculator_phase2'),
+    path('phase-3/<slug:category>/<slug:archetype>/', Phase3View.as_view(), name='calculator_phase3'),
+    path('phase-4/<slug:category>/<slug:archetype>/', Phase4View.as_view(), name='calculator_phase4'),
+    path('recipe-final/<slug:category>/<slug:archetype>/', FinalRecipeView.as_view(), name='calculator_final_recipe'),
+    
+    # Formula Sharing Routes
+    path('recipe/save/', save_recipe, name='save_recipe'),
+    path('recipe/<uuid:recipe_id>/', shared_recipe, name='shared_recipe'),
+    path('recipe/<uuid:recipe_id>/tweak/', tweak_recipe, name='tweak_recipe'),
+    
     path('search/', views.SearchPresetsView.as_view(), name='search_presets'),
     path('load-preset/<int:preset_id>/', views.LoadPresetView.as_view(), name='load_preset'),
-    path('calculate/', views.CalculateRecipeAjaxView.as_view(), name='calculate_recipe_ajax'),
     path('settings/', views.SettingsPageView.as_view(), name='settings_page'),
     path('settings/save/', views.SaveSettingsView.as_view(), name='save_settings'),
     path('sourdough-calibrate/', views.SourdoughCalibrateView.as_view(), name='sourdough_calibrate'),
@@ -29,4 +45,7 @@ urlpatterns = [
     path('generate-variants/', views.GenerateVariantsView.as_view(), name='generate_variants'),
     path('generate-creativity-recipes/', views.GenerateCreativityRecipesView.as_view(), name='generate_creativity_recipes'),
     path('ai-recipe-details/', views.AiRecipeDetailsView.as_view(), name='ai_recipe_details'),
+    path('generate-substitutes/', views.AiGenerateSubstitutesView.as_view(), name='generate_substitutes'),
+    path('ai-process-alternatives/', views.AiProcessAlternativesView.as_view(), name='ai_process_alternatives'),
+    path('ai-process-details/', views.AiProcessDetailsView.as_view(), name='ai_process_details'),
 ]

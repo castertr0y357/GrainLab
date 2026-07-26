@@ -38,6 +38,12 @@ class BaseEngine:
     gluten_behavior = "Standard gluten development"
     flavor_affinity = "Standard flour profile"
     tannin_sensitive = False
+    supported_tweaks = ["hydration", "leavening"]
+    tweak_labels = {
+        "enrichment": ["Lean", "Brioche"],
+        "hydration": ["Tight", "Open"],
+        "leavening": ["Yeast", "40%"]
+    }
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",

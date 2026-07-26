@@ -8,6 +8,7 @@ class PastryEngine(BaseEngine):
     gluten_behavior = "Exceptional Extensibility. Dough sheets must roll out into paper-thin layers wrapping alternating cold solid butter blocks without tearing or puncturing."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires an ultra-clean, sweet backdrop to highlight intense layered butter fat distribution."
     tannin_sensitive = True
+    supported_tweaks = ["hydration", "leavening", "enrichment"]
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
         "mechanical_energy_threshold": "minimal_folding",

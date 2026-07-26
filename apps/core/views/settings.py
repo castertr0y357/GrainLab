@@ -12,7 +12,7 @@ from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core import bakers_math
-from apps.core import gemma_client
+from apps.core import gemma
 from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 
 logger = logging.getLogger("grainlab.views")
@@ -67,7 +67,7 @@ class SourdoughCalibrateView(View):
         mill_type = request.POST.get("mill_type", "stoneground")
         is_sifted = request.POST.get("is_sifted") in ("on", "true", "True")
     
-        calibration = gemma_client.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
+        calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
     
         context = {
             "calibration": calibration,

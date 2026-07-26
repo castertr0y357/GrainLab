@@ -8,6 +8,10 @@ class BatterEngine(BaseEngine):
     gluten_behavior = "Complete Absence of Gluten. High-ratio sugar and liquid dispersion requires structure built purely on starch gelatinization and egg protein coagulation."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a completely neutral grain baseline to host delicate vanilla, citrus, or fruit fats."
     tannin_sensitive = True
+    supported_tweaks = ["enrichment"]
+    tweak_labels = {
+        "enrichment": ["Dense / Fudgy", "Light / Spongy"]
+    }
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",

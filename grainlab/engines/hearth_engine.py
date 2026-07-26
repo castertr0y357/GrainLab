@@ -8,6 +8,7 @@ class HearthEngine(BaseEngine):
     gluten_behavior = "High Elasticity, maximum gas retention, capability to withstand long fermentation arcs."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes deep caramelization, complex bran expressions, and lactic/acetic sourness."
     tannin_sensitive = False
+    supported_tweaks = ["hydration", "leavening"]
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",

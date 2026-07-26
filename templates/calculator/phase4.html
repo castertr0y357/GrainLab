@@ -1,4 +1,5 @@
 {% extends 'calculator/phase_base.html' %}
+{% load static %}
 
 {% block title %}Phase 4: Final Calibration - GrainLab{% endblock %}
 
@@ -6,22 +7,43 @@
 x-data="phase4App({
     current_phase: 4,
     selected_master: '{{ state.selected_master|escapejs }}',
+    preset_slug: '{{ state.preset_slug|escapejs }}',
+    recipe_name: '{{ state.recipe_name|default:""|escapejs }}',
     global_ai_enabled: {{ state.global_ai_enabled|yesno:"true,false" }},
     enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}' || '{}'),
     engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}' || '{}'),
     
     mixing_method: '{{ state.mixing_method|default:"hand_knead"|escapejs }}',
     active_action: '{{ state.active_action|default:"stretch_fold"|escapejs }}',
+    texture: {{ state.texture|default:"50" }},
+    crumb: {{ state.crumb|default:"50" }},
+    starter: {{ state.starter|default:"20" }},
+    leaven: '{{ state.leaven|default:"starter"|escapejs }}',
     recipeCompiled: {{ recipe_compiled|yesno:"true,false"|default:"false" }}
 })"
 {% endblock %}
 
 {% block phase_x_init %}
-x-init="init(); if(recipeCompiled) loadCompiledData();"
+{% endblock %}
+
+{% block phase_hidden_forms %}
+    <form id="calculator-form" action="{% url 'calculator_phase4' category=state.selected_master archetype=state.preset_slug %}" method="POST" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="texture" :value="texture">
+        <input type="hidden" name="crumb" :value="crumb">
+        <input type="hidden" name="starter" :value="starter">
+        <input type="hidden" name="mixing_method" :value="mixing_method">
+        <input type="hidden" name="active_action" :value="active_action">
+    </form>
 {% endblock %}
 
 {% block phase_left_panel %}
-        <div class="card" x-show="!countertopMode" x-transition>
+        <div x-show="!countertopMode" x-transition style="position: relative;">
+        <!-- Loading Overlay -->
+        <div x-show="processRecommendationsLoading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 23, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: var(--radius-md);">
+            <div style="color: var(--accent); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.05em; text-align: center; text-transform: uppercase; margin-bottom: 2rem;">CALCULATING OPTIMAL PROCESS...</div>
+            <div class="spinner" style="width: 50px; height: 50px; border: 3px solid rgba(255, 136, 0, 0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        </div>
             <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <span>Final Calibration</span>
@@ -30,460 +52,174 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             
                     <!-- PHASE 4: Yield & Refinement -->
 
-<!-- Component 2: Semantic Appliance Filtering & Contextual Actions -->
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                <div>
-                    <!-- Appliance selection deck -->
-                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Hardware &amp; Appliance Selector</h4>
-                    <input type="hidden" name="mixing_method" :value="mixing_method">
-                    <div class="pill-btn-group">
-                        <template x-for="tool in filteredTools" :key="tool.id">
-                            <button type="button" 
-                                    class="pill-btn" 
-                                    :class="mixing_method === tool.id ? 'active' : ''"
-                                    @click="mixing_method = tool.id; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                    @mouseenter="setHoveredElement(tool.id)"
-                                    @mouseleave="clearHoveredElement()"
-                                    @focusin="setHoveredElement(tool.id)"
-                                    @focusout="clearHoveredElement()">
-                                <span x-text="tool.name"></span>
-                            </button>
-                        </template>
-                    </div>
+        <!-- Process Recommendations (Home Baker Configuration) -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem; position: relative;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">How are we making it?</h4>
+            
+            <div x-show="processRecommendationsLoading" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                <div class="spinner" style="border: 3px solid rgba(255,136,0,0.1); border-top-color: var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 1rem auto;"></div>
+                Analyzing recipe for optimal process...
+            </div>
 
-                    <!-- Gluten prevention warning banner -->
-                    <div x-show="activeProductionProfile.mechanical_energy_threshold === 'minimal_folding' && ['stand_mixer', 'bread_machine', 'food_processor'].includes(mixing_method)" 
-                         style="background-color: rgba(255, 159, 28, 0.1); border-left: 4px solid var(--warning); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-top: 1rem;">
-                        <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-weight: 700; font-size: 0.85rem; text-transform: uppercase;">⚠️ Shear Force Warning</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
-                            Intensive mixing will over-develop gluten and destroy the tender structure required for <span x-text="engines_ff?.[selected_master]?.title"></span>. Use a spatula or fold gently.
-                        </p>
+            <div x-show="!processRecommendationsLoading && Object.keys(processRecommendations).length > 0 && activeProcessCategory === null" style="display: grid; gap: 1rem;">
+                <template x-for="(categoryData, categoryKey) in processRecommendations" :key="categoryKey">
+                    <div style="background: var(--bg-body); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
+                        <div style="flex: 1;">
+                            <h5 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;" 
+                                x-text="categoryKey.replace('_', ' ')"></h5>
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem;" 
+                                 x-text="categoryData.name"></div>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" 
+                               x-text="categoryData.explanation"></p>
+                        </div>
+                        <button type="button" 
+                                @click="openProcessAlternatives(categoryKey)"
+                                class="pill-btn" style="white-space: nowrap; font-size: 0.85rem; padding: 0.4rem 0.8rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-code-branch" style="margin-right: 0.4rem;"></i> Alternatives
+                        </button>
                     </div>
+                </template>
+            </div>
+            
+            <div x-show="!processRecommendationsLoading && Object.keys(processRecommendations).length === 0" style="padding: 1rem; color: var(--text-secondary);">
+                No process recommendations found for this recipe.
+            </div>
+
+            <!-- Focus Mode for Process Alternatives -->
+            <div x-show="activeProcessCategory !== null" style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+                    <div>
+                        <h4 style="font-size: 1.1rem; color: var(--accent); font-weight: 600; margin: 0;">Select Process Alternative</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; margin-top: 0.25rem;">Targeting: <span x-text="activeProcessCategory?.replace('_', ' ')" style="color: #fff; text-transform: uppercase;"></span></p>
+                    </div>
+                    <button type="button" class="btn btn-secondary" @click="closeProcessAlternatives()">Cancel / Keep Original</button>
+                </div>
+                
+                <div x-show="processAlternativesLoading" style="display: flex; justify-content: center; padding: 2rem;">
+                    <div class="spinner" style="border-top-color: var(--accent);"></div>
+                    <span style="margin-left: 1rem; color: var(--text-secondary);">Generating intelligent alternatives...</span>
                 </div>
 
-                <div>
-                    <!-- Action Sequence Configurator -->
-                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">Primary Action Sequence</h4>
-                    <input type="hidden" name="active_action" :value="active_action">
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <div class="pill-btn-group">
-                        <template x-for="action in (required_actions.length > 0 ? required_actions : activeProductionProfile.permissible_action_types)" :key="action">
-                            <button type="button" 
-                                    class="pill-btn" 
-                                    :class="active_action === action ? 'active' : ''"
-                                    @click="active_action = action; $nextTick(() => htmx.trigger('#calculator-form', 'change'));"
-                                    @mouseenter="setHoveredElement(action)"
+                        <template x-for="(alt, index) in (processAlternativesCache[activeProcessCategory] || [])" :key="index">
+                            <button type="button" class="pill-btn" style="padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;"
+                                    @mouseenter="setHoveredElement('process_alt_' + index)"
                                     @mouseleave="clearHoveredElement()"
-                                    @focusin="setHoveredElement(action)"
-                                    @focusout="clearHoveredElement()">
-                                <span style="text-transform: capitalize;" x-text="action.replace('_', ' ')"></span>
+                                    @focusin="setHoveredElement('process_alt_' + index)"
+                                    @focusout="clearHoveredElement()"
+                                    @click="swapProcessRecommendation(activeProcessCategory, alt); closeProcessAlternatives();">
+                                <span style="font-weight: 600; font-size: 0.95rem;" x-text="alt.name"></span>
                             </button>
                         </template>
+                        <button type="button" class="pill-btn" style="padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: 1px dashed rgba(255,255,255,0.2); background: transparent;"
+                                @click="generateMoreProcessAlternatives(activeProcessCategory)"
+                                :disabled="processAlternativesLoading">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span x-show="!processAlternativesLoading" style="font-weight: 600; font-size: 0.95rem;">Generate More</span>
+                            <span x-show="processAlternativesLoading" style="font-weight: 600; font-size: 0.95rem;">Thinking...</span>
+                        </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden inputs to bind active state to the form for htmx submission if needed -->
+        <input type="hidden" name="mixing_method" :value="mixing_method">
+        <input type="hidden" name="active_action" :value="active_action">
+
+        <!-- Contextual Variance Sliders -->
+        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).length > 0">
+            <h4 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">Formula Tweaking (Optional)</h4>
+            
+            <!-- Texture Profile Matrix -->
+            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('enrichment')" @mouseenter="hoverSlider('enrichment')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">
+                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                        Enrichment & Tenderness
+                    </span>
+                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="texture"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px; text-align: right;" x-text="engines_ff[selected_master]?.tweak_labels?.enrichment?.[0] || 'Lean'"></span>
+                    <input type="range" name="texture" class="range-slider" x-model.number="texture" min="0" max="100" style="flex-grow: 1;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px;" x-text="engines_ff[selected_master]?.tweak_labels?.enrichment?.[1] || 'Brioche'"></span>
+                </div>
+            </div>
+
+            <!-- Crumb Hydration Matrix -->
+            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('hydration')" @mouseenter="hoverSlider('hydration')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">
+                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                        Crumb Hydration Matrix
+                    </span>
+                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="crumb"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px; text-align: right;" x-text="engines_ff[selected_master]?.tweak_labels?.hydration?.[0] || 'Tight'"></span>
+                    <input type="range" name="crumb" class="range-slider" x-model.number="crumb" min="0" max="100" style="flex-grow: 1;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px;" x-text="engines_ff[selected_master]?.tweak_labels?.hydration?.[1] || 'Open'"></span>
+                </div>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 0;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('leavening')" @mouseenter="hoverSlider('leavening')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">
+                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                        Leavening Inoculation
+                    </span>
+                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="starter + '%'"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;" x-text="leaven === 'yeast' ? 'Yeast' : '0%'"></span>
+                    <input type="range" name="starter" class="range-slider" x-model.number="starter" :min="leaven === 'yeast' ? 0 : 5" :max="40" :disabled="leaven === 'yeast'" style="flex-grow: 1;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;" x-text="leaven === 'yeast' ? 'Yeast' : '40%'"></span>
                 </div>
             </div>
         </div>
 
             
             <div style="margin-top: 1.5rem;">
-                <button type="button" @click="compileRecipe()" class="btn btn-primary" style="width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.1em;">
+                <button type="submit" onclick="document.getElementById('calculator-form').submit();" class="btn btn-primary" style="width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.1em;">
                     COMPILE RECIPE & TIMELINE
                 </button>
                 <div style="margin-top: 10px; display: flex; gap: 10px;">
-                   <button type="button" @click="startCountertopMode()" x-show="steps.length > 0" class="btn btn-primary" style="flex: 1; background-color: var(--success); height: 50px;">
-                       START BAKE
-                   </button>
-                   <a href="{% url 'calculator_phase3' %}" class="btn btn-secondary" style="flex: 1; text-align: center; line-height: 50px; height: 50px;">
+                   <a href="{% url 'calculator_phase3' category=state.selected_master archetype=state.preset_slug %}" class="btn btn-secondary" style="flex: 1; text-align: center; line-height: 50px; height: 50px;">
                        BACK
                    </a>
                 </div>
             </div>
         </div>
-
-        <!-- Timer view -->
-        <!-- Countertop Active Timeline View -->
-            <div class="card" x-show="countertopMode" x-transition style="display: none; padding: 1.5rem; min-height: 100%;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
-                    <span style="font-weight: 700; font-size: 1.15rem; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase;">
-                        🚀 Countertop Live Timeline
-                    </span>
-                    <button type="button" 
-                            style="background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-weight: 600; font-size: 0.85rem;"
-                            @click="stopAlarm(); pauseTimer(); countertopMode = false;">
-                        EXIT BAKE ✕
-                    </button>
-                              <!-- Sequential Timeline Progress Blocks -->
-                <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
-                    <template x-for="(step, idx) in steps" :key="step.key">
-                        <div style="flex: 1; min-width: 90px; text-align: center; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);"
-                             :style="idx === currentStepIndex ? 'background-color: rgba(255, 136, 0, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 700;' : (idx < currentStepIndex ? 'color: var(--success); opacity: 0.6;' : 'color: var(--text-muted); opacity: 0.4; border: 1px solid transparent;')">
-                            <div style="font-size: 1.15rem;" x-text="idx < currentStepIndex ? '✅' : (idx === currentStepIndex ? '⏱️' : '💤')"></div>
-                            <div style="font-size: 0.8rem; text-transform: uppercase; margin-top: 0.25rem;" x-text="step.name"></div>
-                            <div style="font-size: 0.7rem; margin-top: 0.1rem;" x-text="step.duration_sec >= 60 ? Math.round(step.duration_sec / 60) + 'm' : step.duration_sec + 's'"></div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Active Step Showcase -->
-                <div :class="isAlarm ? 'flash-alarm' : ''"
-                     style="border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;"
-                     :style="isAlarm ? 'border-left: 4px solid var(--danger);' : 'background-color: #1a1a1f; border-left: 4px solid var(--accent);'">
-                     <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;" :style="isAlarm ? 'color: var(--danger);' : 'color: var(--accent);'">Active Step</div>
-                     <h3 style="margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);" x-text="steps[currentStepIndex].name"></h3>
-                     <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="steps[currentStepIndex].desc || ''"></p>
-
-                     <!-- Water Temperature Calibration dynamic readout during Mix/Knead steps -->
-                     <div x-show="steps[currentStepIndex].is_mix || steps[currentStepIndex].is_knead" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 1rem; align-items: center;">
-                         <div style="background-color: rgba(255, 136, 0, 0.1); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); flex: 1;">
-                             <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Water Temp Calibration</div>
-                             <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="waterTemp + '°F'"></div>
-                             <div style="font-size: 0.75rem; color: var(--text-secondary);">Target DDT is 78°F</div>
-                         </div>
-                     </div>
-    </div>
 {% endblock %}
 
 {% block phase_right_panel %}
-        <!-- Panel B: Pragmatic Magic Layer (AIInsightCard for non-grain items when AI active) -->
-                    <div x-show="global_ai_enabled && hovered_element && !hovered_element.startsWith('grain_')" style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 152, 0, 0.15); box-shadow: 0 0 10px rgba(255, 136, 0, 0.05);">
-                        <h3 style="color: #ff9800; margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 136, 0, 0.1); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                            🤖 Pragmatic Magic Layer
-                        </h3>
-                        
-                        <!-- Insight Loading State -->
-                        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                                <span class="spinner" style="width: 10px; height: 10px;"></span>
-                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
-                            </div>
-                        </div>
+    <!-- Active Selected Recipe -->
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
+        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name || enginesArchetypes[selected_master]?.[preset_slug]?.label || '{{ recipe.title|default:"Final Calibration Phase"|escapejs }}'"></div>
+    </div>
+    <!-- Panel B: AIInsightCard for non-grain items when AI active -->
+    <div x-show="global_ai_enabled && hovered_element && !hovered_element.startsWith('grain_')" style="display: flex; flex-direction: column; gap: 1.25rem;">
         
-        <div x-show="recipeCompiled && !hovered_element" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
-            <div id="geometry-metadata" style="display: none;"
-     data-geometry-status="{{ geometry_evaluation.status|default:'recommended' }}"
-     data-geometry-advisory="{{ geometry_evaluation.advisory_label|default:'' }}"
-     data-geometry-temp-offset="{{ geometry_evaluation.profile_adjustments.oven_temp_offset_f|default:0 }}"
-     data-geometry-time-offset="{{ geometry_evaluation.profile_adjustments.bake_time_offset_m|default:0 }}"
-     data-geometry-steam-override="{{ geometry_evaluation.profile_adjustments.steam_override|default:'no-change' }}">
-</div>
-
-{% if recipe.structural_warning %}
-<div x-show="current_phase >= 3" x-transition
-     style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-    <h4 style="color: var(--danger); margin: 0 0 0.25rem 0; font-weight: 600; font-size: 1.05rem;">⚠️ Gluten Strength Notice</h4>
-    <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
-        {{ recipe.structural_warning }}
-    </p>
-</div>
-{% endif %}
-
-<!-- SLEEK EMPTY STATE -->
-<div x-show="current_phase === 1" x-transition
-     style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; text-align: center; padding: 6rem 1.5rem;">
-    Select a dough preset and flour medium to compile formulas...
-</div>
-
-<!-- FORMULA AND INSTRUCTIONS PANEL (PHASE 4) -->
-<div x-show="current_phase >= 4" x-transition>
-    
-    <!-- COMPILED FORMULA -->
-    <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
-            <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: {{ recipe.target_mass }}g</span>
+        <!-- Insight Loading State -->
+        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span class="spinner" style="width: 10px; height: 10px;"></span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
+            </div>
         </div>
-
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <!-- Flour Base Weight Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: var(--text-primary); font-weight: 600;">Added Flour Weight</span>
-                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_flour }}g</span>
-            </div>
-            
-            <!-- Individual Grains / Mill Blend Sub-Items -->
-            <div style="display: contents;">
-                {% if recipe.wheat_berry_mix %}
-                    {% for berry, weight in recipe.wheat_berry_mix.items %}
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                            <span style="color: var(--text-muted);">↳ {{ berry }}</span>
-                            <span style="color: var(--text-secondary); font-weight: 500;">{{ weight }}g</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">↳ {% if recipe.grain_type == "whole_wheat" %}Whole Wheat Flour{% elif recipe.grain_type == "spelt" %}Spelt Flour{% elif recipe.grain_type == "kamut" %}Kamut Flour{% elif recipe.grain_type == "einkorn" %}Einkorn Flour{% else %}Refined Flour (AP/Bread){% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.added_flour }}g</span>
-                    </div>
-                {% endif %}
-            </div>
-            
-            <!-- Added Liquid Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
-                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
-            </div>
-            <div style="display: contents;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                    <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label == "Whole Milk" %}Whole Milk{% elif recipe.liquid_label == "Almond Milk" %}Almond Milk{% else %}Pure Water{% endif %}</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.liquid_weight }}g</span>
-                </div>
-            </div>
-            
-            <!-- Leaven Row -->
-            {% if leaven_type == "sourdough" %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">Sourdough Starter (100% hydration)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.starter_weight }}g</span>
-                </div>
-                <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">↳ Sourdough Starter</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.starter_weight }}g</span>
-                    </div>
-                </div>
-            {% else %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">Instant Dry Yeast</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.yeast_weight }}g</span>
-                </div>
-                <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">↳ Commercial Yeast</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.yeast_weight }}g</span>
-                    </div>
-                </div>
-            {% endif %}
-            
-            <!-- Enrichments: Butter / Oil -->
-            {% if recipe.added_butter > 0 or recipe.added_oil > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">
-                        {% if recipe.added_butter > 0 %}Butter (solid enrichment){% else %}Fats / Oil (liquid enrichment){% endif %}
-                    </span>
-                    <span style="color: var(--text-primary); font-weight: 700;">
-                        {% if recipe.added_butter > 0 %}{{ recipe.added_butter }}{% else %}{{ recipe.added_oil }}{% endif %}g
-                    </span>
-                </div>
-                <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">
-                            ↳ {% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label }}{% elif recipe.added_butter > 0 %}Butter{% else %}Default Fat/Oil{% endif %}
-                        </span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">
-                            {% if recipe.added_butter > 0 %}{{ recipe.added_butter }}{% else %}{{ recipe.added_oil }}{% endif %}g
-                        </span>
-                    </div>
-                </div>
-            {% endif %}
-            
-            <!-- Enrichments: Sugar -->
-            {% if recipe.effective_sugar_pct > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">Sugar</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.sugar_weight }}g</span>
-                </div>
-                <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">↳ Granulated Sugar</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.sugar_weight }}g</span>
-                    </div>
-                </div>
-            {% endif %}
-            
-            <!-- Binders: Eggs / Aquafaba -->
-            {% if recipe.added_eggs > 0 or recipe.added_egg_whites > 0 or recipe.added_aquafaba > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">
-                        {% if recipe.added_eggs > 0 %}Whole Eggs (binder){% elif recipe.added_egg_whites > 0 %}Egg Whites (binder){% else %}Aquafaba (vegan binder){% endif %}
-                    </span>
-                    <span style="color: var(--text-primary); font-weight: 700;">
-                        {% if recipe.added_eggs > 0 %}{{ recipe.added_eggs }}{% elif recipe.added_egg_whites > 0 %}{{ recipe.added_egg_whites }}{% else %}{{ recipe.added_aquafaba }}{% endif %}g
-                    </span>
-                </div>
-                <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">
-                            ↳ {% if recipe.added_eggs > 0 %}Whole Eggs{% elif recipe.added_egg_whites > 0 %}Egg Whites{% else %}Vegan Aquafaba{% endif %}
-                        </span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">
-                            {% if recipe.added_eggs > 0 %}{{ recipe.added_eggs }}{% elif recipe.added_egg_whites > 0 %}{{ recipe.added_egg_whites }}{% else %}{{ recipe.added_aquafaba }}{% endif %}g
-                        </span>
-                    </div>
-                </div>
-            {% endif %}
-            
-            <!-- Salt Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: var(--text-primary); font-weight: 600;">Salt (2% ratio)</span>
-                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.salt_weight }}g</span>
-            </div>
-            <div style="display: contents;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                    <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.salt_weight }}g</span>
-                </div>
-            </div>
-            
-            <!-- Flavor Inclusions Row -->
-            {% if recipe.flavor_inclusions %}
-                {% for inclusion in recipe.flavor_inclusions %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--text-primary); font-weight: 600;">{{ inclusion.name }} ({{ inclusion.percentage }}%)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ inclusion.weight }}g</span>
-                </div>
-                <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
-                        <span style="color: var(--text-muted);">↳ {{ inclusion.volume_description }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ inclusion.weight }}g</span>
-                    </div>
-                </div>
-                {% endfor %}
-            {% endif %}
-            
-            <!-- Total Scaled Weight Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
-                <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
-                <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;">{{ recipe.target_mass }}g</span>
-            </div>
+        
+        <!-- Analysis Content -->
+        <div x-show="!sidebar_insight_loading && sidebar_analysis" x-transition.opacity.duration.200ms style="margin-top: 0.5rem;">
+            <div x-html="sidebar_analysis" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);"></div>
         </div>
     </div>
-
-    <!-- BAKING PROFILE -->
-    <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
-            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Oven Temp</div>
-            </div>
-            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Bake Time</div>
-            </div>
-            <div>
-                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">
-                    {% if steam_required %}Yes{% else %}No{% endif %}
-                </div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Steam</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- GEOMETRY SUITABILITY ADVISORY -->
-    {% if geometry_evaluation %}
-        <div style="background-color: #1a1a1f; border-left: 4px solid {% if geometry_evaluation.status == 'sub-optimal' %}var(--warning){% else %}var(--success){% endif %}; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-            <div style="font-size: 0.85rem; font-weight: 600; color: {% if geometry_evaluation.status == 'sub-optimal' %}var(--warning){% else %}var(--success){% endif %}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
-                <span>Geometry Advisory: {{ geometry_evaluation.status|title }}</span>
-                {% if geometry_evaluation.status == 'sub-optimal' %}
-                    <span style="font-size: 0.75rem; background: rgba(255, 159, 28, 0.15); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">Warning Glow Active</span>
-                {% endif %}
-            </div>
-            <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
-                {{ geometry_evaluation.advisory_label }}
-            </p>
-            {% if geometry_evaluation.profile_adjustments.oven_temp_offset_f != 0 or geometry_evaluation.profile_adjustments.bake_time_offset_m != 0 or geometry_evaluation.profile_adjustments.steam_override != 'no-change' %}
-                <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.5rem; margin-top: 0.5rem;">
-                    <strong>AI Profile Adjustments Applied:</strong>
-                    <ul style="margin: 0.25rem 0 0 0; padding-left: 1.25rem; list-style-type: disc;">
-                        {% if geometry_evaluation.profile_adjustments.oven_temp_offset_f != 0 %}
-                            <li>Oven Temp Offset: {{ geometry_evaluation.profile_adjustments.oven_temp_offset_f }}°F</li>
-                        {% endif %}
-                        {% if geometry_evaluation.profile_adjustments.bake_time_offset_m != 0 %}
-                            <li>Bake Time Offset: {{ geometry_evaluation.profile_adjustments.bake_time_offset_m }}m</li>
-                        {% endif %}
-                        {% if geometry_evaluation.profile_adjustments.steam_override != 'no-change' %}
-                            <li>Steam Override: {{ geometry_evaluation.profile_adjustments.steam_override }}</li>
-                        {% endif %}
-                    </ul>
-                </div>
-            {% endif %}
-        </div>
-    {% endif %}
-
-    <!-- SUBSTITUTION ALERTS -->
-    {% if recipe.substitution_notes %}
-        <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
-            {% for note in recipe.substitution_notes %}
-                <div style="background-color: #1a1a1f; border-left: 4px solid var(--success); padding: 1rem; border-radius: var(--radius-sm);">
-                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Substitution Adjustment</div>
-                    <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">{{ note }}</p>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- THERMAL PROFILE -->
-    <div x-show="!countertopMode" x-transition style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-        <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm);">
-            <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Liquid Water Temp</div>
-            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
-                {{ recipe.required_water_temp_f }}°F
-            </div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                ({{ recipe.required_water_temp_c }}°C) to hit DDT 78°F
-            </div>
-        </div>
-        <div style="background-color: #1a1a1f; border-left: 4px solid var(--warning); padding: 1rem; border-radius: var(--radius-sm);">
-            <div style="font-size: 0.85rem; font-weight: 600; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em;">Target Doneness</div>
-            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
-                {{ doneness_temp_f }}°F
-            </div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                ({{ doneness_temp_c }}°C) internal probe temp
-            </div>
-        </div>
-    </div>
-
-    <!-- AI SENSORY BENCHMARKS -->
-    <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">AI Sensory Benchmarks</div>
-        <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.5;">{{ sensory_description }}</p>
-    </div>
-
-    <!-- AI CRAFT ELEVATORS -->
-    <div x-show="globalElevateRecipe && globalElevateRecipe.length > 0" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">AI Craft Elevators</div>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <template x-for="(tip, index) in globalElevateRecipe" :key="index">
-                <div style="display: flex; align-items: flex-start; gap: 0.75rem; background-color: rgba(255, 255, 255, 0.03); padding: 0.75rem; border-radius: var(--radius-sm);">
-                    <div style="color: var(--accent); font-size: 1.1rem; margin-top: -2px;">✨</div>
-                    <div style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.4;" x-text="tip"></div>
-                </div>
-            </template>
-        </div>
-    </div>
-
-    <!-- PITFALL ALERTS -->
-    {% if pitfalls %}
-        <div style="margin-top: 1.5rem;">
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Operational Warnings & Task Injections</div>
-            {% for pitfall in pitfalls %}
-                <div style="background-color: #1a1a1f; border-left: 4px solid var(--warning); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
-                    <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-size: 0.95rem; font-weight: 600;">⚠️ {{ pitfall.title }}</h4>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;">{{ pitfall.message }}</p>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
-    <div id="countertop-data" 
-         data-steps="{{ countertop_steps_json }}"
-         data-bake-temp="{{ bake_temp_f }}"
-         data-bake-steam="{% if steam_required %}Yes{% else %}No{% endif %}"
-         data-doneness-temp="{{ doneness_temp_f }}"
-         data-water-temp="{{ recipe.required_water_temp_f }}"
-         style="display: none;">
-    </div>
-
-</div>
-
-        </div>
-        <div x-show="!recipeCompiled && !hovered_element" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
-             Click "Compile Recipe" to generate output.
+        
+        <div x-show="!hovered_element" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+             Select parameters and compile your recipe when ready.
         </div>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{{ static 'js/calculator/phase4.js' }}"></script>
+{% block head_scripts %}
+<script src="{% static 'js/calculator/core.js' %}"></script>
+<script src="{% static 'js/calculator/phase4.js' %}"></script>
 {% endblock %}

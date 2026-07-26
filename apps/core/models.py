@@ -247,3 +247,23 @@ class BackgroundTask(models.Model):
     def __str__(self):
         return f"Task {self.id} ({self.status} - {self.progress}%)"
 
+class SavedRecipe(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, help_text="e.g. 'My Sourdough Boule'")
+    
+    # Core categorization
+    category_slug = models.CharField(max_length=100)
+    archetype_slug = models.CharField(max_length=100)
+    
+    # State storage
+    configuration_state = models.JSONField(help_text="The session state dictionary used to calculate this formula")
+    compiled_data = models.JSONField(help_text="The final output of calculate_final_recipe(state)")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    objects = SoftDeleteManager()
+    all_objects = AllObjectsManager()
+    
+    def __str__(self):
+        return self.name

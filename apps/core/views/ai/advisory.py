@@ -12,7 +12,7 @@ from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core import bakers_math
-from apps.core import gemma_client
+from apps.core import gemma
 from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 
 logger = logging.getLogger("grainlab.views")
@@ -25,7 +25,7 @@ class AiGrainAdvisoryView(View):
         Returns dynamic recommendation and warning details for the requested preset or category.
         """
         from django.http import JsonResponse
-        from apps.core import gemma_client
+        from apps.core import gemma
         from apps.core.models import SystemSetting
         import json
     
@@ -58,7 +58,7 @@ class AiGrainAdvisoryView(View):
         advisory = None
         if ai_enabled:
             try:
-                advisory = gemma_client.get_grain_advisory_ai(
+                advisory = gemma.get_grain_advisory_ai(
                     preset_slug, category_slug, 
                     selected_grains=selected_grains,
                     only_evaluations=only_evaluations,
@@ -71,12 +71,12 @@ class AiGrainAdvisoryView(View):
                 )
             except Exception as e:
                 logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
-                advisory = {"grain_evaluations": [], "elevate_recipe": []}
+                return JsonResponse({"error": "Failed fetching advisory"}, status=503)
         else:
-            advisory = gemma_client.get_local_grain_advisory(preset_slug, category_slug, preset_name=preset_name, active_archetype_id=active_archetype_id)
+            advisory = gemma.get_local_grain_advisory(preset_slug, category_slug, preset_name=preset_name, active_archetype_id=active_archetype_id)
             if only_elevate:
                 # Generate local/mock elevate tips when AI is disabled
-                mock_data = gemma_client.get_mock_gemma_response(
+                mock_data = gemma.get_mock_gemma_response(
                     system_prompt="",
                     user_prompt=json.dumps({
                         "preset_slug": preset_slug,
@@ -94,8 +94,8 @@ class AiGrainAdvisoryView(View):
         if only_evaluations:
             return JsonResponse({
                 "grain_evaluations": advisory.get("grain_evaluations", []),
-                "mill_recommendation": advisory.get("mill_recommendation", None),
-                "sifted_recommendation": advisory.get("sifted_recommendation", None)
+                "mill_evaluations": advisory.get("mill_evaluations", []),
+                "sifter_evaluations": advisory.get("sifter_evaluations", {})
             })
         elif only_elevate:
             return JsonResponse({"elevate_recipe": advisory.get("elevate_recipe", [])})
@@ -103,8 +103,8 @@ class AiGrainAdvisoryView(View):
             return JsonResponse({
                 "grain_evaluations": advisory.get("grain_evaluations", []),
                 "elevate_recipe": advisory.get("elevate_recipe", []),
-                "mill_recommendation": advisory.get("mill_recommendation", None),
-                "sifted_recommendation": advisory.get("sifted_recommendation", None)
+                "mill_evaluations": advisory.get("mill_evaluations", []),
+                "sifter_evaluations": advisory.get("sifter_evaluations", {})
             })
 
 
@@ -114,7 +114,7 @@ def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = No
     """
     from apps.core.models import WheatBerry, BreadPreset
     from grainlab.engines import router
-    from apps.core.gemma_client import evaluate_grains_batch
+    from apps.core.gemma import evaluate_grains_batch
 
     preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
     if not category_slug and preset and preset.dough_category:

@@ -12,7 +12,7 @@ from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core import bakers_math
-from apps.core import gemma_client
+from apps.core import gemma
 from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 
 logger = logging.getLogger("grainlab.views")

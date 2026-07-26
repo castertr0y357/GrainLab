@@ -12,7 +12,7 @@ from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core import bakers_math
-from apps.core import gemma_client
+from apps.core import gemma
 from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 
 logger = logging.getLogger("grainlab.views")
@@ -75,15 +75,15 @@ class GenerateVariantsView(View):
         if creativity_level_raw:
             try:
                 creativity_level = int(creativity_level_raw)
-                result = gemma_client.generate_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
+                result = gemma.generate_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
             except Exception as e:
                 logger.error(f"[Views] Failed generating creativity variants: {e}")
-                result = None
+                return JsonResponse({"error": "Failed generating variants"}, status=503)
         else:
-            result = gemma_client.generate_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
+            result = gemma.generate_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
 
         if result is None:
-            return JsonResponse({"generated_variants": []}, status=200)
+            return JsonResponse({"error": "Failed generating variants"}, status=503)
 
         return JsonResponse(result, status=200)
 
@@ -135,9 +135,9 @@ class GenerateCreativityRecipesView(View):
                     "absorption": float(g.moisture_absorption_coef),
                 })
 
-        result = gemma_client.generate_creativity_recipes(engine_id, active_archetype_id, inventory)
+        result = gemma.generate_creativity_recipes(engine_id, active_archetype_id, inventory)
         if not result or not result.get("recipes"):
-            fallback = gemma_client.get_fallback_creativity_recipes(engine_id, active_archetype_id, pref_slugs=[])
+            fallback = gemma.get_fallback_creativity_recipes(engine_id, active_archetype_id, pref_slugs=[])
             return JsonResponse(fallback, status=200)
 
         return JsonResponse(result, status=200)
@@ -146,7 +146,7 @@ class GenerateCreativityRecipesView(View):
 class AiOptimizeSharesView(View):
     def get(self, request):
         from django.http import JsonResponse
-        from apps.core import gemma_client
+        from apps.core import gemma
         from apps.core.models import WheatBerry
         import json
     
@@ -162,7 +162,7 @@ class AiOptimizeSharesView(View):
         if not active_berries or not preset_slug:
             return JsonResponse({"shares": {}})
         
-        result = gemma_client.optimize_grain_blend(preset_slug, preset_name, active_berries)
+        result = gemma.optimize_grain_blend(preset_slug, preset_name, active_berries)
         if result:
             shares, warning = result
             return JsonResponse({"shares": shares, "warning": warning})

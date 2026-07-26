@@ -1,0 +1,391 @@
+{% extends 'calculator/phase_base.html' %}
+{% load static %}
+
+{% block title %}Final Recipe - GrainLab{% endblock %}
+
+{% block phase_x_data %}
+x-data="phase4App({
+    current_phase: 5,
+    selected_master: '{{ state.selected_master|escapejs }}',
+    preset_slug: '{{ state.preset_slug|escapejs }}',
+    recipe_name: '{{ state.recipe_name|default:""|escapejs }}',
+    global_ai_enabled: {{ state.global_ai_enabled|yesno:"true,false" }},
+    recipeCompiled: true
+})"
+{% endblock %}
+
+{% block phase_x_init %}
+x-init="loadCompiledData();"
+{% endblock %}
+
+{% block phase_left_panel %}
+    <!-- COMPILED FORMULA -->
+    <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
+            <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: {{ recipe.target_mass }}g</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Flour Base Weight Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Added Flour Weight</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.added_flour }}g</span>
+            </div>
+            
+            <!-- Individual Grains / Mill Blend Sub-Items -->
+            <div style="display: contents;">
+                {% if recipe.wheat_berry_mix %}
+                    {% for berry, weight in recipe.wheat_berry_mix.items %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                            <span style="color: var(--text-muted);">↳ {{ berry }}</span>
+                            <span style="color: var(--text-secondary); font-weight: 500;">{{ weight }}g</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ {% if recipe.grain_type == "whole_wheat" %}Whole Wheat Flour{% elif recipe.grain_type == "spelt" %}Spelt Flour{% elif recipe.grain_type == "kamut" %}Kamut Flour{% elif recipe.grain_type == "einkorn" %}Einkorn Flour{% else %}Refined Flour (AP/Bread){% endif %}</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.added_flour }}g</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Added Liquid Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
+            </div>
+            <div style="display: contents;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label == "Whole Milk" %}Whole Milk{% elif recipe.liquid_label == "Almond Milk" %}Almond Milk{% else %}Pure Water{% endif %}</span>
+                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.liquid_weight }}g</span>
+                </div>
+            </div>
+            
+            <!-- Leaven Row -->
+            {% if leaven_type == "sourdough" %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Sourdough Starter (100% hydration)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.starter_weight }}g</span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ Sourdough Starter</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.starter_weight }}g</span>
+                    </div>
+                </div>
+            {% else %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Instant Dry Yeast</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.yeast_weight }}g</span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ Commercial Yeast</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.yeast_weight }}g</span>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Enrichments: Butter / Oil -->
+            {% if recipe.added_butter > 0 or recipe.added_oil > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">
+                        {% if recipe.added_butter > 0 %}Butter (solid enrichment){% else %}Fats / Oil (liquid enrichment){% endif %}
+                    </span>
+                    <span style="color: var(--text-primary); font-weight: 700;">
+                        {% if recipe.added_butter > 0 %}{{ recipe.added_butter }}{% else %}{{ recipe.added_oil }}{% endif %}g
+                    </span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">
+                            ↳ {% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label }}{% elif recipe.added_butter > 0 %}Butter{% else %}Default Fat/Oil{% endif %}
+                        </span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">
+                            {% if recipe.added_butter > 0 %}{{ recipe.added_butter }}{% else %}{{ recipe.added_oil }}{% endif %}g
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Enrichments: Sugar -->
+            {% if recipe.effective_sugar_pct > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">Sugar</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.sugar_weight }}g</span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ Granulated Sugar</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.sugar_weight }}g</span>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Binders: Eggs / Aquafaba -->
+            {% if recipe.added_eggs > 0 or recipe.added_egg_whites > 0 or recipe.added_aquafaba > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">
+                        {% if recipe.added_eggs > 0 %}Whole Eggs (binder){% elif recipe.added_egg_whites > 0 %}Egg Whites (binder){% else %}Aquafaba (vegan binder){% endif %}
+                    </span>
+                    <span style="color: var(--text-primary); font-weight: 700;">
+                        {% if recipe.added_eggs > 0 %}{{ recipe.added_eggs }}{% elif recipe.added_egg_whites > 0 %}{{ recipe.added_egg_whites }}{% else %}{{ recipe.added_aquafaba }}{% endif %}g
+                    </span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">
+                            ↳ {% if recipe.added_eggs > 0 %}Whole Eggs{% elif recipe.added_egg_whites > 0 %}Egg Whites{% else %}Vegan Aquafaba{% endif %}
+                        </span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">
+                            {% if recipe.added_eggs > 0 %}{{ recipe.added_eggs }}{% elif recipe.added_egg_whites > 0 %}{{ recipe.added_egg_whites }}{% else %}{{ recipe.added_aquafaba }}{% endif %}g
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Salt Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-primary); font-weight: 600;">Salt (2% ratio)</span>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.salt_weight }}g</span>
+            </div>
+            <div style="display: contents;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
+                    <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.salt_weight }}g</span>
+                </div>
+            </div>
+            
+            <!-- Flavor Inclusions Row -->
+            {% if recipe.flavor_inclusions %}
+                {% for inclusion in recipe.flavor_inclusions %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">{{ inclusion.name }} ({{ inclusion.percentage }}%)</span>
+                    <span style="color: var(--text-primary); font-weight: 700;">{{ inclusion.weight }}g</span>
+                </div>
+                <div style="display: contents;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <span style="color: var(--text-muted);">↳ {{ inclusion.volume_description }}</span>
+                        <span style="color: var(--text-secondary); font-weight: 500;">{{ inclusion.weight }}g</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Total Scaled Weight Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
+                <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
+                <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;">{{ recipe.target_mass }}g</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BAKING PROFILE -->
+    <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
+            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Oven Temp</div>
+            </div>
+            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Bake Time</div>
+            </div>
+            <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">
+                    {% if steam_required %}Yes{% else %}No{% endif %}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Steam</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Timer view -->
+    <!-- Countertop Active Timeline View -->
+    <div x-show="countertopMode" x-transition style="display: none; background-color: #1a1a1f; padding: 1.5rem; margin-top: 1.5rem; border-radius: var(--radius-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+            <span style="font-weight: 700; font-size: 1.15rem; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase;">
+                🚀 Countertop Live Timeline
+            </span>
+            <button type="button" 
+                    style="background: rgba(220, 53, 69, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-weight: 600; font-size: 0.85rem;"
+                    @click="stopAlarm(); pauseTimer(); countertopMode = false;">
+                EXIT BAKE ✕
+            </button>
+        </div>
+        <!-- Sequential Timeline Progress Blocks -->
+        <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+            <template x-for="(step, idx) in steps" :key="step.key">
+                <div style="flex: 1; min-width: 90px; text-align: center; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);"
+                     :style="idx === currentStepIndex ? 'background-color: rgba(255, 136, 0, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 700;' : (idx < currentStepIndex ? 'color: var(--success); opacity: 0.6;' : 'color: var(--text-muted); opacity: 0.4; border: 1px solid transparent;')">
+                    <div style="font-size: 1.15rem;" x-text="idx < currentStepIndex ? '✅' : (idx === currentStepIndex ? '⏱️' : '💤')"></div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; margin-top: 0.25rem;" x-text="step.name"></div>
+                    <div style="font-size: 0.7rem; margin-top: 0.1rem;" x-text="step.duration_sec >= 60 ? Math.round(step.duration_sec / 60) + 'm' : step.duration_sec + 's'"></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Active Step Showcase -->
+        <div :class="isAlarm ? 'flash-alarm' : ''"
+             style="border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;"
+             :style="isAlarm ? 'border-left: 4px solid var(--danger);' : 'background-color: #1a1a1f; border-left: 4px solid var(--accent);'">
+             <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;" :style="isAlarm ? 'color: var(--danger);' : 'color: var(--accent);'">Active Step</div>
+             <h3 style="margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);" x-text="steps[currentStepIndex]?.name"></h3>
+             <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" x-text="steps[currentStepIndex]?.desc || ''"></p>
+
+             <!-- Water Temperature Calibration dynamic readout during Mix/Knead steps -->
+             <div x-show="steps[currentStepIndex]?.is_mix || steps[currentStepIndex]?.is_knead" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 1rem; align-items: center;">
+                 <div style="background-color: rgba(255, 136, 0, 0.1); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); flex: 1;">
+                     <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Water Temp Calibration</div>
+                     <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="waterTemp + '°F'"></div>
+                     <div style="font-size: 0.75rem; color: var(--text-secondary);">Target DDT is 78°F</div>
+                 </div>
+             </div>
+        </div> <!-- Closes Active Step Showcase -->
+    </div> <!-- Closes countertopMode card -->
+{% endblock %}
+
+{% block phase_right_panel %}
+    <!-- Active Selected Recipe -->
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
+        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name || enginesArchetypes[selected_master]?.[preset_slug]?.label || '{{ recipe.title|default:"Final Calibration Phase"|escapejs }}'"></div>
+    </div>
+    
+    <div x-show="!countertopMode">
+        <button type="button" @click="startCountertopMode()" x-show="steps.length > 0" class="btn btn-primary" style="width: 100%; background-color: var(--success); height: 50px; margin-bottom: 10px;">
+            START BAKE
+        </button>
+        <form action="{% url 'save_recipe' %}" method="POST" style="margin-bottom: 10px;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary" style="width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.1em; background-color: var(--accent); color: #000; border: none;">
+                💾 SAVE & SHARE RECIPE
+            </button>
+        </form>
+        <a href="{% url 'calculator_phase4' category=state.selected_master archetype=state.preset_slug %}" class="btn btn-secondary" style="display: block; width: 100%; text-align: center; line-height: 50px; height: 50px;">
+            BACK TO TWEAKING
+        </a>
+    </div>
+
+    <!-- GEOMETRY SUITABILITY ADVISORY -->
+    {% if geometry_evaluation %}
+        <div style="background-color: #1a1a1f; border-left: 4px solid {% if geometry_evaluation.status == 'sub-optimal' %}var(--warning){% else %}var(--success){% endif %}; padding: 1rem; border-radius: var(--radius-sm); margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: {% if geometry_evaluation.status == 'sub-optimal' %}var(--warning){% else %}var(--success){% endif %}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <span>Geometry Advisory: {{ geometry_evaluation.status|title }}</span>
+                {% if geometry_evaluation.status == 'sub-optimal' %}
+                    <span style="font-size: 0.75rem; background: rgba(255, 159, 28, 0.15); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">Warning Glow Active</span>
+                {% endif %}
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
+                {{ geometry_evaluation.advisory_label }}
+            </p>
+            {% if geometry_evaluation.profile_adjustments.oven_temp_offset_f != 0 or geometry_evaluation.profile_adjustments.bake_time_offset_m != 0 or geometry_evaluation.profile_adjustments.steam_override != 'no-change' %}
+                <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.5rem; margin-top: 0.5rem;">
+                    <strong>AI Profile Adjustments Applied:</strong>
+                    <ul style="margin: 0.25rem 0 0 0; padding-left: 1.25rem; list-style-type: disc;">
+                        {% if geometry_evaluation.profile_adjustments.oven_temp_offset_f != 0 %}
+                            <li>Oven Temp Offset: {{ geometry_evaluation.profile_adjustments.oven_temp_offset_f }}°F</li>
+                        {% endif %}
+                        {% if geometry_evaluation.profile_adjustments.bake_time_offset_m != 0 %}
+                            <li>Bake Time Offset: {{ geometry_evaluation.profile_adjustments.bake_time_offset_m }}m</li>
+                        {% endif %}
+                        {% if geometry_evaluation.profile_adjustments.steam_override != 'no-change' %}
+                            <li>Steam Override: {{ geometry_evaluation.profile_adjustments.steam_override }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- SUBSTITUTION ALERTS -->
+    {% if recipe.substitution_notes %}
+        <div style="margin-bottom: 1.5rem; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for note in recipe.substitution_notes %}
+                <div style="background-color: #1a1a1f; border-left: 4px solid var(--success); padding: 1rem; border-radius: var(--radius-sm);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Substitution Adjustment</div>
+                    <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.4;">{{ note }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- THERMAL PROFILE -->
+    <div x-show="!countertopMode" x-transition style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; margin-top: 1.5rem;">
+        <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Liquid Water Temp</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
+                {{ recipe.required_water_temp_f }}°F
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                ({{ recipe.required_water_temp_c }}°C) to hit DDT 78°F
+            </div>
+        </div>
+        <div style="background-color: #1a1a1f; border-left: 4px solid var(--warning); padding: 1rem; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em;">Target Doneness</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; color: var(--text-primary);">
+                {{ doneness_temp_f }}°F
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                ({{ doneness_temp_c }}°C) internal probe temp
+            </div>
+        </div>
+    </div>
+
+    <!-- AI SENSORY BENCHMARKS -->
+    <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">AI Sensory Benchmarks</div>
+        <p style="font-size: 0.95rem; color: var(--text-primary); margin: 0; line-height: 1.5;">{{ sensory_description }}</p>
+    </div>
+
+    <!-- AI CRAFT ELEVATORS -->
+    <div x-show="globalElevateRecipe && globalElevateRecipe.length > 0" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">AI Craft Elevators</div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <template x-for="(tip, index) in globalElevateRecipe" :key="index">
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; background-color: rgba(255, 255, 255, 0.03); padding: 0.75rem; border-radius: var(--radius-sm);">
+                    <div style="color: var(--accent); font-size: 1.1rem; margin-top: -2px;">✨</div>
+                    <div style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.4;" x-text="tip"></div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- PITFALL ALERTS -->
+    {% if pitfalls %}
+        <div style="margin-top: 1.5rem;">
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Operational Warnings & Task Injections</div>
+            {% for pitfall in pitfalls %}
+                <div style="background-color: #1a1a1f; border-left: 4px solid var(--warning); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+                    <h4 style="color: var(--warning); margin: 0 0 0.25rem 0; font-size: 0.95rem; font-weight: 600;">⚠️ {{ pitfall.title }}</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;">{{ pitfall.message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <div id="geometry-metadata" style="display: none;"
+     data-geometry-status="{{ geometry_evaluation.status|default:'recommended' }}"
+     data-geometry-advisory="{{ geometry_evaluation.advisory_label|default:'' }}"
+     data-geometry-temp-offset="{{ geometry_evaluation.profile_adjustments.oven_temp_offset_f|default:0 }}"
+     data-geometry-time-offset="{{ geometry_evaluation.profile_adjustments.bake_time_offset_m|default:0 }}"
+     data-geometry-steam-override="{{ geometry_evaluation.profile_adjustments.steam_override|default:'no-change' }}">
+    </div>
+
+    <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
+    <div id="countertop-data" 
+         data-steps="{{ countertop_steps_json }}"
+         data-bake-temp="{{ bake_temp_f }}"
+         data-bake-steam="{% if steam_required %}Yes{% else %}No{% endif %}"
+         data-doneness-temp="{{ doneness_temp_f }}"
+         data-water-temp="{{ recipe.required_water_temp_f }}"
+         style="display: none;">
+    </div>
+{% endblock %}
+
+{% block head_scripts %}
+<script src="{% static 'js/calculator/core.js' %}"></script>
+<script src="{% static 'js/calculator/phase4.js' %}"></script>
+{% endblock %}

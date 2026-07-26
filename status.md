@@ -170,3 +170,6 @@
 - Fixed sidebar CSS wrapping issue.
 - Refactored remaining phase templates (Phase 4 and beyond) to inherit from `phase_base.html` to maintain consistent sidebar/border layout.
 - Conducted thorough verification tests to ensure all complex functionality remains fully functional after template inheritance migration.
+- **Recipe Selection Pipeline**: Formula selections in Phase 2 correctly serialize state (name and secondary ingredients) into Django sessions via `Phase2View.post`, passing it effectively to `Phase3View`.
+- **Phase 3 Interface Setup**: The UI binds and correctly displays the selected recipe name at the top of the sidebar. The left panel supports dynamic ingredient selection with specialized pill-button categories across lipids, liquids, binders, sweeteners, leaveners, and additives.
+- **Prompt Architecture**: The AI prompt in `phase2_client.py` has been explicitly tuned to force the LLM to provide mechanical/chemical justifications for `SUB-OPTIMAL` and `NOT RECOMMENDED` mill and sifter items (preventing parroting).

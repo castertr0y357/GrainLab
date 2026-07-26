@@ -1,4 +1,257 @@
-export const actions = {
+// phase3.js
+document.addEventListener('alpine:init', () => {
+    Alpine.data('phase3App', (initialData) => ({
+        // State variables required for Phase 3
+        current_phase: initialData.current_phase || 3,
+        selected_master: initialData.selected_master || null,
+        global_ai_enabled: initialData.global_ai_enabled || true,
+        enginesArchetypes: initialData.enginesArchetypes || {},
+        engines_ff: initialData.engines_ff || {},
+        
+        hydration: initialData.hydration || 70,
+        fat: initialData.fat || 0,
+        sugar: initialData.sugar || 0,
+        starter: initialData.starter || 20,
+        
+        mill_type: initialData.mill_type || null,
+        is_sifted: initialData.is_sifted || false,
+        custom_mixer: initialData.custom_mixer || null,
+        
+        selectedRecipeSecondaryIngredients: initialData.selectedRecipeSecondaryIngredients || null,
+        recipe_name: initialData.recipe_name || '',
+        preset_slug: initialData.preset_slug || '',
+        activeBerries: initialData.active_berries || [],
+        flavor_inclusions: initialData.flavor_inclusions || [],
+        
+        // Loading State
+        phase3Loading: false,
+        phase3LoadingMessage: '',
+        phase3Error: null,
+        // Progressive Disclosure State
+        activeSubstituteCategory: null,
+        substitutesCache: {},
+        substituteLoading: false,
+
+        phase3_generation_steps: [],
+        
+        // Secondary Ingredient Selections
+        secondary_lipid_category: 'None',
+        secondary_lipid_option: 'None',
+        secondary_lipid_temp: 'N/A',
+        secondary_liquid_category: 'None',
+        secondary_liquid_option: 'None',
+        secondary_liquid_temp: 'N/A',
+        secondary_binder_category: 'None',
+        secondary_binder_option: 'None',
+        secondary_binder_temp: 'N/A',
+        secondary_sweetener_category: 'None',
+        secondary_sweetener_option: 'None',
+        secondary_sweetener_temp: 'N/A',
+        secondary_leavener_category: 'None',
+        secondary_leavener_option: 'None',
+        secondary_leavener_temp: 'N/A',
+        secondary_additive_category: 'None',
+        secondary_additive_option: 'None',
+        secondary_additive_temp: 'N/A',
+        
+        // Form Factor stuff (if needed in phase 3)
+        ff_expanded: null,
+        
+        // Hover state variables
+        hovered_element: null,
+        sidebar_tier: '',
+        sidebar_labor_roi: '',
+        sidebar_analysis: '',
+        sidebar_insight_loading: false,
+        
+        // Pre-fetched insights
+        batchInsightsMap: {},
+        factual_dictionary: {},
+        mill_recommendation: null,
+        sifted_recommendation: null,
+        
+        
+        fetchSubstitutes(categoryKey) {
+            if (this.substitutesCache[categoryKey]) {
+                this.activeSubstituteCategory = categoryKey;
+                return;
+            }
+
+            this.substituteLoading = true;
+            this.activeSubstituteCategory = categoryKey;
+
+            const originalRec = this.selectedRecipeSecondaryIngredients[categoryKey];
+            const inventory_ids = (this.activeBerries || []).map(b => b.id).join(',');
+
+            const payload = {
+                engine_id: this.selected_master,
+                active_archetype_id: this.preset_slug,
+                recipe_slug: this.preset_slug,
+                recipe_name: this.recipe_name,
+                selected_grains: inventory_ids,
+                target_category: categoryKey,
+                original_recommendation: originalRec
+            };
+
+            fetch(`/generate-substitutes/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrf_token
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) {}
+                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.substitutes) {
+                    this.substitutesCache[categoryKey] = data.substitutes;
+                }
+                this.substituteLoading = false;
+            })
+            .catch(err => {
+                console.error("Failed fetching substitutes:", err);
+                // Instead of failing entirely, just close it or show an error
+                this.substituteLoading = false;
+                this.substitutesCache[categoryKey] = [];
+            });
+        },
+        
+                
+        generateMoreSubstitutes(categoryKey) {
+            this.substituteLoading = true;
+            this.activeSubstituteCategory = categoryKey;
+
+            const originalRec = this.selectedRecipeSecondaryIngredients[categoryKey];
+            const inventory_ids = (this.activeBerries || []).map(b => b.id).join(',');
+            
+            // Get currently displayed substitute names to exclude them
+            const currentSubstitutes = this.substitutesCache[categoryKey] || [];
+            const excludeNames = currentSubstitutes.map(s => s.name);
+
+            const payload = {
+                engine_id: this.selected_master,
+                active_archetype_id: this.preset_slug,
+                recipe_slug: this.preset_slug,
+                recipe_name: this.recipe_name,
+                selected_grains: inventory_ids,
+                target_category: categoryKey,
+                original_recommendation: originalRec,
+                exclude_names: excludeNames
+            };
+
+            fetch(`/generate-substitutes/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrf_token
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) {}
+                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.substitutes) {
+                    // Append new substitutes instead of replacing
+                    const existing = this.substitutesCache[categoryKey] || [];
+                    this.substitutesCache[categoryKey] = [...existing, ...data.substitutes];
+                }
+                this.substituteLoading = false;
+            })
+            .catch(err => {
+                console.error("Failed fetching more substitutes:", err);
+                this.substituteLoading = false;
+            });
+        },
+confirmSubstitute(categoryKey, substituteObj) {
+            this.selectedRecipeSecondaryIngredients[categoryKey].name = substituteObj.name;
+            this.selectedRecipeSecondaryIngredients[categoryKey].temperature = substituteObj.temperature;
+            this.selectedRecipeSecondaryIngredients[categoryKey].reasoning = substituteObj.difference_explanation;
+            this.activeSubstituteCategory = null;
+        },
+        init() {
+            console.log("Phase 3 App Initialized.");
+            this.csrf_token = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            this.fetchSecondaryIngredients();
+        },
+
+        fetchSecondaryIngredients() {
+            if (!this.global_ai_enabled) {
+                return;
+            }
+            
+            this.phase3Loading = true;
+            this.phase3LoadingMessage = 'Formulating Final Secondary Ingredients...';
+            this.phase3_generation_steps = [
+                { id: '1', text: 'Analyzing grain blend structural profile...', active: true, completed: false },
+                { id: '2', text: 'Calculating hydration interactions...', active: false, completed: false },
+                { id: '3', text: 'Finalizing secondary ingredient recommendations...', active: false, completed: false }
+            ];
+
+            let stepInt = setInterval(() => {
+                let activeIndex = this.phase3_generation_steps.findIndex(s => s.active);
+                if (activeIndex >= 0 && activeIndex < this.phase3_generation_steps.length - 1) {
+                    this.phase3_generation_steps[activeIndex].active = false;
+                    this.phase3_generation_steps[activeIndex].completed = true;
+                    this.phase3_generation_steps[activeIndex + 1].active = true;
+                }
+            }, 2500);
+
+            const inventory_ids = (this.activeBerries || []).map(b => b.id).join(',');
+            const params = new URLSearchParams({
+                recipe_slug: this.preset_slug,
+                engine_id: this.selected_master,
+                active_archetype_id: this.preset_slug,
+                selected_grains: inventory_ids,
+                recipe_name: this.recipe_name,
+                mill_type: this.mill_type,
+                is_sifted: this.is_sifted ? 'true' : 'false'
+            });
+
+            fetch(`/ai-recipe-details/?${params.toString()}`)
+                .then(async res => {
+                    if (!res.ok) {
+                        let errData;
+                        try { errData = await res.json(); } catch(e) {}
+                        throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    clearInterval(stepInt);
+                    this.phase3_generation_steps.forEach(s => { s.active = false; s.completed = true; });
+                    if (data.secondary_ingredients) {
+                        this.selectedRecipeSecondaryIngredients = data.secondary_ingredients;
+                    }
+                    if (data.flavor_inclusions) {
+                        this.flavor_inclusions = data.flavor_inclusions;
+                    }
+                    setTimeout(() => {
+                        this.phase3Loading = false;
+                    }, 500);
+                })
+                .catch(err => {
+                    clearInterval(stepInt);
+                    console.error("Failed fetching phase 3 data:", err);
+                    this.phase3Error = err.message || "Failed to load ingredients.";
+                    this.phase3Loading = false;
+                });
+        },
+
+        // Inherit all methods from original actions.js
+        
 
 
     setHoveredElement(key) {
@@ -15,7 +268,18 @@ export const actions = {
             return;
         }
         
-        if (key.startsWith('grain_')) {
+        
+        if (key.startsWith('substitute_')) {
+            const index = parseInt(key.replace('substitute_', ''));
+            const sub = this.substitutesCache[this.activeSubstituteCategory]?.[index];
+            if (sub) {
+                this.sidebar_tier = '';
+                this.sidebar_analysis = `<strong>Quality Impact:</strong><br/>${sub.difference_explanation}`;
+                this.sidebar_insight_loading = false;
+            }
+            return;
+        }
+if (key.startsWith('grain_')) {
             if (this.advisoryLoading) {
                 this.sidebar_insight_loading = true;
                 this.sidebar_tier = '';
@@ -102,6 +366,15 @@ export const actions = {
             return;
         }
 
+        if (key.startsWith('specialty_')) {
+            const name = key.replace('specialty_', '');
+            this.sidebar_insight_loading = false;
+            this.sidebar_labor_roi = '';
+            this.sidebar_tier = 'recommended';
+            this.sidebar_analysis = `Flavor inclusion precisely calculated to complement ${this.recipe_name}.`;
+            return;
+        }
+
         
         // Use pre-fetched batch insights instead of lazily fetching
         this.sidebar_insight_loading = true;
@@ -112,14 +385,19 @@ export const actions = {
             this.sidebar_tier = data.recommendation_tier || '';
             this.sidebar_insight_loading = false;
         } else {
-            // Fallback if not loaded
-            this.sidebar_labor_roi = 'Low Priority / Minor Textural Return';
-            this.sidebar_analysis = 'Loading insight... Please wait.';
             this.sidebar_tier = '';
+            this.sidebar_analysis = 'Could not find details for this component.';
             this.sidebar_insight_loading = false;
         }
     },
 
+    hasValidSecondary(secObj) {
+        if (!secObj) return false;
+        if (!secObj.categories || secObj.categories.length === 0) return false;
+        if (secObj.categories.length === 1 && (secObj.categories[0].name.toLowerCase() === 'none' || secObj.categories[0].name.toLowerCase() === 'n/a')) return false;
+        if (secObj.required_category && (secObj.required_category.toLowerCase() === 'none' || secObj.required_category.toLowerCase() === 'n/a')) return false;
+        return true;
+    },
 
     clearHoveredElement() {
         this.hovered_element = null;
@@ -450,5 +728,19 @@ export const actions = {
                             // Broadcast the recipe-details-updated event to update the inner form component!
                             window.dispatchEvent(new CustomEvent('recipe-details-updated', {
                                 detail: data
-                            
-};
+                            }));
+                            this.recipe_details_loading = false;
+                        }
+                    }, 300);
+                } else {
+                    // Stay on the last step until resolved
+                    this.recipe_details_interval = setTimeout(tick, 400);
+                }
+            }
+        };
+        
+        this.recipe_details_interval = setTimeout(tick, 2000);
+    },
+
+    }));
+});

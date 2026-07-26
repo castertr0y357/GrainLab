@@ -12,7 +12,7 @@ from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core import bakers_math
-from apps.core import gemma_client
+from apps.core import gemma
 
 
 logger = logging.getLogger("grainlab.views")
@@ -50,7 +50,7 @@ def ai_analyze_wheat_berry_task(task: BackgroundTask, wb_id: uuid.UUID) -> dict:
     task.progress = 30
     task.save()
     
-    analysis = gemma_client.analyze_wheat_berry_ai(wb.name)
+    analysis = gemma.analyze_wheat_berry_ai(wb.name)
     task.progress = 80
     task.save()
     
@@ -71,7 +71,7 @@ def ai_analyze_equipment_task(task: BackgroundTask, eq_id: uuid.UUID) -> dict:
     task.progress = 30
     task.save()
     
-    analysis = gemma_client.analyze_equipment_ai(eq.name, eq.equipment_type)
+    analysis = gemma.analyze_equipment_ai(eq.name, eq.equipment_type)
     task.progress = 80
     task.save()
     
@@ -100,7 +100,7 @@ def bulk_ai_analyze_task(task: BackgroundTask) -> dict:
         task.progress = progress_pct
         task.save()
         
-        analysis = gemma_client.analyze_wheat_berry_ai(wb.name)
+        analysis = gemma.analyze_wheat_berry_ai(wb.name)
         if analysis:
             wb.protein_content = analysis.get("protein_content", wb.protein_content)
             wb.moisture_absorption_coef = analysis.get("moisture_absorption_coef", wb.moisture_absorption_coef)
@@ -115,7 +115,7 @@ def bulk_ai_analyze_task(task: BackgroundTask) -> dict:
         task.progress = progress_pct
         task.save()
         
-        analysis = gemma_client.analyze_equipment_ai(eq.name, eq.equipment_type)
+        analysis = gemma.analyze_equipment_ai(eq.name, eq.equipment_type)
         if analysis:
             eq.friction_heat_factor = analysis.get("friction_heat_factor", eq.friction_heat_factor)
             eq.notes = analysis.get("notes", eq.notes)

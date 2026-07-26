@@ -8,6 +8,10 @@ class CookieEngine(BaseEngine):
     gluten_behavior = "Minimal Gluten Interaction. Flour must allow melting fats and sugars to spread horizontally before the crumb structure sets in the oven."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Designed for toasted brown sugars and confections; whole-grain bitterness clashes aggressively."
     tannin_sensitive = True
+    supported_tweaks = ["enrichment"]
+    tweak_labels = {
+        "enrichment": ["Crispy / Chewy", "Soft / Cakey"]
+    }
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
