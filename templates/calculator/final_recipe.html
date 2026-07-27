@@ -236,6 +236,23 @@ x-init="loadCompiledData(); fetchAIInsights();"
         </div>
     </div>
     
+    <!-- STATIC DIRECTIONS -->
+    <div x-show="!countertopMode && steps.length > 0" x-transition style="background-color: #1a1a1f; padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        <h3 style="color: var(--accent); margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">Directions</h3>
+        <ol style="margin: 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; color: var(--text-primary);">
+            <template x-for="(step, idx) in steps" :key="step.key">
+                <li style="line-height: 1.5; padding-left: 0.5rem;">
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1.05rem;" x-text="step.name"></div>
+                    <div style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.35rem;" x-text="step.desc || ''"></div>
+                    <div style="color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; display: flex; gap: 1rem;">
+                        <span x-text="'⏱️ ' + (step.duration_sec >= 60 ? Math.round(step.duration_sec / 60) + 'm' : step.duration_sec + 's')"></span>
+                        <span x-show="step.is_mix || step.is_knead" x-text="'🌡️ Water Temp Target: ' + waterTemp + '°F'"></span>
+                    </div>
+                </li>
+            </template>
+        </ol>
+    </div>
+
     <!-- Timer view -->
     <!-- Countertop Active Timeline View -->
     <div x-show="countertopMode" x-transition style="display: none; background-color: #1a1a1f; padding: 1.5rem; margin-top: 1.5rem; border-radius: var(--radius-md);">

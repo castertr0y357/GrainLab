@@ -176,4 +176,5 @@
 - [x] Fix Alpine.js syntax errors (`Unexpected token '*'`, `Invalid or unexpected token`) in `final_recipe.html` by using `|default:"0"` template filters and safe fallback expressions.
 - [x] Fix `AttributeError: 'NoneType' object has no attribute 'get'` and 500 server errors on AI recipe generation endpoints by implementing defensive null-value handling for `secondary_ingredients`, `geometry_evaluation`, and `calibration` dictionaries in `calculation.py` and `phase2_client.py`.
 - [x] Add comprehensive unit test `test_calculate_final_recipe_none_secondary_ingredients` in `tests.py` verifying None safety in math calculations.
+- [x] Add a static "Directions" block to the final recipe page to display step-by-step instructions outside of Countertop mode.
 
