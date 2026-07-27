@@ -207,6 +207,11 @@ class BaseEngine:
         sec_liquid = kwargs.get("secondary_liquid") or "pure_water"
         sec_binder = kwargs.get("secondary_binder") or "none"
 
+        # AI Fallback mapping: if AI mapped an egg to liquid, re-map to binder
+        if "egg" in sec_liquid.lower():
+            sec_binder = sec_liquid
+            sec_liquid = "none"
+
         # Apply legacy substitution mapping
         if substitution and substitution.get("original") == "water":
             sub_sub = substitution.get("substitute")

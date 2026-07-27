@@ -151,6 +151,14 @@ class CookieEngine(BaseEngine):
         }
     }
 
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+        # Cookies have minimal to no added water (hydration comes from eggs/butter)
+        cookie_hyd = max(0.0, min(0.05, hydration))
+        # High fat and high sugar ratios relative to flour
+        cookie_fat = max(0.40, min(0.80, fat))
+        cookie_sugar = max(0.50, min(1.20, sugar))
+        return cookie_hyd, cookie_fat, cookie_sugar
+
     def get_ai_culinary_directive(self) -> str:
         return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient."
 

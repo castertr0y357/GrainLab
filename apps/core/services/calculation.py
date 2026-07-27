@@ -199,6 +199,14 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         secondary_sweetener = (secondary_ingredients.get("sweeteners") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
         secondary_leavener = (secondary_ingredients.get("leaveners") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
 
+        # Guard: AI sometimes mis-classifies eggs as a liquid medium since they provide moisture.
+        # Re-route any egg value from liquid -> binder so it renders in the correct "Binder" row.
+        _EGG_LIQUID_TERMS = ("egg", "aquafaba")
+        if secondary_liquid and any(t in secondary_liquid.lower() for t in _EGG_LIQUID_TERMS):
+            if not secondary_binder or secondary_binder.lower() in ("none", ""):
+                secondary_binder = secondary_liquid
+            secondary_liquid = None
+
         flavor_inclusions = state.get("flavor_inclusions") or []
         if isinstance(flavor_inclusions, str) and flavor_inclusions.strip():
             try:

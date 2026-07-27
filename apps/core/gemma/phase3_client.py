@@ -657,6 +657,11 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "    \"additives\": { \"category_name\": \"Additive\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }\n"
         "  }\n"
         "}\n\n"
+        "ABSOLUTE CATEGORY RULES — violating any of these is a critical error:\n"
+        "  - The 'liquids' key MUST only contain true fluid media: water, milk, cream, buttermilk, juice, coffee, or similar pourable liquids.\n"
+        "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
+        "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
+        "  - If a recipe does not require a liquid medium (e.g., cookies or shortbread where all moisture comes from eggs and butter), set 'liquids' to null.\n"
         "Do not include markdown blocks, just raw JSON."
     )
     

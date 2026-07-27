@@ -105,6 +105,8 @@ class BakersMathTests(TestCase):
     def test_secondary_ingredients_math(self):
         """
         Verify that secondary ingredients scale correctly under simplified math.
+        Note: preset_slug uses a bread engine so cookie-specific fat/hydration
+        clamping constraints do not interfere with these assertions.
         """
         recipe_salted = bakers_math.calculate_recipe(
             base_hydration=0.50,
@@ -112,7 +114,7 @@ class BakersMathTests(TestCase):
             base_sugar=0.10,
             target_mass=1000.0,
             secondary_lipid="salted_butter",
-            preset_slug="cookies"
+            preset_slug="sandwich_bread"
         )
         self.assertAlmostEqual(recipe_salted["added_butter"], 109.0, places=1)
 
@@ -123,7 +125,7 @@ class BakersMathTests(TestCase):
             target_mass=1000.0,
             secondary_liquid="buttermilk",
             secondary_binder="whole_eggs",
-            preset_slug="cookies"
+            preset_slug="sandwich_bread"
         )
         self.assertTrue(recipe_buttermilk_egg["added_eggs"] > 0)
         self.assertEqual(recipe_buttermilk_egg["liquid_label"], "Buttermilk")
