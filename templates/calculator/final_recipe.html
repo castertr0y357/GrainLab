@@ -61,14 +61,14 @@ x-init="loadCompiledData(); fetchAIInsights();"
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
             <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: <span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.target_mass }}g</span></span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: <span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <!-- Flour Base Weight Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Flour Base</span>
-                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.added_flour }}g</span></span>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_flour }}g</span></span>
             </div>
             
             <!-- Individual Grains / Mill Blend Sub-Items -->
@@ -77,13 +77,13 @@ x-init="loadCompiledData(); fetchAIInsights();"
                     {% for berry, weight in recipe.wheat_berry_mix.items %}
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                             <span style="color: var(--text-muted);">↳ {{ berry }}</span>
-                            <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ weight }}g</span></span>
+                            <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ weight }}g</span></span>
                         </div>
                     {% endfor %}
                 {% else %}
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                         <span style="color: var(--text-muted);">↳ {% if recipe.grain_type == "whole_wheat" %}Whole Wheat Flour{% elif recipe.grain_type == "spelt" %}Spelt Flour{% elif recipe.grain_type == "kamut" %}Kamut Flour{% elif recipe.grain_type == "einkorn" %}Einkorn Flour{% else %}Refined Flour (AP/Bread){% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.added_flour }}g</span></span>
+                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_flour }}g</span></span>
                     </div>
                 {% endif %}
             </div>
@@ -91,12 +91,12 @@ x-init="loadCompiledData(); fetchAIInsights();"
             <!-- Added Liquid Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
-                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.liquid_weight }}g</span></span>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.liquid_weight }}g</span></span>
             </div>
             <div style="display: contents;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                     <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label %}{{ recipe.liquid_label }}{% else %}Pure Water{% endif %}</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.liquid_weight }}g</span></span>
+                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.liquid_weight }}g</span></span>
                 </div>
             </div>
             
@@ -104,23 +104,23 @@ x-init="loadCompiledData(); fetchAIInsights();"
             {% if leaven_type == "sourdough" %}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener (Sourdough Starter)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.starter_weight }}g</span></span>
+                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                         <span style="color: var(--text-muted);">↳ {% if recipe.yeast_label %}{{ recipe.yeast_label }}{% else %}Sourdough Starter{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.starter_weight }}g</span></span>
+                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
                     </div>
                 </div>
             {% else %}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.yeast_weight }}g</span></span>
+                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                         <span style="color: var(--text-muted);">↳ {% if recipe.yeast_label %}{{ recipe.yeast_label }}{% else %}Commercial Yeast{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.yeast_weight }}g</span></span>
+                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
                     </div>
                 </div>
             {% endif %}
@@ -149,12 +149,12 @@ x-init="loadCompiledData(); fetchAIInsights();"
             {% if recipe.effective_sugar_pct > 0 %}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: var(--text-primary); font-weight: 600;">Sweetener</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.sugar_weight }}g</span></span>
+                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                         <span style="color: var(--text-muted);">↳ {% if recipe.sugar_label %}{{ recipe.sugar_label }}{% else %}Granulated Sugar{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.sugar_weight }}g</span></span>
+                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
                     </div>
                 </div>
             {% endif %}
@@ -182,12 +182,12 @@ x-init="loadCompiledData(); fetchAIInsights();"
             <!-- Salt Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Salt</span>
-                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.salt_weight }}g</span></span>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
             </div>
             <div style="display: contents;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                     <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.salt_weight }}g</span></span>
+                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
                 </div>
             </div>
             
@@ -210,7 +210,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
             <!-- Total Scaled Weight Row -->
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
-                <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;"><span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + \'g\'">{{ recipe.target_mass }}g</span></span>
+                <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;"><span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
             </div>
         </div>
     </div>
