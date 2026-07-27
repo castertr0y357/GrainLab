@@ -184,30 +184,38 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
                 fat_pct = max(0.0, fat_pct + offset.get("fat_offset_pct", 0.0))
                 sugar_pct = max(0.0, sugar_pct + offset.get("sugar_offset_pct", 0.0))
             
-        secondary_ingredients = state.get("secondary_ingredients", "{}")
+        secondary_ingredients = state.get("secondary_ingredients") or {}
         if isinstance(secondary_ingredients, str) and secondary_ingredients.strip():
             try:
-                secondary_ingredients = json.loads(secondary_ingredients)
+                secondary_ingredients = json.loads(secondary_ingredients) or {}
             except Exception:
                 secondary_ingredients = {}
+        elif not isinstance(secondary_ingredients, dict):
+            secondary_ingredients = {}
                 
-        secondary_lipid = secondary_ingredients.get("secondary_lipid", {}).get("name") if isinstance(secondary_ingredients, dict) else None
-        secondary_liquid = secondary_ingredients.get("secondary_liquid", {}).get("name") if isinstance(secondary_ingredients, dict) else None
-        secondary_binder = secondary_ingredients.get("secondary_binder", {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_lipid = (secondary_ingredients.get("lipids") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_liquid = (secondary_ingredients.get("liquids") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_binder = (secondary_ingredients.get("binders") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_sweetener = (secondary_ingredients.get("sweeteners") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_leavener = (secondary_ingredients.get("leaveners") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
 
-        flavor_inclusions = state.get("flavor_inclusions", [])
+        flavor_inclusions = state.get("flavor_inclusions") or []
         if isinstance(flavor_inclusions, str) and flavor_inclusions.strip():
             try:
-                flavor_inclusions = json.loads(flavor_inclusions)
+                flavor_inclusions = json.loads(flavor_inclusions) or []
             except Exception:
                 flavor_inclusions = []
+        elif not isinstance(flavor_inclusions, list):
+            flavor_inclusions = []
                 
-        flour_blend = state.get("flour_blend", {})
+        flour_blend = state.get("flour_blend") or {}
         if isinstance(flour_blend, str) and flour_blend.strip():
             try:
-                flour_blend = json.loads(flour_blend)
+                flour_blend = json.loads(flour_blend) or {}
             except Exception:
                 flour_blend = {}
+        elif not isinstance(flour_blend, dict):
+            flour_blend = {}
 
         recipe = bakers_math.calculate_recipe(
             base_hydration=hydration_pct,
@@ -233,6 +241,8 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             secondary_lipid=secondary_lipid,
             secondary_liquid=secondary_liquid,
             secondary_binder=secondary_binder,
+            secondary_sweetener=secondary_sweetener,
+            secondary_leavener=secondary_leavener,
             flavor_inclusions=flavor_inclusions,
             flour_blend=flour_blend
         )
@@ -293,9 +303,9 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         
     # 7b. Query geometry advisory and apply offsets
     if run_ai:
-        geom_advisory = gemma.get_geometry_advisory(preset_slug_resolved, preset_name, cat.slug, ff.slug)
-        geom_eval = geom_advisory.get("geometry_evaluation", {})
-        profile_adjustments = geom_eval.get("profile_adjustments", {})
+        geom_advisory = gemma.get_geometry_advisory(preset_slug_resolved, preset_name, cat.slug, ff.slug) or {}
+        geom_eval = geom_advisory.get("geometry_evaluation") or {}
+        profile_adjustments = geom_eval.get("profile_adjustments") or {}
     else:
         geom_eval = {}
         profile_adjustments = {}
@@ -325,8 +335,8 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         is_sifted = state.get("is_sifted") in ("on", "true", "True", True)
     
         if run_ai:
-            calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
-            estimated_bulk_hours = calibration.get("estimated_bulk_fermentation_hours", 4.0)
+            calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted) or {}
+            estimated_bulk_hours = calibration.get("estimated_bulk_fermentation_hours", 4.0) or 4.0
             estimated_proof_hours = 2.0
         else:
             estimated_bulk_hours = 4.0

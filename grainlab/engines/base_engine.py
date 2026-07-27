@@ -135,8 +135,25 @@ class BaseEngine:
             for b in active_berries:
                 name = _get_val(b, 'name')
                 slug = name.lower().replace(" ", "_").replace("-", "_")
-                pct = flour_blend.get(slug, 0.0)
-                shares[name] = float(pct) / 100.0
+                
+                pct = flour_blend.get(slug)
+                if pct is None:
+                    slug_clean = "".join(c for c in slug if c.isalnum() or c == '_')
+                    pct = flour_blend.get(slug_clean)
+                
+                if pct is None:
+                    for k, v in flour_blend.items():
+                        if k in slug or slug in k:
+                            pct = v
+                            break
+                            
+                shares[name] = float(pct or 0.0)
+                
+            total_share = sum(shares.values())
+            if total_share > 0:
+                shares = {k: v / total_share for k, v in shares.items()}
+            else:
+                shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
         else:
             shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
         
@@ -251,16 +268,26 @@ class BaseEngine:
             liquid_label = "Buttermilk"
         elif sec_liquid == "almond_milk":
             liquid_label = "Almond Milk"
+        elif sec_liquid and sec_liquid not in ["pure_water", "none"]:
+            liquid_label = sec_liquid.title()
 
         # Re-compute lipids weight
-        added_butter = fat_weight if sec_lipid in ["unsalted_butter", "salted_butter"] else 0.0
-        added_oil = fat_weight if sec_lipid not in ["unsalted_butter", "salted_butter"] else 0.0
-        fat_substitute_label = sec_lipid.replace("_", " ").title() if sec_lipid != "none" else None
+        added_butter = fat_weight if sec_lipid in ["unsalted_butter", "salted_butter", "butter"] else 0.0
+        added_oil = fat_weight if sec_lipid not in ["unsalted_butter", "salted_butter", "butter"] else 0.0
+        fat_substitute_label = sec_lipid.replace("_", " ").title() if sec_lipid and sec_lipid != "none" else None
 
         # Re-compute binders weight
         added_eggs = flour_weight * binder_pct if sec_binder == "whole_eggs" else 0.0
         added_egg_whites = flour_weight * binder_pct if sec_binder == "egg_whites" else 0.0
         added_aquafaba = flour_weight * binder_pct if sec_binder == "aquafaba_vegan" else 0.0
+        binder_label = sec_binder.replace("_", " ").title() if sec_binder and sec_binder != "none" else None
+        
+        # Leavener and Sweetener labels
+        sec_sweetener = kwargs.get("secondary_sweetener")
+        sweetener_label = sec_sweetener.replace("_", " ").title() if sec_sweetener and sec_sweetener != "none" else None
+        
+        sec_leavener = kwargs.get("secondary_leavener")
+        leavener_label = sec_leavener.replace("_", " ").title() if sec_leavener and sec_leavener != "none" else None
 
         # 5. Desired Dough Temperature (DDT)
         ddt_target_f = 78.0
@@ -295,17 +322,23 @@ class BaseEngine:
             "effective_sugar_pct": round(effective_sugar * 100, 1),
             "added_flour": round(added_flour, 1),
             "added_water": round(added_water, 1),
-            "liquid_label": liquid_label,
             "liquid_weight": round(liquid_weight, 1),
-            "sugar_weight": round(sugar_weight, 1),
-            "salt_weight": round(salt_weight, 1),
+            "liquid_label": liquid_label,
             "yeast_weight": round(yeast_weight, 1),
-            "starter_weight": round(starter_weight, 1),
+            "yeast_label": leavener_label or ("Sourdough Starter" if leaven_type == "sourdough" else "Commercial Yeast"),
+            "fat_weight": round(fat_weight, 1),
             "added_butter": round(added_butter, 1),
             "added_oil": round(added_oil, 1),
+            "fat_substitute_label": fat_substitute_label,
+            "sugar_weight": round(sugar_weight, 1),
+            "sugar_label": sweetener_label or "Granulated Sugar",
+            "salt_weight": round(salt_weight, 1),
+            "starter_weight": round(starter_weight, 1),
             "added_eggs": round(added_eggs, 1),
             "added_egg_whites": round(added_egg_whites, 1),
             "added_aquafaba": round(added_aquafaba, 1),
+            "binder_label": binder_label,
+            "inclusions": processed_inclusions,
             "secondary_lipid": sec_lipid,
             "secondary_liquid": sec_liquid,
             "secondary_binder": sec_binder,

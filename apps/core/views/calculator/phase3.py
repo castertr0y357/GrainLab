@@ -46,6 +46,10 @@ class Phase3View(View):
             'target_weight': request.POST.get('target_weight', 1000),
             'secondary_ingredients': request.POST.get('secondary_ingredients', '{}'),
             'flavor_inclusions': request.POST.get('flavor_inclusions', '[]'),
+            'flour_blend': request.POST.get('flour_blend', '{}'),
+            'default_yield_amount': request.POST.get('default_yield_amount', 1),
+            'yield_unit': request.POST.get('yield_unit', 'loaf'),
+            'is_portionable': request.POST.get('is_portionable', 'false') == 'true',
         }
         
         # Additional processing if any before phase 4 calculations

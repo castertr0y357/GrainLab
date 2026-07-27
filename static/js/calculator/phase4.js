@@ -10,6 +10,11 @@ document.addEventListener('alpine:init', () => {
         engines_ff: initialData.engines_ff || {},
         recipe_name: initialData.recipe_name || '',
         
+        default_yield_amount: initialData.default_yield_amount !== undefined ? parseFloat(initialData.default_yield_amount) : 1.0,
+        yield_unit: initialData.yield_unit || 'loaf',
+        is_portionable: initialData.is_portionable || false,
+        scaleMultiplier: 1.0,
+        
         mixing_method: initialData.mixing_method || 'hand_knead',
         active_action: initialData.active_action || 'stretch_fold',
         texture: initialData.texture !== undefined ? initialData.texture : 50,
@@ -260,6 +265,22 @@ document.addEventListener('alpine:init', () => {
         closeProcessAlternatives() {
             this.activeProcessCategory = null;
         },
+        // Methods inherited or specific
+        incrementScale() {
+            if (this.is_portionable) {
+                this.scaleMultiplier += 0.5;
+            } else {
+                this.scaleMultiplier += 1.0;
+            }
+        },
+        
+        decrementScale() {
+            let decrement = this.is_portionable ? 0.5 : 1.0;
+            if (this.scaleMultiplier > decrement) {
+                this.scaleMultiplier -= decrement;
+            }
+        },
+
         loadCompiledData() {
             const dataEl = document.getElementById('countertop-data');
             if (dataEl) {

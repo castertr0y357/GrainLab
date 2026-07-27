@@ -638,6 +638,9 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "You MUST align the flavor_inclusions specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as flavor inclusions!\n"
         "Each response must match this JSON schema exactly:\n"
         "{\n"
+        "  \"default_yield_amount\": 24,\n"
+        "  \"yield_unit\": \"cookies\",\n"
+        "  \"is_portionable\": true,\n"
         "  \"sidebar_science_profile\": \"A concise 2-3 sentence technical overview of this recipe's expected structural mechanics, flavor development, and hydration physics.\",\n"
         "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
         "  \"flour_blend\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20},\n"
@@ -787,6 +790,9 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
         pref_slugs = ["hard_red_spring_wheat"]
         
     return {
+        "default_yield_amount": 1,
+        "yield_unit": "loaf",
+        "is_portionable": False,
         "menu_description": f"A balanced formulation of {recipe_name or slug} optimized for target mechanics.",
         "recommended_grain_ids": pref_slugs,
         "flour_blend": flour_blend,

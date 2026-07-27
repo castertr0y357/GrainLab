@@ -196,7 +196,11 @@ x-init="init()"
         <input type="hidden" name="fat_pct" :value="fat">
         <input type="hidden" name="sugar_pct" :value="sugar">
         <input type="hidden" name="secondary_ingredients" :value="JSON.stringify(selectedRecipeSecondaryIngredients || {})">
-        <input type="hidden" name="flavor_inclusions" :value="JSON.stringify(flavor_inclusions || [])">
+        <input type="hidden" name="flavor_inclusions" :value="JSON.stringify($data.flavor_inclusions || [])">
+        <input type="hidden" name="flour_blend" :value="JSON.stringify($data.flour_blend || {})">
+        <input type="hidden" name="default_yield_amount" :value="$data.default_yield_amount">
+        <input type="hidden" name="yield_unit" :value="$data.yield_unit">
+        <input type="hidden" name="is_portionable" :value="$data.is_portionable">
     </form>
 {% endblock %}
 
@@ -226,6 +230,6 @@ x-init="init()"
 {% endblock %}
 
 {% block head_scripts %}
-<script src="{% static 'js/calculator/core.js' %}"></script>
-<script src="{% static 'js/calculator/phase3.js' %}"></script>
+<script src="{% static 'js/calculator/core.js' %}?v=1.1"></script>
+<script src="{% static 'js/calculator/phase3.js' %}?v=1.2"></script>
 {% endblock %}

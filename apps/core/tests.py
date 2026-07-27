@@ -608,6 +608,27 @@ class RecipeRestructuringAndBakingTests(TestCase):
         self.assertIn('doneness_temp_f', context)
         self.assertIn('required_water_temp_f', context['recipe'])
 
+    def test_calculate_final_recipe_none_secondary_ingredients(self) -> None:
+        """Verifies calculate_final_recipe handles secondary_ingredients with None category values without crashing."""
+        context = calculate_final_recipe({
+            "dough_category": self.category.slug,
+            "form_factor": self.form_factor.slug,
+            "texture_score": 50,
+            "crumb_score": 50,
+            "secondary_ingredients": {
+                "lipids": None,
+                "liquids": {"name": "Whole Milk", "category_name": "Liquid Medium"},
+                "binders": None,
+                "sweeteners": None,
+                "leaveners": None,
+            },
+            "flavor_inclusions": None,
+            "flour_blend": None,
+        }, run_ai=False)
+        self.assertIn("recipe", context)
+        self.assertIsNotNone(context["recipe"])
+
+
 
 class AuditSecurityQualityTests(TestCase):
     """
@@ -1184,3 +1205,4 @@ class GenerateVariantsTests(TestCase):
         # Truncated array bracket
         raw3 = '{"grain_evaluations": [{"grain_id": "123", "tier": "recommended"'
         self.assertEqual(json.loads(heal_json_string(raw3)), {"grain_evaluations": [{"grain_id": "123", "tier": "recommended"}]})
+

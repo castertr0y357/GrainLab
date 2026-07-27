@@ -67,10 +67,10 @@ def get_grain_advisory_ai(
                 selected_grains=selected_grains
             )
             recommended_slugs = native_details.get("recommended_grain_ids", [])
-            sec_ingredients = native_details.get("secondary_ingredients", {})
-            native_lipid = sec_ingredients.get("lipids", {}).get("required", "none")
-            native_liquid = sec_ingredients.get("liquids", {}).get("required", "pure_water")
-            native_binder = sec_ingredients.get("binders", {}).get("required", "none")
+            sec_ingredients = native_details.get("secondary_ingredients") or {}
+            native_lipid = (sec_ingredients.get("lipids") or {}).get("required", "none")
+            native_liquid = (sec_ingredients.get("liquids") or {}).get("required", "pure_water")
+            native_binder = (sec_ingredients.get("binders") or {}).get("required", "none")
             
             if native_lipid != "none":
                 specialty_ingredients.append(native_lipid.replace("_", " "))

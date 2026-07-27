@@ -22,6 +22,10 @@ document.addEventListener('alpine:init', () => {
         preset_slug: initialData.preset_slug || '',
         activeBerries: initialData.active_berries || [],
         flavor_inclusions: initialData.flavor_inclusions || [],
+        flour_blend: initialData.flour_blend || {},
+        default_yield_amount: initialData.default_yield_amount || 1,
+        yield_unit: initialData.yield_unit || 'loaf',
+        is_portionable: initialData.is_portionable || false,
         
         // Loading State
         phase3Loading: false,
@@ -237,6 +241,18 @@ confirmSubstitute(categoryKey, substituteObj) {
                     }
                     if (data.flavor_inclusions) {
                         this.flavor_inclusions = data.flavor_inclusions;
+                    }
+                    if (data.flour_blend) {
+                        this.flour_blend = data.flour_blend;
+                    }
+                    if (data.default_yield_amount !== undefined) {
+                        this.default_yield_amount = data.default_yield_amount;
+                    }
+                    if (data.yield_unit) {
+                        this.yield_unit = data.yield_unit;
+                    }
+                    if (data.is_portionable !== undefined) {
+                        this.is_portionable = data.is_portionable;
                     }
                     setTimeout(() => {
                         this.phase3Loading = false;
