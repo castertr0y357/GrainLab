@@ -18,11 +18,6 @@ def _get_val(obj, key, default=None):
         return obj.get(key, default)
     return default
 
-def _is_ai_enabled() -> bool:
-    """Checks if AI integration is active."""
-    # Check database settings to see if AI is active
-    return SystemSetting.get_val("ai_enabled", "False").lower() in ("true", "1", "t")
-
 def _get_api_config() -> tuple[str, str]:
     """Retrieves API details from SystemSettings."""
     url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
@@ -31,199 +26,6 @@ def _get_api_config() -> tuple[str, str]:
     if not url.endswith("/chat/completions"):
         url = url.rstrip("/") + "/chat/completions"
     return url, model
-
-def get_mock_gemma_response(system_prompt: str, user_prompt: str, expected_keys: list = None) -> dict | None:
-    """
-    Generates realistic, schema-compliant mock responses for offline testing/development.
-    """
-    import json
-    try:
-        user_data = json.loads(user_prompt)
-    except Exception:
-        user_data = {}
-
-    if expected_keys and "evaluation_result" in expected_keys:
-        grain_name = user_data.get("grain_name", "")
-        from apps.core.models import WheatBerry
-        wb = WheatBerry.objects.filter(name=grain_name).first()
-        if not wb:
-            grain_id = user_data.get("grain_id", "")
-            wb = WheatBerry.objects.filter(id=grain_id).first()
-        
-        from grainlab.engines import router
-        engine_id = user_data.get("engine_id", "hearth")
-        active_archetype_id = user_data.get("active_archetype_id")
-        
-        engine = None
-        try:
-            engine = router.get_engine_by_id(engine_id)
-        except Exception:
-            pass
-        if not engine:
-            try:
-                engine = router.get_engine_for_preset("", engine_id)
-            except Exception:
-                pass
-            
-        res = calculate_local_compatibility_from_specs(wb, engine, active_archetype_id=active_archetype_id)
-        return {
-            "evaluation_result": {
-                "compatibility_tier": res["tier"].upper().replace("-", "_"),
-                "technical_justification": res["reasoning"]
-            }
-        }
-
-    if expected_keys and "shares" in expected_keys:
-        berries = user_data.get("active_berries", [])
-        shares = {}
-        warning = None
-        if not berries:
-            return {"shares": {}, "structural_warning": None}
-            
-        if len(berries) == 2:
-            shares[berries[0]["name"]] = 0.70
-            shares[berries[1]["name"]] = 0.30
-            warning = "This split is optimized to balance the strong gluten of the first grain with the extensibility or flavor profile of the second."
-        else:
-            equal_share = round(1.0 / len(berries), 2)
-            for b in berries:
-                shares[b["name"]] = equal_share
-            shares[berries[-1]["name"]] += round(1.0 - sum(shares.values()), 2)
-        return {"shares": shares, "structural_warning": warning}
-
-    elif expected_keys and ("grain_evaluations" in expected_keys or "elevate_recipe" in expected_keys):
-        preset_slug = user_data.get("preset_slug", "")
-        category_slug = user_data.get("category_slug", "")
-        preset_name = user_data.get("preset_name", "")
-        inventory = user_data.get("inventory", [])
-        
-        from grainlab.engines import router
-        engine = router.get_engine_for_preset(preset_slug, category_slug)
-        
-        evaluations = []
-        for b in inventory:
-            class MockBerry:
-                def __init__(self, name, protein, hardness):
-                    self.name = name
-                    self.protein_content = protein
-                    self.hardness = hardness
-            wb = MockBerry(b.get("name"), b.get("protein", 12.0), b.get("hardness", "hard"))
-            res = calculate_local_compatibility_from_specs(wb, engine, preset_slug)
-            evaluations.append({
-                "grain_id": b.get("id"),
-                "tier": res["tier"],
-                "reasoning": res["reasoning"]
-            })
-            
-        elevate_recipe = [
-            "Adjust initial water temperature to regulate yeast/enzymatic activity under current ambient conditions.",
-            "Incorporate a 30-minute autolyse stage to fully hydrate raw bran and soften the structural network.",
-            "Utilize gradual, gentle folding rather than intensive mechanical mixing to control gluten elasticity."
-        ]
-        
-        return {
-            "grain_evaluations": evaluations,
-            "elevate_recipe": elevate_recipe,
-            "mill_recommendation": {
-                "mill_id": "mock-mill",
-                "reasoning": "[MOCK] A stone mill is ideal to retain volatile aromatics for this category."
-            },
-            "sifted_recommendation": {
-                "should_sift": False,
-                "reasoning": "[MOCK] Whole grain bran provides essential structure and flavor depth."
-            }
-        }
-
-    elif expected_keys and "recipes" in expected_keys:
-        engine_id = user_data.get("engine_id", "hearth")
-        active_archetype_id = user_data.get("active_archetype_id", "classic_sourdough")
-        inventory = user_data.get("inventory", [])
-        
-        def grain_slug(g):
-            return g.get("name", "").lower().replace(" ", "_").replace("/", "").replace("-", "_")
-
-        hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
-        soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
-        hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
-        soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
-        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta", "lean-crusty", "alkaline-bath", "fresh-pasta-noodles", "enriched-soft"] else soft_slugs
-
-        from apps.core.gemma.phase3_client import get_fallback_creativity_recipes
-        return get_fallback_creativity_recipes(engine_id, active_archetype_id, pref_slugs)
-
-    elif expected_keys and "generated_variants" in expected_keys:
-        engine_id = user_data.get("engine_id", "hearth")
-        active_archetype_id = user_data.get("active_archetype_id", "")
-        creativity_level = user_data.get("creativity_level")
-        exclude_names = user_data.get("exclude_names", [])
-
-        inventory = user_data.get("inventory", [])
-        hard_grains = [b for b in inventory if "hard" in b.get("hardness", "").lower()]
-        soft_grains = [b for b in inventory if "soft" in b.get("hardness", "").lower() or b.get("hardness") == "ancient"]
-
-        def grain_slug(g):
-            return g.get("name", "").lower().replace(" ", "_").replace("/", "").replace("-", "_")
-
-        hard_slugs = [grain_slug(g) for g in hard_grains[:2]] or ["hard_red_spring_wheat"]
-        soft_slugs = [grain_slug(g) for g in soft_grains[:2]] or ["soft_white_wheat"]
-        pref_slugs = hard_slugs if engine_id in ["hearth", "pan", "bath", "pasta", "lean-crusty", "alkaline-bath", "fresh-pasta-noodles", "enriched-soft"] else soft_slugs
-
-        c_lvl = int(creativity_level) if creativity_level is not None else 1
-        from apps.core.gemma.phase3_client import get_fallback_variants
-        return get_fallback_variants(engine_id, active_archetype_id, c_lvl, pref_slugs, exclude_names=exclude_names)
-
-    elif expected_keys and "pitfalls" in expected_keys:
-        return {
-            "pitfalls": [
-                {
-                    "title": "High Hydration Sticky Zone",
-                    "message": "The formula hydration is high relative to your grain blend. Ensure you use stretch-and-fold techniques rather than intensive mechanical kneading to maintain structure without tearing the gluten sheets."
-                }
-            ]
-        }
-
-    elif expected_keys and "sensory_description" in expected_keys:
-        return {
-            "sensory_description": "The dough should feel smooth, highly extensible, and slightly tacky but not sticky. It should hold its shape when rounded and show early signs of gas bubbles forming under the surface skin."
-        }
-
-    elif expected_keys and "geometry_evaluation" in expected_keys:
-        return {
-            "geometry_evaluation": {
-                "status": "recommended",
-                "advisory_label": "Excellent heat transfer properties and moisture retention, allowing the dough to expand fully before the crust sets.",
-                "profile_adjustments": {
-                    "oven_temp_offset_f": 0,
-                    "bake_time_offset_m": 0,
-                    "steam_override": "no-change"
-                }
-            }
-        }
-
-    elif expected_keys and "recommendation_tier" in expected_keys:
-        hovered = user_data.get("hovered_element", "").lower()
-        preset = user_data.get("preset_slug", "")
-        category = user_data.get("category_slug", "")
-        
-        from grainlab.engines import router
-        engine = router.get_engine_for_preset(preset, category)
-        
-        class MockBerry:
-            def __init__(self, name):
-                self.name = name
-                self.protein_content = 12.0
-                self.hardness = "hard"
-        wb = MockBerry(hovered)
-        res = calculate_local_compatibility_from_specs(wb, engine, preset)
-        
-        return {
-            "recommendation_tier": res["tier"],
-            "labor_roi_rating": "High Priority / Worth the Extra Step" if res["tier"] == "recommended" else "Low Priority / Minor Textural Return",
-            "last_10_percent_analysis": res["reasoning"],
-            "elevate_recipe": "Adjust hydration slightly to accommodate the grain's natural water-absorption capacity."
-        }
-
-    return None
 
 def assemble_system_prompt(engine, data_context: str, task_instructions: str, response_schema_example: str = None, active_archetype_id: str = None) -> str:
     """
@@ -379,9 +181,6 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     Caches results persistently using Django file cache framework.
     Returns None if any step fails.
     """
-    if not _is_ai_enabled():
-        return None
-
     import hashlib
     # Normalize user_prompt to ensure consistent caching key
     normalized_user_prompt = user_prompt
@@ -496,9 +295,6 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
     Submits a structured prompt to local Gemma with stream=True and yields JSON objects
     incrementally as they are generated from within a top-level JSON array.
     """
-    if not _is_ai_enabled():
-        return
-        
     url, model = _get_api_config()
     headers = {"Content-Type": "application/json"}
     
@@ -928,7 +724,7 @@ def get_contextual_pitfalls(category_slug: str, effective_hydration: float, grai
     Retrieves pitfall analysis from Gemma, falling back to local python rules.
     """
     from apps.core.gemma.core_client import _is_ai_enabled
-    if _is_ai_enabled():
+    if True:
         system_prompt = (
             "Analyze the recipe variables and identify potential baking pitfalls "
             "or custom step additions (e.g., pretzel soda boiling, high-hydration sticky dough). "
@@ -956,7 +752,7 @@ def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydrat
     Retrieves sensory text from Gemma, falling back to local description mappings.
     """
     from apps.core.gemma.core_client import _is_ai_enabled
-    if _is_ai_enabled():
+    if True:
         system_prompt = (
             "You are a baking science expert. Synthesize a descriptive sensory benchmark describing what the mixture (dough, batter, or paste) should look "
             "and feel like (texture, touch resilience, structure, visual indicators) "
@@ -987,9 +783,6 @@ def stream_final_insights(state: dict, recipe_data: dict = None, countertop_step
     Yields JSON objects as Server-Sent Events.
     """
     from apps.core.gemma.core_client import _is_ai_enabled, stream_gemma_api
-    if not _is_ai_enabled():
-        return None
-        
     is_sourdough = state.get("leaven_type") == "sourdough"
     sourdough_context = ""
     if is_sourdough:

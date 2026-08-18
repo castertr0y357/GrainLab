@@ -1,6 +1,6 @@
 import json
 import logging
-from apps.core.gemma.core_client import call_gemma_api, _is_ai_enabled, _get_val
+from apps.core.gemma.core_client import call_gemma_api, _get_val
 from apps.core.gemma.core_client import CATEGORY_TO_ENGINE
 
 
@@ -11,7 +11,7 @@ def get_substitution_offset(original_ing: str, substitute_ing: str, current_reci
     """
     Retrieves mathematical hydration/fat offsets from Gemma, falling back to local logic.
     """
-    if _is_ai_enabled():
+    if True:
         system_prompt = (
             "Analyze an ingredient swap (substitution) in baking. You must determine the exact composition of the SUBSTITUTE ingredient. "
             "Return a JSON object with: "
@@ -88,7 +88,7 @@ def calibrate_fermentation(starter_feed_hours: str, rise_speed: str, mill_type: 
     """
     Computes diagnostic parameters based on sourdough activity and sifting factors.
     """
-    if _is_ai_enabled():
+    if True:
         system_prompt = (
             "Calibrate bulk fermentation countdown targets and ash estimate based on "
             "starter feeding schedule and milling profile. Return a JSON object with: "
@@ -152,11 +152,6 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
         }
     }
     
-    if not _is_ai_enabled():
-        return {
-            "geometry_evaluation": fallback_data
-        }
-
     system_prompt = (
         "You are an expert baking science assistant. Evaluate the suitability of the selected baking geometry (equipment form factor) "
         "for the active recipe type and return a structured JSON response. Consider thermal mass, heat conduction, expansion, and steam dynamics.\n"
@@ -222,19 +217,6 @@ def generate_process_details(engine_id: str, active_archetype_id: str, recipe_sl
     logger.info(f"[Gemma Client] - Info - Calling generate_process_details for: {recipe_slug}")
     
     try:
-        if not _is_ai_enabled():
-            import time
-            time.sleep(1)
-            return {
-                "process_recommendations": {
-                    "mixing_method": {"name": "Hand Knead", "explanation": "Gentle hand mixing preserves delicate gluten networks."},
-                    "dough_handling": {"name": "Stretch and Fold", "explanation": "Builds structure slowly without oxidizing the dough."},
-                    "proofing_environment": {"name": "Cold Retard (38°F)", "explanation": "Slows yeast activity to develop complex organic acids and flavor."},
-                    "baking_vessel": {"name": "Dutch Oven", "explanation": "Traps steam to maximize oven spring and crust gelatinization."},
-                    "shaping_style": {"name": "Boule", "explanation": "Classic round shape promotes even baking and crumb openness."}
-                }
-            }
-            
         system_prompt = (
             "You are an expert baking science assistant. Your task is to recommend optimal process parameters "
             "for a specific bread or pastry recipe based on its characteristics.\n"
@@ -335,20 +317,6 @@ def stream_process_details(engine_id: str, active_archetype_id: str, recipe_slug
     
     logger.info(f"[Gemma Client] - Phase 4 AI PROMPT FED TO STREAM_PROCESS_DETAILS: {user_prompt}")
 
-    if not _is_ai_enabled():
-        import time
-        time.sleep(1)
-        mock_data = [
-            { "type": "process", "category": "mixing_method", "name": "Hand Knead", "explanation": "Gentle hand mixing preserves delicate gluten networks." },
-            { "type": "process", "category": "dough_handling", "name": "Stretch and Fold", "explanation": "Builds structure slowly without oxidizing the dough." },
-            { "type": "process", "category": "proofing_environment", "name": "Cold Retard (38°F)", "explanation": "Slows yeast activity to develop complex organic acids and flavor." },
-            { "type": "process", "category": "baking_vessel", "name": "Dutch Oven", "explanation": "Traps steam to maximize oven spring and crust gelatinization." },
-            { "type": "process", "category": "shaping_style", "name": "Boule", "explanation": "Classic round shape promotes even baking and crumb openness." }
-        ]
-        for m in mock_data:
-            yield json.dumps(m)
-        return
-
     from apps.core.gemma.core_client import stream_gemma_api
     for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
         yield chunk
@@ -390,18 +358,6 @@ def stream_process_alternatives(engine_id: str, active_archetype_id: str, recipe
         "excluded_names": exclude_names
     })
 
-    if not _is_ai_enabled():
-        import time
-        time.sleep(1)
-        mock_data = [
-            { "type": "alternative", "name": "Mix by Hand", "difference_explanation": "A gentle approach that connects you with the dough and prevents over-oxidation." },
-            { "type": "alternative", "name": "Food Processor", "difference_explanation": "Incredibly fast gluten development, but requires ice water to prevent overheating." },
-            { "type": "alternative", "name": "No-Knead Method", "difference_explanation": "Relies entirely on time and enzymatic action to develop gluten naturally." }
-        ]
-        for m in mock_data:
-            yield json.dumps(m)
-        return
-
     from apps.core.gemma.core_client import stream_gemma_api
     for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
         yield chunk
@@ -410,22 +366,6 @@ def generate_process_alternatives(engine_id: str, active_archetype_id: str, reci
     logger.info(f"[Gemma Client] - Info - Calling generate_process_alternatives for: {recipe_slug}, category: {target_category}")
     
     try:
-        if not _is_ai_enabled():
-            import time
-            time.sleep(1)
-            return {
-                "alternatives": [
-                    {
-                        "name": "Alternative 1",
-                        "difference_explanation": "This option produces a tighter crumb structure but is much easier to execute."
-                    },
-                    {
-                        "name": "Alternative 2",
-                        "difference_explanation": "This results in better volume but requires careful temperature control."
-                    }
-                ]
-            }
-            
         exclude_text = ""
         if exclude_names:
             names_str = ", ".join(exclude_names)

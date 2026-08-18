@@ -1,10 +1,10 @@
 import json
 import logging
 from django.core.cache import cache
-from apps.core.gemma.core_client import call_gemma_api, _is_ai_enabled, heal_json_string
+from apps.core.gemma.core_client import call_gemma_api, heal_json_string, assemble_system_prompt
 from apps.core.gemma.core_client import load_grain_registry, get_archetype_mechanics, get_grain_registry_profile
 from django.conf import settings
-from apps.core.gemma.core_client import call_gemma_api, _is_ai_enabled, heal_json_string, get_mock_gemma_response, stream_gemma_api
+from apps.core.gemma.core_client import call_gemma_api, heal_json_string, assemble_system_prompt, stream_gemma_api
 from apps.core.gemma.core_client import get_archetype_mechanics, CATEGORY_TO_ENGINE, ENGINE_FLAVORS
 from apps.core.models import SystemSetting
 
@@ -65,9 +65,6 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
     for a specific bread preset.
     Returns: (shares_dict, structural_warning) or None
     """
-    if not _is_ai_enabled():
-        return None
-        
     system_prompt = (
         "You are a food science assistant specializing in flour milling. "
         "Analyze the requested bread preset and the active wheat berries available. "
@@ -127,7 +124,7 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
     # 2. Fetch target archetype mechanics from active engine (force explicit dynamic prompt binding)
     archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
     
-    if _is_ai_enabled():
+    if True:
         data_context = (
             f"[INTRINSIC RAW MATERIAL PROFILE]\n"
             f"* Element Name: {wb.name}\n"
@@ -231,7 +228,7 @@ def evaluate_grains_batch(grains: list, engine, preset_name: str = None, preset_
         return results
         
     # 2. If there are uncached grains, query the LLM or run fallback
-    if _is_ai_enabled():
+    if True:
         archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
         
         data_context = (
@@ -499,12 +496,6 @@ def generate_recipe_variants(engine_id: str, active_archetype_id: str, inventory
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_variants: {str(e)}")
 
-    if not _is_ai_enabled():
-        if not _is_ai_enabled():
-            # Fall back to mock
-            mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
-            return mock
-        return None
     return None
 
 def generate_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list) -> dict | None:
@@ -554,12 +545,6 @@ def generate_creativity_recipes(engine_id: str, active_archetype_id: str, invent
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_creativity_recipes: {str(e)}")
 
-    if not _is_ai_enabled():
-        if not _is_ai_enabled():
-            # Fall back to mock
-            mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["recipes"])
-            return mock
-        return None
     return None
 
 def generate_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list, exclude_names: list = None, count: int = 5) -> dict | None:
@@ -608,12 +593,6 @@ def generate_creativity_variants(engine_id: str, creativity_level: int, active_a
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_creativity_variants: {str(e)}")
 
-    if not _is_ai_enabled():
-        if not _is_ai_enabled():
-            # Fall back to mock
-            mock = get_mock_gemma_response(system_prompt, user_prompt, expected_keys=["generated_variants"])
-            return mock
-        return None
     return None
 
 def stream_recipe_variants(engine_id: str, active_archetype_id: str, inventory: list, exclude_names: list = None, count: int = 5):
@@ -653,14 +632,6 @@ def stream_recipe_variants(engine_id: str, active_archetype_id: str, inventory: 
         "inventory": inventory,
         "exclude_names": exclude_names or [],
     })
-
-    if not _is_ai_enabled():
-        # Yield mock items synchronously
-        mock = get_fallback_variants(engine_id, active_archetype_id, 1, [], exclude_names=exclude_names)
-        if mock and "generated_variants" in mock:
-            for item in mock["generated_variants"]:
-                yield item
-        return
 
     for item in stream_gemma_api(system_prompt, user_prompt):
         yield item
@@ -703,14 +674,6 @@ def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventor
         "inventory": inventory,
     })
 
-    if not _is_ai_enabled():
-        # Yield mock items synchronously
-        mock = get_fallback_creativity_recipes(engine_id, active_archetype_id, [])
-        if mock and "recipes" in mock:
-            for item in mock["recipes"]:
-                yield item
-        return
-
     for item in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
         yield item
 
@@ -750,13 +713,6 @@ def stream_creativity_variants(engine_id: str, creativity_level: int, active_arc
         "inventory": inventory,
         "exclude_names": exclude_names or [],
     })
-
-    if not _is_ai_enabled():
-        mock = get_fallback_variants(engine_id, active_archetype_id, creativity_level, [], exclude_names=exclude_names)
-        if mock and "generated_variants" in mock:
-            for item in mock["generated_variants"]:
-                yield item
-        return
 
     for item in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
         yield item
@@ -839,9 +795,6 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
 
     try:
         # If AI is globally disabled in settings, use the offline mock fallback
-        if not _is_ai_enabled():
-            return get_local_recipe_details(recipe_slug, engine_id, active_archetype_id, selected_grains, recipe_name=recipe_name)
-
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "recommended_grain_ids"])
         if result and isinstance(result, dict) and "secondary_ingredients" in result:
             return result
@@ -849,7 +802,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_details: {str(e)}")
 
     # If AI is enabled but fails, we do NOT fallback to mock data, we return None to let the UI error overlay trigger
-    if _is_ai_enabled():
+    if True:
         return None
 
 def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False):
@@ -937,11 +890,6 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
     import logging
     logger = logging.getLogger("grainlab.gemma")
     logger.info(f"[Gemma Client] - Phase 3 AI PROMPT FED TO STREAM_RECIPE_DETAILS: {user_prompt}")
-
-    if not _is_ai_enabled():
-        mock_data = get_local_recipe_details(recipe_slug, engine_id, active_archetype_id, selected_grains, recipe_name=recipe_name)
-        yield json.dumps(mock_data)
-        return
 
     from apps.core.gemma.core_client import stream_gemma_api
     for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
@@ -1072,30 +1020,6 @@ def generate_substitutes(engine_id: str, active_archetype_id: str, recipe_slug: 
     logger.info(f"[Gemma Client] - Info - Calling generate_substitutes for: {recipe_slug}, category: {target_category}")
 
     try:
-        if not _is_ai_enabled():
-            # Mock data for substitutes
-            import time
-            time.sleep(1) # simulate network
-            return {
-                "substitutes": [
-                    {
-                        "name": "Alternative Option 1",
-                        "temperature": "Room Temp",
-                        "difference_explanation": "This alternative produces a denser crumb and less robust flavor but holds up well to hydration."
-                    },
-                    {
-                        "name": "Alternative Option 2",
-                        "temperature": "Cold",
-                        "difference_explanation": "This provides a flakier texture with a slightly sweeter profile."
-                    },
-                    {
-                        "name": "Alternative Option 3",
-                        "temperature": "Melted",
-                        "difference_explanation": "Using this melted will create a chewier texture and tighter crumb structure."
-                    }
-                ]
-            }
-            
         exclude_text = ""
         if exclude_names:
             names_str = ", ".join(exclude_names)
@@ -1135,7 +1059,7 @@ def generate_substitutes(engine_id: str, active_archetype_id: str, recipe_slug: 
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_substitutes: {str(e)}")
 
-    if _is_ai_enabled():
+    if True:
         return None
 
     return {"substitutes": []}
@@ -1147,30 +1071,6 @@ def stream_generate_substitutes(engine_id: str, active_archetype_id: str, recipe
     import json
     import time
     
-    if not _is_ai_enabled():
-        mock_data = {
-            "substitutes": [
-                {
-                    "name": "Alternative Option 1",
-                    "temperature": "Room Temp",
-                    "difference_explanation": "This alternative produces a denser crumb and less robust flavor but holds up well to hydration."
-                },
-                {
-                    "name": "Alternative Option 2",
-                    "temperature": "Cold",
-                    "difference_explanation": "This provides a flakier texture with a slightly sweeter profile."
-                },
-                {
-                    "name": "Alternative Option 3",
-                    "temperature": "Melted",
-                    "difference_explanation": "Using this melted will create a chewier texture and tighter crumb structure."
-                }
-            ]
-        }
-        time.sleep(1)
-        yield json.dumps(mock_data)
-        return
-
     exclude_text = ""
     if exclude_names:
         names_str = ", ".join(exclude_names)

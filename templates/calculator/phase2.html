@@ -10,7 +10,10 @@ x-data="phase2App({
     global_ai_enabled: {{ state.global_ai_enabled|yesno:"true,false" }},
     enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}' || '{}'),
     engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}' || '{}'),
-    berries: JSON.parse('{{ berries_json|escapejs }}' || '[]')
+    berries: JSON.parse('{{ berries_json|escapejs }}' || '[]'),
+    custom_archetype: '{{ custom_archetype|escapejs }}',
+    custom_name: '{{ custom_name|escapejs }}',
+    custom_desc: '{{ custom_desc|escapejs }}'
 })"
 {% endblock %}
 

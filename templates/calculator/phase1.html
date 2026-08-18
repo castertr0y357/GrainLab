@@ -51,33 +51,60 @@ x-data="phase1App({
                 {% endfor %}
             </div>
 
-            <!-- Autocomplete search relocated prominently to Phase 1 -->
+            <!-- AI Creative Prompter -->
             <div style="background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 1rem; color: var(--text-secondary);">
-                    Or Search Preset Target
-                </label>
-                <div class="search-container">
-                    <input type="text" 
-                           name="q" 
-                           placeholder="Search all recipes (e.g. Bagel, Focaccia, Naan)..." 
-                           class="search-input"
-                           x-model="query"
-                           @input="searchOpen = query.length >= 2"
-                           @click.away="searchOpen = false"
-                           hx-get="{% url 'search_presets' %}" 
-                           hx-trigger="keyup changed delay:300ms" 
-                           hx-target="#search-suggestions-flow"
-                           hx-indicator="#search-indicator-flow"
-                           style="height: 48px;">
-                    
-                    <div id="search-indicator-flow" class="htmx-indicator" style="position: absolute; right: 15px; top: 12px;">
-                        <span class="spinner"></span>
+                
+                <!-- Input State -->
+                <div x-show="!creative_streaming && creative_ideas.length === 0">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 1rem; color: var(--text-secondary);">
+                        Or Tell the AI What You Want to Bake
+                    </label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" 
+                               placeholder="e.g. Dutch Baby, or Bread for General Tso's Chicken..." 
+                               class="search-input"
+                               x-model="creative_query"
+                               @keydown.enter.prevent="generateCreativeIdeas()"
+                               style="height: 48px; flex-grow: 1;">
+                        <button type="button" 
+                                class="btn btn-primary" 
+                                @click="generateCreativeIdeas()" 
+                                style="height: 48px; padding: 0 1.5rem;">
+                            Ask AI
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Thinking State & Results State -->
+                <div x-show="creative_streaming || creative_ideas.length > 0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="font-weight: 600; color: var(--text-primary);">AI Suggestions</span>
+                        <button type="button" @click="creative_ideas = []; creative_streaming = false; creative_query = '';" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: transparent; color: var(--text-muted); border-color: transparent;">Cancel & Reset</button>
                     </div>
                     
-                    <div id="search-suggestions-flow" 
-                         class="search-results" 
-                         x-show="searchOpen" 
-                         style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem;">
+                        <!-- Generated Cards -->
+                        <template x-for="(idea, index) in creative_ideas" :key="index">
+                            <div class="card" 
+                                 @click="selectCreativeIdea(idea)"
+                                 @mouseenter="selected_master = idea.category_slug"
+                                 style="cursor: pointer; border: 2px solid var(--border); background: var(--bg-card); transition: var(--transition); padding: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-bottom: 0;">
+                                <strong style="color: var(--text-primary); font-size: 1rem; display: block; margin-bottom: 0.25rem;" x-text="idea.recipe_name"></strong>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);" x-text="idea.menu_description"></span>
+                            </div>
+                        </template>
+
+                        <!-- Loading Skeletons -->
+                        <template x-if="creative_streaming">
+                            <div style="display: contents;">
+                                <template x-for="i in Math.max(0, 3 - creative_ideas.length)">
+                                    <div class="card"
+                                         :style="'height: 90px; padding: 1rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; display: flex; align-items: center; justify-content: center; margin-bottom: 0; animation-delay: ' + (i * 0.2) + 's;'">
+                                        <span class="spinner" style="width: 20px; height: 20px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

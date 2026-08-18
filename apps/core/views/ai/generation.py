@@ -176,3 +176,28 @@ class AiOptimizeSharesView(View):
         return JsonResponse({"shares": {}})
 
 
+
+
+class GenerateCreativeIdeasView(View):
+    def get(self, request):
+        """
+        Generate creative ideas based on free-form prompt.
+        Accepts: GET ?prompt=<string>
+        Returns: SSE stream of JSON { generated_ideas: [...] }
+        """
+        prompt = request.GET.get('prompt', '').strip()
+        if not prompt:
+            from django.http import JsonResponse
+            return JsonResponse({"error": "prompt is required."}, status=400)
+            
+        generator = gemma.stream_creative_ideas(prompt)
+
+        from django.http import StreamingHttpResponse
+        import json
+        
+        def event_stream():
+            for item in generator:
+                yield f"data: {json.dumps(item)}\n\n"
+            yield "event: close\ndata: {}\n\n"
+
+        return StreamingHttpResponse(event_stream(), content_type="text/event-stream")

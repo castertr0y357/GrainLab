@@ -1,6 +1,6 @@
 import json
 import logging
-from apps.core.gemma.core_client import call_gemma_api, _is_ai_enabled, get_mock_gemma_response, assemble_system_prompt
+from apps.core.gemma.core_client import call_gemma_api, assemble_system_prompt
 from apps.core.gemma.phase3_client import get_local_recipe_details
 from apps.core.gemma.core_client import load_grain_registry, get_archetype_mechanics, FACTUAL_DICTIONARY, get_grain_registry_profile
 from apps.core.gemma.phase3_client import evaluate_single_grain
@@ -37,7 +37,7 @@ def get_grain_advisory_ai(
     if not active_berries:
         return {"grain_evaluations": []}
 
-    if _is_ai_enabled():
+    if True:
         selected_ids = [s.strip() for s in selected_grains.split(",") if s.strip()] if selected_grains else []
         selected_berries = [wb for wb in active_berries if str(wb.id) in selected_ids]
         selected_names = [wb.name for wb in selected_berries]
@@ -485,7 +485,7 @@ def analyze_wheat_berry_ai(name: str) -> dict | None:
     )
     user_prompt = json.dumps({"name": name})
     
-    if _is_ai_enabled():
+    if True:
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["protein_content", "hardness", "moisture_absorption_coef"])
         if result:
             try:
@@ -527,7 +527,7 @@ def analyze_equipment_ai(name: str, equipment_type: str) -> dict | None:
     )
     user_prompt = json.dumps({"name": name, "type": equipment_type})
 
-    if _is_ai_enabled():
+    if True:
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["friction_heat_factor", "notes", "details"])
         if result:
             try:

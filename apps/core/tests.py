@@ -844,7 +844,6 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertEqual(hard_eval["tier"], "recommended")
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    @patch('apps.core.gemma.phase2_client._is_ai_enabled', return_value=True)
     def test_grain_advisory_sovereignty_override(self, mock_ai_enabled, mock_call_gemma):
         import json
         from apps.core.gemma import get_grain_advisory_ai
@@ -870,7 +869,6 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertNotIn("engine_profile", user_prompt)
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    @patch('apps.core.gemma.phase2_client._is_ai_enabled', return_value=True)
     def test_grain_advisory_robust_id_mapping(self, mock_ai_enabled, mock_call_gemma):
         from apps.core.gemma import get_grain_advisory_ai
         
@@ -902,7 +900,6 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertEqual(hard_eval["grain_id"], str(self.hard_spring.id))
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    @patch('apps.core.gemma.phase2_client._is_ai_enabled', return_value=True)
     def test_grain_advisory_selected_grains_tailored(self, mock_ai_enabled, mock_call_gemma):
         from apps.core.gemma import get_grain_advisory_ai
         import json
@@ -1003,8 +1000,7 @@ class SidebarInsightTests(TestCase):
             soft_white.delete()
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    @patch('apps.core.gemma.phase2_client._is_ai_enabled', return_value=True)
-    def test_sidebar_insight_culinary_sovereignty_override(self, mock_ai_enabled, mock_call_gemma):
+    def test_sidebar_insight_culinary_sovereignty_override(self, mock_call_gemma):
         import json
         from apps.core.gemma import get_sidebar_insight_ai
         from apps.core.models import WheatBerry

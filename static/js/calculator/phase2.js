@@ -52,7 +52,32 @@ document.addEventListener('alpine:init', () => {
         init() {
             console.log("Phase 2 App Initialized.");
             this.csrf_token = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-            // Optionally, we could automatically expand an archetype or start a generation process here.
+            
+            // If redirected from Phase 1 AI search
+            if (initialData.custom_archetype && initialData.custom_name) {
+                this.active_archetype_id = initialData.custom_archetype;
+                this.recipe_name = initialData.custom_name;
+                this.selectedRecipeMenuDescription = initialData.custom_desc;
+                this.selected_recipe_id = "custom_" + Date.now();
+                this.recipe_selected = true;
+                
+                // Add to creativity recipes list to simulate a generated recipe being selected
+                this.creativity_recipes.push({
+                    recipe_id: this.selected_recipe_id,
+                    recipe_name: this.recipe_name,
+                    menu_description: this.selectedRecipeMenuDescription,
+                    creativity_level: 1,
+                    pinned: true
+                });
+                
+                // Immediately fetch AI grain recommendations for this custom recipe
+                this.fetchSidebarInsight('custom', {
+                    target: 'recipe',
+                    recipe_id: this.selected_recipe_id,
+                    recipe_name: this.recipe_name,
+                    menu_description: this.selectedRecipeMenuDescription
+                });
+            }
         },
 
         extractPartialObjects(buffer) {

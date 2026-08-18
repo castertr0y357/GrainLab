@@ -22,6 +22,7 @@ urlpatterns = [
     path('recipe/<uuid:recipe_id>/tweak/', tweak_recipe, name='tweak_recipe'),
     
     path('search/', views.SearchPresetsView.as_view(), name='search_presets'),
+    path('generate-creative-ideas/', views.GenerateCreativeIdeasView.as_view(), name='generate_creative_ideas'),
     path('load-preset/<int:preset_id>/', views.LoadPresetView.as_view(), name='load_preset'),
     path('settings/', views.SettingsPageView.as_view(), name='settings_page'),
     path('settings/save/', views.SaveSettingsView.as_view(), name='save_settings'),

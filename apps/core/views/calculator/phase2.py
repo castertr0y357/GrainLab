@@ -32,6 +32,9 @@ class Phase2View(View):
             'state': state,
             'engines_archetypes_json': get_engines_archetypes_json(),
             'engines_ff_json': get_engines_ff_json(),
+            'custom_archetype': request.GET.get('archetype', ''),
+            'custom_name': request.GET.get('custom_name', ''),
+            'custom_desc': request.GET.get('custom_desc', ''),
         }
         return render(request, 'calculator/phase2.html', context)
 
