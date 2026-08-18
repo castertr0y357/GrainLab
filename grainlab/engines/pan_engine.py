@@ -162,8 +162,16 @@ class PanEngine(BaseEngine):
         s = max(0.0, min(0.50, sugar))
         return hyd, f, s
 
+    def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
+        pitfalls = super().get_contextual_pitfalls(effective_hydration, grain_type, preset_slug)
+        pitfalls.insert(0, {
+            "title": "Fermentation Retardation",
+            "message": "Fats and sugars slow down yeast fermentation. Allow for a longer bulk proof or create a warm, moist proofing box to encourage active rising."
+        })
+        return pitfalls
+
     def get_ai_culinary_directive(self) -> str:
-        return "Warn the user if the dough mass will overflow or underfill a standard 9x5 loaf pan. This is an enriched pan bread (e.g. brioche, sandwich loaf). You MUST include lipids (butter/oil), sweeteners, binders (eggs), a liquid medium, and a yeast leavener."
+        return "Warn the user if the dough mass will overflow or underfill the selected form factor (e.g. 9x5 loaf pan, pullman pan, or individual rolls). This is an enriched pan bread (e.g. brioche, sandwich loaf). You MUST include lipids (butter/oil), sweeteners, binders (eggs), a liquid medium, and a yeast leavener."
 
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like seeds), use true baker's percentages (flour = 100%). For sandwich breads, these typically range from 5.0 to 15.0."

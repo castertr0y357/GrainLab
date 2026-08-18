@@ -152,7 +152,7 @@ class FryEngine(BaseEngine):
         preset_slug = kwargs.get("preset_slug") or ""
 
         is_batter = False
-        if "cake" in preset_slug.lower() or "fritter" in preset_slug.lower() or "beignet" in preset_slug.lower() or "batter" in preset_slug.lower():
+        if "cake" in preset_slug.lower() or "fritter" in preset_slug.lower() or "batter" in preset_slug.lower():
             is_batter = True
 
         if is_batter:

@@ -138,6 +138,42 @@ class PastaEngine(BaseEngine):
         },
     }
 
+
+    def get_diagnostic_insight(self, item_id: str) -> dict:
+        from .insights_fallbacks import PASTA_FALLBACKS
+        insight = PASTA_FALLBACKS.get(item_id)
+        if not insight and item_id.startswith('grain_'):
+            for k, val in PASTA_FALLBACKS.items():
+                if k.startswith('grain_') and (k in item_id or item_id in k):
+                    insight = val
+                    break
+        return insight or {
+            'labor_roi': 'Low Priority / Minor Textural Return',
+            'last_10_percent_analysis': 'An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected.'
+        }
+
+    def get_flavor_bases(self, creativity_level: int) -> list:
+        return ['Rich Egg Yolk & Semolina', 'Spinach & Herb', 'Squid Ink & Lemon']
+
+    def get_ai_flavor_directive(self) -> str:
+        return "Do not call them 'Spelt Noodle'. Use creative but clear culinary names like 'Rustic Einkorn Tagliatelle'."
+
+    def get_ai_structural_directive(self) -> str:
+        return "For example, pasta generally does not need a 'proofing_environment', it needs resting and sheeting."
+
+    def get_sensory_benchmark(self, grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
+        grain_name = grain_type.replace('_', ' ').title()
+        desc = f'For fresh-milled {grain_name} pasta: '
+        desc += 'Expect a very dense, dry, and crumbly initial mixture. It should consolidate into a firm, non-sticky mass after firm pressure. '
+        
+        if flour_maturity == 'just_milled':
+            desc += "Today's fresh-milled flour hydrates rapidly but the gluten needs extra resting time. Let the wrapped dough sit for 45 minutes before sheeting."
+        elif flour_maturity == 'dead_zone':
+            desc += 'Caution: Flour is in the 1-2 week dead zone. The dough might feel slightly brittle during sheeting; roll out slowly to prevent edge cracking.'
+        else:
+            desc += 'Flour is fully matured. Gluten structure is stable and resilient, providing an excellent al dente bite when boiled.'
+        return desc
+
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
         hyd = max(0.0, min(0.50, hydration))
         f = max(0.0, min(0.20, fat))

@@ -159,9 +159,11 @@ class HearthEngine(BaseEngine):
         # Bulk ferment adjusts for stretch and folds
         bulk_min = max(30, estimated_bulk_minutes - sf_min)
         
-        # Dual-phase bake: Steam phase is 25 mins (or less if bake_time is short)
-        steam_bake_min = min(25, max(15, bake_time_min - 15))
-        dry_bake_min = max(10, bake_time_min - steam_bake_min)
+        # Dual-phase bake: Steam phase is max 25 mins, dry phase is at least 10 mins (if possible)
+        steam_bake_min = min(25, max(10, bake_time_min - 15))
+        if steam_bake_min >= bake_time_min:
+            steam_bake_min = max(5, int(bake_time_min * 0.6))
+        dry_bake_min = bake_time_min - steam_bake_min
         preset_slug = kwargs.get("preset_slug") or ""
 
         steps = [

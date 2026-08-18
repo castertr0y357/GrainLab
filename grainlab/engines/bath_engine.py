@@ -131,6 +131,14 @@ class BathEngine(BaseEngine):
         s = max(0.0, min(0.20, sugar))
         return hyd, f, s
 
+    def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
+        pitfalls = super().get_contextual_pitfalls(effective_hydration, grain_type, preset_slug)
+        pitfalls.insert(0, {
+            "title": "Mandatory Alkaline Bath",
+            "message": "To achieve the signature deep mahogany color and unique flavor, you must boil the shaped dough in a 3% baking soda bath (or carefully dip in a 3% lye solution) for 30 seconds before baking."
+        })
+        return pitfalls
+
     def get_ai_culinary_directive(self) -> str:
         return "Instruct the user to prepare an alkaline bath (lye or malted water) to gelatinize starches prior to baking. This is a boiled-bath bread (bagels, pretzels). Yeast-leavened with a dense structure. Requires a liquid medium. Modest or no lipids."
 

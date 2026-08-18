@@ -163,6 +163,69 @@ class BaseEngine:
     def get_ai_culinary_directive(self) -> str:
         return ""
 
+    def get_diagnostic_insight(self, item_id: str) -> dict:
+        from .insights_fallbacks import BREAD_FALLBACKS
+        insight = BREAD_FALLBACKS.get(item_id)
+        if not insight and item_id.startswith("grain_"):
+            for k, val in BREAD_FALLBACKS.items():
+                if k.startswith("grain_") and (k in item_id or item_id in k):
+                    insight = val
+                    break
+        return insight or {
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
+        }
+
+    def get_flavor_bases(self, creativity_level: int) -> list:
+        return [
+            "Flour, water, and salt",
+            "Toasted grains and seeds",
+            "Malted barley syrup or molasses"
+        ]
+
+    def get_ai_flavor_directive(self) -> str:
+        return ""
+
+    def get_ai_structural_directive(self) -> str:
+        return ""
+
+    def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
+        pitfalls = []
+        if effective_hydration >= 0.78:
+            pitfalls.append({
+                "title": "High Hydration Handling",
+                "message": "With a hydration of over 78%, this dough is wet. Do not add raw flour to the workspace; instead, perform 'stretch-and-folds' with wet hands to build gluten structure."
+            })
+        if grain_type in ["spelt", "kamut", "einkorn"]:
+            pitfalls.append({
+                "title": "Ancient Grain Fragility",
+                "message": f"{grain_type.title()} has weaker gluten networks. Avoid intensive machine mixing. Prefer short hand mixing followed by gentle folds to keep the structure from collapsing."
+            })
+        if not pitfalls:
+            pitfalls.append({
+                "title": "Standard Proofing Check",
+                "message": "Keep dough covered at a stable temp of 75-78°F. The poke test is your best guide: if a gentle indent springs back slowly, it is ready to bake."
+            })
+        return pitfalls
+
+    def get_sensory_benchmark(self, grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
+        grain_name = grain_type.replace("_", " ").title()
+        desc = f"For fresh-milled {grain_name} dough: "
+        if effective_hydration >= 0.75:
+            desc += "The dough will be wet and sticky. Look for a glossy surface and a clean, dome-like rise. "
+        elif effective_hydration >= 0.65:
+            desc += "Expect a supple, holding structure. The dough should feel alive, resilient, and elastic when touched. "
+        else:
+            desc += "Dough is firm and tight. It will not double dramatically; monitor for a rounded dome and a smooth outer skin. "
+            
+        if flour_maturity == "just_milled":
+            desc += "As this flour was milled today, gluten activity is highly active but lacks extensibility. Expect rapid enzyme fermentation; handle gently to avoid tearing."
+        elif flour_maturity == "dead_zone":
+            desc += "Caution: Flour is in the 1-2 week enzyme dead zone. Gluten structure is relaxed and vulnerable. The dough will feel sticky and might lack holding power; do not over-proof."
+        else:
+            desc += "Flour is fully matured. Gluten bonds are stable and predictable. The rise will be steady with solid gas retention."
+        return desc
+
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives, use true baker's percentages (where flour = 100%). Default ranges are typically 10.0 to 30.0 for standard doughs."
 
