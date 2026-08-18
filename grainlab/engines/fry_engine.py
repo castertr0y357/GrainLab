@@ -129,8 +129,17 @@ class FryEngine(BaseEngine):
         },
     }
 
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+        hyd = max(0.0, min(0.80, hydration))
+        f = max(0.0, min(0.40, fat))
+        s = max(0.0, min(0.40, sugar))
+        return hyd, f, s
+
     def get_ai_culinary_directive(self) -> str:
-        return "Provide the target frying oil pre-heat temperature (typically around 375°F to allow a drop to 365°F during frying)."
+        return "Provide the target frying oil pre-heat temperature (typically around 375°F to allow a drop to 365°F during frying). This is a fried dough (donuts, beignets). Enriched dough requiring lipids, sweeteners, eggs, and leaveners (yeast or chemical)."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like spices or glaze bases), use true baker's percentages (flour = 100%). For fried doughs, these typically range from 10.0 to 30.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 8
@@ -140,52 +149,83 @@ class FryEngine(BaseEngine):
         side_a_sec = 120
         flip_sec = 10
         side_b_sec = 120
-        
-        return [
-            {
-                "key": "mix",
-                "name": "Dough Mix & Knead",
-                "duration_sec": mix_min * 60,
-                "desc": "Mix ingredients to form a soft, supple leavened dough. Knead until smooth.",
-                "is_mix": True
-            },
-            {
-                "key": "proof",
-                "name": "Portion & Proof",
-                "duration_sec": proof_min * 60,
-                "desc": "Roll out and cut into shapes. Proof on parchment squares until airy and delicate.",
-                "is_proof": True
-            },
-            {
-                "key": "preheat",
-                "name": "Oil Preheat & Recovery Check",
-                "duration_sec": 10 * 60,
-                "desc": "Heat neutral fry oil to 375°F. Confirm your drainage racks, spider tools, and coatings are ready."
-            },
-            {
+        preset_slug = kwargs.get("preset_slug") or ""
+
+        is_batter = False
+        if "cake" in preset_slug.lower() or "fritter" in preset_slug.lower() or "beignet" in preset_slug.lower() or "batter" in preset_slug.lower():
+            is_batter = True
+
+        if is_batter:
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Batter Mix",
+                    "duration_sec": mix_min * 60,
+                    "desc": "Whisk wet and dry ingredients into a thick, uniform batter. Do not over-mix.",
+                    "is_mix": True
+                }
+            ]
+        else:
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Dough Mix & Knead",
+                    "duration_sec": mix_min * 60,
+                    "desc": "Mix ingredients to form a soft, supple leavened dough. Knead until smooth.",
+                    "is_mix": True
+                },
+                {
+                    "key": "proof",
+                    "name": "Portion & Proof",
+                    "duration_sec": proof_min * 60,
+                    "desc": "Roll out and cut into shapes. Proof on parchment squares until airy and delicate.",
+                    "is_proof": True
+                }
+            ]
+
+        steps.append({
+            "key": "preheat",
+            "name": "Oil Preheat & Recovery Check",
+            "duration_sec": 10 * 60,
+            "desc": "Heat neutral fry oil to 375°F. Confirm your drainage racks, spider tools, and coatings are ready."
+        })
+
+        if is_batter:
+            steps.append({
+                "key": "fry_a",
+                "name": "Drop & Fry Side A",
+                "duration_sec": side_a_sec,
+                "desc": "Drop, pipe, or extrude the batter directly into the hot oil. Fry Side A.",
+                "is_bake": True
+            })
+        else:
+            steps.append({
                 "key": "fry_a",
                 "name": "Fry Side A",
-                "duration_sec": side_a_sec,  # 120 seconds
+                "duration_sec": side_a_sec,
                 "desc": "Gently drop proofed dough into hot oil. Fry Side A. Watch for rapid expansion and bubble formation.",
-                "is_bake": True  # Treat fry as bake for countertop template readouts
-            },
+                "is_bake": True
+            })
+
+        steps.extend([
             {
                 "key": "flip",
-                "name": "Flip Prompt",
-                "duration_sec": flip_sec,  # 10 seconds
-                "desc": "⚠️ FLIP IMMEDIATELY! Use metal chopsticks or a spider tool to turn the dough over in the hot oil."
+                "name": "Flip",
+                "duration_sec": flip_sec,
+                "desc": "Use tongs or chopsticks to quickly flip the pieces. Maintain oil temperature.",
             },
             {
                 "key": "fry_b",
                 "name": "Fry Side B",
-                "duration_sec": side_b_sec,  # 120 seconds
-                "desc": "Fry Side B until golden brown and cooked through. Ensure internal temperature reaches 195°F.",
+                "duration_sec": side_b_sec,
+                "desc": "Fry Side B until deeply golden and cooked through.",
                 "is_bake": True
             },
             {
-                "key": "drain",
+                "key": "cool",
                 "name": "Drain & Cool",
-                "duration_sec": 5 * 60,
-                "desc": "Transfer to wire rack to drain excess oil. Glaze or coat in sugar while warm."
+                "duration_sec": 10 * 60,
+                "desc": "Remove from oil onto a wire rack to drain. If coating with sugar/cinnamon, do so while hot. If glazing, wait until slightly cooled."
             }
-        ]
+        ])
+        return steps

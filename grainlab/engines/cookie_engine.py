@@ -3,6 +3,8 @@ from grainlab.engines.base_engine import BaseEngine
 class CookieEngine(BaseEngine):
     name = "Cookies & Shortbread Engine"
     slug = "cookie"
+    default_binder_pct = 0.35
+    default_salt_pct = 0.008
     target_protein_min = 8.5
     target_protein_max = 10.5
     gluten_behavior = "Minimal Gluten Interaction. Flour must allow melting fats and sugars to spread horizontally before the crumb structure sets in the oven."
@@ -152,23 +154,29 @@ class CookieEngine(BaseEngine):
     }
 
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
-        # Cookies have minimal to no added water (hydration comes from eggs/butter)
-        cookie_hyd = max(0.0, min(0.05, hydration))
-        # High fat and high sugar ratios relative to flour
-        cookie_fat = max(0.40, min(0.80, fat))
-        cookie_sugar = max(0.50, min(1.20, sugar))
+        # Cookies have zero added water (hydration comes entirely from eggs and butter).
+        # We force this to 0.0 to prevent the system from falling back to default bread water percentages.
+        cookie_hyd = 0.0
+        # Wider guardrails to allow AI flavor chemistry to dictate final cookie richness.
+        # Max 1.20 for fat (e.g. shortbreads), max 2.00 for sugar (e.g. extremely chewy brittle cookies)
+        cookie_fat = max(0.20, min(1.20, fat))
+        cookie_sugar = max(0.40, min(2.00, sugar))
         return cookie_hyd, cookie_fat, cookie_sugar
 
     def get_ai_culinary_directive(self) -> str:
-        return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient."
+        return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient. This is a cookie archetype. You MUST include a chemical leavener (baking soda/powder). It requires heavy lipids and sweeteners. Liquids are rarely needed unless specified."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). For cookies, these MUST be scaled heavily, typically ranging from 50.0 to 150.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         cream_min = 5
         fold_min = 3
         chill_min = 60
         bake_min = bake_time_min
+        preset_slug = kwargs.get("preset_slug") or ""
 
-        return [
+        steps = [
             {
                 "key": "mix",
                 "name": "Cream Fat & Sugar",
@@ -181,18 +189,53 @@ class CookieEngine(BaseEngine):
                 "name": "Fold Dry & Inclusions",
                 "duration_sec": fold_min * 60,
                 "desc": "Fold in flour, salt, and inclusions (chocolate chips, oats) just until combined. Do not over-work to keep the crumb tender."
-            },
-            {
-                "key": "chill",
-                "name": "Fridge Chilling Rest",
-                "duration_sec": chill_min * 60,
-                "desc": "Mandatory refrigeration rest. Chilling solidifies butter fat (slowing spread) and hydrates flour completely for a chewier center."
-            },
-            {
-                "key": "bake",
-                "name": "Horizontal Spread Bake",
-                "duration_sec": bake_min * 60,
-                "desc": "Scoop dough balls onto sheet pan. Bake until edges are set and golden, watching horizontal expansion spread. Center will set soft.",
-                "is_bake": True
             }
         ]
+
+        if "slice" in preset_slug.lower() or "biscotti" in preset_slug.lower():
+            steps.append({
+                "key": "shape_log",
+                "name": "Form Dough Cylinder",
+                "duration_sec": 10 * 60,
+                "desc": "Form dough into a tight cylinder or log on parchment paper before chilling."
+            })
+
+        steps.append({
+            "key": "chill",
+            "name": "Fridge Chilling Rest",
+            "duration_sec": chill_min * 60,
+            "desc": "Mandatory refrigeration rest for at least 1 hour (up to 24-48 hours for optimal flavor). Chilling solidifies butter fat (slowing spread) and hydrates flour completely for a chewier center."
+        })
+
+        if "bar" in preset_slug.lower() or "slab" in preset_slug.lower() or "continuous" in preset_slug.lower():
+            bake_name = "Continuous Slab Bake"
+            bake_desc = "Press dough evenly into a prepared continuous pan. Bake until edges are set and golden. Center will set soft."
+        elif "slice" in preset_slug.lower() or "biscotti" in preset_slug.lower():
+            bake_name = "Sliced Disc Bake"
+            bake_desc = "Slice chilled log into uniform discs and arrange on a baking sheet. Bake until crisp and golden."
+        elif "cutout" in preset_slug.lower() or "gingerbread" in preset_slug.lower() or "sugar" in preset_slug.lower():
+            bake_name = "Geometric Rolled Bake"
+            bake_desc = "Roll out chilled dough on a floured surface, cut with geometric dies/cutters, and place on sheet pan. Bake until edges are set."
+        else:
+            bake_name = "Horizontal Spread Bake"
+            bake_desc = "Scoop dough balls onto sheet pan. Bake until edges are set and golden, watching horizontal expansion spread. Center will set soft."
+
+        steps.extend([
+            {
+                "key": "bake",
+                "name": bake_name,
+                "duration_sec": bake_min * 60,
+                "desc": bake_desc,
+                "is_bake": True
+            },
+            {
+                "key": "cool",
+                "name": "Pan & Wire Rack Cooling",
+                "duration_sec": 15 * 60,
+                "desc": "Allow the cookies to cool on the hot baking/pan for 5 minutes before transferring to a wire rack to cool completely. This carryover cooking sets the soft centers."
+            }
+        ])
+        return steps
+
+    def get_default_process(self, **kwargs) -> list[dict]:
+        return self.get_live_timeline_steps(recipe_data={}, estimated_bulk_minutes=0, estimated_proof_minutes=0, bake_time_min=15, **kwargs)

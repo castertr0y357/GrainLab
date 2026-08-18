@@ -218,7 +218,7 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
         "geometry_evaluation": fallback_data
     }
 
-def generate_process_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str) -> dict | None:
+def generate_process_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, flavor_inclusions: list = None) -> dict | None:
     logger.info(f"[Gemma Client] - Info - Calling generate_process_details for: {recipe_slug}")
     
     try:
@@ -242,7 +242,7 @@ def generate_process_details(engine_id: str, active_archetype_id: str, recipe_sl
             "CRITICAL: You MUST omit any category that is completely irrelevant or contradictory for the specific recipe type. For example, cookies generally do not need a 'proofing_environment' or 'baking_vessel'. If a category is unnecessary, simply do not include it in the JSON.\n"
             "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
             "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
-            "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole of the slider achieves, the second explaining what the right pole achieves, and the third explaining the reasoning for your specific recommended value.\n"
+            "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
             "Your response MUST be pure JSON matching this schema exactly (omitting irrelevant keys in process_recommendations):\n"
             "{\n"
             "  \"process_recommendations\": {\n"
@@ -270,7 +270,8 @@ def generate_process_details(engine_id: str, active_archetype_id: str, recipe_sl
             "recipe_slug": recipe_slug,
             "recipe_name": recipe_name,
             "supported_tweaks": supported_tweaks,
-            "tweak_labels": tweak_labels
+            "tweak_labels": tweak_labels,
+            "flavor_inclusions": flavor_inclusions or []
         })
 
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["process_recommendations"])
@@ -280,6 +281,130 @@ def generate_process_details(engine_id: str, active_archetype_id: str, recipe_sl
         logger.error(f"[Gemma Client] - Error - Failed calling generate_process_details: {str(e)}")
 
     return None
+
+def stream_process_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, flavor_inclusions: list = None):
+    """
+    Streaming version of generate_process_details.
+    Yields JSON string chunks as Server-Sent Events from the LLM.
+    """
+    logger.info(f"[Gemma Client] - Info - Calling stream_process_details for: {recipe_slug}")
+    from apps.core.gemma.core_client import SystemSetting
+    
+    ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
+    ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
+
+    system_prompt = (
+        "You are an expert baking science assistant. Your task is to recommend optimal process parameters "
+        "for a specific bread or pastry recipe based on its characteristics.\n"
+        "Provide the top recommended option for the relevant categories among: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
+        "CRITICAL: You MUST omit any category that is completely irrelevant or contradictory for the specific recipe type. For example, cookies generally do not need a 'proofing_environment' or 'baking_vessel'. If a category is unnecessary, simply do not include it in the JSON.\n"
+        "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
+        "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
+        "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
+        "Your response MUST be a pure JSON array matching this schema exactly:\n"
+        "[\n"
+        "  { \"type\": \"process\", \"category\": \"mixing_method\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+        "  { \"type\": \"process\", \"category\": \"dough_handling\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+        "  { \"type\": \"process\", \"category\": \"proofing_environment\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+        "  { \"type\": \"process\", \"category\": \"baking_vessel\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+        "  { \"type\": \"process\", \"category\": \"shaping_style\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+        "  { \"type\": \"slider\", \"tweak_id\": \"string\", \"explanation\": \"string (HTML formatted)\", \"recommended_value\": 0 }\n"
+        "]\n"
+        "Do not include markdown blocks, just the raw JSON array."
+    )
+
+    if ai_thinking_enabled:
+        system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
+    else:
+        system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
+
+    from grainlab.engines.router import ENGINES
+    engine = ENGINES.get(engine_id)
+    supported_tweaks = getattr(engine, "supported_tweaks", []) if engine else []
+    tweak_labels = getattr(engine, "tweak_labels", {}) if engine else {}
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "recipe_slug": recipe_slug,
+        "recipe_name": recipe_name,
+        "supported_tweaks": supported_tweaks,
+        "tweak_labels": tweak_labels,
+        "flavor_inclusions": flavor_inclusions or []
+    })
+    
+    logger.info(f"[Gemma Client] - Phase 4 AI PROMPT FED TO STREAM_PROCESS_DETAILS: {user_prompt}")
+
+    if not _is_ai_enabled():
+        import time
+        time.sleep(1)
+        mock_data = [
+            { "type": "process", "category": "mixing_method", "name": "Hand Knead", "explanation": "Gentle hand mixing preserves delicate gluten networks." },
+            { "type": "process", "category": "dough_handling", "name": "Stretch and Fold", "explanation": "Builds structure slowly without oxidizing the dough." },
+            { "type": "process", "category": "proofing_environment", "name": "Cold Retard (38°F)", "explanation": "Slows yeast activity to develop complex organic acids and flavor." },
+            { "type": "process", "category": "baking_vessel", "name": "Dutch Oven", "explanation": "Traps steam to maximize oven spring and crust gelatinization." },
+            { "type": "process", "category": "shaping_style", "name": "Boule", "explanation": "Classic round shape promotes even baking and crumb openness." }
+        ]
+        for m in mock_data:
+            yield json.dumps(m)
+        return
+
+    from apps.core.gemma.core_client import stream_gemma_api
+    for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
+        yield chunk
+
+def stream_process_alternatives(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, target_category: str, original_recommendation: dict, exclude_names: list = None):
+    """
+    Streaming version of generate_process_alternatives.
+    """
+    logger.info(f"[Gemma Client] - Info - Calling stream_process_alternatives for: {recipe_slug}, category: {target_category}")
+    from apps.core.gemma.core_client import SystemSetting
+    
+    ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
+    ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
+
+    system_prompt = (
+        "You are an expert baking science assistant. Your task is to provide alternative recommendations "
+        "for a specific process parameter category.\n"
+        "Provide exactly 3 alternative options for the specified category that are distinct from the original recommendation.\n"
+        "For each alternative, explain its unique impact on the final product.\n"
+        "Your response MUST be a pure JSON array matching this schema exactly:\n"
+        "[\n"
+        "  { \"type\": \"alternative\", \"name\": \"string\", \"difference_explanation\": \"string\" }\n"
+        "]\n"
+        "Do not include markdown blocks, just the raw JSON array."
+    )
+
+    if ai_thinking_enabled:
+        system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
+    else:
+        system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "recipe_slug": recipe_slug,
+        "recipe_name": recipe_name,
+        "target_category": target_category,
+        "original_recommendation": original_recommendation,
+        "excluded_names": exclude_names
+    })
+
+    if not _is_ai_enabled():
+        import time
+        time.sleep(1)
+        mock_data = [
+            { "type": "alternative", "name": "Mix by Hand", "difference_explanation": "A gentle approach that connects you with the dough and prevents over-oxidation." },
+            { "type": "alternative", "name": "Food Processor", "difference_explanation": "Incredibly fast gluten development, but requires ice water to prevent overheating." },
+            { "type": "alternative", "name": "No-Knead Method", "difference_explanation": "Relies entirely on time and enzymatic action to develop gluten naturally." }
+        ]
+        for m in mock_data:
+            yield json.dumps(m)
+        return
+
+    from apps.core.gemma.core_client import stream_gemma_api
+    for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
+        yield chunk
 
 def generate_process_alternatives(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, target_category: str, original_recommendation: dict, exclude_names: list = None) -> dict | None:
     logger.info(f"[Gemma Client] - Info - Calling generate_process_alternatives for: {recipe_slug}, category: {target_category}")

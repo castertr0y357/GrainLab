@@ -3,6 +3,8 @@ from grainlab.engines.base_engine import BaseEngine
 class BatterEngine(BaseEngine):
     name = "Cakes & Batters Engine"
     slug = "batter"
+    default_binder_pct = 0.45
+    default_leaven_pct = 0.03
     target_protein_min = 7.5
     target_protein_max = 9.5
     gluten_behavior = "Complete Absence of Gluten. High-ratio sugar and liquid dispersion requires structure built purely on starch gelatinization and egg protein coagulation."
@@ -163,23 +165,60 @@ class BatterEngine(BaseEngine):
     }
 
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
-        # High-ratio cake batters allow sugar and fat to scale independently and exceed 100% of flour weight
-        # Thus, no downward ceilings are applied here.
-        return hydration, fat, sugar
+        hyd = max(0.0, min(1.50, hydration))
+        f = max(0.0, min(1.20, fat))
+        s = max(0.0, min(2.00, sugar))
+        return hyd, f, s
 
     def get_ai_culinary_directive(self) -> str:
-        return "This is a batter. Recommend a specific emulsification style (e.g. whipped egg foam, creamed butter) to aerate the dough, and ensure zero yeast is used."
+        return "This is a batter. Recommend a specific emulsification style (e.g. whipped egg foam, creamed butter) to aerate the dough, and ensure zero yeast is used. This is a liquid batter (pancakes, waffles, cakes). Requires chemical leaveners, high hydration (milk/buttermilk), and binders (eggs)."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like berries or chips), use true baker's percentages (flour = 100%). For liquid batters, these typically range from 20.0 to 80.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
-        preset_slug = kwargs.get("preset_slug", "")
+        preset_slug = kwargs.get("preset_slug") or ""
+        
+        # Branch for griddle batters (Pancakes, Waffles, Crepes)
+        if "griddle" in preset_slug.lower() or "pancake" in preset_slug.lower() or "waffle" in preset_slug.lower() or "crepe" in preset_slug.lower():
+            return [
+                {
+                    "key": "dry_whisk",
+                    "name": "Dry Sift & Whisk",
+                    "duration_sec": 3 * 60,
+                    "desc": "Whisk together the flour, sugar, leavening agents, and salt in a large bowl. Creating a uniform dry mix prevents clumps later."
+                },
+                {
+                    "key": "wet_mix",
+                    "name": "Wet Ingredient Emulsification",
+                    "duration_sec": 4 * 60,
+                    "desc": "In a separate bowl, whisk together the eggs, milk/buttermilk, and melted fat (butter or oil) until smooth."
+                },
+                {
+                    "key": "fold",
+                    "name": "Wet-into-Dry Fold",
+                    "duration_sec": 3 * 60,
+                    "desc": "Pour the wet ingredients into the dry ingredients. Gently fold with a spatula just until combined. Lumps are acceptable and desired; over-mixing develops gluten and makes the batter tough.",
+                    "is_mix": True
+                },
+                {
+                    "key": "bake",
+                    "name": "Griddle / Iron Cooking",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Cook portions of the batter on a preheated, greased griddle or waffle iron until golden brown and cooked through. For pancakes, flip when bubbles form and pop on the surface.",
+                    "is_bake": True
+                }
+            ]
+
+        # Standard Cake/Batter Branch
         if "chiffon" in preset_slug.lower() or "angel" in preset_slug.lower():
             emuls_desc = "Whip egg whites/yolks with sugar to soft peaks. Creates the micro-bubbles needed for rise without chemical leavening."
-        elif "cupcake" in preset_slug.lower() or "pancake" in preset_slug.lower() or "waffle" in preset_slug.lower():
+        elif "cupcake" in preset_slug.lower():
             emuls_desc = "Mix flour, sugar, leavening, and butter together first until sandy. Prevents excess gluten structure from forming when liquid is added."
         else:
             emuls_desc = "Cream softened butter and sugar at medium-high speed for 5-6 minutes until pale and fluffy. Traps air bubbles inside the fat crystals."
 
-        return [
+        steps = [
             {
                 "key": "mix",
                 "name": "Emulsification Phase",
@@ -207,3 +246,12 @@ class BatterEngine(BaseEngine):
                 "is_bake": True
             }
         ]
+        
+        steps.append({
+            "key": "cool",
+            "name": "Pan & Wire Rack Cooling",
+            "duration_sec": 30 * 60,
+            "desc": "Allow the cake to cool in its pan for 10-15 minutes before carefully inverting onto a wire rack to cool completely. Frosting a warm cake will cause it to melt."
+        })
+        
+        return steps

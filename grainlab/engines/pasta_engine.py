@@ -3,6 +3,8 @@ from grainlab.engines.base_engine import BaseEngine
 class PastaEngine(BaseEngine):
     name = "Fresh Pasta & Noodles Engine"
     slug = "pasta"
+    default_binder_pct = 0.50
+    default_leaven_pct = 0.0
     target_protein_min = 12.5
     target_protein_max = 15.0
     gluten_behavior = "High Plastic Deformation, Zero Leavening. Requires an ultra-dense, low-hydration network that maintains a firm, snap-resistant 'al dente' structural bite when boiled."
@@ -137,12 +139,16 @@ class PastaEngine(BaseEngine):
     }
 
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
-        # Egg-to-semolina hydration boundary limits restricted to strict 35% to 40% metrics
-        pasta_hyd = max(0.35, min(0.40, hydration))
-        return pasta_hyd, fat, sugar
+        hyd = max(0.0, min(0.50, hydration))
+        f = max(0.0, min(0.20, fat))
+        s = max(0.0, min(0.10, sugar))
+        return hyd, f, s
 
     def get_ai_culinary_directive(self) -> str:
-        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast."
+        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast. This is pasta/noodles. NEVER include leaveners or sweeteners. Focus purely on liquids and binders (eggs)."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like herbs or squid ink), use true baker's percentages (flour = 100%). For pastas, these typically range from 1.0 to 5.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 6
@@ -150,8 +156,9 @@ class PastaEngine(BaseEngine):
         rest_min = 30
         roll_min = 15
         cut_min = 10
+        preset_slug = kwargs.get("preset_slug") or ""
 
-        return [
+        steps = [
             {
                 "key": "mix",
                 "name": "Compaction Mix",
@@ -167,23 +174,54 @@ class PastaEngine(BaseEngine):
                 "is_knead": True
             },
             {
-                "key": "proof", # Use proof key to fit the countertop proof alerts if needed
+                "key": "proof",
                 "name": "Plastic Hydration Rest",
                 "duration_sec": rest_min * 60,
                 "desc": "Wrap dough tightly in plastic wrap. Rest at room temperature. Allows moisture to equilibrate and the rigid gluten matrix to relax.",
                 "is_proof": True
-            },
-            {
-                "key": "roll_pass",
-                "name": "Mechanical Roller Passes",
-                "duration_sec": roll_min * 60,
-                "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm)."
-            },
-            {
-                "key": "bake",  # Use bake key for final phase cook/dry tracking
+            }
+        ]
+
+        if "extrud" in preset_slug.lower() or "rigatoni" in preset_slug.lower():
+            steps.extend([
+                {
+                    "key": "roll_pass",
+                    "name": "High-Pressure Extrusion",
+                    "duration_sec": roll_min * 60,
+                    "desc": "Extrude dough through high-pressure bronze or teflon dies, cutting to desired length."
+                },
+                {
+                    "key": "bake",
+                    "name": "Air-Dry / Cook",
+                    "duration_sec": cut_min * 60,
+                    "desc": "Let the extruded shapes air dry slightly on a mesh rack, or cook immediately in boiling salted water.",
+                    "is_bake": True
+                }
+            ])
+            return steps
+
+        steps.append({
+            "key": "roll_pass",
+            "name": "Mechanical Roller Passes",
+            "duration_sec": roll_min * 60,
+            "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm)."
+        })
+
+        if "stuffed" in preset_slug.lower() or "ravioli" in preset_slug.lower() or "tortellini" in preset_slug.lower():
+            steps.append({
+                "key": "bake",
+                "name": "Fill, Seal & Cut",
+                "duration_sec": cut_min * 60,
+                "desc": "Pipe filling in mounds along sheet, lay second sheet on top (or fold over), press out air to seal edges tightly, and cut into pockets.",
+                "is_bake": True
+            })
+        else:
+            steps.append({
+                "key": "bake",
                 "name": "Dust, Cut & Air-Dry",
                 "duration_sec": cut_min * 60,
                 "desc": "Dust sheet with semolina flour. Cut into noodles (e.g. tagliatelle) or wrappers. Let dry on a rack or cook immediately in boiling salted water.",
                 "is_bake": True
-            }
-        ]
+            })
+
+        return steps

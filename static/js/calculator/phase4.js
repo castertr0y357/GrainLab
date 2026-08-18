@@ -6,6 +6,8 @@ document.addEventListener('alpine:init', () => {
         selected_master: initialData.selected_master || null,
         global_ai_enabled: initialData.global_ai_enabled || true,
         preset_slug: initialData.preset_slug || null,
+        flavor_inclusions: initialData.flavor_inclusions || [],
+        secondary_ingredients: initialData.secondary_ingredients || {},
         enginesArchetypes: initialData.enginesArchetypes || {},
         engines_ff: initialData.engines_ff || {},
         recipe_name: initialData.recipe_name || '',
@@ -14,6 +16,13 @@ document.addEventListener('alpine:init', () => {
         yield_unit: initialData.yield_unit || 'loaf',
         is_portionable: initialData.is_portionable || false,
         scaleMultiplier: 1.0,
+        
+        bakeTimeMin: null,
+        bakeTemp: null,
+        bakeSteam: null,
+        geometry_evaluation: null,
+        pitfalls: [],
+        sensory_description: '',
         
         mixing_method: initialData.mixing_method || 'hand_knead',
         active_action: initialData.active_action || 'stretch_fold',
@@ -46,6 +55,7 @@ document.addEventListener('alpine:init', () => {
         // Phase 4 exclusive timer state
         countertopMode: false,
         steps: [],
+        recipeIngredients: [],
         currentStepIndex: 0,
         timerRunning: false,
         stepTimeRemaining: 0,
@@ -54,8 +64,8 @@ document.addEventListener('alpine:init', () => {
         progressPercent: 0,
         bakeTemp: 450,
         bakeSteam: 'Yes',
-        donenessTemp: 205,
-        waterTemp: 75,
+        donenessTemp: -1,
+        waterTemp: -1,
         timerInterval: null,
         recipeCompiled: initialData.recipeCompiled || false,
         aiLoading: initialData.current_phase === 5 && (initialData.global_ai_enabled || true),
@@ -87,6 +97,21 @@ document.addEventListener('alpine:init', () => {
             };
         },
         
+        get requiresThermalProfile() {
+            return this.activeProductionProfile?.thermodynamic_focus === 'biological_yeast_activity';
+        },
+        
+        get groupedIngredients() {
+            const groups = {};
+            this.recipeIngredients.forEach(ing => {
+                if (!groups[ing.category]) {
+                    groups[ing.category] = [];
+                }
+                groups[ing.category].push(ing);
+            });
+            return groups;
+        },
+        
         get filteredTools() {
             if (this.required_hardware && this.required_hardware.length > 0) {
                 return this.hardware_registry.filter(t => this.required_hardware.includes(t.id));
@@ -102,8 +127,114 @@ document.addEventListener('alpine:init', () => {
             return this.hardware_registry;
         },
         
-        
+        repairAndParse(str) {
+            let repaired = str.trim();
+            let quotes = 0;
+            let escape = false;
+            for (let i = 0; i < repaired.length; i++) {
+                if (escape) { escape = false; continue; }
+                if (repaired[i] === '\\') { escape = true; continue; }
+                if (repaired[i] === '"') { quotes++; }
+            }
+            if (quotes % 2 !== 0) {
+                repaired += '"'; 
+            }
+            
+            repaired = repaired.replace(/,\s*$/, '');
+            if (repaired.match(/:\s*$/)) {
+                repaired += 'null';
+            }
+            
+            let openBraces = (repaired.match(/\{/g) || []).length;
+            let closeBraces = (repaired.match(/\}/g) || []).length;
+            let openBrackets = (repaired.match(/\[/g) || []).length;
+            let closeBrackets = (repaired.match(/\]/g) || []).length;
+            
+            while (openBrackets > closeBrackets) {
+                repaired += ']';
+                closeBrackets++;
+            }
+            while (openBraces > closeBraces) {
+                repaired += '}';
+                closeBraces++;
+            }
+            
+            try {
+                return JSON.parse(repaired);
+            } catch(e) {
+                return null;
+            }
+        },
+
+        extractPartialObjects(arrayContent) {
+            const results = [];
+            let depth = 0;
+            let inString = false;
+            let escape = false;
+            let objStart = -1;
+            
+            for (let i = 0; i < arrayContent.length; i++) {
+                const char = arrayContent[i];
+                if (escape) { escape = false; continue; }
+                if (char === '\\') { escape = true; continue; }
+                if (char === '"') { inString = !inString; continue; }
+                
+                if (!inString) {
+                    if (char === '{') {
+                        if (depth === 0) objStart = i;
+                        depth++;
+                    } else if (char === '}') {
+                        depth--;
+                        if (depth === 0 && objStart !== -1) {
+                            results.push(arrayContent.substring(objStart, i + 1));
+                            objStart = -1;
+                        }
+                    }
+                }
+            }
+            
+            if (depth > 0 && objStart !== -1) {
+                results.push(arrayContent.substring(objStart));
+            }
+            
+            return results;
+        },
+
+        extractPhase4State(rawText) {
+            let arrContent = rawText;
+            const startMatch = arrContent.match(/\[/);
+            if (startMatch) {
+                arrContent = arrContent.substring(startMatch.index + 1);
+            }
+            const endMatch = arrContent.match(/\],\\s*"/);
+            if (endMatch) {
+                arrContent = arrContent.substring(0, endMatch.index);
+            }
+            
+            const objStrings = this.extractPartialObjects(arrContent);
+            const results = [];
+            for (const objStr of objStrings) {
+                const parsed = this.repairAndParse(objStr);
+                if (parsed) results.push(parsed);
+            }
+            return results;
+        },
+
         init() {
+            // Convert legacy string inclusions to objects so the parser can match inc.name
+            if (this.flavor_inclusions && Array.isArray(this.flavor_inclusions)) {
+                this.flavor_inclusions = this.flavor_inclusions.map(inc => {
+                    if (typeof inc === 'string') {
+                        return {
+                            name: inc,
+                            volume_description: "To taste",
+                            bakers_percentage: null
+                        };
+                    }
+                    return inc;
+                });
+            }
+
             if (this.global_ai_enabled) {
                 this.fetchProcessDetails();
             }
@@ -112,38 +243,142 @@ document.addEventListener('alpine:init', () => {
         fetchProcessDetails() {
             this.processRecommendationsLoading = true;
             
+            this.processRecommendations = {};
+            this.slider_recommendations = {};
+            
             const params = new URLSearchParams({
                 engine_id: this.selected_master,
                 active_archetype_id: this.preset_slug,
                 recipe_slug: this.preset_slug,
-                recipe_name: 'Phase 4 Recipe'
+                recipe_name: 'Phase 4 Recipe',
+                stream: 'true'
             });
+
+            let rawBuffer = "";
 
             fetch('/ai-process-details/?' + params.toString())
                 .then(async res => {
-                    if (!res.ok) throw new Error('Failed to fetch process details');
-                    return res.json();
+                    if (!res.ok) {
+                        let errData;
+                        try { errData = await res.json(); } catch(e) {}
+                        throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                    }
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop(); // Keep the incomplete line in the buffer
+                        
+                        for (let line of lines) {
+                            if (line.startsWith("data: ")) {
+                                const dataStr = line.substring(6).trim();
+                                if (dataStr === "[DONE]" || !dataStr) continue;
+                                
+                                try {
+                                    const parsedObj = JSON.parse(dataStr);
+                                    if (typeof parsedObj === 'string') {
+                                        rawBuffer += parsedObj;
+                                    } else if (parsedObj.text) {
+                                        rawBuffer += parsedObj.text;
+                                    } else {
+                                        // Legacy / non-raw object
+                                        rawBuffer += JSON.stringify(parsedObj);
+                                    }
+                                } catch(e) {
+                                    // if it's already a raw string without json wrapper
+                                    rawBuffer += dataStr;
+                                }
+
+                                const items = this.extractPhase4State(rawBuffer);
+                                
+                                const newRecommendations = {};
+                                for (const parsed of items) {
+                                    if (!parsed) continue;
+                                    if (parsed.type === "process" && parsed.category) {
+                                        if (parsed.name && parsed.name.toLowerCase() !== 'none' && parsed.name.toLowerCase() !== 'n/a') {
+                                            if (!this.processRecommendations[parsed.category]) {
+                                                this.processRecommendations[parsed.category] = parsed;
+                                            } else {
+                                                this.processRecommendations[parsed.category].name = parsed.name;
+                                                this.processRecommendations[parsed.category].explanation = parsed.explanation;
+                                            }
+                                            if (parsed.category === 'dough_handling') {
+                                                this.active_action = parsed.name || this.active_action;
+                                            }
+                                        }
+                                    } else if (parsed.type === "slider" && parsed.tweak_id) {
+                                        if (!this.slider_recommendations[parsed.tweak_id]) {
+                                            this.slider_recommendations[parsed.tweak_id] = parsed;
+                                        } else {
+                                            this.slider_recommendations[parsed.tweak_id].explanation = parsed.explanation;
+                                            this.slider_recommendations[parsed.tweak_id].recommended_value = parsed.recommended_value;
+                                        }
+                                        if (parsed.tweak_id === 'enrichment' && parsed.recommended_value !== undefined) {
+                                            this.texture = parsed.recommended_value;
+                                        }
+                                        if (parsed.tweak_id === 'hydration' && parsed.recommended_value !== undefined) {
+                                            this.crumb = parsed.recommended_value;
+                                        }
+                                        if (parsed.tweak_id === 'leavening' && parsed.recommended_value !== undefined) {
+                                            this.starter = parsed.recommended_value;
+                                        }
+                                    } else if (parsed.type === "inclusion" && parsed.name && parsed.bakers_percentage !== undefined && parsed.bakers_percentage !== null) {
+                                        const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                        const lowerParsed = normalize(parsed.name);
+                                        let matched = false;
+                                        const incIndex = this.flavor_inclusions.findIndex(inc => {
+                                            const lowerInc = normalize(inc.name);
+                                            return lowerInc === lowerParsed || lowerInc.includes(lowerParsed) || lowerParsed.includes(lowerInc);
+                                        });
+                                        if (incIndex !== -1) {
+                                            console.log(`[Phase 4 AI Stream] Generated Percentage for inclusion ${parsed.name}: ${parsed.bakers_percentage}%`);
+                                            if (!this.flavor_inclusions[incIndex].ratio && !this.flavor_inclusions[incIndex].bakers_percentage) {
+                                                this.flavor_inclusions[incIndex].bakers_percentage = parsed.bakers_percentage;
+                                            }
+                                            matched = true;
+                                        }
+
+                                        if (this.secondary_ingredients && Array.isArray(this.secondary_ingredients.additives)) {
+                                            const addIndex = this.secondary_ingredients.additives.findIndex(add => {
+                                                const lowerAdd = normalize(add.name);
+                                                return lowerAdd === lowerParsed || lowerAdd.includes(lowerParsed) || lowerParsed.includes(lowerAdd);
+                                            });
+                                            if (addIndex !== -1) {
+                                                console.log(`[Phase 4 AI Stream] Generated Percentage for additive ${parsed.name}: ${parsed.bakers_percentage}%`);
+                                                if (!this.secondary_ingredients.additives[addIndex].ratio && !this.secondary_ingredients.additives[addIndex].bakers_percentage) {
+                                                    this.secondary_ingredients.additives[addIndex].bakers_percentage = parsed.bakers_percentage;
+                                                }
+                                                matched = true;
+                                            }
+                                        }
+
+                                        if (!matched) {
+                                            const existingIndex = this.flavor_inclusions.findIndex(inc => normalize(inc.name) === lowerParsed);
+                                            if (existingIndex !== -1) {
+                                                if (!this.flavor_inclusions[existingIndex].ratio && !this.flavor_inclusions[existingIndex].bakers_percentage) {
+                                                    this.flavor_inclusions[existingIndex].bakers_percentage = parsed.bakers_percentage;
+                                                }
+                                            } else {
+                                                console.warn(`[Phase 4 AI Stream] Generated percentage for ${parsed.name} (${parsed.bakers_percentage}%) but couldn't match it to any phase 3 inclusion or additive! Adding it to inclusions anyway.`);
+                                                this.flavor_inclusions.push({
+                                                    name: parsed.name,
+                                                    volume_description: "To taste",
+                                                    bakers_percentage: parsed.bakers_percentage
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 })
-                .then(data => {
-                    if (data.process_recommendations) {
-                        this.processRecommendations = data.process_recommendations;
-                        // Set the active action based on AI recommendation if not already set manually
-                        if (this.processRecommendations.dough_handling) {
-                            this.active_action = this.processRecommendations.dough_handling.name;
-                        }
-                    }
-                    if (data.slider_recommendations) {
-                        this.slider_recommendations = data.slider_recommendations;
-                        if (this.slider_recommendations.enrichment && this.slider_recommendations.enrichment.recommended_value !== undefined) {
-                            this.texture = this.slider_recommendations.enrichment.recommended_value;
-                        }
-                        if (this.slider_recommendations.hydration && this.slider_recommendations.hydration.recommended_value !== undefined) {
-                            this.crumb = this.slider_recommendations.hydration.recommended_value;
-                        }
-                        if (this.slider_recommendations.leavening && this.slider_recommendations.leavening.recommended_value !== undefined) {
-                            this.starter = this.slider_recommendations.leavening.recommended_value;
-                        }
-                    }
+                .then(() => {
                     this.processRecommendationsLoading = false;
                 })
                 .catch(err => {
@@ -171,6 +406,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.processAlternativesLoading = true;
+            this.processAlternativesCache[categoryKey] = [];
             const originalRec = this.processRecommendations[categoryKey];
 
             const payload = {
@@ -182,25 +418,7 @@ document.addEventListener('alpine:init', () => {
                 original_recommendation: originalRec
             };
 
-            fetch('/ai-process-alternatives/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.alternatives) {
-                    this.processAlternativesCache[categoryKey] = data.alternatives;
-                }
-                this.processAlternativesLoading = false;
-            })
-            .catch(err => {
-                console.error('Failed fetching alternatives:', err);
-                this.processAlternativesLoading = false;
-            });
+            this.streamAlternatives(categoryKey, payload, false);
         },
 
         generateMoreProcessAlternatives(categoryKey) {
@@ -221,7 +439,14 @@ document.addEventListener('alpine:init', () => {
                 exclude_names: excludeNames
             };
 
-            fetch('/ai-process-alternatives/', {
+            this.streamAlternatives(categoryKey, payload, true);
+        },
+
+        streamAlternatives(categoryKey, payload, append) {
+            let rawBuffer = "";
+            let initialCacheLength = append ? (this.processAlternativesCache[categoryKey]?.length || 0) : 0;
+
+            fetch('/ai-process-alternatives/?stream=true', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -229,18 +454,60 @@ document.addEventListener('alpine:init', () => {
                 },
                 body: JSON.stringify(payload)
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.alternatives) {
-                    this.processAlternativesCache[categoryKey] = [
-                        ...this.processAlternativesCache[categoryKey],
-                        ...data.alternatives
-                    ];
+            .then(async res => {
+                if (!res.ok) {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) {}
+                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
                 }
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); 
+                    
+                    for (let line of lines) {
+                        if (line.startsWith("data: ")) {
+                            const dataStr = line.substring(6).trim();
+                            if (dataStr === "[DONE]" || !dataStr) continue;
+                            
+                            try {
+                                const parsedObj = JSON.parse(dataStr);
+                                if (typeof parsedObj === 'string') {
+                                    rawBuffer += parsedObj;
+                                } else if (parsedObj.text) {
+                                    rawBuffer += parsedObj.text;
+                                } else {
+                                    rawBuffer += JSON.stringify(parsedObj);
+                                }
+                            } catch(e) {
+                                rawBuffer += dataStr;
+                            }
+
+                            const items = this.extractPhase4State(rawBuffer);
+                            
+                            const validItems = items.filter(i => i && i.type === 'alternative');
+                            
+                            if (append) {
+                                const baseCache = this.processAlternativesCache[categoryKey].slice(0, initialCacheLength);
+                                this.processAlternativesCache[categoryKey] = [...baseCache, ...validItems];
+                            } else {
+                                this.processAlternativesCache[categoryKey] = validItems;
+                            }
+                        }
+                    }
+                }
+            })
+            .then(() => {
                 this.processAlternativesLoading = false;
             })
             .catch(err => {
-                console.error('Failed fetching more alternatives:', err);
+                console.error('Failed fetching alternatives:', err);
                 this.processAlternativesLoading = false;
             });
         },
@@ -297,9 +564,20 @@ document.addEventListener('alpine:init', () => {
         },
 
         async fetchAIInsights() {
-            if (!this.global_ai_enabled || this.current_phase !== 5) return;
+            if (!this.global_ai_enabled) return;
             
             this.aiLoading = true;
+            this.rawStreamText = "";
+            this.steps.splice(0, this.steps.length); // Clear preserving reactivity
+            this.bakeTemp = null;
+            this.bakeTimeMin = null;
+            this.bakeSteam = null;
+            this.donenessTemp = -1;
+            this.waterTemp = -1;
+            this.pitfalls = [];
+            this.sensory_description = '';
+            this.geometry_evaluation = null;
+
             try {
                 // Determine category and archetype from current path
                 const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -310,26 +588,44 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
                 
-                const response = await fetch(`/recipe-final/${cat}/${arch}/ai/`, {
+                const response = await fetch(`/recipe-final/${cat}/${arch}/ai/?stream=true`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
-                
-                const json = await response.json();
-                if (json.status === 'success' && json.data) {
-                    const d = json.data;
-                    this.recipe = d.recipe || {};
-                    this.sensory_description = d.sensory_description || '';
-                    this.pitfalls = d.pitfalls || [];
-                    this.geometry_evaluation = d.geometry_evaluation || null;
-                    
-                    if (d.bake_temp_f) this.bakeTemp = d.bake_temp_f;
-                    if (d.bake_time_min) this.bakeTimeMin = d.bake_time_min;
-                    if (d.steam_required !== undefined) this.bakeSteam = d.steam_required ? 'Yes' : 'No';
-                    
-                    if (d.countertop_steps_json) {
-                        try {
-                            this.steps = JSON.parse(d.countertop_steps_json);
-                        } catch (e) {}
+
+                if (!response.body) {
+                    throw new Error("No response body for streaming");
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    let parts = buffer.split(/\r?\n\r?\n/);
+                    buffer = parts.pop();
+
+                    // Clear old steps before starting to parse new ones from the AI stream
+                    let hasClearedSteps = false;
+
+                    for (const part of parts) {
+                        if (part.startsWith('data: ')) {
+                            const dataStr = part.replace('data: ', '').trim();
+                            if (dataStr === "[DONE]" || !dataStr) continue;
+                            
+                            try {
+                                const parsed = JSON.parse(dataStr);
+                                if (parsed.text) {
+                                    this.rawStreamText += parsed.text;
+                                    this.parseRawStream();
+                                }
+                            } catch(e) {
+                                console.error("Parse error on chunk:", dataStr, e);
+                            }
+                        }
                     }
                 }
             } catch (err) {
@@ -337,6 +633,84 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.aiLoading = false;
             }
+        },
+
+        parseRawStream() {
+            if (!this.rawStreamText) return;
+            
+            const profileMatch = this.rawStreamText.match(/"type"\s*:\s*"baking_profile"(.*?)(?=\{\s*"type"|\]|$)/s);
+            if (profileMatch) {
+                const text = profileMatch[0];
+                const tempMatch = text.match(/"oven_temp"\s*:\s*(\d+)/);
+                if (tempMatch) this.bakeTemp = parseInt(tempMatch[1]);
+                
+                const timeMatch = text.match(/"bake_time"\s*:\s*(\d+)/);
+                if (timeMatch) this.bakeTimeMin = parseInt(timeMatch[1]);
+                
+                const steamMatch = text.match(/"steam"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                if (steamMatch) this.bakeSteam = steamMatch[1];
+                
+                const donenessMatch = text.match(/"target_doneness"\s*:\s*(\d+)/);
+                if (donenessMatch) this.donenessTemp = parseInt(donenessMatch[1]);
+                
+                const waterTempMatch = text.match(/"liquid_water_temp"\s*:\s*(\d+)/);
+                if (waterTempMatch) this.waterTemp = parseInt(waterTempMatch[1]);
+            }
+
+            const phaseMatches = [...this.rawStreamText.matchAll(/"type"\s*:\s*"phase"(.*?)(?=\{\s*"type"|\]|$)/gs)];
+            let newSteps = [];
+            for (let i = 0; i < phaseMatches.length; i++) {
+                const text = phaseMatches[i][0];
+                const stepNumMatch = text.match(/"step_number"\s*:\s*(\d+)/);
+                if (!stepNumMatch) continue;
+                
+                const stepNum = parseInt(stepNumMatch[1]);
+                const nameMatch = text.match(/"name"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                const name = nameMatch ? nameMatch[1].replace(/\\n/g, '\\n').replace(/\\"/g, '"') : '';
+                
+                const instMatch = text.match(/"instruction"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                const instruction = instMatch ? instMatch[1].replace(/\\n/g, '\\n').replace(/\\"/g, '"') : '';
+                
+                const timeMatch = text.match(/"time_estimate_sec"\s*:\s*(\d+)/);
+                const timeSec = timeMatch ? parseInt(timeMatch[1]) : 0;
+                
+                newSteps.push({
+                    key: 'step_' + stepNum,
+                    step_number: stepNum,
+                    name: name,
+                    desc: instruction,
+                    duration_sec: timeSec,
+                    is_mix: false,
+                    is_knead: false
+                });
+            }
+            this.steps = newSteps;
+
+            const ingredientMatches = [...this.rawStreamText.matchAll(/"type"\s*:\s*"ingredient"(.*?)(?=\{\s*"type"|\]|$)/gs)];
+            let newIngredients = [];
+            for (let i = 0; i < ingredientMatches.length; i++) {
+                const text = ingredientMatches[i][0];
+                const nameMatch = text.match(/"name"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                if (!nameMatch) continue;
+                const name = nameMatch[1].replace(/\\n/g, '\\n').replace(/\\"/g, '"');
+                
+                const catMatch = text.match(/"category"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                const category = catMatch ? catMatch[1].replace(/\\n/g, '\\n').replace(/\\"/g, '"') : 'Other';
+
+                const weightMatch = text.match(/"weight_grams"\s*:\s*([\d.]+)/);
+                const weight_grams = weightMatch ? parseFloat(weightMatch[1]) : 0;
+
+                const pctMatch = text.match(/"bakers_percentage"\s*:\s*([\d.]+)/);
+                const bakers_percentage = pctMatch ? parseFloat(pctMatch[1]) : 0;
+
+                newIngredients.push({
+                    name: name,
+                    category: category,
+                    weight_grams: weight_grams,
+                    bakers_percentage: bakers_percentage
+                });
+            }
+            this.recipeIngredients = newIngredients;
         },
         
         // Form trigger for the COMPILE button to ensure it pushes state and re-renders
@@ -743,17 +1117,18 @@ document.addEventListener('alpine:init', () => {
             this.creativity_loading = false;
             return;
         }
-        this.creativity_loading = true;
+        
+        // Clear old state before streaming
         this.recipe_selected = false;
         this.selected_recipe_id = null;
         this.expanded_level = null;
         this.alternative_variants = [];
         this.grainEvaluations = [];
+        this.creativity_recipes = [];
         this.resetAdvisory();
         
-        this.recipe_gen_resolved = false;
-        this.recipe_gen_data = null;
-        this.startRecipeGenerationProgress();
+        // Show the cards container immediately, so we can see them stream in
+        this.creativity_loading = false;
 
         if (this.creativityRecipesAbortController) {
             this.creativityRecipesAbortController.abort();
@@ -764,6 +1139,7 @@ document.addEventListener('alpine:init', () => {
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
         const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        
         fetch(url, { signal })
             .then(async res => {
                 if (!res.ok) {
@@ -771,30 +1147,46 @@ document.addEventListener('alpine:init', () => {
                     try { errData = await res.json(); } catch(e) {}
                     throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
                 }
-                return res.json();
-            })
-            .then(data => {
-                // Normalize keys in case of AI returning capitalized keys
-                const normalized_recipes = (data.recipes || []).map(r => {
-                    const norm = {};
-                    for (const key in r) {
-                        norm[key.toLowerCase()] = r[key];
+                
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep the incomplete line in the buffer
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('event: close')) {
+                            // close event
+                        } else if (line.startsWith('data: ')) {
+                            const dataStr = line.substring(6).trim();
+                            if (dataStr && dataStr !== '{}') {
+                                try {
+                                    const parsed = JSON.parse(dataStr);
+                                    // Normalize keys
+                                    const norm = {};
+                                    for (const key in parsed) {
+                                        norm[key.toLowerCase()] = parsed[key];
+                                    }
+                                    // Append incrementally to trigger Alpine reactivity
+                                    this.creativity_recipes.push(norm);
+                                } catch (e) {
+                                    console.error('JSON parse error', e);
+                                }
+                            }
+                        }
                     }
-                    return norm;
-                });
-                this.recipe_gen_data = {
-                    category_slug: category_slug,
-                    archetype_id: archetype_id,
-                    recipes: normalized_recipes
-                };
-                this.recipe_gen_resolved = true;
+                }
             })
             .catch(err => {
                 if (err.name === 'AbortError') return;
                 console.error('[GrainLab] Failed fetching creativity recipes:', err);
                 this.phase4Error = err.message || "Failed fetching creativity recipes.";
-                this.creativity_loading = false;
-                if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
             })
             .finally(() => {
                 if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {

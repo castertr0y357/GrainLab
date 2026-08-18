@@ -138,6 +138,11 @@ class HearthEngine(BaseEngine):
             )
         },
     }
+    def get_ai_culinary_directive(self) -> str:
+        return "This is a lean hearth bread (e.g. sourdough, artisan loaf). Do NOT include lipids, sweeteners, or egg binders unless it's a specific hybrid. You MUST include a yeast/sourdough leavener and a liquid medium."
+        
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like seeds, nuts, or olives), use true baker's percentages (flour = 100%). For lean hearth doughs, these typically range from 10.0 to 25.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         # Desired Dough Temp (DDT) factoring friction is processed in water temp calculations.
@@ -157,8 +162,9 @@ class HearthEngine(BaseEngine):
         # Dual-phase bake: Steam phase is 25 mins (or less if bake_time is short)
         steam_bake_min = min(25, max(15, bake_time_min - 15))
         dry_bake_min = max(10, bake_time_min - steam_bake_min)
+        preset_slug = kwargs.get("preset_slug") or ""
 
-        return [
+        steps = [
             {
                 "key": "autolyse",
                 "name": "Autolyse Rest",
@@ -174,22 +180,93 @@ class HearthEngine(BaseEngine):
             },
             {
                 "key": "knead",
-                "name": "Gluten Development",
+                "name": "Intensive Mechanical Knead",
                 "duration_sec": knead_min * 60,
-                "desc": f"Develop the gluten network. Knead using '{mixing_method.replace('_', ' ').title()}' until dough passes the windowpane test.",
+                "desc": f"Knead using '{mixing_method.replace('_', ' ').title()}' to build a strong initial gluten mesh capable of holding high hydration.",
                 "is_knead": True
             },
             {
                 "key": "stretch_fold",
-                "name": "Stretch & Fold Sets",
+                "name": "Stretch & Folds",
                 "duration_sec": sf_min * 60,
-                "desc": "Perform 3 sets of stretch-and-folds every 15 minutes to align the gluten sheets and incorporate air pockets."
+                "desc": "Perform 3 sets of stretch and folds spaced 15 minutes apart. This aligns the gluten network gently while introducing oxygen."
             },
             {
                 "key": "bulk",
-                "name": "Bulk Fermentation",
+                "name": "Bulk Ferment",
                 "duration_sec": bulk_min * 60,
-                "desc": "Primary fermentation. Allow dough to build structure, volume, and carbon dioxide pockets."
+                "desc": "Allow dough to ferment until volume increases by 50-75% with visible bubbles throughout the matrix."
+            },
+            {
+                "key": "preshape",
+                "name": "Pre-Shape & Bench Rest",
+                "duration_sec": 20 * 60,
+                "desc": "Divide dough into required portions. Gently round them up and let rest on the bench. Relaxes dough before final tensioning."
+            }
+        ]
+
+        if "pizza" in preset_slug.lower() or "calzone" in preset_slug.lower():
+            steps.extend([
+                {
+                    "key": "final_shape",
+                    "name": "Pizza Stretching",
+                    "duration_sec": 10 * 60,
+                    "desc": "Gently stretch the dough ball outward from the center, preserving the gas in the outer rim (cornicione)."
+                },
+                {
+                    "key": "proof",
+                    "name": "Brief Rest",
+                    "duration_sec": 15 * 60,
+                    "desc": "Allow the stretched dough to relax briefly before topping.",
+                    "is_proof": True
+                },
+                {
+                    "key": "bake",
+                    "name": "Flash Stone Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake on an extremely hot stone/steel. The intense conduction heat causes immediate oven spring and crust blistering.",
+                    "is_bake": True
+                }
+            ])
+            return steps
+        elif "slab" in preset_slug.lower() or "focaccia" in preset_slug.lower() or "ciabatta" in preset_slug.lower():
+            steps.extend([
+                {
+                    "key": "final_shape",
+                    "name": "Pan Transfer & Dimpling",
+                    "duration_sec": 10 * 60,
+                    "desc": "Gently stretch and transfer the slack dough to a heavily oiled pan. Dimple deeply with oiled fingers."
+                },
+                {
+                    "key": "proof",
+                    "name": "Pan Proof",
+                    "duration_sec": estimated_proof_minutes * 60,
+                    "desc": "Proof in the pan until very bubbly and jiggly.",
+                    "is_proof": True
+                },
+                {
+                    "key": "bake",
+                    "name": "High-Heat Oil Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake in the hot oven. The oiled pan acts to shallow-fry the bottom crust while the top sets crisp.",
+                    "is_bake": True
+                },
+                {
+                    "key": "cool",
+                    "name": "Wire Rack Cooling",
+                    "duration_sec": 30 * 60,
+                    "desc": "Remove from pan to prevent a soggy bottom. Cool on a wire rack."
+                }
+            ])
+            return steps
+
+        # Default Hearth Loaf Pipeline
+        steps.extend([
+            {
+                "key": "final_shape",
+                "name": "Final Shaping",
+                "duration_sec": 10 * 60,
+                "desc": "Shape into a tight boule or batard to build surface tension. Place seam-side up in a floured banneton basket."
             },
             {
                 "key": "proof",
@@ -212,4 +289,13 @@ class HearthEngine(BaseEngine):
                 "desc": "Remove Dutch oven lid or vent oven steam. Reduce heat slightly to dry out the crust and achieve a deep golden blistered finish.",
                 "is_bake": True
             }
-        ]
+        ])
+        
+        steps.append({
+            "key": "cool",
+            "name": "Wire Rack Cooling",
+            "duration_sec": 120 * 60,
+            "desc": "Transfer the loaf immediately to a wire rack. Allow to cool completely (1-2 hours) before slicing. Slicing warm hearth bread will result in a gummy, damaged crumb."
+        })
+        
+        return steps

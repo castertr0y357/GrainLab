@@ -4,7 +4,7 @@
 <div {% block phase_x_data %}{% endblock %} class="calculator-layout" {% block phase_x_init %}{% endblock %}>
     {% block phase_hidden_forms %}{% endblock %}
     
-    <div class="calculator-grid" style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+    <div class="calculator-grid" style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start;">
         
         <!-- Left Panel: Main Content -->
         <div class="panel-left card" style="padding: 1.5rem; background-color: var(--bg-card); border-color: var(--border);">
@@ -12,7 +12,7 @@
         </div>
         
         <!-- Right Panel: Sidebar / Inspector -->
-        <div class="panel-right card" style="position: sticky; top: 2rem; height: fit-content; padding: 1.5rem; background-color: var(--bg-card); border-color: var(--border);">
+        <div class="panel-right card" style="position: sticky; top: 6rem; height: fit-content; padding: 1.5rem; background-color: var(--bg-card); border-color: var(--border);">
             {% block phase_right_panel %}{% endblock %}
         </div>
         

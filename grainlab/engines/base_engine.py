@@ -163,6 +163,9 @@ class BaseEngine:
     def get_ai_culinary_directive(self) -> str:
         return ""
 
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives, use true baker's percentages (where flour = 100%). Default ranges are typically 10.0 to 30.0 for standard doughs."
+
     def calculate_recipe(
         self,
         base_hydration: float,
@@ -203,29 +206,26 @@ class BaseEngine:
         effective_sugar = base_sugar
 
         # 2. Map Secondary Ingredients & Substitutions
-        sec_lipid = kwargs.get("secondary_lipid") or "none"
-        sec_liquid = kwargs.get("secondary_liquid") or "pure_water"
-        sec_binder = kwargs.get("secondary_binder") or "none"
-
-        # AI Fallback mapping: if AI mapped an egg to liquid, re-map to binder
-        if "egg" in sec_liquid.lower():
-            sec_binder = sec_liquid
-            sec_liquid = "none"
+        fat_substitute_label = None
+        sec_lipids = kwargs.get("secondary_lipids") or []
+        sec_liquids = kwargs.get("secondary_liquids") or []
+        sec_binders = kwargs.get("secondary_binders") or []
+        sec_sweeteners = kwargs.get("secondary_sweeteners") or []
+        sec_leaveners = kwargs.get("secondary_leaveners") or []
+        sec_additives = kwargs.get("secondary_additives") or []
 
         # Apply legacy substitution mapping
         if substitution and substitution.get("original") == "water":
             sub_sub = substitution.get("substitute")
             if sub_sub in ["whole_milk", "almond_milk"]:
-                sec_liquid = sub_sub
+                sec_liquids = [{"name": sub_sub.replace("_", " ").title(), "ratio": 1.0}]
 
         if substitution and substitution.get("original") == "fat":
             sub_sub = substitution.get("substitute")
             if sub_sub in ["butter", "salted_butter", "unsalted_butter", "olive_oil", "canola_oil", "vegetable_oil"]:
-                sec_lipid = sub_sub
-                if sec_lipid == "butter":
-                    sec_lipid = "unsalted_butter"
+                sec_lipids = [{"name": sub_sub.replace("_", " ").title(), "ratio": 1.0}]
 
-        binder_pct = 0.10 if sec_binder != "none" else 0.0
+        binder_pct = getattr(self, "default_binder_pct", 0.10) if len(sec_binders) > 0 else 0.0
 
         # Perform subclass-specific constraints (ceilings / floors)
         effective_hydration, effective_fat, effective_sugar = self.apply_sub_class_constraints(
@@ -235,7 +235,7 @@ class BaseEngine:
         # 3. Calculate Baker's Math Scaling
         flavor_inclusions = kwargs.get("flavor_inclusions", [])
         inclusion_pct = 0.0
-        for inc in flavor_inclusions:
+        for inc in flavor_inclusions + sec_additives:
             if isinstance(inc, dict) and "bakers_percentage" in inc:
                 try:
                     inclusion_pct += float(inc["bakers_percentage"]) / 100.0
@@ -262,37 +262,42 @@ class BaseEngine:
         else:
             yeast_weight = leaven_weight
 
-        # Re-compute liquid weight based on selection
-        liquid_weight = added_water
-        liquid_label = "Water"
-        if sec_liquid == "whole_milk":
-            liquid_label = "Whole Milk"
-        elif sec_liquid == "heavy_cream":
-            liquid_label = "Heavy Cream"
-        elif sec_liquid == "buttermilk":
-            liquid_label = "Buttermilk"
-        elif sec_liquid == "almond_milk":
-            liquid_label = "Almond Milk"
-        elif sec_liquid and sec_liquid not in ["pure_water", "none"]:
-            liquid_label = sec_liquid.title()
+        def allocate_weights(items, total_weight, default_name):
+            if not items:
+                if total_weight > 0:
+                    return [{"name": default_name, "weight": round(total_weight, 1)}]
+                return []
+            
+            # Legacy robust: if items is a dict instead of list of dicts, make it a list
+            if isinstance(items, dict):
+                items = [items]
 
-        # Re-compute lipids weight
-        added_butter = fat_weight if sec_lipid in ["unsalted_butter", "salted_butter", "butter"] else 0.0
-        added_oil = fat_weight if sec_lipid not in ["unsalted_butter", "salted_butter", "butter"] else 0.0
-        fat_substitute_label = sec_lipid.replace("_", " ").title() if sec_lipid and sec_lipid != "none" else None
+            total_ratio = sum(float(item.get("ratio", 1.0)) for item in items if isinstance(item, dict))
+            if total_ratio == 0:
+                total_ratio = 1.0
 
-        # Re-compute binders weight
-        added_eggs = flour_weight * binder_pct if sec_binder == "whole_eggs" else 0.0
-        added_egg_whites = flour_weight * binder_pct if sec_binder == "egg_whites" else 0.0
-        added_aquafaba = flour_weight * binder_pct if sec_binder == "aquafaba_vegan" else 0.0
-        binder_label = sec_binder.replace("_", " ").title() if sec_binder and sec_binder != "none" else None
+            results = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                ratio = float(item.get("ratio", 1.0))
+                weight = round(total_weight * (ratio / total_ratio), 1)
+                if weight > 0:
+                    results.append({"name": item.get("name", default_name).replace("_", " ").title(), "weight": weight})
+            return results
+        # Re-compute weights dynamically pulling defaults from child engine
+        def get_default(cat, fallback):
+            val = self.secondary_ingredients.get(cat, {}).get("default", fallback).replace("_", " ").title()
+            return val if val.lower() != "none" else fallback
+
+        liquid_items = allocate_weights(sec_liquids, added_water, get_default("liquids", "Water"))
+        lipid_items = allocate_weights(sec_lipids, fat_weight, get_default("lipids", "Unsalted Butter"))
+        binder_weight = flour_weight * binder_pct
+        binder_items = allocate_weights(sec_binders, binder_weight, get_default("binders", "Whole Eggs"))
+        sweetener_items = allocate_weights(sec_sweeteners, sugar_weight, get_default("sweeteners", "Granulated Sugar"))
         
-        # Leavener and Sweetener labels
-        sec_sweetener = kwargs.get("secondary_sweetener")
-        sweetener_label = sec_sweetener.replace("_", " ").title() if sec_sweetener and sec_sweetener != "none" else None
-        
-        sec_leavener = kwargs.get("secondary_leavener")
-        leavener_label = sec_leavener.replace("_", " ").title() if sec_leavener and sec_leavener != "none" else None
+        leaven_default = "Sourdough Starter" if leaven_type == "sourdough" else get_default("leaveners", "Baking Soda")
+        leavener_items = allocate_weights(sec_leaveners, leaven_weight, leaven_default)
 
         # 5. Desired Dough Temperature (DDT)
         ddt_target_f = 78.0
@@ -310,12 +315,33 @@ class BaseEngine:
                 except (ValueError, TypeError):
                     pass
                 weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
-                processed_inclusions.append({
-                    "name": name,
-                    "weight": weight,
-                    "volume_description": vol,
-                    "percentage": round(pct * 100, 1)
-                })
+                if weight > 0:
+                    processed_inclusions.append({
+                        "name": name,
+                        "weight": weight,
+                        "volume_description": vol,
+                        "percentage": round(pct * 100, 1)
+                    })
+                
+        # Handle secondary additives similarly since they act as inclusions but have their percentages driven by phase 4
+        processed_additives = []
+        for inc in sec_additives:
+            if isinstance(inc, dict) and "name" in inc:
+                name = inc["name"]
+                vol = inc.get("volume_description", "")
+                pct = 0.0
+                try:
+                    pct = float(inc.get("ratio", inc.get("bakers_percentage", 0))) / 100.0
+                except (ValueError, TypeError):
+                    pass
+                weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
+                if weight > 0:
+                    processed_additives.append({
+                        "name": name,
+                        "weight": weight,
+                        "volume_description": vol,
+                        "percentage": round(pct * 100, 1)
+                    })
 
         return {
             "target_mass": round(target_mass, 1),
@@ -327,26 +353,22 @@ class BaseEngine:
             "effective_sugar_pct": round(effective_sugar * 100, 1),
             "added_flour": round(added_flour, 1),
             "added_water": round(added_water, 1),
-            "liquid_weight": round(liquid_weight, 1),
-            "liquid_label": liquid_label,
+            "liquid_items": liquid_items,
             "yeast_weight": round(yeast_weight, 1),
-            "yeast_label": leavener_label or ("Sourdough Starter" if leaven_type == "sourdough" else "Commercial Yeast"),
+            "leavener_items": leavener_items,
             "fat_weight": round(fat_weight, 1),
-            "added_butter": round(added_butter, 1),
-            "added_oil": round(added_oil, 1),
-            "fat_substitute_label": fat_substitute_label,
+            "lipid_items": lipid_items,
             "sugar_weight": round(sugar_weight, 1),
-            "sugar_label": sweetener_label or "Granulated Sugar",
+            "sweetener_items": sweetener_items,
             "salt_weight": round(salt_weight, 1),
             "starter_weight": round(starter_weight, 1),
-            "added_eggs": round(added_eggs, 1),
-            "added_egg_whites": round(added_egg_whites, 1),
-            "added_aquafaba": round(added_aquafaba, 1),
-            "binder_label": binder_label,
+            "binder_weight": round(binder_weight, 1),
+            "binder_items": binder_items,
             "inclusions": processed_inclusions,
-            "secondary_lipid": sec_lipid,
-            "secondary_liquid": sec_liquid,
-            "secondary_binder": sec_binder,
+            "additive_items": processed_additives,
+            "secondary_lipids": sec_lipids,
+            "secondary_liquids": sec_liquids,
+            "secondary_binders": sec_binders,
             "thirst_modifier_applied": thirst_mod,
             "maturity_modifier_applied": maturity_mod,
             "required_water_temp_f": round(required_water_temp_f, 1),
@@ -358,8 +380,12 @@ class BaseEngine:
         }
 
     def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
-        """Sub-classes override this to inject custom mathematical validations."""
-        return hydration, fat, sugar
+        """Sub-classes override this to inject custom mathematical validations.
+        Base limits to prevent completely broken AI formulas."""
+        hyd = max(0.0, min(1.50, hydration))
+        f = max(0.0, min(1.20, fat))
+        s = max(0.0, min(2.00, sugar))
+        return hyd, f, s
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         return [

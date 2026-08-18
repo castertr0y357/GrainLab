@@ -3,6 +3,8 @@ from grainlab.engines.base_engine import BaseEngine
 class ChouxEngine(BaseEngine):
     name = "Choux Paste Engine"
     slug = "choux"
+    default_binder_pct = 1.60
+    default_salt_pct = 0.01
     target_protein_min = 12.0
     target_protein_max = 13.5
     gluten_behavior = "High Starch Gelatinization & High Elasticity. Matrix must actively bind massive egg moisture volumes, expanding violently into a hollow, self-supporting structural shell via steam inflation."
@@ -111,8 +113,17 @@ class ChouxEngine(BaseEngine):
         },
     }
 
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+        hyd = max(0.0, min(1.50, hydration))
+        f = max(0.0, min(1.00, fat))
+        s = max(0.0, min(0.30, sugar))
+        return hyd, f, s
+
     def get_ai_culinary_directive(self) -> str:
-        return "Choux paste relies heavily on a high ratio of eggs for leavening puff. Ensure you include a substantial amount of whole eggs, and zero yeast."
+        return "Choux paste relies heavily on a high ratio of eggs for leavening puff. Ensure you include a substantial amount of whole eggs, and zero yeast. This is choux pastry. NEVER include leaveners (it relies on steam). Requires high hydration, high lipids (butter), and high binders (eggs)."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like cheese), use true baker's percentages (flour = 100%). For choux doughs, these typically range from 10.0 to 25.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         boil_min = 3
@@ -164,5 +175,11 @@ class ChouxEngine(BaseEngine):
                 "duration_sec": dry_min * 60,
                 "desc": "Reduce heat to 375°F. Pierce shell walls to vent trapped steam and dry until golden, crisp, and hollow.",
                 "is_bake": True
+            },
+            {
+                "key": "cool",
+                "name": "Wire Rack Cooling",
+                "duration_sec": 30 * 60,
+                "desc": "Transfer to a wire rack to cool completely before filling. Filling warm shells will melt pastry cream and make them soggy."
             }
         ]

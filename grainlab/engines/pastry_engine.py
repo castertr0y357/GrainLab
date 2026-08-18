@@ -3,6 +3,8 @@ from grainlab.engines.base_engine import BaseEngine
 class PastryEngine(BaseEngine):
     name = "Pastry & Lamination Engine"
     slug = "pastry"
+    default_binder_pct = 0.10
+    default_leaven_pct = 0.0
     target_protein_min = 11.0
     target_protein_max = 12.5
     gluten_behavior = "Exceptional Extensibility. Dough sheets must roll out into paper-thin layers wrapping alternating cold solid butter blocks without tearing or puncturing."
@@ -124,11 +126,21 @@ class PastryEngine(BaseEngine):
         },
     }
 
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+        hyd = max(0.0, min(0.60, hydration))
+        f = max(0.0, min(1.20, fat))
+        s = max(0.0, min(0.50, sugar))
+        return hyd, f, s
+
     def get_ai_culinary_directive(self) -> str:
-        return "Specify the exact butter block weight required for lamination (around 28% of total dough mass), and detail the lamination fold style (e.g., book folds vs letter folds) and zero yeast if it is a shortcrust pastry."
+        return "Specify the exact butter block weight required for lamination (around 28% of total dough mass), and detail the lamination fold style (e.g., book folds vs letter folds) and zero yeast if it is a shortcrust pastry. This is laminated or pie pastry (croissants, puff, pie crust). Requires extreme lipids (butter blocks). NEVER include chemical leaveners for puff/pie crust (croissants may use yeast). Cold temperatures are strictly required."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like fruit fillings or almond paste), use true baker's percentages (flour = 100%). For pastries, these typically range from 10.0 to 50.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
-        preset_slug = kwargs.get("preset_slug", "")
+        preset_slug = kwargs.get("preset_slug") or ""
+        
         if "puff" in preset_slug.lower() or "danish" in preset_slug.lower():
             fold_desc = "Roll dough to a rectangle. Fold both outer edges to meet in the middle, then fold in half like a book (4 layers generated)."
         elif "croissant" in preset_slug.lower() or "chocolat" in preset_slug.lower():
@@ -136,49 +148,111 @@ class PastryEngine(BaseEngine):
         else:
             fold_desc = "Rub cold butter chunks into flour until pea-sized. Keep cool; do not laminate."
 
-        return [
-            {
-                "key": "mix",
-                "name": "Détrempe Base Mix",
-                "duration_sec": 6 * 60,
-                "desc": "Mix base dough (détrempe) until combined. Do not over-knead to prevent excess gluten toughness.",
-                "is_mix": True
-            },
-            {
-                "key": "butter_encase",
-                "name": "Butter Block Encasement",
-                "duration_sec": 10 * 60,
-                "desc": f"Roll the détrempe out. Place the cold butter block ({recipe_data.get('butter_block_weight', 0.0)}g) in the center. Fold the corners of the dough over to fully seal the butter block."
-            },
-            {
-                "key": "fold_one",
-                "name": "First Fold Set",
-                "duration_sec": 10 * 60,
-                "desc": f"Perform the first fold set: {fold_desc} Work quickly so butter remains cold."
-            },
-            {
-                "key": "chill_lock_one",
-                "name": "Low-Temp Chill Lock 1",
-                "duration_sec": 30 * 60,
-                "desc": "Mandatory low-temperature environmental chill-rest step. Chill in freezer/fridge to solidify butter and relax gluten sheets."
-            },
-            {
-                "key": "fold_two",
-                "name": "Second Fold Set",
-                "duration_sec": 10 * 60,
-                "desc": f"Roll dough out and perform the second fold set: {fold_desc}"
-            },
-            {
-                "key": "chill_lock_two",
-                "name": "Low-Temp Chill Lock 2",
-                "duration_sec": 30 * 60,
-                "desc": "Second mandatory chill lock. Keeps laminated butter solid so layers do not bleed together."
-            },
-            {
-                "key": "bake",
-                "name": "Laminated Steam Rise Bake",
-                "duration_sec": bake_time_min * 60,
-                "desc": "Bake in hot oven. Water in butter boils instantly, creating steam which puffs the pastry layers apart while fat setting locks the crumb.",
-                "is_bake": True
-            }
-        ]
+        if "tart" in preset_slug.lower() or "pie" in preset_slug.lower() or "shortcrust" in preset_slug.lower():
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Shortcrust Base Mix",
+                    "duration_sec": 10 * 60,
+                    "desc": "Cut cold butter into flour until pea-sized, add cold liquid until it just holds together. Do not overwork.",
+                    "is_mix": True
+                },
+                {
+                    "key": "chill_lock_one",
+                    "name": "Chill Lock",
+                    "duration_sec": 30 * 60,
+                    "desc": "Mandatory chill step in fridge to solidify butter before rolling out."
+                },
+                {
+                    "key": "bake",
+                    "name": "Crust Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Blind bake or bake with filling until crust is deeply golden.",
+                    "is_bake": True
+                }
+            ]
+        elif "phyllo" in preset_slug.lower() or "strudel" in preset_slug.lower():
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Phyllo Base Mix",
+                    "duration_sec": 10 * 60,
+                    "desc": "Mix flour, water, and a touch of oil/vinegar into a smooth, highly extensible dough.",
+                    "is_mix": True
+                },
+                {
+                    "key": "chill_lock_one",
+                    "name": "Relaxation Rest",
+                    "duration_sec": 60 * 60,
+                    "desc": "Rest dough at room temperature for at least 1 hour to fully relax gluten for extreme stretching."
+                },
+                {
+                    "key": "stretch",
+                    "name": "Paper-Thin Stretch & Stack",
+                    "duration_sec": 30 * 60,
+                    "desc": "Stretch dough paper-thin until translucent, stack layers while brushing generously with melted fat/oil."
+                },
+                {
+                    "key": "bake",
+                    "name": "Crisp Laminate Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake until golden and shatteringly crisp.",
+                    "is_bake": True
+                }
+            ]
+        else:
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Détrempe Base Mix",
+                    "duration_sec": 6 * 60,
+                    "desc": "Mix base dough (détrempe) until combined. Do not over-knead to prevent excess gluten toughness.",
+                    "is_mix": True
+                },
+                {
+                    "key": "butter_encase",
+                    "name": "Butter Block Encasement",
+                    "duration_sec": 10 * 60,
+                    "desc": f"Roll the détrempe out. Place the cold butter block ({recipe_data.get('butter_block_weight', 0.0)}g) in the center. Fold the corners of the dough over to fully seal the butter block."
+                },
+                {
+                    "key": "fold_one",
+                    "name": "First Fold Set",
+                    "duration_sec": 10 * 60,
+                    "desc": f"Perform the first fold set: {fold_desc} Work quickly so butter remains cold."
+                },
+                {
+                    "key": "chill_lock_one",
+                    "name": "Low-Temp Chill Lock 1",
+                    "duration_sec": 30 * 60,
+                    "desc": "Mandatory low-temperature environmental chill-rest step. Chill in freezer/fridge to solidify butter and relax gluten sheets."
+                },
+                {
+                    "key": "fold_two",
+                    "name": "Second Fold Set",
+                    "duration_sec": 10 * 60,
+                    "desc": f"Roll dough out and perform the second fold set: {fold_desc}"
+                },
+                {
+                    "key": "chill_lock_two",
+                    "name": "Low-Temp Chill Lock 2",
+                    "duration_sec": 30 * 60,
+                    "desc": "Second mandatory chill lock. Keeps laminated butter solid so layers do not bleed together."
+                },
+                {
+                    "key": "bake",
+                    "name": "Laminated Steam Rise Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake in hot oven. Water in butter boils instantly, creating steam which puffs the pastry layers apart while fat setting locks the crumb.",
+                    "is_bake": True
+                }
+            ]
+        
+        steps.append({
+            "key": "cool",
+            "name": "Wire Rack Cooling",
+            "duration_sec": 30 * 60,
+            "desc": "Transfer to a wire rack. Allow the pastries to cool completely to room temperature so the butter sets back up, restoring the crisp flaky texture."
+        })
+        
+        return steps

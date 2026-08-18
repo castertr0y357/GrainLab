@@ -168,6 +168,8 @@
 
 - Resolved UI Phase 3 and Phase 4 restructure.
 - Fixed sidebar CSS wrapping issue.
+- **Phase 3/4 UI Reactivity:** Fixed visual flickering in Phase 4 by directly mutating recommendation properties in Alpine.js state instead of object replacement.
+- **Phase 4 State Persistence:** Ensured `secondary_ingredients` generated in Phase 3 are persisted to the calculator state in Phase 4 so the LLM output properly matches UI components.
 - Refactored remaining phase templates (Phase 4 and beyond) to inherit from `phase_base.html` to maintain consistent sidebar/border layout.
 - Conducted thorough verification tests to ensure all complex functionality remains fully functional after template inheritance migration.
 - **Recipe Selection Pipeline**: Formula selections in Phase 2 correctly serialize state (name and secondary ingredients) into Django sessions via `Phase2View.post`, passing it effectively to `Phase3View`.

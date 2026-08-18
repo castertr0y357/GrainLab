@@ -441,6 +441,8 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
             {"role": "user", "content": normalized_user_prompt}
         ],
         "temperature": 0.1,
+        "max_tokens": 4096,
+        "num_predict": 4096,
         "response_format": {"type": "json_object"}
     }
     
@@ -488,6 +490,125 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         logger.error(f"[AI] - Error - Failed calling local Gemma: {str(e)}")
         
     return None
+
+def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = False):
+    """
+    Submits a structured prompt to local Gemma with stream=True and yields JSON objects
+    incrementally as they are generated from within a top-level JSON array.
+    """
+    if not _is_ai_enabled():
+        return
+        
+    url, model = _get_api_config()
+    headers = {"Content-Type": "application/json"}
+    
+    ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
+    ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
+
+    if ai_thinking_enabled:
+        system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
+    else:
+        system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt + " You MUST respond with raw JSON ONLY. No markdown formatting, no codeblocks."},
+            {"role": "user", "content": user_prompt}
+        ],
+        "temperature": 0.1,
+        "max_tokens": 4096,
+        "num_predict": 4096,
+        "stream": True
+    }
+    
+    # Optional OpenAI compatible reasoning effort
+    if ai_thinking_enabled:
+        payload["reasoning_effort"] = ai_thinking_effort
+
+    try:
+        response = requests.post(url, headers=headers, json=payload, stream=True, timeout=60.0)
+        
+        if response.status_code == 200:
+            def character_stream():
+                for line in response.iter_lines():
+                    if line:
+                        line_str = line.decode("utf-8").strip()
+                        if line_str.startswith("data: "):
+                            line_str = line_str[6:]
+                        if line_str == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(line_str)
+                            if "message" in data and "content" in data["message"]:
+                                yield data["message"]["content"]
+                            elif "choices" in data and len(data["choices"]) > 0:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta:
+                                    yield delta["content"]
+                        except Exception:
+                            pass
+
+            # NEW LOGGING FOR LLM DEBUGGING
+            def logging_stream_wrapper(gen):
+                full_raw_text = ""
+                for chunk in gen:
+                    full_raw_text += chunk
+                    yield chunk
+                logger.info(f"\\n\\n[AI Stream Debug] - Full Raw LLM Response:\\n{full_raw_text}\\n\\n")
+
+            char_stream = logging_stream_wrapper(character_stream())
+
+            if yield_raw:
+                for chunk in char_stream:
+                    yield chunk
+            else:
+                buffer = ""
+                brace_depth = 0
+                in_string = False
+                escape = False
+                in_array = False
+                obj_start = -1
+                
+                for chunk in char_stream:
+                    for char in chunk:
+                        buffer += char
+                        idx = len(buffer) - 1
+                        
+                        if escape:
+                            escape = False
+                            continue
+                        if char == '\\':
+                            escape = True
+                            continue
+                        if char == '"':
+                            in_string = not in_string
+                            continue
+                            
+                        if not in_string:
+                            if not in_array and char == '[':
+                                in_array = True
+                            
+                            if in_array:
+                                if char == '{':
+                                    if brace_depth == 0:
+                                        obj_start = idx
+                                    brace_depth += 1
+                                elif char == '}':
+                                    brace_depth -= 1
+                                    if brace_depth == 0 and obj_start != -1:
+                                        obj_str = buffer[obj_start:idx+1]
+                                        try:
+                                            yield json.loads(obj_str)
+                                        except Exception as e:
+                                            logger.warning(f"[AI Stream] - Failed to parse object chunk: {e}")
+                                        # Reset buffer to save memory, keeping anything after the current object
+                                        buffer = buffer[idx+1:]
+                                        obj_start = -1
+        else:
+            logger.error(f"[AI Stream] - HTTP Error - Endpoint returned status {response.status_code}")
+    except Exception as e:
+        logger.error(f"[AI Stream] - Error - Failed calling local Gemma stream: {str(e)}")
 
 
 # Moved from top of file
@@ -858,3 +979,106 @@ def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydrat
 
     # Fallback
     return get_local_sensory_benchmark(grain_type, flour_maturity, effective_hydration, category_slug, preset_slug)
+
+def stream_final_insights(state: dict, recipe_data: dict = None, countertop_steps_json: str = "[]", bake_temp_f: int = None, bake_time_min: int = None, steam_required: bool = False):
+    """
+    Streaming version of the final recipe AI generation.
+    Combines sensory benchmark, contextual pitfalls, geometry advisory, and fermentation calibration.
+    Yields JSON objects as Server-Sent Events.
+    """
+    from apps.core.gemma.core_client import _is_ai_enabled, stream_gemma_api
+    if not _is_ai_enabled():
+        return None
+        
+    is_sourdough = state.get("leaven_type") == "sourdough"
+    sourdough_context = ""
+    if is_sourdough:
+        sourdough_context = f"Sourdough Settings: starter fed {state.get('starter_feed_hours')} hours ago, {state.get('flow_rise_speed')} rise speed expected, {state.get('mill_type')} flour, sifted: {state.get('is_sifted')}."
+
+    system_prompt = (
+        "You are an expert baking scientist. You are provided with a requested recipe configuration, exact pre-calculated ingredient weights, and user preferences.\n"
+        "Your task is to generate the ENTIRE timeline and baking profile for this recipe.\n\n"
+        "Your response MUST be pure JSON matching this schema exactly:\n"
+        "{\n"
+        "  \"sensory_benchmark\": \"A descriptive, mouth-watering 2-sentence summary of the final texture, crust, and crumb expected.\",\n"
+        "  \"contextual_pitfalls\": [\n"
+        "    \"Specific warning #1 (e.g., 'Do not over-cream the butter or the cookies will spread too thin').\",\n"
+        "    \"Specific warning #2 (e.g., 'Ensure the water is exactly 95°F to hit the target DDT').\"\n"
+        "  ],\n"
+        "  \"timeline\": [\n"
+        "    { \n"
+        "      \"type\": \"baking_profile\",\n"
+        "      \"oven_temp\": <int>,\n"
+        "      \"bake_time\": <int>,\n"
+        "      \"steam\": \"<Yes/No>\",\n"
+        "      \"target_doneness\": <int|null>,\n"
+        "      \"liquid_water_temp\": <int|null>\n"
+        "    },\n"
+        "    { \n"
+        "      \"type\": \"phase\",\n"
+        "      \"step_number\": 1,\n"
+        "      \"name\": \"<step name>\",\n"
+        "      \"instruction\": \"<detailed instruction>\",\n"
+        "      \"time_estimate_sec\": 300\n"
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "Timeline Construction Rules:\n"
+        "1. Exactly ONE object with `type`: 'baking_profile'. This is metadata. You MUST set `oven_temp`, `bake_time`, and `steam` to EXACTLY match the `engine_baking_parameters` provided. Do NOT change them. `target_doneness`: <int|null> (Only if applicable, e.g. 205 for bread, else null), `liquid_water_temp`: <int|null> (Only if dough temperature matters, e.g. 75, else null).\n"
+        "2. Multiple objects for the timeline/steps, with `type`: 'phase', `step_number`: <int>, `name`: '<step title>', `instruction`: '<detailed instruction>', `time_estimate_sec`: <int>.\n"
+        "   - CRITICAL: The `baking_profile` object does NOT replace the final baking phase. You MUST still generate a `type: 'phase'` object for the baking step if one exists in `engine_timeline_steps`.\n"
+        "   - CRITICAL: You MUST use the EXACT ingredient names found in `calculated_recipe_data` (e.g., 'Unsalted Butter', 'Light Brown Sugar'). If the `process_recommendations` mention generic terms like 'oil', 'liquid', or 'granulated sugar', you MUST override them with the specific ingredients from `calculated_recipe_data`. Do NOT hallucinate ingredients that are not in the recipe.\n"
+        "   - CRITICAL: The user already has the exact weights in their formula sheet. Including weights in the instructions causes confusion. Simply say 'Add the flour and water', NEVER 'Add 400g of flour'.\n"
+        "   - CRITICAL: Pay attention to the `leavener_label` or `yeast_label`. If it is 'Baking Soda' or 'Baking Powder', DO NOT mention or add 'yeast' and do not generate fermentation steps.\n"
+        "   - CRITICAL: You MUST strictly follow the chronological phases provided in `engine_timeline_steps`. You MUST use the exact `name` and map the exact `duration_sec` to `time_estimate_sec` for each phase, UNLESS the phase description provides a flexible time range (e.g. 1 to 24 hours). If a range is provided, you MUST pick a specific optimal duration (e.g. 24 hours) and convert THAT specific time into seconds for your `time_estimate_sec`. Weave the `process_recommendations` details into the appropriate timeline step (e.g., mention the 'Baking Vessel' during the Bake step, use 'Mixing Method' during the Mix/Knead steps). Do NOT create standalone steps named after equipment.\n"
+        "   - CRITICAL: You MUST ensure EVERY single ingredient listed in `calculated_recipe_data` (including binders, salt, sweeteners, and inclusions) is explicitly added during the appropriate phase. Do not leave any ingredients out of the directions.\n"
+        "   - CRITICAL INSTRUCTION DEPTH: Do not just output empty steps. You must provide a rich, detailed 'instruction' string for EACH phase explaining EXACTLY 'how we are making it', incorporating temperature goals, sensory cues (e.g., 'until it pulls away from the bowl'), and precise techniques. If you mention time durations in the text, you MUST explicitly output duration in minutes or hours (e.g., '5 minutes'). Do NOT use 'seconds' unless the step takes less than 1 minute. Do NOT include the seconds in parenthesis next to the minutes. Ensure the text duration exactly matches your `time_estimate_sec`.\n"
+    )
+    
+    # Organize recipe_data into a clean, categorized list of ingredients WITHOUT weights
+    safe_recipe_data = {}
+    if recipe_data:
+        safe_recipe_data = {
+            "Flour Base": ["Flour (Milled Grains)"],
+            "Liquids": [item.get("name", "Liquid") for item in recipe_data.get("liquid_items", [])],
+            "Lipids & Fats": [item.get("name", "Fat") for item in recipe_data.get("lipid_items", [])],
+            "Sweeteners": [item.get("name", "Sugar") for item in recipe_data.get("sweetener_items", [])],
+            "Binders": [item.get("name", "Binder") for item in recipe_data.get("binder_items", [])],
+            "Leaveners": [item.get("name", "Leavener") for item in recipe_data.get("leavener_items", [])],
+            "Salt": ["Salt"] if recipe_data.get("salt_weight", 0) > 0 else [],
+            "Flavor Inclusions": [item.get("name", "Inclusion") for item in recipe_data.get("inclusions", []) + recipe_data.get("flavor_inclusions", []) + recipe_data.get("additive_items", [])]
+        }
+        
+        # Strip out empty categories to keep prompt clean
+        safe_recipe_data = {k: v for k, v in safe_recipe_data.items() if v}
+        
+    logger.info(f"[Gemma Client] - AI PROMPT FED TO STREAM_FINAL_INSIGHTS (safe_recipe_data): {json.dumps(safe_recipe_data)}")
+
+    user_prompt = json.dumps({
+        "category": state.get("selected_master") or state.get("dough_category"),
+        "preset": state.get("preset_slug"),
+        "grain_type": state.get("grain_type"),
+        "target_mass_grams": state.get("target_mass"),
+        "hydration_pct": state.get("hydration_pct"),
+        "sourdough_context": sourdough_context if is_sourdough else "N/A",
+        "form_factor": state.get("form_factor"),
+        "secondary_selections": state.get("secondary_ingredients", {}),
+        "flavor_inclusions": state.get("flavor_inclusions", []),
+        "flour_blend": state.get("flour_blend", {}),
+        "calculated_recipe_data": safe_recipe_data,
+        "process_recommendations": state.get("process_recommendations", {}),
+        "engine_timeline_steps": json.loads(countertop_steps_json) if countertop_steps_json else [],
+        "engine_baking_parameters": {
+            "bake_temp_f": bake_temp_f,
+            "bake_time_min": bake_time_min,
+            "steam_required": "Yes" if steam_required else "No"
+        }
+    })
+    
+    import logging
+    log = logging.getLogger("grainlab.gemma")
+    log.info(f"[Gemma Client] - AI PROMPT FED TO STREAM_FINAL_INSIGHTS: {user_prompt}")
+
+    for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
+        yield {"text": chunk}
+

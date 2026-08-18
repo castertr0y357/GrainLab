@@ -54,7 +54,30 @@ class AiGrainAdvisoryView(View):
                 "elevate_recipe": []
             })
         
+        stream = request.GET.get("stream", "false").lower() == "true"
+        
         ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
+        
+        if stream and ai_enabled and only_evaluations:
+            from django.http import StreamingHttpResponse
+            
+            def event_stream():
+                try:
+                    generator = gemma.stream_grain_evaluations(
+                        preset_slug, category_slug, 
+                        preset_name=preset_name,
+                        active_archetype_id=active_archetype_id
+                    )
+                    for item in generator:
+                        yield f"data: {json.dumps(item)}\n\n"
+                except Exception as e:
+                    logger.error(f"[AI] - Advisory Stream Error: {e}")
+                    yield f"data: {json.dumps({'error': 'Failed streaming advisory'})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+                
+            return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+
         advisory = None
         if ai_enabled:
             try:

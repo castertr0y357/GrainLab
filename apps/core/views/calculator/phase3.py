@@ -25,6 +25,8 @@ class Phase3View(View):
             'berries': WheatBerry.objects.filter(is_active=True), # In case we need it, but the state has active_berries
             'active_berries_json': json.dumps(state.get('active_berries', [])),
             'state': state,
+            'secondary_ingredients_json': json.dumps(state.get('secondary_ingredients', {})),
+            'flavor_inclusions_json': json.dumps(state.get('flavor_inclusions', [])),
             'engines_archetypes_json': get_engines_archetypes_json(),
             'engines_ff_json': get_engines_ff_json(),
             'mixers': Equipment.objects.filter(equipment_type='mixer').order_by('name'),
@@ -34,6 +36,23 @@ class Phase3View(View):
 
     def post(self, request, category, archetype):
         # Process slider states and configuration to transition to phase 4
+        
+        # Parse JSON fields safely
+        try:
+            secondary_ingredients = json.loads(request.POST.get('secondary_ingredients', '{}'))
+        except json.JSONDecodeError:
+            secondary_ingredients = {}
+            
+        try:
+            flavor_inclusions = json.loads(request.POST.get('flavor_inclusions', '[]'))
+        except json.JSONDecodeError:
+            flavor_inclusions = []
+            
+        try:
+            flour_blend = json.loads(request.POST.get('flour_blend', '{}'))
+        except json.JSONDecodeError:
+            flour_blend = {}
+            
         updates = {
             'current_phase': 4,
             # We would capture the full finalized recipe data here, e.g. hydration, fat, sugar, salt
@@ -44,9 +63,9 @@ class Phase3View(View):
             'fat_pct': request.POST.get('fat_pct', 0),
             'sugar_pct': request.POST.get('sugar_pct', 0),
             'target_weight': request.POST.get('target_weight', 1000),
-            'secondary_ingredients': request.POST.get('secondary_ingredients', '{}'),
-            'flavor_inclusions': request.POST.get('flavor_inclusions', '[]'),
-            'flour_blend': request.POST.get('flour_blend', '{}'),
+            'secondary_ingredients': secondary_ingredients,
+            'flavor_inclusions': flavor_inclusions,
+            'flour_blend': flour_blend,
             'default_yield_amount': request.POST.get('default_yield_amount', 1),
             'yield_unit': request.POST.get('yield_unit', 'loaf'),
             'is_portionable': request.POST.get('is_portionable', 'false') == 'true',

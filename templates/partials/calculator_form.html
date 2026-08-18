@@ -237,7 +237,7 @@
                       this.required_hardware = data.required_hardware;
                   }
                   if (data.flour_blend) {
-                      this.flour_blend = data.flour_blend;
+                      this.flour_blend = data.flour_blend.ratios || data.flour_blend;
                   }
               }
           });

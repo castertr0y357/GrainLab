@@ -64,6 +64,31 @@ class AiRecipeDetailsView(View):
                 if suffix in active_archetype_id:
                     active_archetype_id = active_archetype_id.split(suffix)[0]
 
+        is_stream = request.GET.get("stream", "false").strip().lower() == "true"
+        if is_stream:
+            from django.http import StreamingHttpResponse
+            
+            def event_stream():
+                try:
+                    generator = gemma.stream_recipe_details(
+                        engine_id=engine_id,
+                        active_archetype_id=active_archetype_id,
+                        recipe_slug=recipe_slug,
+                        recipe_name=recipe_name,
+                        selected_grains=selected_grains_names,
+                        category_slug=category_slug,
+                        mill_type=mill_type,
+                        is_sifted=is_sifted
+                    )
+                    for item in generator:
+                        yield f"data: {json.dumps(item)}\n\n"
+                except Exception as e:
+                    logger.error(f"[AI] - Recipe Details Stream Error: {e}")
+                    yield f"data: {json.dumps({'error': 'Failed streaming recipe details'})}\n\n"
+                yield "data: [DONE]\n\n"
+                
+            return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
         result = gemma.generate_recipe_details(
             engine_id=engine_id,
             active_archetype_id=active_archetype_id,
@@ -123,6 +148,31 @@ class AiGenerateSubstitutesView(View):
         if not recipe_slug or not target_category:
             return JsonResponse({"error": "recipe_slug and target_category are required."}, status=400)
 
+        is_stream = request.GET.get("stream", "false").strip().lower() == "true"
+        if is_stream:
+            from django.http import StreamingHttpResponse
+            
+            def event_stream():
+                try:
+                    generator = gemma.stream_generate_substitutes(
+                        engine_id=engine_id,
+                        active_archetype_id=active_archetype_id,
+                        recipe_slug=recipe_slug,
+                        recipe_name=recipe_name,
+                        selected_grains=selected_grains,
+                        target_category=target_category,
+                        original_recommendation=original_recommendation,
+                        exclude_names=exclude_names
+                    )
+                    for item in generator:
+                        yield f"data: {json.dumps(item)}\n\n"
+                except Exception as e:
+                    logger.error(f"[AI] - Substitute Stream Error: {e}")
+                    yield f"data: {json.dumps({'error': 'Failed streaming substitutes'})}\n\n"
+                yield "data: [DONE]\n\n"
+                
+            return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
         result = gemma.generate_substitutes(
             engine_id=engine_id,
             active_archetype_id=active_archetype_id,
@@ -161,6 +211,32 @@ class AiProcessAlternativesView(View):
         if not recipe_slug or not target_category:
             return JsonResponse({"error": "recipe_slug and target_category are required."}, status=400)
 
+        is_stream = request.GET.get("stream", "false").strip().lower() == "true"
+        if is_stream:
+            from django.http import StreamingHttpResponse
+            import logging
+            logger = logging.getLogger("grainlab.gemma")
+            
+            def event_stream():
+                try:
+                    generator = gemma.stream_process_alternatives(
+                        engine_id=engine_id,
+                        active_archetype_id=active_archetype_id,
+                        recipe_slug=recipe_slug,
+                        recipe_name=recipe_name,
+                        target_category=target_category,
+                        original_recommendation=original_recommendation,
+                        exclude_names=exclude_names
+                    )
+                    for chunk in generator:
+                        yield f"data: {json.dumps(chunk)}\n\n"
+                except Exception as e:
+                    logger.error(f"[AI] - Process Alternatives Stream Error: {e}")
+                    yield f"data: {json.dumps({'error': 'Failed streaming process alternatives'})}\n\n"
+                yield "data: [DONE]\n\n"
+                
+            return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
         result = gemma.generate_process_alternatives(
             engine_id=engine_id,
             active_archetype_id=active_archetype_id,
@@ -189,11 +265,48 @@ class AiProcessDetailsView(View):
         if not recipe_slug:
             return JsonResponse({"error": "recipe_slug is required."}, status=400)
 
+        is_stream = request.GET.get("stream", "false").strip().lower() == "true"
+        if is_stream:
+            from django.http import StreamingHttpResponse
+            import json
+            import logging
+            logger = logging.getLogger("grainlab.gemma")
+            
+            def event_stream():
+                try:
+                    from apps.core.services.calculator_session import get_calculator_state
+                    state = get_calculator_state(request)
+                    flavor_inclusions = state.get('flavor_inclusions', [])
+                    additives = state.get('secondary_ingredients', {}).get('additives', [])
+                    combined_inclusions = list(flavor_inclusions) + list(additives)
+                    generator = gemma.stream_process_details(
+                        engine_id=engine_id,
+                        active_archetype_id=active_archetype_id,
+                        recipe_slug=recipe_slug,
+                        recipe_name=recipe_name,
+                        flavor_inclusions=combined_inclusions
+                    )
+                    for item in generator:
+                        yield f"data: {json.dumps(item)}\n\n"
+                except Exception as e:
+                    logger.error(f"[AI] - Process Details Stream Error: {e}")
+                    yield f"data: {json.dumps({'error': 'Failed streaming process details'})}\n\n"
+                yield "data: [DONE]\n\n"
+                
+            return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
+        from apps.core.services.calculator_session import get_calculator_state
+        state = get_calculator_state(request)
+        flavor_inclusions = state.get('flavor_inclusions', [])
+        additives = state.get('secondary_ingredients', {}).get('additives', [])
+        combined_inclusions = list(flavor_inclusions) + list(additives)
+        
         result = gemma.generate_process_details(
             engine_id=engine_id,
             active_archetype_id=active_archetype_id,
             recipe_slug=recipe_slug,
-            recipe_name=recipe_name
+            recipe_name=recipe_name,
+            flavor_inclusions=combined_inclusions
         )
 
         if result is None:

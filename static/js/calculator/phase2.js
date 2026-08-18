@@ -11,8 +11,10 @@ document.addEventListener('alpine:init', () => {
         // Phase 2 specific state
         active_archetype_id: null,
         creativity_loading: false,
+        creativity_streaming: false,
         phase2Error: null,
         creativity_recipes: [],
+        creativityRecipesAbortController: null,
         recipe_generation_steps: [],
         expanded_level: null,
         variant_loading: false,
@@ -51,6 +53,74 @@ document.addEventListener('alpine:init', () => {
             console.log("Phase 2 App Initialized.");
             this.csrf_token = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
             // Optionally, we could automatically expand an archetype or start a generation process here.
+        },
+
+        extractPartialObjects(buffer) {
+            // Find the array content to ignore the root object wrapper
+            const match = buffer.match(/\[([\s\S]*)/);
+            if (!match) return [];
+            let arrayContent = match[1];
+            
+            const results = [];
+            let depth = 0;
+            let inString = false;
+            let escape = false;
+            let objStart = -1;
+            
+            for (let i = 0; i < arrayContent.length; i++) {
+                const char = arrayContent[i];
+                if (escape) { escape = false; continue; }
+                if (char === '\\') { escape = true; continue; }
+                if (char === '"') { inString = !inString; continue; }
+                
+                if (!inString) {
+                    if (char === '{') {
+                        if (depth === 0) objStart = i;
+                        depth++;
+                    } else if (char === '}') {
+                        depth--;
+                        if (depth === 0 && objStart !== -1) {
+                            results.push(arrayContent.substring(objStart, i + 1));
+                            objStart = -1;
+                        }
+                    }
+                }
+            }
+            
+            if (objStart !== -1) {
+                results.push(arrayContent.substring(objStart));
+            }
+            return results;
+        },
+
+        repairAndParse(str) {
+            let repaired = str.trim();
+            let quotes = 0;
+            let escape = false;
+            for (let i = 0; i < repaired.length; i++) {
+                if (escape) { escape = false; continue; }
+                if (repaired[i] === '\\') { escape = true; continue; }
+                if (repaired[i] === '"') { quotes++; }
+            }
+            if (quotes % 2 !== 0) {
+                repaired += '"'; 
+            }
+            
+            // Fix trailing commas or colons
+            repaired = repaired.replace(/,\s*$/, '');
+            if (repaired.match(/:\s*$/)) {
+                repaired += '""';
+            }
+            
+            if (!repaired.endsWith('}')) {
+                repaired += '}';
+            }
+            
+            try {
+                return JSON.parse(repaired);
+            } catch(e) {
+                return null;
+            }
         },
 
         get siftedAdvisory() { return this.sifted_recommendation; },
@@ -308,7 +378,8 @@ document.addEventListener('alpine:init', () => {
         }
         if (this.hovered_element.startsWith('mill_')) {
             const millId = String(this.hovered_element.replace('mill_', ''));
-            const evaluation = this.mill_evaluations ? this.mill_evaluations.find(m => String(m.mill_id) === millId) : null;
+            const millName = this.hover_metadata;
+            const evaluation = this.mill_evaluations ? this.mill_evaluations.find(m => String(m.mill_id) === millId || (millName && String(m.mill_id).toLowerCase() === String(millName).toLowerCase())) : null;
             const tier = evaluation ? (evaluation.tier || 'info') : 'info';
             const reason = evaluation ? evaluation.reasoning : 'No AI evaluation available for this mill.';
 
@@ -371,51 +442,74 @@ document.addEventListener('alpine:init', () => {
             : '';
     },
 
-    getMillStyle(millId) {
-        if (!this.mill_evaluations || this.mill_evaluations.length === 0) return '';
-        const evaluation = this.mill_evaluations.find(m => String(m.mill_id) === String(millId));
-        if (!evaluation || !evaluation.tier) return '';
+    getMillStyle(millId, millName) {
+        if (!this.mill_evaluations || this.mill_evaluations.length === 0) return {};
+        const evaluation = this.mill_evaluations.find(m => String(m.mill_id) === String(millId) || (millName && String(m.mill_id).toLowerCase() === String(millName).toLowerCase()));
+        if (!evaluation || !evaluation.tier) return {};
         const tier = evaluation.tier;
         const isSelected = String(this.mill_type) === String(millId);
         
         if (tier === 'recommended') {
             return isSelected
-                ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.12);'
-                : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.04);';
+                ? { 'border-color': '#ffd700', 'box-shadow': '0 0 12px rgba(255, 215, 0, 0.6)', 'background-color': 'rgba(255, 215, 0, 0.12)' }
+                : { 'border-color': '#ffd700', 'box-shadow': '0 0 8px rgba(255, 215, 0, 0.3)', 'background-color': 'rgba(255, 215, 0, 0.04)' };
         } else if (tier === 'sub-optimal') {
             return isSelected
-                ? 'border-color: var(--warning); box-shadow: 0 0 10px rgba(255,193,7,0.5); background-color: rgba(255,193,7,0.08);'
-                : 'border-color: var(--warning); box-shadow: 0 0 6px rgba(255,193,7,0.2); background-color: rgba(255,193,7,0.02);';
+                ? { 'border-color': 'var(--warning)', 'box-shadow': '0 0 10px rgba(255,193,7,0.5)', 'background-color': 'rgba(255,193,7,0.08)' }
+                : { 'border-color': 'var(--warning)', 'box-shadow': '0 0 6px rgba(255,193,7,0.2)', 'background-color': 'rgba(255,193,7,0.02)' };
         } else if (tier === 'not-recommended') {
             return isSelected
-                ? 'border-color: var(--danger); box-shadow: 0 0 10px rgba(220,53,69,0.5); background-color: rgba(220,53,69,0.08);'
-                : 'border-color: var(--danger); box-shadow: 0 0 6px rgba(220,53,69,0.2); background-color: rgba(220,53,69,0.02);';
+                ? { 'border-color': 'var(--danger)', 'box-shadow': '0 0 10px rgba(220,53,69,0.5)', 'background-color': 'rgba(220,53,69,0.08)' }
+                : { 'border-color': 'var(--danger)', 'box-shadow': '0 0 6px rgba(220,53,69,0.2)', 'background-color': 'rgba(220,53,69,0.02)' };
         }
-        return '';
+        return {};
     },
 
     getSifterStyle(isSifted) {
-        if (!this.sifter_evaluations) return '';
+        if (!this.sifter_evaluations) return {};
         const evaluation = isSifted ? this.sifter_evaluations.sifted : this.sifter_evaluations.unsifted;
-        if (!evaluation || !evaluation.tier) return '';
+        if (!evaluation || !evaluation.tier) return {};
         
         const tier = evaluation.tier;
         const isSelected = this.is_sifted === isSifted;
 
         if (tier === 'recommended') {
             return isSelected
-                ? 'border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); background-color: rgba(255, 215, 0, 0.12);'
-                : 'border-color: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); background-color: rgba(255, 215, 0, 0.04);';
+                ? { 'border-color': '#ffd700', 'box-shadow': '0 0 12px rgba(255, 215, 0, 0.6)', 'background-color': 'rgba(255, 215, 0, 0.12)' }
+                : { 'border-color': '#ffd700', 'box-shadow': '0 0 8px rgba(255, 215, 0, 0.3)', 'background-color': 'rgba(255, 215, 0, 0.04)' };
         } else if (tier === 'sub-optimal') {
             return isSelected
-                ? 'border-color: var(--warning); box-shadow: 0 0 10px rgba(255,193,7,0.5); background-color: rgba(255,193,7,0.08);'
-                : 'border-color: var(--warning); box-shadow: 0 0 6px rgba(255,193,7,0.2); background-color: rgba(255,193,7,0.02);';
+                ? { 'border-color': 'var(--warning)', 'box-shadow': '0 0 10px rgba(255,193,7,0.5)', 'background-color': 'rgba(255,193,7,0.08)' }
+                : { 'border-color': 'var(--warning)', 'box-shadow': '0 0 6px rgba(255,193,7,0.2)', 'background-color': 'rgba(255,193,7,0.02)' };
         } else if (tier === 'not-recommended') {
             return isSelected
-                ? 'border-color: var(--danger); box-shadow: 0 0 10px rgba(220,53,69,0.5); background-color: rgba(220,53,69,0.08);'
-                : 'border-color: var(--danger); box-shadow: 0 0 6px rgba(220,53,69,0.2); background-color: rgba(220,53,69,0.02);';
+                ? { 'border-color': 'var(--danger)', 'box-shadow': '0 0 10px rgba(220,53,69,0.5)', 'background-color': 'rgba(220,53,69,0.08)' }
+                : { 'border-color': 'var(--danger)', 'box-shadow': '0 0 6px rgba(220,53,69,0.2)', 'background-color': 'rgba(220,53,69,0.02)' };
         }
-        return '';
+        return {};
+    },
+
+    isMillRecommended(millId, millName) {
+        if (!this.mill_evaluations || this.mill_evaluations.length === 0) return true;
+        const evaluation = this.mill_evaluations.find(m => String(m.mill_id) === String(millId) || (millName && String(m.mill_id).toLowerCase() === String(millName).toLowerCase()));
+        return evaluation && evaluation.tier === 'recommended';
+    },
+
+    hasOtherMills() {
+        if (!this.mill_evaluations || this.mill_evaluations.length === 0) return false;
+        return this.mill_evaluations.some(m => m.tier !== 'recommended');
+    },
+
+    isSifterRecommended(isSifted) {
+        if (!this.sifter_evaluations || Object.keys(this.sifter_evaluations).length === 0) return true;
+        const evaluation = isSifted ? this.sifter_evaluations.sifted : this.sifter_evaluations.unsifted;
+        return evaluation && evaluation.tier === 'recommended';
+    },
+
+    hasOtherSifters() {
+        if (!this.sifter_evaluations || Object.keys(this.sifter_evaluations).length === 0) return false;
+        const evals = Object.values(this.sifter_evaluations);
+        return evals.some(e => e.tier !== 'recommended');
     },
 
     getGrainReasoning(berry) {
@@ -538,18 +632,20 @@ document.addEventListener('alpine:init', () => {
             this.creativity_loading = false;
             return;
         }
-        this.creativity_loading = true;
+        
+        // Clear old state before streaming
         this.recipe_selected = false;
         this.selected_recipe_id = null;
         this.expanded_level = null;
         this.alternative_variants = [];
         this.grainEvaluations = [];
+        this.creativity_recipes = [];
         this.resetAdvisory();
         
-        this.recipe_gen_resolved = false;
-        this.recipe_gen_data = null;
-        this.startRecipeGenerationProgress();
-
+        // Show the cards container immediately, so we can see them stream in
+        this.creativity_loading = false;
+        this.creativity_streaming = true;
+        
         if (this.creativityRecipesAbortController) {
             this.creativityRecipesAbortController.abort();
             this.creativityRecipesAbortController = null;
@@ -559,6 +655,7 @@ document.addEventListener('alpine:init', () => {
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
         const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        
         fetch(url, { signal })
             .then(async res => {
                 if (!res.ok) {
@@ -566,32 +663,81 @@ document.addEventListener('alpine:init', () => {
                     try { errData = await res.json(); } catch(e) {}
                     throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
                 }
-                return res.json();
-            })
-            .then(data => {
-                // Normalize keys in case of AI returning capitalized keys
-                const normalized_recipes = (data.recipes || []).map(r => {
-                    const norm = {};
-                    for (const key in r) {
-                        norm[key.toLowerCase()] = r[key];
+                
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let rawBuffer = "";
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep the incomplete line in the buffer
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('event: close')) {
+                            // close event
+                        } else if (line.startsWith('data: ')) {
+                            const dataStr = line.substring(6).trim();
+                            if (dataStr && dataStr !== '{}') {
+                                try {
+                                    const parsed = JSON.parse(dataStr);
+                                    
+                                    if (typeof parsed === 'string') {
+                                        // Streaming raw text chunks
+                                        rawBuffer += parsed;
+                                        const objects = this.extractPartialObjects(rawBuffer);
+                                        console.log('rawBuffer', rawBuffer);
+                                        console.log('extracted objects', objects);
+                                        
+                                        // Update the creativity_recipes array with the latest state
+                                        const newRecipes = [];
+                                        for (let i = 0; i < objects.length; i++) {
+                                            const objStr = objects[i];
+                                            const parsedObj = this.repairAndParse(objStr);
+                                            
+                                            if (parsedObj) {
+                                                const norm = {};
+                                                for (const key in parsedObj) {
+                                                    norm[key.toLowerCase()] = parsedObj[key];
+                                                }
+                                                newRecipes.push(norm);
+                                            } else {
+                                                // If parsing fails for a partial object, retain the last known good state
+                                                if (this.creativity_recipes[i]) {
+                                                    newRecipes.push(this.creativity_recipes[i]);
+                                                }
+                                            }
+                                        }
+                                        // Trigger reactivity
+                                        this.creativity_recipes = newRecipes;
+                                        
+                                    } else {
+                                        // Fallback dictionary mode
+                                        const norm = {};
+                                        for (const key in parsed) {
+                                            norm[key.toLowerCase()] = parsed[key];
+                                        }
+                                        this.creativity_recipes.push(norm);
+                                    }
+                                } catch (e) {
+                                    console.error('JSON parse error', e);
+                                }
+                            }
+                        }
                     }
-                    return norm;
-                });
-                this.recipe_gen_data = {
-                    category_slug: category_slug,
-                    archetype_id: archetype_id,
-                    recipes: normalized_recipes
-                };
-                this.recipe_gen_resolved = true;
+                }
             })
             .catch(err => {
                 if (err.name !== 'AbortError') {
                     console.error('[GrainLab] Failed fetching creativity recipes:', err);
                 }
-                this.creativity_loading = false;
-                if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
             })
             .finally(() => {
+                this.creativity_streaming = false;
                 if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {
                     this.creativityRecipesAbortController = null;
                 }
@@ -696,11 +842,15 @@ document.addEventListener('alpine:init', () => {
     },
 
     fetchAlternativeVariants(level) {
+        // Clear previous variants before streaming
+        this.alternative_variants = [];
+        // Keep the loading spinner active, or we could turn it off immediately depending on UI.
+        // Let's keep it true and set to false when stream ends.
         this.variant_loading = true;
         
         // Extract existing names to avoid generating the same ones again
-        const excludeNames = this.alternative_variants
-            .map(v => v.variant_name || v.name)
+        const excludeNames = this.creativity_recipes
+            .map(v => v.recipe_name || v.name)
             .filter(Boolean)
             .join(',');
 
@@ -727,25 +877,75 @@ document.addEventListener('alpine:init', () => {
                     try { errData = await res.json(); } catch(e) {}
                     throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
                 }
-                return res.json();
-            })
-            .then(data => {
-                let newVariants = [];
-                if (data.generated_variants) {
-                    newVariants = data.generated_variants;
-                } else if (data.variants) {
-                    newVariants = data.variants;
+                
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let rawBuffer = "";
+                let count = 0;
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataStr = line.substring(6).trim();
+                            if (dataStr === '[DONE]' || dataStr.startsWith('event: close')) break;
+                            if (dataStr && dataStr !== '{}') {
+                                try {
+                                    const parsed = JSON.parse(dataStr);
+                                    
+                                    if (typeof parsed === 'string') {
+                                        // Streaming raw text chunks
+                                        rawBuffer += parsed;
+                                        const objects = this.extractPartialObjects(rawBuffer);
+                                        
+                                        const newVariants = [];
+                                        let vCount = 0;
+                                        for (const objStr of objects) {
+                                            const v = this.repairAndParse(objStr);
+                                            if (v) {
+                                                const mappedVariant = {
+                                                    variant_id: v.variant_id || v.id || `variant-${Date.now()}-${vCount}`,
+                                                    variant_name: v.variant_name || v.name || 'Generating...',
+                                                    description: v.description || '',
+                                                    menu_description: v.menu_description || '',
+                                                    creativity_level: v.creativity_level || level
+                                                };
+                                                newVariants.push(mappedVariant);
+                                            } else {
+                                                if (this.alternative_variants[vCount]) {
+                                                    newVariants.push(this.alternative_variants[vCount]);
+                                                }
+                                            }
+                                            vCount++;
+                                        }
+                                        this.alternative_variants = newVariants;
+                                        
+                                    } else {
+                                        // Fallback dictionary mode
+                                        const v = parsed;
+                                        const mappedVariant = {
+                                            variant_id: v.variant_id || v.id || `variant-${Date.now()}-${count++}`,
+                                            variant_name: v.variant_name || v.name || 'Unknown Variant',
+                                            description: v.description,
+                                            menu_description: v.menu_description,
+                                            creativity_level: v.creativity_level || level
+                                        };
+                                        this.alternative_variants.push(mappedVariant);
+                                    }
+                                } catch (e) {
+                                    console.error('JSON parse error in variants stream', e);
+                                }
+                            }
+                        }
+                    }
                 }
-                
-                // Ensure each has a variant_id for Alpine reactivity
-                const mappedVariants = newVariants.map((v, idx) => ({
-                    ...v,
-                    variant_id: v.variant_id || v.id || `variant-${Date.now()}-${idx}`,
-                    variant_name: v.variant_name || v.name || 'Unknown Variant',
-                    description: v.description || v.desc || ''
-                }));
-                
-                this.alternative_variants = mappedVariants;
                 this.variant_loading = false;
             })
             .catch(err => {
@@ -779,36 +979,95 @@ document.addEventListener('alpine:init', () => {
             global_ai_enabled: this.global_ai_enabled
         });
         const urlDetails = `/ai-recipe-details/?${params.toString()}`;
-        const urlAdvisory = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true`;
+        const urlAdvisory = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true&stream=true`;
         
-        Promise.all([
-            fetch(urlDetails, { signal }).then(async res => {
-                if (!res.ok) {
-                    let errData;
-                    try { errData = await res.json(); } catch(e) {}
-                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+        // Reset evaluations before streaming
+        this.grainEvaluations = [];
+        this.mill_evaluations = [];
+        this.sifter_evaluations = {};
+        if (this.activeBerries) {
+            this.activeBerries.forEach(b => {
+                b.classification = null;
+                b.reasoning = null;
+                b.selected = false;
+            });
+        }
+        
+        const detailsPromise = fetch(urlDetails, { signal }).then(async res => {
+            if (!res.ok) {
+                let errData;
+                try { errData = await res.json(); } catch(e) {}
+                throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        });
+        
+        const advisoryPromise = fetch(urlAdvisory, { signal }).then(async res => {
+            if (!res.ok) {
+                let errData;
+                try { errData = await res.json(); } catch(e) {}
+                throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+            }
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.substring(6).trim();
+                        if (dataStr === '[DONE]') break;
+                        if (dataStr && dataStr !== '{}') {
+                            try {
+                                const parsed = JSON.parse(dataStr);
+                                
+                                // Normalize tiers if AI responds creatively
+                                if (parsed.tier) parsed.tier = parsed.tier.toLowerCase().trim();
+                                if (parsed.tier === 'optimal') parsed.tier = 'recommended';
+                                else if (parsed.tier === 'not recommended') parsed.tier = 'not-recommended';
+                                else if (parsed.tier === 'sub optimal' || parsed.tier === 'suboptimal') parsed.tier = 'sub-optimal';
+
+                                if (parsed.type === 'grain') {
+                                    // Match by exact ID or by grain name (case-insensitive) in case LLM returns the name instead of UUID
+                                    const berry = this.activeBerries.find(b => 
+                                        b.id.toString() === parsed.id.toString() || 
+                                        (b.name && b.name.toLowerCase() === parsed.id.toString().toLowerCase())
+                                    );
+                                    
+                                    if (berry) {
+                                        console.log(`[Advisory] Matched grain: ${berry.name} (${parsed.tier})`);
+                                        this.grainEvaluations.push({ grain_id: berry.id, tier: parsed.tier, reasoning: parsed.reasoning });
+                                        berry.classification = parsed.tier;
+                                        berry.reasoning = parsed.reasoning;
+                                        if (parsed.tier === 'recommended') berry.selected = true;
+                                    } else {
+                                        console.warn(`[Advisory] Warning: Could not match grain id/name returned by AI: "${parsed.id}"`);
+                                    }
+                                } else if (parsed.type === 'mill') {
+                                    console.log(`[Advisory] Mill evaluation: ${parsed.id} (${parsed.tier})`);
+                                    this.mill_evaluations.push({ mill_id: parsed.id, tier: parsed.tier, reasoning: parsed.reasoning });
+                                } else if (parsed.type === 'sifter') {
+                                    console.log(`[Advisory] Sifter evaluation: ${parsed.id} (${parsed.tier})`);
+                                    this.sifter_evaluations[parsed.id] = { tier: parsed.tier, reasoning: parsed.reasoning };
+                                }
+                            } catch (e) { console.error('SSE Parse Error', e); }
+                        }
+                    }
                 }
-                return res.json();
-            }),
-            fetch(urlAdvisory, { signal }).then(async res => {
-                if (!res.ok) {
-                    let errData;
-                    try { errData = await res.json(); } catch(e) {}
-                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })
-        ])
-            .then(([detailsData, advisoryData]) => {
+            }
+        });
+        
+        Promise.all([detailsPromise, advisoryPromise])
+            .then(([detailsData]) => {
                 this.recipe_details_data = detailsData;
                 
-                // Set global grain evaluations
-                if (advisoryData) {
-                    this.grainEvaluations = advisoryData.grain_evaluations || [];
-                    this.recipe_details_data.grain_evaluations = advisoryData.grain_evaluations || [];
-                    this.recipe_details_data.mill_evaluations = advisoryData.mill_evaluations || [];
-                    this.recipe_details_data.sifter_evaluations = advisoryData.sifter_evaluations || {};
-                }
+                this.recipe_details_data.grain_evaluations = this.grainEvaluations;
+                this.recipe_details_data.mill_evaluations = this.mill_evaluations;
+                this.recipe_details_data.sifter_evaluations = this.sifter_evaluations;
                 
                 if (this.recipe_details_data.sidebar_science_profile) {
                     this.sidebar_analysis = this.recipe_details_data.sidebar_science_profile;

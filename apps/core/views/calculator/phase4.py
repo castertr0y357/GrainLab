@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views import View
+import json
+from apps.core.models import WheatBerry, DoughCategory
 from apps.core.services.calculator_session import get_calculator_state, get_engines_archetypes_json, get_engines_ff_json
 class Phase4View(View):
     def get(self, request, category, archetype):
@@ -18,10 +20,27 @@ class Phase4View(View):
             })
             state = get_calculator_state(request)
             
+        # Safeguard if state has strings instead of parsed objects
+        sec_ing = state.get('secondary_ingredients', {})
+        if isinstance(sec_ing, str):
+            try: sec_ing = json.loads(sec_ing)
+            except: sec_ing = {}
+            
+        flav_inc = state.get('flavor_inclusions', [])
+        if isinstance(flav_inc, str):
+            try: flav_inc = json.loads(flav_inc)
+            except: flav_inc = []
+
         context = {
+            'berries': WheatBerry.objects.filter(is_active=True), # In case we need it, but the state has active_berries
+            'active_berries_json': json.dumps(state.get('active_berries', [])),
             'state': state,
+            'secondary_ingredients_json': json.dumps(sec_ing),
+            'flavor_inclusions_json': json.dumps(flav_inc),
             'engines_archetypes_json': get_engines_archetypes_json(),
             'engines_ff_json': get_engines_ff_json(),
+            'category_name': DoughCategory.objects.get(slug=category).name,
+            'process_recommendations_json': json.dumps(state.get('process_recommendations', {})),
         }
         
         # Calculate final recipe and inject into context
@@ -49,12 +68,44 @@ class Phase4View(View):
             return redirect('calculator_phase1')
             
         from apps.core.services.calculator_session import update_calculator_state
+        import json
+        
+        # Parse process_recommendations safely
+        process_recs = {}
+        raw_recs = request.POST.get('process_recommendations')
+        if raw_recs:
+            try:
+                process_recs = json.loads(raw_recs)
+            except json.JSONDecodeError:
+                pass
+                
+        # Parse flavor_inclusions safely
+        flavor_inclusions = []
+        raw_inclusions = request.POST.get('flavor_inclusions')
+        if raw_inclusions:
+            try:
+                flavor_inclusions = json.loads(raw_inclusions)
+            except json.JSONDecodeError:
+                pass
+
+        # Parse secondary_ingredients safely
+        secondary_ingredients = {}
+        raw_secondary = request.POST.get('secondary_ingredients')
+        if raw_secondary:
+            try:
+                secondary_ingredients = json.loads(raw_secondary)
+            except json.JSONDecodeError:
+                pass
+
         update_calculator_state(request, {
             'texture': request.POST.get('texture'),
             'crumb': request.POST.get('crumb'),
             'starter': request.POST.get('starter'),
             'mixing_method': request.POST.get('mixing_method'),
             'active_action': request.POST.get('active_action'),
+            'process_recommendations': process_recs,
+            'flavor_inclusions': flavor_inclusions,
+            'secondary_ingredients': secondary_ingredients,
         })
             
         # Redirect to final recipe view

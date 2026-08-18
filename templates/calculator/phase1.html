@@ -8,8 +8,8 @@
 
 {% block phase_x_data %}
 x-data="phase1App({
-    selected_master: '{{ state.selected_master|default:'' }}',
-    presetSlug: '{{ state.preset_slug|default:'' }}'
+    selected_master: '',
+    presetSlug: ''
 })" style="margin-top: 1rem;"
 {% endblock %}
 
@@ -104,15 +104,14 @@ x-data="phase1App({
                     </h3>
                     
                     <!-- The Science Profile Card -->
-                    <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">🔬 The Science Profile</span>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.45;" 
+                    <div>
+                        <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0; line-height: 1.45;" 
                            x-text="phase1_categories[selected_master]?.definition"></p>
                     </div>
                     
                     <!-- Included Targets Array -->
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">INCLUDED TARGETS:</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.05em;">INCLUDED ARCHETYPES:</span>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                             <template x-for="preset in phase1_categories[selected_master]?.presets" :key="preset">
                                 <span style="font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-primary); cursor: default;" x-text="preset"></span>

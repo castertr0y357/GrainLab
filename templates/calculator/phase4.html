@@ -10,6 +10,8 @@ x-data="phase4App({
     preset_slug: '{{ state.preset_slug|escapejs }}',
     recipe_name: '{{ state.recipe_name|default:""|escapejs }}',
     global_ai_enabled: {{ state.global_ai_enabled|yesno:"true,false" }},
+    flavor_inclusions: JSON.parse('{{ flavor_inclusions_json|default:"[]"|escapejs }}'),
+    secondary_ingredients: JSON.parse('{{ secondary_ingredients_json|default:"{}"|escapejs }}'),
     enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}' || '{}'),
     engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}' || '{}'),
     
@@ -34,16 +36,14 @@ x-data="phase4App({
         <input type="hidden" name="starter" :value="starter">
         <input type="hidden" name="mixing_method" :value="mixing_method">
         <input type="hidden" name="active_action" :value="active_action">
+        <input type="hidden" name="process_recommendations" :value="JSON.stringify(processRecommendations)">
+        <input type="hidden" name="flavor_inclusions" :value="JSON.stringify($data.flavor_inclusions || [])">
+        <input type="hidden" name="secondary_ingredients" :value="JSON.stringify($data.secondary_ingredients || {})">
     </form>
 {% endblock %}
 
 {% block phase_left_panel %}
         <div x-show="!countertopMode" x-transition style="position: relative;">
-        <!-- Loading Overlay -->
-        <div x-show="processRecommendationsLoading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 23, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: var(--radius-md);">
-            <div style="color: var(--accent); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.05em; text-align: center; text-transform: uppercase; margin-bottom: 2rem;">CALCULATING OPTIMAL PROCESS...</div>
-            <div class="spinner" style="width: 50px; height: 50px; border: 3px solid rgba(255, 136, 0, 0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        </div>
             <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <span>Final Calibration</span>
@@ -52,18 +52,24 @@ x-data="phase4App({
             
                     <!-- PHASE 4: Yield & Refinement -->
 
+
+
         <!-- Process Recommendations (Home Baker Configuration) -->
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem; position: relative;">
             <h4 style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">How are we making it?</h4>
             
-            <div x-show="processRecommendationsLoading" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-                <div class="spinner" style="border: 3px solid rgba(255,136,0,0.1); border-top-color: var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 1rem auto;"></div>
-                Analyzing recipe for optimal process...
-            </div>
+            <div x-show="activeProcessCategory === null" style="display: grid; gap: 1rem;">
+                <!-- Skeletons when loading and NO data yet -->
+                <template x-if="processRecommendationsLoading && Object.keys(processRecommendations).length === 0">
+                    <div style="display: contents;">
+                        <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; border: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                            <div class="spinner" style="width: 24px; height: 24px; border-width: 2px; border-top-color: var(--accent);"></div>
+                        </div>
+                    </div>
+                </template>
 
-            <div x-show="!processRecommendationsLoading && Object.keys(processRecommendations).length > 0 && activeProcessCategory === null" style="display: grid; gap: 1rem;">
                 <template x-for="(categoryData, categoryKey) in processRecommendations" :key="categoryKey">
-                    <div style="background: var(--bg-body); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
+                    <div style="background: var(--bg-body); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; min-height: 120px;">
                         <div style="flex: 1;">
                             <h5 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;" 
                                 x-text="categoryKey.replace('_', ' ')"></h5>
@@ -79,6 +85,13 @@ x-data="phase4App({
                         </button>
                     </div>
                 </template>
+
+                <!-- Single skeleton when loading but SOME data has arrived -->
+                <template x-if="processRecommendationsLoading && Object.keys(processRecommendations).length > 0">
+                    <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; border: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                        <div class="spinner" style="width: 24px; height: 24px; border-width: 2px; border-top-color: var(--accent);"></div>
+                    </div>
+                </template>
             </div>
             
             <div x-show="!processRecommendationsLoading && Object.keys(processRecommendations).length === 0" style="padding: 1rem; color: var(--text-secondary);">
@@ -92,7 +105,17 @@ x-data="phase4App({
                         <h4 style="font-size: 1.1rem; color: var(--accent); font-weight: 600; margin: 0;">Select Process Alternative</h4>
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; margin-top: 0.25rem;">Targeting: <span x-text="activeProcessCategory?.replace('_', ' ')" style="color: #fff; text-transform: uppercase;"></span></p>
                     </div>
-                    <button type="button" class="btn btn-secondary" @click="closeProcessAlternatives()">Cancel / Keep Original</button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="button" class="pill-btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; border: 1px dashed rgba(255,255,255,0.2); background: transparent;"
+                                @click="generateMoreProcessAlternatives(activeProcessCategory)"
+                                :disabled="processAlternativesLoading">
+                            <i class="fa-solid fa-plus" x-show="!processAlternativesLoading"></i>
+                            <i class="fa-solid fa-gear fa-spin" x-show="processAlternativesLoading"></i>
+                            <span x-show="!processAlternativesLoading" style="white-space: nowrap;">Generate More</span>
+                            <span x-show="processAlternativesLoading" style="white-space: nowrap;">Thinking...</span>
+                        </button>
+                        <button type="button" class="pill-btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" @click="closeProcessAlternatives()">Cancel / Keep Original</button>
+                    </div>
                 </div>
                 
                 <div x-show="processAlternativesLoading" style="display: flex; justify-content: center; padding: 2rem;">
@@ -100,26 +123,26 @@ x-data="phase4App({
                     <span style="margin-left: 1rem; color: var(--text-secondary);">Generating intelligent alternatives...</span>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div class="pill-btn-group">
-                        <template x-for="(alt, index) in (processAlternativesCache[activeProcessCategory] || [])" :key="index">
-                            <button type="button" class="pill-btn" style="padding: 0.75rem 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;"
-                                    @mouseenter="setHoveredElement('process_alt_' + index)"
-                                    @mouseleave="clearHoveredElement()"
-                                    @focusin="setHoveredElement('process_alt_' + index)"
-                                    @focusout="clearHoveredElement()"
-                                    @click="swapProcessRecommendation(activeProcessCategory, alt); closeProcessAlternatives();">
-                                <span style="font-weight: 600; font-size: 0.95rem;" x-text="alt.name"></span>
-                            </button>
-                        </template>
-                        <button type="button" class="pill-btn" style="padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: 1px dashed rgba(255,255,255,0.2); background: transparent;"
-                                @click="generateMoreProcessAlternatives(activeProcessCategory)"
-                                :disabled="processAlternativesLoading">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            <span x-show="!processAlternativesLoading" style="font-weight: 600; font-size: 0.95rem;">Generate More</span>
-                            <span x-show="processAlternativesLoading" style="font-weight: 600; font-size: 0.95rem;">Thinking...</span>
-                        </button>
-                    </div>
+                <div style="display: grid; gap: 1rem;">
+                    <template x-for="(alt, index) in (processAlternativesCache[activeProcessCategory] || [])" :key="index">
+                        <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h5 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;" 
+                                        x-text="activeProcessCategory?.replace('_', ' ')"></h5>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;" 
+                                         x-text="alt.name"></div>
+                                </div>
+                                <button type="button" 
+                                        @click="swapProcessRecommendation(activeProcessCategory, alt); closeProcessAlternatives();"
+                                        class="pill-btn" style="white-space: nowrap; font-size: 0.85rem; padding: 0.4rem 0.8rem; flex-shrink: 0; background: rgba(255,136,0,0.15); color: var(--accent); border-color: var(--accent);">
+                                    Select
+                                </button>
+                            </div>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" 
+                               x-text="alt.difference_explanation"></p>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -130,7 +153,10 @@ x-data="phase4App({
 
         <!-- Contextual Variance Sliders -->
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).length > 0">
-            <h4 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">Formula Tweaking (Optional)</h4>
+            <h4 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+                <span>Formula Tweaking (Optional)</span>
+                <i class="fa-solid fa-gear fa-spin" style="font-size: 1rem; opacity: 0.7;" x-show="processRecommendationsLoading" title="Generating slider recommendations..."></i>
+            </h4>
             
             <!-- Texture Profile Matrix -->
             <div class="input-group" style="margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('enrichment')" @mouseenter="hoverSlider('enrichment')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">

@@ -3,6 +3,8 @@ from grainlab.engines.base_engine import BaseEngine
 class QuickEngine(BaseEngine):
     name = "Quick Breads & Scones Engine"
     slug = "quick"
+    default_binder_pct = 0.20
+    default_leaven_pct = 0.025
     target_protein_min = 8.5
     target_protein_max = 10.5
     gluten_behavior = "Zero Gluten Development. Mechanical kneading is banned; structure relies entirely on chemical leavening reactions to yield a tender, crumbly interior."
@@ -160,40 +162,103 @@ class QuickEngine(BaseEngine):
         },
     }
 
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+        hyd = max(0.0, min(0.80, hydration))
+        f = max(0.0, min(0.80, fat))
+        s = max(0.0, min(0.80, sugar))
+        return hyd, f, s
+
     def get_ai_culinary_directive(self) -> str:
-        return "Quick breads require chemical leavening. Specify the correct amount of baking powder, and if acidic liquids are present, include baking soda. Zero yeast should be used."
+        return "Quick breads require chemical leavening. Specify the correct amount of baking powder, and if acidic liquids are present, include baking soda. Zero yeast should be used. This is a quick bread (biscuits, scones, muffins). You MUST include a chemical leavener (baking powder/soda), lipids (usually cold butter or oil), and liquids (buttermilk/cream)."
+
+    def get_additive_scaling_directive(self) -> str:
+        return "When generating ratios for inclusions or additives (like berries, nuts, or chocolate chips), use true baker's percentages (flour = 100%). For quick breads, these typically range from 30.0 to 100.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         dry_min = 2
         fat_min = 5
         fold_min = 3
 
-        return [
-            {
-                "key": "mix",
-                "name": "Dry & Leavener Blend",
-                "duration_sec": dry_min * 60,
-                "desc": "Whisk flour, sugar, salt, and chemical leaveners. Ensures uniform distribution for immediate chemical neutralization.",
-                "is_mix": True
-            },
-            {
-                "key": "fat_cut",
-                "name": "Fat Cutting & Cold Lock",
-                "duration_sec": fat_min * 60,
-                "desc": "Cut cold butter/fat into the dry mix until it forms pea-sized crumbs. Keep ingredients cold to form steam pocket layers."
-            },
-            {
-                "key": "fold",
-                "name": "Minimal Spatula Fold",
-                "duration_sec": fold_min * 60,
-                "desc": "Pour in liquid. Fold gently by hand using a spatula just until dry pockets disappear. Do NOT over-mix or knead to avoid structural gluten activation!",
-                "is_knead": True
-            },
-            {
-                "key": "bake",
-                "name": "Zero-Rise Thermal Bake",
-                "duration_sec": bake_time_min * 60,
-                "desc": "Bake immediately in preheated oven. Chemical carbon dioxide releases instantly and sets the tender crumb structure.",
-                "is_bake": True
-            }
-        ]
+        preset_slug = kwargs.get("preset_slug") or ""
+
+        is_muffin_method = False
+        if "loaf" in preset_slug.lower() or "muffin" in preset_slug.lower() or "bread" in preset_slug.lower():
+            is_muffin_method = True
+
+        if is_muffin_method:
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Dry & Leavener Blend",
+                    "duration_sec": dry_min * 60,
+                    "desc": "Whisk flour, sugar, salt, and chemical leaveners. Ensures uniform distribution for immediate chemical neutralization.",
+                    "is_mix": True
+                },
+                {
+                    "key": "fat_cut",
+                    "name": "Wet Mix (Muffin Method)",
+                    "duration_sec": fat_min * 60,
+                    "desc": "Whisk wet ingredients and melted fat together thoroughly."
+                },
+                {
+                    "key": "fold",
+                    "name": "Wet into Dry Fold",
+                    "duration_sec": fold_min * 60,
+                    "desc": "Fold the wet mixture into the dry ingredients gently using a spatula, just until dry pockets disappear. Do NOT over-mix or batter will be tough!",
+                    "is_knead": True
+                },
+                {
+                    "key": "bake",
+                    "name": "Zero-Rise Thermal Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake immediately in preheated oven. Chemical carbon dioxide releases instantly and sets the tender crumb structure.",
+                    "is_bake": True
+                }
+            ]
+        else:
+            steps = [
+                {
+                    "key": "mix",
+                    "name": "Dry & Leavener Blend",
+                    "duration_sec": dry_min * 60,
+                    "desc": "Whisk flour, sugar, salt, and chemical leaveners. Ensures uniform distribution for immediate chemical neutralization.",
+                    "is_mix": True
+                },
+                {
+                    "key": "fat_cut",
+                    "name": "Fat Cutting & Cold Lock",
+                    "duration_sec": fat_min * 60,
+                    "desc": "Cut cold butter/fat into the dry mix until it forms pea-sized crumbs. Keep ingredients cold to form steam pocket layers."
+                },
+                {
+                    "key": "fold",
+                    "name": "Minimal Spatula Fold",
+                    "duration_sec": fold_min * 60,
+                    "desc": "Pour in liquid. Fold gently by hand using a spatula just until dry pockets disappear. Do NOT over-mix or knead to avoid structural gluten activation!",
+                    "is_knead": True
+                },
+                {
+                    "key": "bake",
+                    "name": "Zero-Rise Thermal Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake immediately in preheated oven. Chemical carbon dioxide releases instantly and sets the tender crumb structure.",
+                    "is_bake": True
+                }
+            ]
+        
+        preset_slug = kwargs.get("preset_slug", "")
+        if "muffin" in preset_slug.lower() or "scone" in preset_slug.lower():
+            cooling_desc = "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
+            cooling_duration = 15
+        else:
+            cooling_desc = "Allow the quick bread to cool in the pan for 10-15 minutes, then turn out onto a wire rack to cool completely before slicing."
+            cooling_duration = 60
+            
+        steps.append({
+            "key": "cool",
+            "name": "Pan & Wire Rack Cooling",
+            "duration_sec": cooling_duration * 60,
+            "desc": cooling_desc
+        })
+        
+        return steps

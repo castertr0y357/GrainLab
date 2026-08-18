@@ -56,6 +56,38 @@ class FinalRecipeAIView(View):
         from apps.core.services.calculator_session import get_calculator_state
         from apps.core.services.calculation import calculate_final_recipe
         state = get_calculator_state(request)
+        if not state:
+            state = {
+                "selected_master": category,
+                "preset_slug": archetype,
+                "global_ai_enabled": True
+            }
+        is_stream = request.GET.get("stream", "false").strip().lower() == "true"
+        if is_stream:
+            from django.http import StreamingHttpResponse
+            import json
+            from apps.core.gemma.core_client import stream_final_insights
+            
+            
+            recipe_context = calculate_final_recipe(state, run_ai=False)
+            
+            generator = stream_final_insights(
+                state=state,
+                recipe_data=recipe_context.get("recipe", {}),
+                countertop_steps_json=recipe_context.get("countertop_steps_json", "[]"),
+                bake_temp_f=recipe_context.get("bake_temp_f"),
+                bake_time_min=recipe_context.get("bake_time_min"),
+                steam_required=recipe_context.get("steam_required")
+            )
+            
+            def event_stream():
+                if generator:
+                    for chunk in generator:
+                        if chunk:
+                            yield f"data: {json.dumps(chunk)}\n\n"
+                        
+            return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
         try:
             recipe_context = calculate_final_recipe(state, run_ai=True)
             response_data = {

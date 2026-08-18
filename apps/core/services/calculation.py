@@ -78,10 +78,41 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     except (ValueError, TypeError):
         crumb_score = 50
 
-    # Map simplified scores (0-100) to baker's math percentages
-    hydration_pct = 0.45 + (crumb_score / 100.0) * 0.40
-    fat_pct = (texture_score / 100.0) * 0.15
-    sugar_pct = (texture_score / 100.0) * 0.12
+    # Base percentages from UI/AI State (if present), fallback to legacy static mapping
+    try:
+        base_hydration_pct = float(state.get("hydration_pct", -1)) / 100.0
+    except (ValueError, TypeError):
+        base_hydration_pct = -1.0
+        
+    try:
+        base_fat_pct = float(state.get("fat_pct", -1)) / 100.0
+    except (ValueError, TypeError):
+        base_fat_pct = -1.0
+
+    try:
+        base_sugar_pct = float(state.get("sugar_pct", -1)) / 100.0
+    except (ValueError, TypeError):
+        base_sugar_pct = -1.0
+
+    # Apply slider offsets: Score 50 = 0 offset. Score 100 = max positive offset, Score 0 = max negative offset.
+    hydration_offset = ((crumb_score - 50) / 50.0) * 0.20  # +/- 20%
+    fat_offset = ((texture_score - 50) / 50.0) * 0.10      # +/- 10%
+    sugar_offset = ((texture_score - 50) / 50.0) * 0.10    # +/- 10%
+
+    if base_hydration_pct >= 0:
+        hydration_pct = max(0.0, base_hydration_pct + hydration_offset)
+    else:
+        hydration_pct = 0.45 + (crumb_score / 100.0) * 0.40
+
+    if base_fat_pct >= 0:
+        fat_pct = max(0.0, base_fat_pct + fat_offset)
+    else:
+        fat_pct = (texture_score / 100.0) * 0.15
+
+    if base_sugar_pct >= 0:
+        sugar_pct = max(0.0, base_sugar_pct + sugar_offset)
+    else:
+        sugar_pct = (texture_score / 100.0) * 0.12
 
     try:
         starter_pct = float(state.get("starter", state.get("starter_pct", 0))) / 100.0
@@ -123,8 +154,11 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         except (ValueError, TypeError):
             target_mass = float(base_weight)
             
-    salt_pct = 0.02
-    leaven_pct = starter_pct if leaven_type == "sourdough" else 0.015
+    try:
+        salt_pct = float(state.get("salt_pct", getattr(engine, "default_salt_pct", 0.02)))
+    except (ValueError, TypeError):
+        salt_pct = getattr(engine, "default_salt_pct", 0.02)
+    leaven_pct = starter_pct if leaven_type == "sourdough" else getattr(engine, "default_leaven_pct", 0.015)
 
     # 2. Process Substitution
     sub_orig = state.get("sub_original")
@@ -193,19 +227,23 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         elif not isinstance(secondary_ingredients, dict):
             secondary_ingredients = {}
                 
-        secondary_lipid = (secondary_ingredients.get("lipids") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
-        secondary_liquid = (secondary_ingredients.get("liquids") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
-        secondary_binder = (secondary_ingredients.get("binders") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
-        secondary_sweetener = (secondary_ingredients.get("sweeteners") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
-        secondary_leavener = (secondary_ingredients.get("leaveners") or {}).get("name") if isinstance(secondary_ingredients, dict) else None
+        secondary_lipids = secondary_ingredients.get("lipids") or []
+        secondary_liquids = secondary_ingredients.get("liquids") or []
+        secondary_binders = secondary_ingredients.get("binders") or []
+        secondary_sweeteners = secondary_ingredients.get("sweeteners") or []
+        secondary_leaveners = secondary_ingredients.get("leaveners") or []
+        secondary_additives = secondary_ingredients.get("additives") or []
 
         # Guard: AI sometimes mis-classifies eggs as a liquid medium since they provide moisture.
         # Re-route any egg value from liquid -> binder so it renders in the correct "Binder" row.
         _EGG_LIQUID_TERMS = ("egg", "aquafaba")
-        if secondary_liquid and any(t in secondary_liquid.lower() for t in _EGG_LIQUID_TERMS):
-            if not secondary_binder or secondary_binder.lower() in ("none", ""):
-                secondary_binder = secondary_liquid
-            secondary_liquid = None
+        actual_liquids = []
+        for liq in secondary_liquids:
+            if isinstance(liq, dict) and any(t in str(liq.get("name", "")).lower() for t in _EGG_LIQUID_TERMS):
+                secondary_binders.append(liq)
+            else:
+                actual_liquids.append(liq)
+        secondary_liquids = actual_liquids
 
         flavor_inclusions = state.get("flavor_inclusions") or []
         if isinstance(flavor_inclusions, str) and flavor_inclusions.strip():
@@ -246,11 +284,12 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             preset_slug=preset_slug,
             preset_name=preset_name,
             category_slug=cat.slug,
-            secondary_lipid=secondary_lipid,
-            secondary_liquid=secondary_liquid,
-            secondary_binder=secondary_binder,
-            secondary_sweetener=secondary_sweetener,
-            secondary_leavener=secondary_leavener,
+            secondary_lipids=secondary_lipids,
+            secondary_liquids=secondary_liquids,
+            secondary_binders=secondary_binders,
+            secondary_sweeteners=secondary_sweeteners,
+            secondary_leaveners=secondary_leaveners,
+            secondary_additives=secondary_additives,
             flavor_inclusions=flavor_inclusions,
             flour_blend=flour_blend
         )

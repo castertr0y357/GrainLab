@@ -75,17 +75,20 @@ class GenerateVariantsView(View):
         if creativity_level_raw:
             try:
                 creativity_level = int(creativity_level_raw)
-                result = gemma.generate_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
+                generator = gemma.stream_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
             except Exception as e:
                 logger.error(f"[Views] Failed generating creativity variants: {e}")
                 return JsonResponse({"error": "Failed generating variants"}, status=503)
         else:
-            result = gemma.generate_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
+            generator = gemma.stream_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
 
-        if result is None:
-            return JsonResponse({"error": "Failed generating variants"}, status=503)
+        from django.http import StreamingHttpResponse
+        def event_stream():
+            for item in generator:
+                yield f"data: {json.dumps(item)}\n\n"
+            yield "event: close\ndata: {}\n\n"
 
-        return JsonResponse(result, status=200)
+        return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
 
 class GenerateCreativityRecipesView(View):
@@ -135,12 +138,16 @@ class GenerateCreativityRecipesView(View):
                     "absorption": float(g.moisture_absorption_coef),
                 })
 
-        result = gemma.generate_creativity_recipes(engine_id, active_archetype_id, inventory)
-        if not result or not result.get("recipes"):
-            fallback = gemma.get_fallback_creativity_recipes(engine_id, active_archetype_id, pref_slugs=[])
-            return JsonResponse(fallback, status=200)
+        from django.http import StreamingHttpResponse
+        generator = gemma.stream_creativity_recipes(engine_id, active_archetype_id, inventory)
+        
+        def event_stream():
+            # In case of fallback, stream_creativity_recipes will yield the mock items
+            for item in generator:
+                yield f"data: {json.dumps(item)}\n\n"
+            yield "event: close\ndata: {}\n\n"
 
-        return JsonResponse(result, status=200)
+        return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
 
 class AiOptimizeSharesView(View):
