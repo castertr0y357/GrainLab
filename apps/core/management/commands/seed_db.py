@@ -502,6 +502,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Leavened entirely with wild yeast. Features a crisp, dark blistered crust and open, Custardy interior.",
                 "cultural_anchor": "The hallmark of artisanal baking, rooted in traditional French sourdough methods.",
                 "crumb_preview": "Open",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Baguette",
@@ -519,6 +520,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Long, thin crusty loaf, scored deeply to expand and form sharp, golden ears.",
                 "cultural_anchor": "An iconic symbol of French culinary heritage, legally protected under national baking guidelines.",
                 "crumb_preview": "Balanced",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Ciabatta",
@@ -536,6 +538,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Extremely high hydration dough yielding a flat, irregular shape resembling a slipper with giant pockets of air.",
                 "cultural_anchor": "Developed in 1982 by a baker in Adria, Italy, to compete with the popularity of French baguettes.",
                 "crumb_preview": "Open",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "French Loaf",
@@ -553,6 +556,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Softer, everyday style crusty white bread baked in a standard pan to optimize slice sizing.",
                 "cultural_anchor": "A kitchen staple developed for uniform slicing, combining artisan flavor with sandwich utility.",
                 "crumb_preview": "Balanced",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Artisan Pizza",
@@ -570,6 +574,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Fermented slow and hot, stretched thin by hand to achieve a charred, puffy Neapolitan-style cornicione.",
                 "cultural_anchor": "Deeply tied to Naples, Italy, where the art of pizza making is recognized as UNESCO intangible heritage.",
                 "crumb_preview": "Open",
+                "sifting_requirement": "optional",
             },
             
             # Enriched & Soft Presets
@@ -589,6 +594,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Soft, uniform sandwich crumb with low crumbly scatter, structured with mild butter/oil fats and sweet sugar accents.",
                 "cultural_anchor": "Standard modern American pan bread, the baseline of household pantry boxes.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Brioche",
@@ -606,6 +612,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Ultra-rich pastry bread loaded with butter and eggs, yielding a tender, paper-thin golden crumb.",
                 "cultural_anchor": "Born in Normandy, France, representing the pinnacle of classic French enrichment techniques.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "mandatory",
             },
             {
                 "name": "Challah",
@@ -623,6 +630,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Egg-enriched braided loaf, egg-washed to achieve a dark, burnished chestnut shine.",
                 "cultural_anchor": "A traditional Jewish bread baked for the Sabbath and holidays, rich with symbolism.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Cinnamon Rolls",
@@ -640,6 +648,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Rolled scroll shapes enclosing butter-cinnamon-sugar layers, glazed warm with cream cheese frosting.",
                 "cultural_anchor": "Svenska kanelbullar variants, customized across modern cafes globally.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Burger Buns",
@@ -657,6 +666,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Portioned soft rounds, topped with sesame, engineered to hold up under hot burger juices without breaking.",
                 "cultural_anchor": "The ultimate partner to the classic American smash burger.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
             
             # Alkaline Bath Presets
@@ -676,6 +686,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Twisted loop shapes or rolls, dipped in a warm lye/baking-soda bath before baking to develop a signature crusty sheen.",
                 "cultural_anchor": "Traditional Bavarian soft bread, heavily associated with German beer halls and seasonal festivals.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
             {
                 "name": "Bagel",
@@ -693,6 +704,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Boiled in a hot alkaline bath before baking to gelatinize surface starches, locking in crust crunch and chewiness.",
                 "cultural_anchor": "Traditional Jewish bakery bread, famously boiled and baked, originating in Poland.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
             
             # Flatbreads & Griddles Presets
@@ -712,6 +724,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Fast hot-pan skillet bake. Best cooked in a screaming hot cast-iron skillet to mimic a tandoor oven.",
                 "cultural_anchor": "Classic South Asian flatbread, traditionally brushed with ghee and served alongside curries.",
                 "crumb_preview": "Balanced",
+                "sifting_requirement": "optional",
             },
             
             # Quick Breads Presets
@@ -731,6 +744,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Tender layered biscuits, leavened chemically, baked hot for high flake growth.",
                 "cultural_anchor": "The soul of Southern breakfast cooking.",
                 "crumb_preview": "Balanced",
+                "sifting_requirement": "optional",
             },
 
             # Cakes & Batters Presets
@@ -750,6 +764,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Emulsified butter batter baking, soft structure setting rapidly in oven.",
                 "cultural_anchor": "Traditional birthday slice standard.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
 
             # Pastry & Lamination Presets
@@ -769,6 +784,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Laminated croissant dough sheets with single folds, high steam puffing rise.",
                 "cultural_anchor": "The pride of Parisian viennoiserie.",
                 "crumb_preview": "Open",
+                "sifting_requirement": "optional",
             },
 
             # Choux Paste Presets
@@ -788,6 +804,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Pre-gelatinized starch paste, egg-integrated V-stage, hot steam puffing.",
                 "cultural_anchor": "High-end French patisserie log shells.",
                 "crumb_preview": "Open",
+                "sifting_requirement": "optional",
             },
 
             # Cookies & Shortbread Presets
@@ -807,6 +824,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Low moisture baking with high spread coefficient, chewy center, crisp edges.",
                 "cultural_anchor": "The ultimate home-baked classic cookie.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
 
             # Fried Doughs Presets
@@ -826,6 +844,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Yeasted dough fried in hot oil, flipping at intervals to rise light.",
                 "cultural_anchor": "The corner donut shop benchmark.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
 
             # Fresh Pasta & Noodles Presets
@@ -845,6 +864,7 @@ class Command(BaseCommand):
                 "accessibility_definition": "Stiff unleavened semolina compacted dough, run through mechanical roller setting passes.",
                 "cultural_anchor": "Emilian traditional egg pasta.",
                 "crumb_preview": "Even",
+                "sifting_requirement": "optional",
             },
         ]
 

@@ -101,6 +101,18 @@ class BreadPreset(models.Model):
     flour_type_default = models.CharField(max_length=50, default="all_purpose")
     flour_maturity_default = models.CharField(max_length=50, default="matured")
 
+    SIFTING_CHOICES = [
+        ('mandatory', 'Mandatory (High Extraction)'),
+        ('optional', 'Optional (Variable)'),
+        ('discouraged', 'Discouraged (Whole Grain)'),
+    ]
+    sifting_requirement = models.CharField(
+        max_length=20, 
+        choices=SIFTING_CHOICES, 
+        default='optional', 
+        help_text="Defines the structural baseline for bran separation."
+    )
+
     # Classifier coordinates and anchors
     classifier_texture = models.IntegerField(default=50, help_text="0 for Crusty, 100 for Soft")
     classifier_crumb = models.IntegerField(default=50, help_text="0 for Dense, 100 for Open Crumb")

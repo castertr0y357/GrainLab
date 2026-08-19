@@ -723,7 +723,7 @@ def get_contextual_pitfalls(category_slug: str, effective_hydration: float, grai
     """
     Retrieves pitfall analysis from Gemma, falling back to local python rules.
     """
-    from apps.core.gemma.core_client import _is_ai_enabled
+    
     if True:
         system_prompt = (
             "Analyze the recipe variables and identify potential baking pitfalls "
@@ -751,7 +751,7 @@ def get_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydrat
     """
     Retrieves sensory text from Gemma, falling back to local description mappings.
     """
-    from apps.core.gemma.core_client import _is_ai_enabled
+    
     if True:
         system_prompt = (
             "You are a baking science expert. Synthesize a descriptive sensory benchmark describing what the mixture (dough, batter, or paste) should look "
@@ -782,7 +782,7 @@ def stream_final_insights(state: dict, recipe_data: dict = None, countertop_step
     Combines sensory benchmark, contextual pitfalls, geometry advisory, and fermentation calibration.
     Yields JSON objects as Server-Sent Events.
     """
-    from apps.core.gemma.core_client import _is_ai_enabled, stream_gemma_api
+    from apps.core.gemma.core_client import stream_gemma_api
     is_sourdough = state.get("leaven_type") == "sourdough"
     sourdough_context = ""
     if is_sourdough:

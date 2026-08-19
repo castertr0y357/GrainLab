@@ -119,3 +119,37 @@ class DeleteEquipmentView(View):
         return response
 
 
+
+
+class EditWheatBerryView(View):
+    def post(self, request, id):
+        wb = get_object_or_404(WheatBerry, id=id)
+        name = request.POST.get("name", "").strip()
+        if name:
+            wb.name = name
+            wb.protein_content = float(request.POST.get("protein_content", 12.0) or 12.0)
+            wb.hardness = request.POST.get("hardness", "hard")
+            wb.moisture_absorption_coef = float(request.POST.get("moisture_absorption_coef", 1.0) or 1.0)
+            wb.notes = request.POST.get("notes", "").strip()
+            wb.is_active = request.POST.get("is_active") in ("on", "true", "True")
+            wb.save()
+            
+        # We can just redirect back to the page since this will be submitted via standard form or htmx
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response
+
+class EditEquipmentView(View):
+    def post(self, request, id):
+        eq = get_object_or_404(Equipment, id=id)
+        name = request.POST.get("name", "").strip()
+        if name:
+            eq.name = name
+            eq.equipment_type = request.POST.get("equipment_type", "other")
+            eq.friction_heat_factor = float(request.POST.get("friction_heat_factor", 0.0) or 0.0)
+            eq.notes = request.POST.get("notes", "").strip()
+            eq.save()
+            
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventory_page')
+        return response

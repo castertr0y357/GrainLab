@@ -317,6 +317,9 @@ class DynamicRouteScannerTests(TestCase):
                 args = ['lean-crusty', 'classic_sourdough']
             elif name == 'calculator_final_recipe':
                 args = ['lean-crusty', 'classic_sourdough']
+            elif name in ('edit_wheat_berry', 'delete_wheat_berry', 'edit_commercial_flour', 'delete_commercial_flour', 'edit_equipment', 'delete_equipment'):
+                import uuid
+                args = [str(uuid.uuid4())]
             elif name == 'calculator_final_recipe_ai':
                 args = ['lean-crusty', 'classic_sourdough']
 
@@ -844,7 +847,7 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertEqual(hard_eval["tier"], "recommended")
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    def test_grain_advisory_sovereignty_override(self, mock_ai_enabled, mock_call_gemma):
+    def test_grain_advisory_sovereignty_override(self, mock_call_gemma):
         import json
         from apps.core.gemma import get_grain_advisory_ai
         
@@ -869,7 +872,7 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertNotIn("engine_profile", user_prompt)
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    def test_grain_advisory_robust_id_mapping(self, mock_ai_enabled, mock_call_gemma):
+    def test_grain_advisory_robust_id_mapping(self, mock_call_gemma):
         from apps.core.gemma import get_grain_advisory_ai
         
         # Mock LLM returning mixed IDs, name slugs, and reasoning text
@@ -900,7 +903,7 @@ class AIGrainAdvisoryTests(TestCase):
         self.assertEqual(hard_eval["grain_id"], str(self.hard_spring.id))
 
     @patch('apps.core.gemma.phase2_client.call_gemma_api')
-    def test_grain_advisory_selected_grains_tailored(self, mock_ai_enabled, mock_call_gemma):
+    def test_grain_advisory_selected_grains_tailored(self, mock_call_gemma):
         from apps.core.gemma import get_grain_advisory_ai
         import json
         
@@ -1043,6 +1046,31 @@ class GenerateVariantsTests(TestCase):
     Verifies both valid requests (returns structured generated_variants JSON)
     and invalid requests (400 with error message).
     """
+    
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        from unittest.mock import patch
+        cls.patcher1 = patch('apps.core.gemma.phase3_client.stream_gemma_api')
+        cls.patcher2 = patch('apps.core.gemma.phase3_client.call_gemma_api')
+        cls.mock_stream = cls.patcher1.start()
+        cls.mock_call = cls.patcher2.start()
+        
+        # Mock responses
+        cls.mock_stream.return_value = [
+            {"variant_id": "test_1", "variant_name": "Test 1", "description": "desc"},
+            {"variant_id": "test_2", "variant_name": "Test 2", "description": "desc"},
+            {"variant_id": "test_3", "variant_name": "Test 3", "description": "desc"},
+            {"variant_id": "test_4", "variant_name": "Test 4", "description": "desc"},
+            {"variant_id": "test_5", "variant_name": "Test 5", "description": "desc"}
+        ]
+        
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher1.stop()
+        cls.patcher2.stop()
+        super().tearDownClass()
+
 
     def setUp(self) -> None:
         self.client = Client()
@@ -1078,6 +1106,7 @@ class GenerateVariantsTests(TestCase):
 
     def test_generate_variants_valid_request_returns_200(self) -> None:
         """Valid request returns 200 with generated_variants list."""
+        self.mock_stream.return_value = [{"variant_id": f"test_{i}", "variant_name": f"Test {i}", "description": "desc"} for i in range(5)]
         url = (
             f"/generate-variants/"
             f"?engine_id=lean-crusty"
@@ -1097,6 +1126,7 @@ class GenerateVariantsTests(TestCase):
 
     def test_generate_variants_data_contract(self) -> None:
         """Each variant must include required polymorphic schema keys without details."""
+        self.mock_stream.return_value = [{"variant_id": f"test_{i}", "variant_name": f"Test {i}", "description": "desc"} for i in range(5)]
         url = (
             f"/generate-variants/"
             f"?engine_id=lean-crusty"
@@ -1120,6 +1150,7 @@ class GenerateVariantsTests(TestCase):
 
     def test_generate_variants_cookie_engine(self) -> None:
         """Cookie engine archetypes must produce valid variants."""
+        self.mock_stream.return_value = [{"variant_id": f"test_{i}", "variant_name": f"Test {i}", "description": "desc"} for i in range(5)]
         url = (
             f"/generate-variants/"
             f"?engine_id=cookies-pastries"
@@ -1132,6 +1163,7 @@ class GenerateVariantsTests(TestCase):
     def test_generate_creativity_recipes_valid(self) -> None:
         """Verifies generate_creativity_recipes endpoint yields exactly 10 recipes without science details."""
         url = "/generate-creativity-recipes/?engine_id=lean-crusty&active_archetype_id=classic_sourdough"
+        self.mock_stream.return_value = [{"recipe_id": f"test_{i}", "recipe_name": f"Test {i}", "creativity_level": 1, "description": "desc"} for i in range(10)]
         response = self.client.get(url)
         content = "".join([chunk.decode("utf-8") for chunk in response.streaming_content])
         
@@ -1152,6 +1184,7 @@ class GenerateVariantsTests(TestCase):
 
     def test_generate_variants_with_creativity_level(self) -> None:
         """Verifies generate_variants handles creativity_level parameters and returns correct alt variants."""
+        self.mock_stream.return_value = [{"variant_id": f"test_{i}", "variant_name": f"Test {i}", "description": "desc"} for i in range(5)]
         url = "/generate-variants/?engine_id=lean-crusty&active_archetype_id=hearth_level1_concept&creativity_level=1"
         response = self.client.get(url)
         content = "".join([chunk.decode("utf-8") for chunk in response.streaming_content])
