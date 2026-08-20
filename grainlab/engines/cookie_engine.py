@@ -197,21 +197,28 @@ class CookieEngine(BaseEngine):
             desc += 'Flour is fully matured. It will provide a highly stable, predictable structure and excellent tender mouthfeel.'
         return desc
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
         # Cookies have zero added water (hydration comes entirely from eggs and butter).
         # We force this to 0.0 to prevent the system from falling back to default bread water percentages.
-        cookie_hyd = 0.0
+        cookie_hyd = max(0.0, min(0.15, hydration))
         # Wider guardrails to allow AI flavor chemistry to dictate final cookie richness.
         # Max 1.20 for fat (e.g. shortbreads), max 2.00 for sugar (e.g. extremely chewy brittle cookies)
         cookie_fat = max(0.20, min(1.20, fat))
         cookie_sugar = max(0.40, min(2.00, sugar))
-        return cookie_hyd, cookie_fat, cookie_sugar
+        if leaven_type == 'sourdough':
+            leaven = max(0.0, min(0.60, leaven))
+        elif leaven_type == 'chemical':
+            leaven = max(0.0, min(0.10, leaven))
+        else:
+            leaven = max(0.0, min(0.015, leaven))
+        salt = max(0.0, min(0.10, salt))
+        return cookie_hyd, cookie_fat, cookie_sugar, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient. This is a cookie archetype. You MUST include a chemical leavener (baking soda/powder). It requires heavy lipids and sweeteners. Liquids are rarely needed unless specified."
+        return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient. This is a cookie archetype. You MUST include a chemical leavener (baking soda/powder). It requires heavy lipids. For sweet cookies, use heavy sugars. For savory shortbreads/crackers, omit sugar and use savory fats (cheese, butter). Liquids are rarely needed unless specified."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). For cookies, these MUST be scaled heavily, typically ranging from 50.0 to 150.0."
+        return "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). For cookies, these MUST be scaled heavily, typically ranging from 50.0 to 150.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         cream_min = 5

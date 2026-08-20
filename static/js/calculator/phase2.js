@@ -71,11 +71,11 @@ document.addEventListener('alpine:init', () => {
                 });
                 
                 // Immediately fetch AI grain recommendations for this custom recipe
-                this.fetchSidebarInsight('custom', {
-                    target: 'recipe',
+                this.fetchRecipeDetails({
                     recipe_id: this.selected_recipe_id,
-                    recipe_name: this.recipe_name,
-                    menu_description: this.selectedRecipeMenuDescription
+                    name: this.recipe_name,
+                    menu_description: this.selectedRecipeMenuDescription,
+                    creativity_level: 1
                 });
             }
         },

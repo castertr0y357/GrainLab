@@ -222,7 +222,6 @@ x-init="initializePhase3()"
     <form id="phase3-form" action="{% url 'calculator_phase3' category=state.selected_master archetype=state.preset_slug %}" method="POST" style="display: none;">
         {% csrf_token %}
         <input type="hidden" name="hydration_pct" :value="hydration">
-        <input type="hidden" name="leaven_pct" :value="starter">
         <input type="hidden" name="fat_pct" :value="fat">
         <input type="hidden" name="sugar_pct" :value="sugar">
         <input type="hidden" name="secondary_ingredients" :value="JSON.stringify(selectedRecipeSecondaryIngredients || {})">

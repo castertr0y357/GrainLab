@@ -549,48 +549,6 @@
             </div>
         </div>
 
-        <!-- Contextual Variance Sliders -->
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;" x-show="!selectedRecipeSecondaryIngredients">
-            <h4 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">Formula Tweaking (Optional)</h4>
-            
-            <!-- Texture Profile Matrix -->
-            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="['enriched-soft', 'cakes-batters', 'pastry-lamination', 'cookies-shortbread'].includes(category_slug)">
-                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Enrichment & Tenderness</span>
-                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="texture"></span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;">Lean</span>
-                    <input type="range" class="range-slider" x-model.number="texture" min="0" max="100" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="flex-grow: 1;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;">Brioche</span>
-                </div>
-            </div>
-
-            <!-- Crumb Hydration Matrix -->
-            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="!['cakes-batters', 'pastry-lamination', 'cookies-shortbread'].includes(category_slug)">
-                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Crumb Hydration Matrix</span>
-                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="crumb"></span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;">Tight</span>
-                    <input type="range" class="range-slider" x-model.number="crumb" min="0" max="100" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));" style="flex-grow: 1;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;">Open</span>
-                </div>
-            </div>
-            
-            <div class="input-group" style="margin-bottom: 0;">
-                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Leavening Inoculation</span>
-                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="starter + '%'"></span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;" x-text="leaven === 'yeast' ? 'Yeast' : '0%'"></span>
-                    <input type="range" class="range-slider" x-model.number="starter" :min="leaven === 'yeast' ? 0 : 5" :max="40" @change="$nextTick(() => htmx.trigger('#calculator-form', 'change'));" :disabled="leaven === 'yeast'" style="flex-grow: 1;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;" x-text="leaven === 'yeast' ? 'Yeast' : '40%'"></span>
-                </div>
-            </div>
-        </div>
 
         <!-- Geometry Constraints & Form Factor Selection -->
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;">

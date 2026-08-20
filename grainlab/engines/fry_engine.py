@@ -129,17 +129,24 @@ class FryEngine(BaseEngine):
         },
     }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(0.80, hydration))
         f = max(0.0, min(0.40, fat))
         s = max(0.0, min(0.40, sugar))
-        return hyd, f, s
+        if leaven_type == 'sourdough':
+            leaven = max(0.0, min(0.60, leaven))
+        elif leaven_type == 'chemical':
+            leaven = max(0.0, min(0.10, leaven))
+        else:
+            leaven = max(0.0, min(0.015, leaven))
+        salt = max(0.0, min(0.10, salt))
+        return hyd, f, s, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "Provide the target frying oil pre-heat temperature (typically around 375°F to allow a drop to 365°F during frying). This is a fried dough (donuts, beignets). Enriched dough requiring lipids, sweeteners, eggs, and leaveners (yeast or chemical)."
+        return "Provide the target frying oil pre-heat temperature (typically around 375°F to allow a drop to 365°F during frying). This is a fried dough (donuts, beignets). Enriched dough requiring lipids and leaveners. Use sweeteners and eggs for sweet donuts, but omit sweeteners for savory fried doughs (like savory fritters)."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like spices or glaze bases), use true baker's percentages (flour = 100%). For fried doughs, these typically range from 10.0 to 30.0."
+        return "When generating ratios for inclusions or additives (like spices or glaze bases), use true baker's percentages (flour = 100%). For fried doughs, these typically range from 10.0 to 30.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 8

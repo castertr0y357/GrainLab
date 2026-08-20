@@ -17,9 +17,6 @@ x-data="phase4App({
     
     mixing_method: '{{ state.mixing_method|default:"hand_knead"|escapejs }}',
     active_action: '{{ state.active_action|default:"stretch_fold"|escapejs }}',
-    texture: {{ state.texture|default:"50" }},
-    crumb: {{ state.crumb|default:"50" }},
-    starter: {{ state.starter|default:"20" }},
     leaven: '{{ state.leaven|default:"starter"|escapejs }}',
     recipeCompiled: {{ recipe_compiled|yesno:"true,false"|default:"false" }}
 })"
@@ -31,9 +28,6 @@ x-data="phase4App({
 {% block phase_hidden_forms %}
     <form id="calculator-form" action="{% url 'calculator_phase4' category=state.selected_master archetype=state.preset_slug %}" method="POST" style="display: none;">
         {% csrf_token %}
-        <input type="hidden" name="texture" :value="texture">
-        <input type="hidden" name="crumb" :value="crumb">
-        <input type="hidden" name="starter" :value="starter">
         <input type="hidden" name="mixing_method" :value="mixing_method">
         <input type="hidden" name="active_action" :value="active_action">
         <input type="hidden" name="process_recommendations" :value="JSON.stringify(processRecommendations)">
@@ -151,57 +145,7 @@ x-data="phase4App({
         <input type="hidden" name="mixing_method" :value="mixing_method">
         <input type="hidden" name="active_action" :value="active_action">
 
-        <!-- Contextual Variance Sliders -->
-        <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).length > 0">
-            <h4 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
-                <span>Formula Tweaking (Optional)</span>
-                <i class="fa-solid fa-gear fa-spin" style="font-size: 1rem; opacity: 0.7;" x-show="processRecommendationsLoading" title="Generating slider recommendations..."></i>
-            </h4>
-            
-            <!-- Texture Profile Matrix -->
-            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('enrichment')" @mouseenter="hoverSlider('enrichment')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">
-                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
-                        Enrichment & Tenderness
-                    </span>
-                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="texture"></span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px; text-align: right;" x-text="engines_ff[selected_master]?.tweak_labels?.enrichment?.[0] || 'Lean'"></span>
-                    <input type="range" name="texture" class="range-slider" x-model.number="texture" min="0" max="100" style="flex-grow: 1;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px;" x-text="engines_ff[selected_master]?.tweak_labels?.enrichment?.[1] || 'Brioche'"></span>
-                </div>
-            </div>
 
-            <!-- Crumb Hydration Matrix -->
-            <div class="input-group" style="margin-bottom: 1.5rem;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('hydration')" @mouseenter="hoverSlider('hydration')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">
-                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
-                        Crumb Hydration Matrix
-                    </span>
-                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="crumb"></span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px; text-align: right;" x-text="engines_ff[selected_master]?.tweak_labels?.hydration?.[0] || 'Tight'"></span>
-                    <input type="range" name="crumb" class="range-slider" x-model.number="crumb" min="0" max="100" style="flex-grow: 1;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 80px;" x-text="engines_ff[selected_master]?.tweak_labels?.hydration?.[1] || 'Open'"></span>
-                </div>
-            </div>
-            
-            <div class="input-group" style="margin-bottom: 0;" x-show="(engines_ff[selected_master]?.supported_tweaks || []).includes('leavening')" @mouseenter="hoverSlider('leavening')" @mouseleave="sidebar_analysis = ''; hovered_element = null;">
-                <label style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
-                        Leavening Inoculation
-                    </span>
-                    <span style="color: var(--accent); font-weight: 700; font-size: 1.1rem; background: rgba(255,136,0,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;" x-text="starter + '%'"></span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px; text-align: right;" x-text="leaven === 'yeast' ? 'Yeast' : '0%'"></span>
-                    <input type="range" name="starter" class="range-slider" x-model.number="starter" :min="leaven === 'yeast' ? 0 : 5" :max="40" :disabled="leaven === 'yeast'" style="flex-grow: 1;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; width: 60px;" x-text="leaven === 'yeast' ? 'Yeast' : '40%'"></span>
-                </div>
-            </div>
-        </div>
 
             
             <div style="margin-top: 1.5rem;">

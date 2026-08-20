@@ -3,7 +3,12 @@ window.phase1App = function(initialState = {}) {
     return {
         selected_master: initialState.selected_master || '',
         presetSlug: initialState.presetSlug || '',
+        presetName: initialState.presetName || '',
+        selected_idea: null,
         query: '',
+        creative_query: '',
+        creative_streaming: false,
+        creative_ideas: [],
         searchOpen: false,
         phase1_categories: {
             'lean-crusty': {
@@ -64,6 +69,57 @@ window.phase1App = function(initialState = {}) {
         },
         init() {
             console.log("Phase 1 initialized with master:", this.selected_master);
+        },
+        selectCreativeIdea(idea) {
+            this.selected_idea = idea;
+            this.selected_master = idea.category_slug;
+            this.presetSlug = idea.archetype_id; 
+            this.presetName = idea.recipe_name;
+        },
+        async generateCreativeIdeas() {
+            if (!this.creative_query.trim()) return;
+            
+            this.creative_ideas = [];
+            this.creative_streaming = true;
+            
+            try {
+                const response = await fetch(`/generate-creative-ideas/?prompt=${encodeURIComponent(this.creative_query)}`);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); 
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataStr = line.replace('data: ', '').trim();
+                            if (dataStr && dataStr !== '{}') {
+                                try {
+                                    const idea = JSON.parse(dataStr);
+                                    if (idea.generated_ideas) {
+                                        this.creative_ideas.push(...idea.generated_ideas);
+                                    } else {
+                                        this.creative_ideas.push(idea);
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing creative idea stream data", e);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to generate creative ideas", e);
+            } finally {
+                this.creative_streaming = false;
+            }
         }
     };
 };

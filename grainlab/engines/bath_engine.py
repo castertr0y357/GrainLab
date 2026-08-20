@@ -125,11 +125,18 @@ class BathEngine(BaseEngine):
         },
     }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(0.65, hydration))
         f = max(0.0, min(0.20, fat))
         s = max(0.0, min(0.20, sugar))
-        return hyd, f, s
+        if leaven_type == 'sourdough':
+            leaven = max(0.0, min(0.60, leaven))
+        elif leaven_type == 'chemical':
+            leaven = max(0.0, min(0.10, leaven))
+        else:
+            leaven = max(0.0, min(0.015, leaven))
+        salt = max(0.0, min(0.10, salt))
+        return hyd, f, s, leaven, salt
 
     def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
         pitfalls = super().get_contextual_pitfalls(effective_hydration, grain_type, preset_slug)
@@ -140,10 +147,10 @@ class BathEngine(BaseEngine):
         return pitfalls
 
     def get_ai_culinary_directive(self) -> str:
-        return "Instruct the user to prepare an alkaline bath (lye or malted water) to gelatinize starches prior to baking. This is a boiled-bath bread (bagels, pretzels). Yeast-leavened with a dense structure. Requires a liquid medium. Modest or no lipids."
+        return "Instruct the user to prepare an alkaline bath (lye or malted water) to gelatinize starches prior to baking. This is a boiled-bath bread (bagels, pretzels). Yeast-leavened with a dense structure. Requires a liquid medium. Modest or no lipids. Use sweet additions (cinnamon/sugar) for sweet variants, and savory additions/toppings (garlic, salt, cheese) for savory variants."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like cinnamon raisins or pretzel toppings), use true baker's percentages (flour = 100%). For boiled-bath doughs, these typically range from 5.0 to 20.0."
+        return "When generating ratios for inclusions or additives (like cinnamon raisins or pretzel toppings), use true baker's percentages (flour = 100%). For boiled-bath doughs, these typically range from 5.0 to 20.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 6

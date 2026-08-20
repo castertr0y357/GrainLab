@@ -11,8 +11,15 @@ def stream_creative_ideas(user_prompt: str):
     """
     
     # Compile a dictionary of valid categories and archetypes
+    frontend_slugs = [
+        'lean-crusty', 'enriched-soft', 'alkaline-bath', 'flatbreads-griddles',
+        'quick-breads-scones', 'cakes-batters', 'pastry-lamination', 'choux-paste',
+        'cookies-shortbread', 'fried-doughs', 'fresh-pasta-noodles'
+    ]
     valid_targets = []
-    for category_slug, engine in ENGINES.items():
+    for category_slug in frontend_slugs:
+        engine = ENGINES.get(category_slug)
+        if not engine: continue
         for archetype_id, details in engine.archetypes.items():
             valid_targets.append({
                 "category_slug": category_slug,
@@ -53,4 +60,4 @@ def stream_creative_ideas(user_prompt: str):
     logger.info(f"[AI] - Phase 1 Creative Prompt execution for: {user_prompt}")
     
     # Stream the results
-    yield from stream_gemma_api(full_system, user_prompt, expected_keys=["generated_ideas"])
+    yield from stream_gemma_api(full_system, user_prompt)

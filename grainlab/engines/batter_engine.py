@@ -208,17 +208,24 @@ class BatterEngine(BaseEngine):
             desc += 'Flour is fully matured. It will provide a highly stable, predictable structure and excellent tender mouthfeel.'
         return desc
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(1.50, hydration))
         f = max(0.0, min(1.20, fat))
         s = max(0.0, min(2.00, sugar))
-        return hyd, f, s
+        if leaven_type == 'sourdough':
+            leaven = max(0.0, min(0.60, leaven))
+        elif leaven_type == 'chemical':
+            leaven = max(0.0, min(0.10, leaven))
+        else:
+            leaven = max(0.0, min(0.015, leaven))
+        salt = max(0.0, min(0.10, salt))
+        return hyd, f, s, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "This is a batter. Recommend a specific emulsification style (e.g. whipped egg foam, creamed butter) to aerate the dough, and ensure zero yeast is used. This is a liquid batter (pancakes, waffles, cakes). Requires chemical leaveners, high hydration (milk/buttermilk), and binders (eggs)."
+        return "This is a batter. Recommend a specific emulsification style (e.g. whipped egg foam, creamed butter) to aerate the dough, and ensure zero yeast is used. This is a liquid batter (pancakes, waffles, cakes). Requires chemical leaveners, high hydration (milk/buttermilk), and binders (eggs). Adjust sweeteners based on whether it is a sweet batter (pancakes, cakes) or a savory batter."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like berries or chips), use true baker's percentages (flour = 100%). For liquid batters, these typically range from 20.0 to 80.0."
+        return "When generating ratios for inclusions or additives (like berries or chips), use true baker's percentages (flour = 100%). For liquid batters, these typically range from 20.0 to 80.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         preset_slug = kwargs.get("preset_slug") or ""

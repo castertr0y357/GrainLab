@@ -94,23 +94,18 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     except (ValueError, TypeError):
         base_sugar_pct = -1.0
 
-    # Apply slider offsets: Score 50 = 0 offset. Score 100 = max positive offset, Score 0 = max negative offset.
-    hydration_offset = ((crumb_score - 50) / 50.0) * 0.20  # +/- 20%
-    fat_offset = ((texture_score - 50) / 50.0) * 0.10      # +/- 10%
-    sugar_offset = ((texture_score - 50) / 50.0) * 0.10    # +/- 10%
-
     if base_hydration_pct >= 0:
-        hydration_pct = max(0.0, base_hydration_pct + hydration_offset)
+        hydration_pct = base_hydration_pct
     else:
         hydration_pct = 0.45 + (crumb_score / 100.0) * 0.40
 
     if base_fat_pct >= 0:
-        fat_pct = max(0.0, base_fat_pct + fat_offset)
+        fat_pct = base_fat_pct
     else:
         fat_pct = (texture_score / 100.0) * 0.15
 
     if base_sugar_pct >= 0:
-        sugar_pct = max(0.0, base_sugar_pct + sugar_offset)
+        sugar_pct = base_sugar_pct
     else:
         sugar_pct = (texture_score / 100.0) * 0.12
 
@@ -155,10 +150,22 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             target_mass = float(base_weight)
             
     try:
-        salt_pct = float(state.get("salt_pct", getattr(engine, "default_salt_pct", 0.02)))
+        salt_val = state.get("salt_pct")
+        if salt_val is not None:
+            salt_pct = float(salt_val) / 100.0
+        else:
+            salt_pct = getattr(engine, "default_salt_pct", 0.02)
     except (ValueError, TypeError):
         salt_pct = getattr(engine, "default_salt_pct", 0.02)
-    leaven_pct = starter_pct if leaven_type == "sourdough" else getattr(engine, "default_leaven_pct", 0.015)
+        
+    try:
+        leaven_val = state.get("leaven_pct")
+        if leaven_val is not None:
+            leaven_pct = float(leaven_val) / 100.0
+        else:
+            leaven_pct = starter_pct if leaven_type == "sourdough" else getattr(engine, "default_leaven_pct", 0.015)
+    except (ValueError, TypeError):
+        leaven_pct = starter_pct if leaven_type == "sourdough" else getattr(engine, "default_leaven_pct", 0.015)
 
     # 2. Process Substitution
     sub_orig = state.get("sub_original")
@@ -169,13 +176,19 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
 
     # 3. Calculate Baker's Math and apply fail-safes
     custom_mixer_id = state.get("custom_mixer")
-    friction_override = None
-    if custom_mixer_id and str(custom_mixer_id) != "static":
+    friction_override = state.get("friction_factor")
+    if friction_override is None:
+        if custom_mixer_id and str(custom_mixer_id) != "static":
+            try:
+                mixer = Equipment.objects.get(id=custom_mixer_id)
+                friction_override = mixer.friction_heat_factor
+            except (ValueError, Equipment.DoesNotExist):
+                pass
+    else:
         try:
-            mixer = Equipment.objects.get(id=custom_mixer_id)
-            friction_override = mixer.friction_heat_factor
-        except (ValueError, Equipment.DoesNotExist):
-            pass
+            friction_override = float(friction_override)
+        except (ValueError, TypeError):
+            friction_override = None
 
     active_berries_state = state.get("active_berries", state.get("selected_grains", []))
     if isinstance(active_berries_state, str) and active_berries_state.strip():

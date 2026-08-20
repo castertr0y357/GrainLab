@@ -83,7 +83,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
             {% if recipe.liquid_items %}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.liquid_weight }}g</span></span>
+                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
                 </div>
                 {% for item in recipe.liquid_items %}
                 <div style="display: contents;">
@@ -93,15 +93,15 @@ x-init="loadCompiledData(); fetchAIInsights();"
                     </div>
                 </div>
                 {% endfor %}
-            {% elif recipe.liquid_weight and recipe.liquid_weight > 0 %}
+            {% elif recipe.added_water and recipe.added_water > 0 %}
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
-                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.liquid_weight }}g</span></span>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
             </div>
             <div style="display: contents;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
                     <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label %}{{ recipe.liquid_label }}{% else %}Pure Water{% endif %}</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.liquid_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.liquid_weight }}g</span></span>
+                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
                 </div>
             </div>
             {% endif %}
@@ -418,7 +418,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
 
 
     <!-- THERMAL PROFILE -->
-    {% if recipe.yeast_weight or recipe.starter_weight or recipe.liquid_weight %}
+    {% if recipe.yeast_weight or recipe.starter_weight or recipe.added_water %}
         <div x-show="!countertopMode && requiresThermalProfile" x-transition style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; margin-top: 1.5rem;">
             <div style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm);">
                 <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">Liquid Water Temp</div>

@@ -124,17 +124,24 @@ class FlatEngine(BaseEngine):
         },
     }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(1.00, hydration))
         f = max(0.0, min(0.30, fat))
         s = max(0.0, min(0.20, sugar))
-        return hyd, f, s
+        if leaven_type == 'sourdough':
+            leaven = max(0.0, min(0.60, leaven))
+        elif leaven_type == 'chemical':
+            leaven = max(0.0, min(0.10, leaven))
+        else:
+            leaven = max(0.0, min(0.015, leaven))
+        salt = max(0.0, min(0.10, salt))
+        return hyd, f, s, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
         return "Specify the target mechanical rolling thickness in millimeters for this specific flatbread (e.g., 1.0mm for tortillas, 3.0mm for naan). This is a flatbread (pita, tortillas). Usually unleavened or very lightly yeast leavened. Modest hydration, sometimes requires fats (lard/oil). No thick binders."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like herbs), use true baker's percentages (flour = 100%). For flatbreads, these typically range from 1.0 to 10.0."
+        return "When generating ratios for inclusions or additives (like herbs), use true baker's percentages (flour = 100%). For flatbreads, these typically range from 1.0 to 10.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 4

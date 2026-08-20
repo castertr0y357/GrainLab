@@ -227,7 +227,7 @@ class BaseEngine:
         return desc
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives, use true baker's percentages (where flour = 100%). Default ranges are typically 10.0 to 30.0 for standard doughs."
+        return "When generating ratios for inclusions or additives, use true baker's percentages (where flour = 100%). Default ranges are typically 10.0 to 30.0 for standard doughs. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
     def calculate_recipe(
         self,
@@ -291,8 +291,8 @@ class BaseEngine:
         binder_pct = getattr(self, "default_binder_pct", 0.10) if len(sec_binders) > 0 else 0.0
 
         # Perform subclass-specific constraints (ceilings / floors)
-        effective_hydration, effective_fat, effective_sugar = self.apply_sub_class_constraints(
-            effective_hydration, effective_fat, effective_sugar, texture_score, crumb_score
+        effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
+            effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type
         )
 
         # 3. Calculate Baker's Math Scaling
@@ -300,8 +300,12 @@ class BaseEngine:
         inclusion_pct = 0.0
         for inc in flavor_inclusions + sec_additives:
             if isinstance(inc, dict) and "bakers_percentage" in inc:
+                name = inc.get("name", "")
                 try:
-                    inclusion_pct += float(inc["bakers_percentage"]) / 100.0
+                    pct = float(inc["bakers_percentage"]) / 100.0
+                    if "salt" in name.lower() and pct <= 0.04:
+                        continue
+                    inclusion_pct += pct
                 except (ValueError, TypeError):
                     pass
         
@@ -377,6 +381,10 @@ class BaseEngine:
                     pct = float(inc.get("bakers_percentage", 0)) / 100.0
                 except (ValueError, TypeError):
                     pass
+                
+                if "salt" in name.lower() and pct <= 0.04:
+                    continue
+                    
                 weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
                 if weight > 0:
                     processed_inclusions.append({
@@ -397,6 +405,10 @@ class BaseEngine:
                     pct = float(inc.get("ratio", inc.get("bakers_percentage", 0))) / 100.0
                 except (ValueError, TypeError):
                     pass
+                
+                if "salt" in name.lower() and pct <= 0.04:
+                    continue
+                    
                 weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
                 if weight > 0:
                     processed_additives.append({
@@ -442,13 +454,20 @@ class BaseEngine:
             "fat_substitute_label": fat_substitute_label,
         }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, texture_score: int, crumb_score: int) -> tuple[float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
         """Sub-classes override this to inject custom mathematical validations.
         Base limits to prevent completely broken AI formulas."""
         hyd = max(0.0, min(1.50, hydration))
         f = max(0.0, min(1.20, fat))
         s = max(0.0, min(2.00, sugar))
-        return hyd, f, s
+        if leaven_type == 'sourdough':
+            l = max(0.0, min(0.60, leaven))
+        elif leaven_type == 'chemical':
+            l = max(0.0, min(0.10, leaven))
+        else:
+            l = max(0.0, min(0.015, leaven))
+        st = max(0.0, min(0.10, salt))
+        return hyd, f, s, l, st
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         return [

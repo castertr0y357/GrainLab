@@ -26,10 +26,7 @@ document.addEventListener('alpine:init', () => {
         
         mixing_method: initialData.mixing_method || 'hand_knead',
         active_action: initialData.active_action || 'stretch_fold',
-        texture: initialData.texture !== undefined ? initialData.texture : 50,
-        crumb: initialData.crumb !== undefined ? initialData.crumb : 50,
-        starter: initialData.starter !== undefined ? initialData.starter : 20,
-        leaven: initialData.leaven || 'starter',
+
 
         processRecommendations: {},
         processRecommendationsLoading: false,
@@ -311,22 +308,7 @@ document.addEventListener('alpine:init', () => {
                                                 this.active_action = parsed.name || this.active_action;
                                             }
                                         }
-                                    } else if (parsed.type === "slider" && parsed.tweak_id) {
-                                        if (!this.slider_recommendations[parsed.tweak_id]) {
-                                            this.slider_recommendations[parsed.tweak_id] = parsed;
-                                        } else {
-                                            this.slider_recommendations[parsed.tweak_id].explanation = parsed.explanation;
-                                            this.slider_recommendations[parsed.tweak_id].recommended_value = parsed.recommended_value;
-                                        }
-                                        if (parsed.tweak_id === 'enrichment' && parsed.recommended_value !== undefined) {
-                                            this.texture = parsed.recommended_value;
-                                        }
-                                        if (parsed.tweak_id === 'hydration' && parsed.recommended_value !== undefined) {
-                                            this.crumb = parsed.recommended_value;
-                                        }
-                                        if (parsed.tweak_id === 'leavening' && parsed.recommended_value !== undefined) {
-                                            this.starter = parsed.recommended_value;
-                                        }
+
                                     } else if (parsed.type === "inclusion" && parsed.name && parsed.bakers_percentage !== undefined && parsed.bakers_percentage !== null) {
                                         const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
                                         const lowerParsed = normalize(parsed.name);
@@ -387,18 +369,7 @@ document.addEventListener('alpine:init', () => {
                 });
         },
 
-        hoverSlider(tweakId) {
-            if (this.slider_recommendations && this.slider_recommendations[tweakId] && this.slider_recommendations[tweakId].explanation) {
-                this.hovered_element = tweakId;
-                this.sidebar_tier = '';
-                this.sidebar_labor_roi = '';
-                this.sidebar_analysis = this.slider_recommendations[tweakId].explanation;
-                this.sidebar_insight_loading = false;
-            } else {
-                this.hovered_element = null;
-                this.sidebar_analysis = '';
-            }
-        },
+
 
         fetchProcessAlternatives(categoryKey) {
             if (this.processAlternativesCache[categoryKey] && this.processAlternativesCache[categoryKey].length > 0) {
@@ -675,7 +646,7 @@ document.addEventListener('alpine:init', () => {
                 const timeSec = timeMatch ? parseInt(timeMatch[1]) : 0;
                 
                 newSteps.push({
-                    key: 'step_' + stepNum,
+                    key: 'step_' + stepNum + '_' + i,
                     step_number: stepNum,
                     name: name,
                     desc: instruction,

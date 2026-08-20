@@ -320,6 +320,11 @@ document.addEventListener('alpine:init', () => {
                 target_sugar_pct: extractFloatField("target_sugar_pct"),
                 target_hydration_pct: extractFloatField("target_hydration_pct"),
                 target_binder_pct: extractFloatField("target_binder_pct"),
+                target_leaven_pct: extractFloatField("target_leaven_pct"),
+                target_salt_pct: extractFloatField("target_salt_pct"),
+                target_friction_factor: extractFloatField("target_friction_factor"),
+                target_bake_temp: extractNumberField("target_bake_temp"),
+                target_bake_time: extractNumberField("target_bake_time"),
                 flour_blend: extractArray("flour_blend"),
                 flavor_inclusions: extractArray("flavor_inclusions"),
                 secondary_ingredients: extractArray("secondary_ingredients")
@@ -399,6 +404,12 @@ document.addEventListener('alpine:init', () => {
                         if (state.target_fat_pct !== null && state.target_fat_pct !== undefined) this.fat = state.target_fat_pct;
                         if (state.target_sugar_pct !== null && state.target_sugar_pct !== undefined) this.sugar = state.target_sugar_pct;
                         if (state.target_hydration_pct !== null && state.target_hydration_pct !== undefined) this.hydration = state.target_hydration_pct;
+                        if (state.target_binder_pct !== null && state.target_binder_pct !== undefined) this.binder = state.target_binder_pct;
+                        if (state.target_leaven_pct !== null && state.target_leaven_pct !== undefined) this.leaven_pct = state.target_leaven_pct;
+                        if (state.target_salt_pct !== null && state.target_salt_pct !== undefined) this.salt_pct = state.target_salt_pct;
+                        if (state.target_friction_factor !== null && state.target_friction_factor !== undefined) this.friction_factor = state.target_friction_factor;
+                        if (state.target_bake_temp !== null && state.target_bake_temp !== undefined) this.bake_temp = state.target_bake_temp;
+                        if (state.target_bake_time !== null && state.target_bake_time !== undefined) this.bake_time = state.target_bake_time;
                         
                         // We also assign this to selectedRecipeScienceProfile so it displays properly if that variable is used elsewhere
                         if (state.sidebar_science_profile) {
@@ -476,6 +487,12 @@ document.addEventListener('alpine:init', () => {
                         if (parsed.target_fat_pct !== undefined) this.fat = parsed.target_fat_pct;
                         if (parsed.target_sugar_pct !== undefined) this.sugar = parsed.target_sugar_pct;
                         if (parsed.target_hydration_pct !== undefined) this.hydration = parsed.target_hydration_pct;
+                        if (parsed.target_binder_pct !== undefined) this.binder = parsed.target_binder_pct;
+                        if (parsed.target_leaven_pct !== undefined) this.leaven_pct = parsed.target_leaven_pct;
+                        if (parsed.target_salt_pct !== undefined) this.salt_pct = parsed.target_salt_pct;
+                        if (parsed.target_friction_factor !== undefined) this.friction_factor = parsed.target_friction_factor;
+                        if (parsed.target_bake_temp !== undefined) this.bake_temp = parsed.target_bake_temp;
+                        if (parsed.target_bake_time !== undefined) this.bake_time = parsed.target_bake_time;
                     }
                 } catch (err) {
                     console.warn("Could not parse SSE chunk:", dataStr);
