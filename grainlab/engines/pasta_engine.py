@@ -13,7 +13,7 @@ class PastaEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "mechanical_compaction",
-        "permissible_action_types": ["knead", "sheet", "extrude"],
+        "permissible_action_types": ["knead", "roll"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -69,11 +69,21 @@ class PastaEngine(BaseEngine):
 
     archetypes = {
         "sheeted_ribbon": {
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
             "label": "Sheeted Ribbon Pastas",
             "icon": "🍝",
             "description": "Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine.",
             "grain_affinity": "high_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
                 "required_gluten_elasticity": "extreme_tensile",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
@@ -86,6 +96,8 @@ class PastaEngine(BaseEngine):
             )
         },
         "stuffed_pocket": {
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
             "label": "Stuffed / Encased Pockets",
             "icon": "🥟",
             "description": "High-elasticity envelopes meant to seal wet fillings securely like Ravioli.",
@@ -103,6 +115,8 @@ class PastaEngine(BaseEngine):
             )
         },
         "extruded_shape": {
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
             "label": "Extruded Die Shapes",
             "icon": "🔩",
             "description": "High-pressure compression matrix tubes or hollows like Rigatoni.",
@@ -120,6 +134,8 @@ class PastaEngine(BaseEngine):
             )
         },
         "alkaline_noodles": {
+            "default_form_factor": "mechanical-sheeter",
+            "default_salt_pct": 0.0,
             "label": "Alkaline Cut Noodles",
             "icon": "🍜",
             "description": "Mineral-fortified strings built for snap and yellow coloration like Ramen.",
@@ -188,7 +204,7 @@ class PastaEngine(BaseEngine):
         return hyd, f, s, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast. This is pasta/noodles. NEVER include leaveners or sweeteners. Focus purely on liquids and binders (eggs)."
+        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast. This is pasta/noodles. NEVER include leaveners or sweeteners. Focus purely on liquids and binders (eggs). CRITICAL: For fresh pasta, target_bake_temp MUST ALWAYS be 212."
 
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like herbs or squid ink), use true baker's percentages (flour = 100%). For pastas, these typically range from 1.0 to 5.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."

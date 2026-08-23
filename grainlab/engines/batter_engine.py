@@ -17,7 +17,7 @@ class BatterEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
-        "permissible_action_types": ["cream", "fold"],
+        "permissible_action_types": ["mix", "fold"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -95,11 +95,21 @@ class BatterEngine(BaseEngine):
 
     archetypes = {
         "sponge_cake": {
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
             "label": "Foam / Sponge Cake",
             "icon": "🍰",
             "description": "Fat-free or low-fat aeration systems like Genoise or Chiffon.",
             "grain_affinity": "low_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
                 "required_gluten_elasticity": "minimal_to_none",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
@@ -112,6 +122,8 @@ class BatterEngine(BaseEngine):
             )
         },
         "creamed_cake": {
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
             "label": "Creamed Layer Cake",
             "icon": "🎂",
             "description": "Emulsified lipid-sugar crystal structures for standard layers.",
@@ -129,6 +141,8 @@ class BatterEngine(BaseEngine):
             )
         },
         "pound_cake": {
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
             "label": "High-Ratio Pound Cake",
             "icon": "🍫",
             "description": "Dense, uniform crumb carrying massive sugar and fat weights.",
@@ -146,6 +160,8 @@ class BatterEngine(BaseEngine):
             )
         },
         "griddle_batter": {
+            "default_form_factor": "straight-sided-round-tin",
+            "default_salt_pct": 0.005,
             "label": "Fluid Griddle Batter",
             "icon": "🥞",
             "description": "High-moisture pourable structures like Pancakes, Waffles, and Crepes.",

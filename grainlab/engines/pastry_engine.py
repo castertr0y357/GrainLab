@@ -14,7 +14,7 @@ class PastryEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
         "mechanical_energy_threshold": "minimal_folding",
-        "permissible_action_types": ["cut_in", "sheet"],
+        "permissible_action_types": ["mix", "fold"],
         "environmental_rest_strategy": "fat_solidification",
     }
     secondary_ingredients = {
@@ -77,11 +77,21 @@ class PastryEngine(BaseEngine):
 
     archetypes = {
         "layered_viennoiserie": {
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
             "label": "Layered Viennoiserie",
             "icon": "🥐",
             "description": "Yeast-leavened laminated structures like Croissants and Danishes.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -89,6 +99,8 @@ class PastryEngine(BaseEngine):
             }
         },
         "inverted_puff": {
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
             "label": "Inverted Puff Pastry",
             "icon": "🍥",
             "description": "Unleavened laminated doughs driven entirely by water-vapor lift.",
@@ -101,6 +113,8 @@ class PastryEngine(BaseEngine):
             }
         },
         "shortcrust_tart": {
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
             "label": "Shortcrust Tart Casing",
             "icon": "🥧",
             "description": "High-fat friable crumb shells designed to remain completely impermeable to wet fillings.",
@@ -113,6 +127,8 @@ class PastryEngine(BaseEngine):
             }
         },
         "paper_thin_phyllo": {
+            "default_form_factor": "perforated-sheet-air-mat",
+            "default_salt_pct": 0.01,
             "label": "Paper-Thin Phyllo / Strudel",
             "icon": "🫓",
             "description": "Stretched, transparent gluten films stacked with liquid fat layers.",
@@ -205,7 +221,7 @@ class PastryEngine(BaseEngine):
                     "key": "mix",
                     "name": "Shortcrust Base Mix",
                     "duration_sec": 10 * 60,
-                    "desc": "Cut cold butter into flour until pea-sized, add cold liquid until it just holds together. Do not overwork.",
+                    "desc": "Cut cold butter into flour until pea-sized, add cold liquid until it just holds together. Do not overwork or fold.",
                     "is_mix": True
                 },
                 {
@@ -241,7 +257,7 @@ class PastryEngine(BaseEngine):
                     "key": "stretch",
                     "name": "Paper-Thin Stretch & Stack",
                     "duration_sec": 30 * 60,
-                    "desc": "Stretch dough paper-thin until translucent, stack layers while brushing generously with melted fat/oil."
+                    "desc": "Stretch dough paper-thin until translucent, fold or stack layers while brushing generously with melted fat/oil."
                 },
                 {
                     "key": "bake",

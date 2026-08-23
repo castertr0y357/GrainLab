@@ -209,6 +209,8 @@ class BaseEngine:
         return pitfalls
 
     def get_sensory_benchmark(self, grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
+        if grain_type is None:
+            grain_type = "all_purpose"
         grain_name = grain_type.replace("_", " ").title()
         desc = f"For fresh-milled {grain_name} dough: "
         if effective_hydration >= 0.75:
@@ -227,7 +229,7 @@ class BaseEngine:
         return desc
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives, use true baker's percentages (where flour = 100%). Default ranges are typically 10.0 to 30.0 for standard doughs. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives, use true baker's percentages (where flour = 100%). Default ranges are typically 10.0 to 30.0 for standard doughs. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste."
 
     def calculate_recipe(
         self,
@@ -350,11 +352,17 @@ class BaseEngine:
                 ratio = float(item.get("ratio", 1.0))
                 weight = round(total_weight * (ratio / total_ratio), 1)
                 if weight > 0:
-                    results.append({"name": item.get("name", default_name).replace("_", " ").title(), "weight": weight})
+                    raw_name = item.get("name")
+                    if raw_name is None:
+                        raw_name = default_name
+                    results.append({"name": raw_name.replace("_", " ").title(), "weight": weight})
             return results
         # Re-compute weights dynamically pulling defaults from child engine
         def get_default(cat, fallback):
-            val = self.secondary_ingredients.get(cat, {}).get("default", fallback).replace("_", " ").title()
+            raw_val = self.secondary_ingredients.get(cat, {}).get("default", fallback)
+            if raw_val is None:
+                raw_val = fallback
+            val = raw_val.replace("_", " ").title()
             return val if val.lower() != "none" else fallback
 
         liquid_items = allocate_weights(sec_liquids, added_water, get_default("liquids", "Water"))

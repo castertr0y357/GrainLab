@@ -80,11 +80,21 @@ class CookieEngine(BaseEngine):
 
     archetypes = {
         "drop_cookie": {
+            "default_form_factor": "half-sheet-pan",
+            "default_salt_pct": 0.0075,
             "label": "Drop Cookie",
             "icon": "🍪",
             "description": "Irregular mounds designed to flow into tender discs.",
             "grain_affinity": "low_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "heavy-aluminum-sheet",
+            "default_salt_pct": 0.0075,
+            "default_form_factor": "heavy-aluminum-sheet",
+            "default_salt_pct": 0.0075,
+            "default_form_factor": "heavy-aluminum-sheet",
+            "default_salt_pct": 0.0075,
+            "default_form_factor": "heavy-aluminum-sheet",
+            "default_salt_pct": 0.0075,
                 "required_gluten_elasticity": "minimal_to_none",
                 "desired_horizontal_flow": "high_spread",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -101,6 +111,8 @@ class CookieEngine(BaseEngine):
             )
         },
         "bar_cookie": {
+            "default_form_factor": "heavy-aluminum-sheet",
+            "default_salt_pct": 0.0075,
             "label": "Bar / Slab",
             "icon": "🍫",
             "description": "Continuous uniform block baking, minimizing perimeter crisping.",
@@ -118,6 +130,8 @@ class CookieEngine(BaseEngine):
             )
         },
         "slice_bake": {
+            "default_form_factor": "heavy-aluminum-sheet",
+            "default_salt_pct": 0.0075,
             "label": "Slice & Bake",
             "icon": "🔪",
             "description": "Log configuration, highly compressed fat crystals for crisp rings.",
@@ -135,6 +149,8 @@ class CookieEngine(BaseEngine):
             )
         },
         "rolled_cutout": {
+            "default_form_factor": "half-sheet-pan",
+            "default_salt_pct": 0.0075,
             "label": "Rolled Cutout",
             "icon": "📐",
             "description": "Zero-spread formulation maintaining clean geometric edges post-bake.",

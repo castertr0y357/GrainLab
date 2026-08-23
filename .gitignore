@@ -19,3 +19,6 @@ static_collected/
 media/
 django_cache/
 
+# Development / Scratch files
+QA_recipes/
+scratch/

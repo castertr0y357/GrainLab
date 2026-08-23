@@ -718,6 +718,56 @@ def stream_creativity_variants(engine_id: str, creativity_level: int, active_arc
         yield item
 
 
+def sanitize_ai_recipe_json(engine_id: str, result: dict) -> dict:
+    if not isinstance(result, dict):
+        return result
+    
+    sec = result.get("secondary_ingredients", {})
+    if not isinstance(sec, dict):
+        return result
+
+    # 1. Leavener Limits
+    leaveners = sec.get("leaveners", [])
+    if isinstance(leaveners, list):
+        for l in leaveners:
+            if isinstance(l, dict):
+                name = str(l.get("name", "")).lower()
+                pct = float(l.get("bakers_percentage", 0))
+                if "powder" in name or "soda" in name or "chemical" in name:
+                    if pct > 5.0:
+                        l["bakers_percentage"] = 5.0
+                elif "starter" in name or "levain" in name or "sourdough" in name:
+                    if pct > 60.0:
+                        l["bakers_percentage"] = 60.0
+                else:
+                    if pct > 1.5:
+                        l["bakers_percentage"] = 1.5
+
+    # 2. Total Liquid Limit
+    # Note: Max 80.0% for quick breads/cookies/batters
+    if engine_id in ["quick", "cookie", "batter"]:
+        liquids = sec.get("liquids", [])
+        if isinstance(liquids, list):
+            total_liquid = sum(float(x.get("bakers_percentage", 0)) for x in liquids if isinstance(x, dict))
+            if total_liquid > 80.0:
+                scale = 80.0 / total_liquid
+                for x in liquids:
+                    if isinstance(x, dict):
+                        x["bakers_percentage"] = round(float(x["bakers_percentage"]) * scale, 2)
+                        
+    # 3. Total Lipid Limit
+    if engine_id in ["quick", "cookie", "batter"]:
+        lipids = sec.get("lipids", [])
+        if isinstance(lipids, list):
+            total_lipid = sum(float(x.get("bakers_percentage", 0)) for x in lipids if isinstance(x, dict))
+            if total_lipid > 80.0:
+                scale = 80.0 / total_lipid
+                for x in lipids:
+                    if isinstance(x, dict):
+                        x["bakers_percentage"] = round(float(x["bakers_percentage"]) * scale, 2)
+
+    return result
+
 def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False) -> dict | None:
     """
     Asks the LLM to generate the detailed science profile and ways to elevate (last_10_percent_magic)
@@ -738,6 +788,8 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "For each recommended ingredient, you MUST provide the specific `name` (e.g. 'Unsalted Butter'), the target `temperature` (e.g. 'Room Temp'), and a concise `reasoning` explaining why it is the perfect fit.\n"
         "CRITICAL RULE FOR ADDITIVES:\n"
         "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
+        "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
+        "You MUST ONLY select actions from the permissible actions list provided by the engine. Do not hallucinate or guess actions like 'knead' or 'fold' unless they are explicitly allowed.\n"
         "Each response must match this JSON schema exactly:\n"
         "{\n"
         "  \"default_yield_amount\": 24,\n"
@@ -747,7 +799,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
         "  \"flour_blend\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20},\n"
         "  \"fat_starting_temp\": \"room_temp\",\n"
-        "  \"required_actions\": [\"knead\", \"fold\"],\n"
+        "  \"required_actions\": [\"ACTION_STRING\"],\n"
         "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"],\n"
         "  \"secondary_ingredients\": {\n"
         "    \"lipids\": [{ \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
@@ -769,6 +821,9 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
     
     from grainlab.engines import router
     engine = router.get_engine_for_preset(recipe_slug, category_slug)
+    permissible_actions = engine.production_profile.get("permissible_action_types", [])
+    system_prompt += f"\n\n🚨 [PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
+
     culinary_directive = engine.get_ai_culinary_directive()
     if culinary_directive:
         system_prompt += f"\n\n🚨 [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
@@ -797,6 +852,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         # If AI is globally disabled in settings, use the offline mock fallback
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "recommended_grain_ids"])
         if result and isinstance(result, dict) and "secondary_ingredients" in result:
+            result = sanitize_ai_recipe_json(engine_id, result)
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_details: {str(e)}")
@@ -830,6 +886,8 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
         "The keys in 'flour_blend' MUST be the exact names from 'selected_grains', but converted to lowercase and with ALL non-alphanumeric characters (including spaces, dashes, parentheses) replaced by underscores. For example, 'Spelt Wheat (Ancient)' MUST become 'spelt_wheat__ancient_'.\n"
         "CRITICAL RULE FOR CORE RATIOS (BAKER'S PERCENTAGES):\n"
         "You MUST output the optimal Baker's Percentages for the base recipe structure, where the total flour is always 100%. For example, a classic cookie needs 100-150% sugar and 80-100% fat. A bread might need 75% hydration and 0% sugar. Output these strictly as floats (e.g., 120.0 for 120%).\n"
+        "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
+        "You MUST ONLY select actions from the permissible actions list provided by the engine. Do not hallucinate or guess actions like 'knead' or 'fold' unless they are explicitly allowed.\n"
         "Each response must match this JSON schema exactly:\n"
         "{\n"
         "  \"default_yield_amount\": 24,\n"
@@ -848,7 +906,7 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
         "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
         "  \"flour_blend\": [{ \"type\": \"blend\", \"ratios\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20}, \"reasoning\": \"string\" }],\n"
         "  \"fat_starting_temp\": \"room_temp\",\n"
-        "  \"required_actions\": [\"knead\", \"fold\"],\n"
+        "  \"required_actions\": [\"ACTION_STRING\"],\n"
         "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"],\n"
         "  \"secondary_ingredients\": [\n"
         "    { \"type\": \"secondary\", \"category_key\": \"lipids\", \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"ratio\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
@@ -870,7 +928,6 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
         "Do not include markdown blocks, just raw JSON."
     )
     
-    engine = router.get_engine_for_preset(recipe_slug, category_slug)
     culinary_directive = engine.get_ai_culinary_directive()
     if culinary_directive:
         system_prompt += f"\n\n🚨 [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"

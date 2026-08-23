@@ -90,6 +90,8 @@ class QuickEngine(BaseEngine):
 
     archetypes = {
         "chemical_loaf": {
+            "default_form_factor": "standard-8x4-loaf-pan",
+            "default_salt_pct": 0.0075,
             "label": "Chemical Loaf",
             "icon": "🍞",
             "description": "Thick pourable batters baked slowly in high-walled pans like Banana or Soda Bread.",
@@ -108,6 +110,8 @@ class QuickEngine(BaseEngine):
             )
         },
         "layered_scone": {
+            "default_form_factor": "individual-wedge-sheet",
+            "default_salt_pct": 0.0075,
             "label": "Layered Wedge Scone",
             "icon": "🍰",
             "description": "Laminated dry-shred flakes cut into solid clean triangles.",
@@ -126,6 +130,8 @@ class QuickEngine(BaseEngine):
             )
         },
         "dropped_biscuit": {
+            "default_form_factor": "individual-wedge-sheet",
+            "default_salt_pct": 0.0075,
             "label": "Dropped / Cut Biscuit",
             "icon": "🧁",
             "description": "High vertical expansion rounds utilizing shortening pockets for flaky separation.",
@@ -144,6 +150,8 @@ class QuickEngine(BaseEngine):
             )
         },
         "textured_muffin": {
+            "default_form_factor": "muffin-cupcake-tin",
+            "default_salt_pct": 0.0075,
             "label": "Textured Muffin",
             "icon": "🧁",
             "description": "Individual cup-bounded portions prioritizing a domed, porous crown.",

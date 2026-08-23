@@ -70,11 +70,16 @@ class HearthEngine(BaseEngine):
 
     archetypes = {
         "hearth_boule": {
+            "default_form_factor": "cast-iron-dutch-oven",
             "label": "Hearth Boule / Batard",
             "icon": "🫓",
             "description": "Freeform oval or round configurations baked on radiant stone floors.",
             "grain_affinity": "high_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "cast-iron-dutch-oven",
+            "default_form_factor": "cast-iron-dutch-oven",
+            "default_form_factor": "cast-iron-dutch-oven",
+            "default_form_factor": "cast-iron-dutch-oven",
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "high_hydration_lean",
@@ -87,6 +92,7 @@ class HearthEngine(BaseEngine):
             )
         },
         "high_hydration_slab": {
+            "default_form_factor": "cast-iron-dutch-oven",
             "label": "High-Hydration Slab",
             "icon": "🍞",
             "description": "Wet, un-kneaded cellular matrices poured out into pans like Focaccia or Ciabatta.",
@@ -104,6 +110,7 @@ class HearthEngine(BaseEngine):
             )
         },
         "tapered_baguette": {
+            "default_form_factor": "cast-iron-dutch-oven",
             "label": "Tapered Baguette",
             "icon": "🥖",
             "description": "Elongated, thin cylinder format optimizing the crust-to-crumb ratio.",
@@ -121,6 +128,7 @@ class HearthEngine(BaseEngine):
             )
         },
         "flash_pizza": {
+            "default_form_factor": "cast-iron-dutch-oven",
             "label": "Flash Pizza Crust",
             "icon": "🍕",
             "description": "Ultra-thin center with a blistered gas-filled rim set under extreme thermal environments.",

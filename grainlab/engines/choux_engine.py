@@ -13,7 +13,7 @@ class ChouxEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "moderate_shearing",
-        "permissible_action_types": ["knead", "cream"],
+        "permissible_action_types": ["boil", "mix"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -61,11 +61,19 @@ class ChouxEngine(BaseEngine):
 
     archetypes = {
         "piped_shell": {
+            "default_form_factor": "extrusion-piping-sheet",
+            "default_salt_pct": 0.005,
             "label": "Piped Shell",
             "icon": "🍫",
             "description": "Linear or round hollow vectors like Éclairs and Profiteroles.",
             "grain_affinity": "low_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "extrusion-piping-sheet",
+            "default_salt_pct": 0.005,
+            "default_form_factor": "extrusion-piping-sheet",
+            "default_salt_pct": 0.005,
+            "default_form_factor": "extrusion-piping-sheet",
+            "default_salt_pct": 0.005,
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
@@ -78,6 +86,8 @@ class ChouxEngine(BaseEngine):
             )
         },
         "extrusion_fried": {
+            "default_form_factor": "extrusion-piping-sheet",
+            "default_salt_pct": 0.005,
             "label": "Extrusion Fried Paste",
             "icon": "🌀",
             "description": "Star-die extrusion profiles built for rapid oil expansion like Churros.",
@@ -95,6 +105,8 @@ class ChouxEngine(BaseEngine):
             )
         },
         "savory_emulsion": {
+            "default_form_factor": "extrusion-piping-sheet",
+            "default_salt_pct": 0.005,
             "label": "Savory Emulsion",
             "icon": "🧀",
             "description": "High-lipid, cheese-bound panade drops like Gougères.",

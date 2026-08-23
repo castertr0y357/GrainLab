@@ -89,11 +89,16 @@ class PanEngine(BaseEngine):
 
     archetypes = {
         "sandwich_pan": {
+            "default_form_factor": "standard-9x5-pan",
             "label": "Sandwich Pan Loaf",
             "icon": "🍞",
             "description": "Straight sidewall containment maximizing volume and thin slicing.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "standard-9x5-pan",
+            "default_form_factor": "standard-9x5-pan",
+            "default_form_factor": "standard-9x5-pan",
+            "default_form_factor": "standard-9x5-pan",
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
@@ -105,6 +110,7 @@ class PanEngine(BaseEngine):
             )
         },
         "freeform_braided": {
+            "default_form_factor": "standard-9x5-pan",
             "label": "Freeform Braided Loaf",
             "icon": "🥯",
             "description": "High-tensile strands capable of holding shape without pan walls like Challah or Brioche.",
@@ -122,6 +128,7 @@ class PanEngine(BaseEngine):
             )
         },
         "soft_dinner_roll": {
+            "default_form_factor": "standard-9x5-pan",
             "label": "Soft Dinner Roll",
             "icon": "🫓",
             "description": "Small batch pull-apart clusters prioritizing maximum steam-trapped softness.",
@@ -139,6 +146,7 @@ class PanEngine(BaseEngine):
             )
         },
         "filled_sweet_roll": {
+            "default_form_factor": "standard-9x5-pan",
             "label": "Filled Sweet Roll",
             "icon": "🌀",
             "description": "Laminated or sheeted scroll structures built to contain heavy interior fillings.",

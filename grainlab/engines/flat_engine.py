@@ -11,7 +11,7 @@ class FlatEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "moderate_shearing",
-        "permissible_action_types": ["knead", "sheet"],
+        "permissible_action_types": ["mix", "roll"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {}
@@ -55,11 +55,16 @@ class FlatEngine(BaseEngine):
 
     archetypes = {
         "leavened_flatbread": {
+            "default_form_factor": "heavy-cast-iron-skillet",
             "label": "Leavened Flatbread",
             "icon": "🫔",
             "description": "Puffy, vapor-pocket pockets driven by interior steam like Naan and Pita.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "heavy-cast-iron-skillet",
+            "default_form_factor": "heavy-cast-iron-skillet",
+            "default_form_factor": "heavy-cast-iron-skillet",
+            "default_form_factor": "heavy-cast-iron-skillet",
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
@@ -72,6 +77,7 @@ class FlatEngine(BaseEngine):
             )
         },
         "unleavened_stretched": {
+            "default_form_factor": "heavy-cast-iron-skillet",
             "label": "Unleavened Stretched",
             "icon": "🫓",
             "description": "Paper-thin configurations demanding zero elastic snapback like Tortillas and Roti.",
@@ -89,6 +95,7 @@ class FlatEngine(BaseEngine):
             )
         },
         "blistered_griddle": {
+            "default_form_factor": "heavy-cast-iron-skillet",
             "label": "Blistered Griddle Cake",
             "icon": "🍳",
             "description": "Direct contact stove-top pan bakes.",
@@ -106,6 +113,7 @@ class FlatEngine(BaseEngine):
             )
         },
         "crisp_flatbread": {
+            "default_form_factor": "heavy-cast-iron-skillet",
             "label": "Crisp Crispbread / Lavash",
             "icon": "🍘",
             "description": "Dehydrated sheet structures prioritizing snap and shelf life.",

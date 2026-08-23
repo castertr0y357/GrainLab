@@ -11,7 +11,7 @@ class FryEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
-        "permissible_action_types": ["knead"],
+        "permissible_action_types": ["mix", "fry"],
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {
@@ -60,11 +60,21 @@ class FryEngine(BaseEngine):
 
     archetypes = {
         "yeast_raised_donut": {
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
             "label": "Yeast-Raised Donut",
             "icon": "🍩",
             "description": "Highly aerated, light, floating dough rings.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
@@ -77,6 +87,8 @@ class FryEngine(BaseEngine):
             )
         },
         "cake_donut": {
+            "default_form_factor": "deep-fry-vat",
+            "default_salt_pct": 0.01,
             "label": "Cake / Chemical Donut",
             "icon": "🍩",
             "description": "Tender, friable, batter-based rings dropping directly into fat.",
@@ -94,6 +106,8 @@ class FryEngine(BaseEngine):
             )
         },
         "fritter_beignet": {
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
             "label": "Batter Fritter / Beignet",
             "icon": "☁️",
             "description": "Irregular high-hydration moisture puffs expanding violently in oil.",
@@ -111,6 +125,8 @@ class FryEngine(BaseEngine):
             )
         },
         "fried_laminate": {
+            "default_form_factor": "high-volume-oil-vat",
+            "default_salt_pct": 0.01,
             "label": "Fried Laminated",
             "icon": "🫓",
             "description": "Alternating layers flashing open instantly in convection fat.",

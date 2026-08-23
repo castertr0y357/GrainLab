@@ -54,11 +54,16 @@ class BathEngine(BaseEngine):
 
     archetypes = {
         "twisted_pretzel": {
+            "default_form_factor": "perforated-baking-sheet",
             "label": "Twisted Pretzel",
             "icon": "🥨",
             "description": "Traditional knot shapes, maximize surface area for Maillard browning.",
             "grain_affinity": "high_protein",
             "target_archetype_mechanics": {
+            "default_form_factor": "perforated-baking-sheet",
+            "default_form_factor": "perforated-baking-sheet",
+            "default_form_factor": "perforated-baking-sheet",
+            "default_form_factor": "perforated-baking-sheet",
                 "required_gluten_elasticity": "extreme_tensile",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -72,6 +77,7 @@ class BathEngine(BaseEngine):
             )
         },
         "boiled_bagel": {
+            "default_form_factor": "perforated-baking-sheet",
             "label": "Boiled Bagel",
             "icon": "🥯",
             "description": "Ring geometry, dense core structure, high tensile strength.",
@@ -90,6 +96,7 @@ class BathEngine(BaseEngine):
             )
         },
         "laugen_bun": {
+            "default_form_factor": "perforated-baking-sheet",
             "label": "Laugen Bun / Roll",
             "icon": "🫓",
             "description": "Spherical soft-crumb interior protected by a thick glossy skin.",
@@ -107,6 +114,7 @@ class BathEngine(BaseEngine):
             )
         },
         "pretzel_stick": {
+            "default_form_factor": "perforated-baking-sheet",
             "label": "Pretzel Stick / Cracker",
             "icon": "🥖",
             "description": "Ultra-low hydration, brittle, snapping structure.",

@@ -31,9 +31,16 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     
     engine = router.get_engine_for_preset(preset_slug, cat.slug)
     
+    # Extract active archetype early to use its defaults
+    archetype_id = state.get("active_archetype_id") or state.get("archetype_id") or preset_slug or ""
+    active_arch = engine.archetypes.get(archetype_id, {})
+    
     ff_slug = state.get("form_factor")
     if not ff_slug:
-        ff_slug = list(getattr(engine, "permissible_form_factors", {}).keys())[0] if getattr(engine, "permissible_form_factors", {}) else None
+        # Check archetype default first, then fallback to first engine form factor
+        ff_slug = active_arch.get("default_form_factor")
+        if not ff_slug:
+            ff_slug = list(getattr(engine, "permissible_form_factors", {}).keys())[0] if getattr(engine, "permissible_form_factors", {}) else None
         
     # Validate ff_slug is permissible for active engine
     permissible_slugs = list(getattr(engine, "permissible_form_factors", {}).keys())
@@ -154,9 +161,9 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         if salt_val is not None:
             salt_pct = float(salt_val) / 100.0
         else:
-            salt_pct = getattr(engine, "default_salt_pct", 0.02)
+            salt_pct = active_arch.get("default_salt_pct", getattr(engine, "default_salt_pct", 0.02))
     except (ValueError, TypeError):
-        salt_pct = getattr(engine, "default_salt_pct", 0.02)
+        salt_pct = active_arch.get("default_salt_pct", getattr(engine, "default_salt_pct", 0.02))
         
     try:
         leaven_val = state.get("leaven_pct")
