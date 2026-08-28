@@ -233,13 +233,15 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
 
     # Force JSON format if supported
+    import random
     payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt + " You MUST respond with raw JSON ONLY. No markdown formatting, no codeblocks."},
             {"role": "user", "content": normalized_user_prompt}
         ],
-        "temperature": 0.1,
+        "temperature": 0.7,
+        "seed": random.randint(1, 1000000),
         "max_tokens": 4096,
         "num_predict": 4096,
         "response_format": {"type": "json_object"}
@@ -290,7 +292,7 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         
     return None
 
-def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = False):
+def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = False, temperature: float = 0.1):
     """
     Submits a structured prompt to local Gemma with stream=True and yields JSON objects
     incrementally as they are generated from within a top-level JSON array.
@@ -312,7 +314,7 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
             {"role": "system", "content": system_prompt + " You MUST respond with raw JSON ONLY. No markdown formatting, no codeblocks."},
             {"role": "user", "content": user_prompt}
         ],
-        "temperature": 0.1,
+        "temperature": temperature,
         "max_tokens": 4096,
         "num_predict": 4096,
         "stream": True
@@ -793,16 +795,11 @@ def stream_final_insights(state: dict, recipe_data: dict = None, countertop_step
         "Your task is to generate the ENTIRE timeline and baking profile for this recipe.\n\n"
         "Your response MUST be pure JSON matching this schema exactly:\n"
         "{\n"
-        "  \"sensory_benchmark\": \"A descriptive, mouth-watering 2-sentence summary of the final texture, crust, and crumb expected.\",\n"
-        "  \"contextual_pitfalls\": [\n"
-        "    \"Specific warning #1 (e.g., 'Do not over-cream the butter or the cookies will spread too thin').\",\n"
-        "    \"Specific warning #2 (e.g., 'Ensure the water is exactly 95°F to hit the target DDT').\"\n"
-        "  ],\n"
         "  \"timeline\": [\n"
         "    { \n"
         "      \"type\": \"baking_profile\",\n"
         "      \"oven_temp\": <int>,\n"
-        "      \"bake_time\": <int>,\n"
+        "      \"bake_time_min\": <int>,\n"
         "      \"steam\": \"<Yes/No>\",\n"
         "      \"target_doneness\": <int|null>,\n"
         "      \"liquid_water_temp\": <int|null>\n"
@@ -817,7 +814,7 @@ def stream_final_insights(state: dict, recipe_data: dict = None, countertop_step
         "  ]\n"
         "}\n\n"
         "Timeline Construction Rules:\n"
-        "1. Exactly ONE object with `type`: 'baking_profile'. This is metadata. You MUST set `oven_temp`, `bake_time`, and `steam` to EXACTLY match the `engine_baking_parameters` provided. Do NOT change them. `target_doneness`: <int|null> (Only if applicable, e.g. 205 for bread, else null), `liquid_water_temp`: <int|null> (Only if dough temperature matters, e.g. 75, else null).\n"
+        "1. Exactly ONE object with `type`: 'baking_profile'. This is metadata. You MUST set `oven_temp`, `bake_time_min`, and `steam` to EXACTLY match the `engine_baking_parameters` provided. Do NOT change them. `target_doneness`: <int|null> (Only if applicable, e.g. 205 for bread, else null), `liquid_water_temp`: <int|null> (Only if dough temperature matters, e.g. 75, else null).\n"
         "2. Multiple objects for the timeline/steps, with `type`: 'phase', `step_number`: <int>, `name`: '<step title>', `instruction`: '<detailed instruction>', `time_estimate_sec`: <int>.\n"
         "   - CRITICAL: The `baking_profile` object does NOT replace the final baking phase. You MUST still generate a `type: 'phase'` object for the baking step if one exists in `engine_timeline_steps`.\n"
         "   - CRITICAL: You MUST use the EXACT ingredient names found in `calculated_recipe_data` (e.g., 'Unsalted Butter', 'Light Brown Sugar'). If the `process_recommendations` mention generic terms like 'oil', 'liquid', or 'granulated sugar', you MUST override them with the specific ingredients from `calculated_recipe_data`. Do NOT hallucinate ingredients that are not in the recipe.\n"
@@ -873,5 +870,6 @@ def stream_final_insights(state: dict, recipe_data: dict = None, countertop_step
     log.info(f"[Gemma Client] - AI PROMPT FED TO STREAM_FINAL_INSIGHTS: {user_prompt}")
 
     for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
-        yield {"text": chunk}
+        if chunk:
+            yield {"text": chunk}
 

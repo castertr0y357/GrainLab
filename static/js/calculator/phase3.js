@@ -32,6 +32,7 @@ document.addEventListener('alpine:init', () => {
         phase3Loading: false,
         phase3LoadingMessage: '',
         phase3Error: null,
+        calculatingPercentages: initialData.calculatingPercentages || false,
         // Progressive Disclosure State
         activeSubstituteCategory: null,
         substitutesCache: {},
@@ -375,135 +376,263 @@ document.addEventListener('alpine:init', () => {
                 stream: 'true'
             });
 
-            const eventSource = new EventSource(`/ai-recipe-details/?${params.toString()}`);
-            let rawBuffer = "";
-            eventSource.onmessage = (e) => {
-                const dataStr = e.data;
-                if (dataStr === "[DONE]") {
-                    eventSource.close();
-                    clearInterval(stepInt);
-                    this.phase3_generation_steps.forEach(s => { s.active = false; s.completed = true; });
-                    setTimeout(() => {
-                        this.phase3Loading = false;
-                    }, 500);
-                    return;
-                }
+            const createPhase3Stream = (target) => {
+                const targetParams = new URLSearchParams(params);
+                targetParams.set('target', target);
                 
-                try {
-                    const parsed = JSON.parse(dataStr);
-                    if (typeof parsed === 'string') {
-                        // Raw streaming chunks
-                        rawBuffer += parsed;
-                        const state = this.extractPhase3State(rawBuffer);
+                return fetch('/ai-recipe-details/?' + targetParams.toString())
+                    .then(async res => {
+                        if (!res.ok) {
+                            let errData;
+                            try { errData = await res.json(); } catch(e) {}
+                            throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                        }
+                        const reader = res.body.getReader();
+                        const decoder = new TextDecoder("utf-8");
+                        let buffer = "";
+                        let localRawBuffer = "";
                         
-                        if (state.default_yield_amount) this.default_yield_amount = state.default_yield_amount;
-                        if (state.yield_unit) this.yield_unit = state.yield_unit;
-                        if (state.fat_starting_temp) this.fat_starting_temp = state.fat_starting_temp;
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            
+                            buffer += decoder.decode(value, { stream: true });
+                            const lines = buffer.split('\n');
+                            buffer = lines.pop(); // Keep incomplete line
+                            
+                            for (let line of lines) {
+                                if (line.startsWith("data: ")) {
+                                    const dataStr = line.substring(6).trim();
+                                    if (dataStr === "[DONE]" || !dataStr) continue;
+                                    
+                                    try {
+                                        const parsed = JSON.parse(dataStr);
+                                        if (typeof parsed === 'string') {
+                                            localRawBuffer += parsed;
+                                            const state = this.extractPhase3State(localRawBuffer);
+                                            
+                                            if (state.default_yield_amount) this.default_yield_amount = state.default_yield_amount;
+                                            if (state.yield_unit) this.yield_unit = state.yield_unit;
+                                            if (state.fat_starting_temp) this.fat_starting_temp = state.fat_starting_temp;
 
-                        // AI driven base percentage updates
-                        if (state.target_fat_pct !== null && state.target_fat_pct !== undefined) this.fat = state.target_fat_pct;
-                        if (state.target_sugar_pct !== null && state.target_sugar_pct !== undefined) this.sugar = state.target_sugar_pct;
-                        if (state.target_hydration_pct !== null && state.target_hydration_pct !== undefined) this.hydration = state.target_hydration_pct;
-                        if (state.target_binder_pct !== null && state.target_binder_pct !== undefined) this.binder = state.target_binder_pct;
-                        if (state.target_leaven_pct !== null && state.target_leaven_pct !== undefined) this.leaven_pct = state.target_leaven_pct;
-                        if (state.target_salt_pct !== null && state.target_salt_pct !== undefined) this.salt_pct = state.target_salt_pct;
-                        if (state.target_friction_factor !== null && state.target_friction_factor !== undefined) this.friction_factor = state.target_friction_factor;
-                        if (state.target_bake_temp !== null && state.target_bake_temp !== undefined) this.bake_temp = state.target_bake_temp;
-                        if (state.target_bake_time !== null && state.target_bake_time !== undefined) this.bake_time = state.target_bake_time;
-                        
-                        // We also assign this to selectedRecipeScienceProfile so it displays properly if that variable is used elsewhere
-                        if (state.sidebar_science_profile) {
-                            this.selectedRecipeScienceProfile = state.sidebar_science_profile;
-                        }
-                        
-                        if (state.flour_blend && state.flour_blend.length > 0) {
-                            const blend = state.flour_blend[0];
-                            this.flour_blend = this.normalizeFlourBlend(blend.ratios || blend);
-                            this.flour_blend_reasoning = blend.reasoning || '';
-                        }
-                        
-                        if (state.flavor_inclusions && state.flavor_inclusions.length > 0) {
-                            const validFlavors = state.flavor_inclusions.filter(f => f.name && f.name.toLowerCase() !== 'none' && f.name.toLowerCase() !== 'n/a');
-                            if (validFlavors.length > 0) {
-                                this.flavor_inclusions = validFlavors;
+                                            // AI driven base percentage updates
+                                            if (state.target_fat_pct !== null && state.target_fat_pct !== undefined) this.fat = state.target_fat_pct;
+                                            if (state.target_sugar_pct !== null && state.target_sugar_pct !== undefined) this.sugar = state.target_sugar_pct;
+                                            if (state.target_hydration_pct !== null && state.target_hydration_pct !== undefined) this.hydration = state.target_hydration_pct;
+                                            if (state.target_binder_pct !== null && state.target_binder_pct !== undefined) this.binder = state.target_binder_pct;
+                                            if (state.target_leaven_pct !== null && state.target_leaven_pct !== undefined) this.leaven_pct = state.target_leaven_pct;
+                                            if (state.target_salt_pct !== null && state.target_salt_pct !== undefined) this.salt_pct = state.target_salt_pct;
+                                            if (state.target_friction_factor !== null && state.target_friction_factor !== undefined) this.friction_factor = state.target_friction_factor;
+                                            if (state.target_bake_temp !== null && state.target_bake_temp !== undefined) this.bake_temp = state.target_bake_temp;
+                                            if (state.target_bake_time !== null && state.target_bake_time !== undefined) this.bake_time = state.target_bake_time;
+                                            
+                                            if (state.sidebar_science_profile) {
+                                                this.selectedRecipeScienceProfile = state.sidebar_science_profile;
+                                            }
+                                            if (state.required_actions) this.required_actions = state.required_actions;
+                                            if (state.required_hardware) this.required_hardware = state.required_hardware;
+                                            
+                                            if (state.flour_blend && state.flour_blend.length > 0) {
+                                                const blend = state.flour_blend[0];
+                                                this.flour_blend = this.normalizeFlourBlend(blend.ratios || blend);
+                                                this.flour_blend_reasoning = blend.reasoning || '';
+                                            }
+                                            
+                                            if (state.flavor_inclusions && state.flavor_inclusions.length > 0) {
+                                                const validFlavors = state.flavor_inclusions.filter(f => f.name && f.name.toLowerCase() !== 'none' && f.name.toLowerCase() !== 'n/a');
+                                                if (validFlavors.length > 0) {
+                                                    if (!this.flavor_inclusions || this.flavor_inclusions.length === 0) {
+                                                        this.flavor_inclusions = validFlavors;
+                                                    } else {
+                                                        for (let i = 0; i < validFlavors.length; i++) {
+                                                            if (i >= this.flavor_inclusions.length) {
+                                                                this.flavor_inclusions.push(validFlavors[i]);
+                                                            } else {
+                                                                this.flavor_inclusions[i].name = validFlavors[i].name;
+                                                                this.flavor_inclusions[i].reasoning = validFlavors[i].reasoning;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            if (state.secondary_ingredients && state.secondary_ingredients.length > 0) {
+                                                const validKeys = ['lipids', 'liquids', 'binders', 'sweeteners', 'leaveners', 'additives'];
+                                                for (const k of validKeys) {
+                                                    const itemsForKey = state.secondary_ingredients.filter(sec => 
+                                                        sec.category_key === k && 
+                                                        sec.name && 
+                                                        sec.name.toLowerCase() !== 'none' && 
+                                                        sec.name.toLowerCase() !== 'n/a'
+                                                    );
+                                                    
+                                                    if (!this.selectedRecipeSecondaryIngredients[k] || !Array.isArray(this.selectedRecipeSecondaryIngredients[k])) {
+                                                        this.selectedRecipeSecondaryIngredients[k] = itemsForKey;
+                                                    } else {
+                                                        for (let i = 0; i < itemsForKey.length; i++) {
+                                                            if (i >= this.selectedRecipeSecondaryIngredients[k].length) {
+                                                                this.selectedRecipeSecondaryIngredients[k].push(itemsForKey[i]);
+                                                            } else {
+                                                                this.selectedRecipeSecondaryIngredients[k][i].name = itemsForKey[i].name;
+                                                                this.selectedRecipeSecondaryIngredients[k][i].reasoning = itemsForKey[i].reasoning;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                        } else if (parsed.type === "secondary" && parsed.category_key) {
+                                            if (parsed.name && parsed.name.toLowerCase() !== 'none' && parsed.name.toLowerCase() !== 'n/a') {
+                                                this.selectedRecipeSecondaryIngredients[parsed.category_key] = parsed;
+                                            }
+                                        } else if (parsed.type === "flavor") {
+                                            if (!this.flavor_inclusions.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
+                                                this.flavor_inclusions.push(parsed);
+                                            }
+                                        } else if (parsed.type === "blend") {
+                                            this.flour_blend = this.normalizeFlourBlend(parsed.ratios || parsed);
+                                            this.flour_blend_reasoning = parsed.reasoning || '';
+                                            if (parsed.default_yield_amount) this.default_yield_amount = parsed.default_yield_amount;
+                                        } else if (parsed.flour_blend) {
+                                            this.flour_blend = this.normalizeFlourBlend(parsed.flour_blend.ratios || parsed.flour_blend);
+                                            this.flour_blend_reasoning = parsed.flour_blend.reasoning || '';
+                                            if (parsed.default_yield_amount) this.default_yield_amount = parsed.default_yield_amount;
+                                        } else if (parsed.ratios) {
+                                            this.flour_blend = this.normalizeFlourBlend(parsed.ratios);
+                                            this.flour_blend_reasoning = parsed.reasoning || '';
+                                        } else {
+                                            if (parsed.secondary_ingredients) {
+                                                this.selectedRecipeSecondaryIngredients = parsed.secondary_ingredients;
+                                            }
+                                            if (parsed.flavor_inclusions) {
+                                                this.flavor_inclusions = parsed.flavor_inclusions;
+                                            }
+                                            if (parsed.flour_blend) {
+                                                this.flour_blend = this.normalizeFlourBlend(parsed.flour_blend.ratios || parsed.flour_blend);
+                                            }
+                                            if (parsed.default_yield_amount !== undefined) {
+                                                this.default_yield_amount = parsed.default_yield_amount;
+                                            }
+                                            if (parsed.yield_unit) {
+                                                this.yield_unit = parsed.yield_unit;
+                                            }
+                                            if (parsed.is_portionable !== undefined) {
+                                                this.is_portionable = parsed.is_portionable;
+                                            }
+                                            if (parsed.target_fat_pct !== undefined) this.fat = parsed.target_fat_pct;
+                                            if (parsed.target_sugar_pct !== undefined) this.sugar = parsed.target_sugar_pct;
+                                            if (parsed.target_hydration_pct !== undefined) this.hydration = parsed.target_hydration_pct;
+                                            if (parsed.target_binder_pct !== undefined) this.binder = parsed.target_binder_pct;
+                                            if (parsed.target_leaven_pct !== undefined) this.leaven_pct = parsed.target_leaven_pct;
+                                            if (parsed.target_salt_pct !== undefined) this.salt_pct = parsed.target_salt_pct;
+                                            if (parsed.target_friction_factor !== undefined) this.friction_factor = parsed.target_friction_factor;
+                                            if (parsed.target_bake_temp !== undefined) this.bake_temp = parsed.target_bake_temp;
+                                            if (parsed.target_bake_time !== undefined) this.bake_time = parsed.target_bake_time;
+                                        }
+                                    } catch (err) {
+                                        console.warn("Could not parse SSE chunk:", dataStr);
+                                    }
+                                }
                             }
                         }
-                        
-                        if (state.secondary_ingredients && state.secondary_ingredients.length > 0) {
-                            const validKeys = ['lipids', 'liquids', 'binders', 'sweeteners', 'leaveners', 'additives'];
-                            for (const k of validKeys) {
-                                const itemsForKey = state.secondary_ingredients.filter(sec => 
-                                    sec.category_key === k && 
-                                    sec.name && 
-                                    sec.name.toLowerCase() !== 'none' && 
-                                    sec.name.toLowerCase() !== 'n/a'
-                                );
-                                this.selectedRecipeSecondaryIngredients[k] = itemsForKey;
-                            }
-                            // DEBUG LOGGING
-                            console.log("[Phase 3 Stream] Parsed Secondary Ingredients: ", JSON.parse(JSON.stringify(this.selectedRecipeSecondaryIngredients)));
-                        }
-                        
-                    } else if (parsed.type === "secondary" && parsed.category_key) {
-                        // Fallback block if backend doesn't yield raw string chunks
-                        if (parsed.name && parsed.name.toLowerCase() !== 'none' && parsed.name.toLowerCase() !== 'n/a') {
-                            this.selectedRecipeSecondaryIngredients[parsed.category_key] = parsed;
-                            console.log(`[Phase 3 Stream Fallback] Secondary Ingredient: ${parsed.name} -> ${parsed.category_key}`);
-                        }
-                    } else if (parsed.type === "flavor") {
-                        if (!this.flavor_inclusions.some(f => f.name.toLowerCase() === parsed.name.toLowerCase())) {
-                            this.flavor_inclusions.push(parsed);
-                        }
-                    } else if (parsed.type === "blend") {
-                        this.flour_blend = this.normalizeFlourBlend(parsed.ratios || parsed);
-                        this.flour_blend_reasoning = parsed.reasoning || '';
-                        if (parsed.default_yield_amount) this.default_yield_amount = parsed.default_yield_amount;
-                    } else if (parsed.flour_blend) {
-                        this.flour_blend = this.normalizeFlourBlend(parsed.flour_blend.ratios || parsed.flour_blend);
-                        this.flour_blend_reasoning = parsed.flour_blend.reasoning || '';
-                        if (parsed.default_yield_amount) this.default_yield_amount = parsed.default_yield_amount;
-                    } else if (parsed.ratios) {
-                        this.flour_blend = this.normalizeFlourBlend(parsed.ratios);
-                        this.flour_blend_reasoning = parsed.reasoning || '';
-                    } else {
-                        if (parsed.secondary_ingredients) {
-                            this.selectedRecipeSecondaryIngredients = parsed.secondary_ingredients;
-                        }
-                        if (parsed.flavor_inclusions) {
-                            this.flavor_inclusions = parsed.flavor_inclusions;
-                        }
-                        if (parsed.flour_blend) {
-                            this.flour_blend = this.normalizeFlourBlend(parsed.flour_blend.ratios || parsed.flour_blend);
-                        }
-                        if (parsed.default_yield_amount !== undefined) {
-                            this.default_yield_amount = parsed.default_yield_amount;
-                        }
-                        if (parsed.yield_unit) {
-                            this.yield_unit = parsed.yield_unit;
-                        }
-                        if (parsed.is_portionable !== undefined) {
-                            this.is_portionable = parsed.is_portionable;
-                        }
-                        if (parsed.target_fat_pct !== undefined) this.fat = parsed.target_fat_pct;
-                        if (parsed.target_sugar_pct !== undefined) this.sugar = parsed.target_sugar_pct;
-                        if (parsed.target_hydration_pct !== undefined) this.hydration = parsed.target_hydration_pct;
-                        if (parsed.target_binder_pct !== undefined) this.binder = parsed.target_binder_pct;
-                        if (parsed.target_leaven_pct !== undefined) this.leaven_pct = parsed.target_leaven_pct;
-                        if (parsed.target_salt_pct !== undefined) this.salt_pct = parsed.target_salt_pct;
-                        if (parsed.target_friction_factor !== undefined) this.friction_factor = parsed.target_friction_factor;
-                        if (parsed.target_bake_temp !== undefined) this.bake_temp = parsed.target_bake_temp;
-                        if (parsed.target_bake_time !== undefined) this.bake_time = parsed.target_bake_time;
-                    }
-                } catch (err) {
-                    console.warn("Could not parse SSE chunk:", dataStr);
-                }
+                    });
             };
-            eventSource.onerror = (err) => {
-                eventSource.close();
+
+            Promise.all([
+                createPhase3Stream('base'),
+                createPhase3Stream('ingredients')
+            ])
+            .then(() => {
+                clearInterval(stepInt);
+                this.phase3_generation_steps.forEach(s => { s.active = false; s.completed = true; });
+                setTimeout(() => {
+                    this.phase3Loading = false;
+                    
+                    // Extract flat list of secondary ingredients from category dict
+                    let flatSecondaryIngredients = [];
+                    for (const cat in this.selectedRecipeSecondaryIngredients) {
+                        if (Array.isArray(this.selectedRecipeSecondaryIngredients[cat])) {
+                            flatSecondaryIngredients.push(...this.selectedRecipeSecondaryIngredients[cat].map(i => i.name));
+                        } else {
+                            flatSecondaryIngredients.push(this.selectedRecipeSecondaryIngredients[cat].name);
+                        }
+                    }
+
+                    // Also include flavor inclusions
+                    if (this.flavor_inclusions && this.flavor_inclusions.length > 0) {
+                        flatSecondaryIngredients.push(...this.flavor_inclusions.map(i => i.name));
+                    }
+
+                    if (flatSecondaryIngredients.length > 0) {
+                        this.calculatingPercentages = true;
+                        
+                        const payload = {
+                            engine_id: this.selected_master,
+                            active_archetype_id: this.preset_slug,
+                            recipe_slug: this.preset_slug,
+                            recipe_name: this.recipe_name,
+                            secondary_ingredients: flatSecondaryIngredients
+                        };
+
+                        fetch('/ai-recipe-percentages/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.csrf_token
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.percentages) {
+                                // Map percentages back to ingredients
+                                for (const cat in this.selectedRecipeSecondaryIngredients) {
+                                    if (Array.isArray(this.selectedRecipeSecondaryIngredients[cat])) {
+                                        this.selectedRecipeSecondaryIngredients[cat].forEach(item => {
+                                            if (data.percentages[item.name] !== undefined) {
+                                                item.ratio = data.percentages[item.name];
+                                            }
+                                        });
+                                    } else {
+                                        const item = this.selectedRecipeSecondaryIngredients[cat];
+                                        if (item && data.percentages[item.name] !== undefined) {
+                                            item.ratio = data.percentages[item.name];
+                                        }
+                                    }
+                                }
+                                // Update flavor inclusions
+                                if (this.flavor_inclusions) {
+                                    this.flavor_inclusions.forEach(item => {
+                                        if (data.percentages[item.name] !== undefined) {
+                                            item.ratio = data.percentages[item.name];
+                                        }
+                                    });
+                                }
+
+                                // Update core ratios if provided
+                                if (data.target_fat_pct !== undefined) this.fat = data.target_fat_pct;
+                                if (data.target_sugar_pct !== undefined) this.sugar = data.target_sugar_pct;
+                                if (data.target_hydration_pct !== undefined) this.hydration = data.target_hydration_pct;
+                                if (data.target_binder_pct !== undefined) this.binder = data.target_binder_pct;
+                                if (data.target_leaven_pct !== undefined) this.leaven_pct = data.target_leaven_pct;
+                                if (data.target_salt_pct !== undefined) this.salt_pct = data.target_salt_pct;
+                            }
+                        })
+                        .catch(err => {
+                            console.error("[Phase 3] Error calculating percentages:", err);
+                        })
+                        .finally(() => {
+                            this.calculatingPercentages = false;
+                        });
+                    }
+                }, 500);
+            })
+            .catch(err => {
                 clearInterval(stepInt);
                 this.phase3Error = "Failed to load ingredients. Connection lost.";
                 this.phase3Loading = false;
-            };
+                console.error("Error streaming phase 3:", err);
+            });
         },
 
         // Inherit all methods from original actions.js
@@ -891,18 +1020,20 @@ if (key.startsWith('grain_')) {
             this.creativity_loading = false;
             return;
         }
-        this.creativity_loading = true;
+        
+        // Clear old state before streaming
         this.recipe_selected = false;
         this.selected_recipe_id = null;
         this.expanded_level = null;
         this.alternative_variants = [];
         this.grainEvaluations = [];
+        this.creativity_recipes = [];
         this.resetAdvisory();
         
-        this.recipe_gen_resolved = false;
-        this.recipe_gen_data = null;
-        this.startRecipeGenerationProgress();
-
+        // Show the cards container immediately, so we can see them stream in
+        this.creativity_loading = false;
+        this.creativity_streaming = true;
+        
         if (this.creativityRecipesAbortController) {
             this.creativityRecipesAbortController.abort();
             this.creativityRecipesAbortController = null;
@@ -911,37 +1042,100 @@ if (key.startsWith('grain_')) {
         const signal = this.creativityRecipesAbortController.signal;
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
-        fetch(url, { signal })
-            .then(res => res.json())
-            .then(data => {
-                // Normalize keys in case of AI returning capitalized keys
-                const normalized_recipes = (data.recipes || []).map(r => {
-                    const norm = {};
-                    for (const key in r) {
-                        norm[key.toLowerCase()] = r[key];
+        const baseUrl = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        
+        let recipesLevel1 = [];
+        let recipesLevel2 = [];
+        
+        const updateUI = () => {
+            this.creativity_recipes = [...recipesLevel1, ...recipesLevel2];
+        };
+
+        const fetchLevel = async (level) => {
+            const url = `${baseUrl}&level=${level}`;
+            try {
+                const res = await fetch(url, { signal });
+                if (!res.ok) {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) {}
+                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                }
+                
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let rawBuffer = "";
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('event: close')) {
+                            // close event
+                        } else if (line.startsWith('data: ')) {
+                            const dataStr = line.substring(6).trim();
+                            if (dataStr && dataStr !== '{}') {
+                                try {
+                                    const parsed = JSON.parse(dataStr);
+                                    if (typeof parsed === 'string') {
+                                        rawBuffer += parsed;
+                                        const objects = this.extractPartialObjects(rawBuffer);
+                                        
+                                        const newRecipes = [];
+                                        const targetArray = level === 1 ? recipesLevel1 : recipesLevel2;
+                                        
+                                        for (let i = 0; i < objects.length; i++) {
+                                            const objStr = objects[i];
+                                            const parsedObj = this.repairAndParse(objStr);
+                                            
+                                            if (parsedObj) {
+                                                const norm = {};
+                                                for (const key in parsedObj) {
+                                                    norm[key.toLowerCase()] = parsedObj[key];
+                                                }
+                                                newRecipes.push(norm);
+                                            } else {
+                                                if (targetArray[i]) {
+                                                    newRecipes.push(targetArray[i]);
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (level === 1) {
+                                            recipesLevel1 = newRecipes;
+                                        } else {
+                                            recipesLevel2 = newRecipes;
+                                        }
+                                        
+                                        updateUI();
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing chunk', e);
+                                }
+                            }
+                        }
                     }
-                    return norm;
-                });
-                this.recipe_gen_data = {
-                    category_slug: category_slug,
-                    archetype_id: archetype_id,
-                    recipes: normalized_recipes
-                };
-                this.recipe_gen_resolved = true;
-            })
-            .catch(err => {
+                }
+            } catch (err) {
                 if (err.name !== 'AbortError') {
-                    console.error('[GrainLab] Failed fetching creativity recipes:', err);
+                    console.error(`Error fetching creativity recipes level ${level}:`, err);
                 }
-                this.creativity_loading = false;
-                if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);
-            })
-            .finally(() => {
-                if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {
-                    this.creativityRecipesAbortController = null;
-                }
-            });
+            }
+        };
+
+        // Fire both levels simultaneously
+        Promise.all([fetchLevel(1), fetchLevel(2)]).then(() => {
+            this.creativity_streaming = false;
+            // Clean up abort controller if completed normally
+            if (this.creativityRecipesAbortController && !this.creativityRecipesAbortController.signal.aborted) {
+                this.creativityRecipesAbortController = null;
+            }
+        });
     },
 
 

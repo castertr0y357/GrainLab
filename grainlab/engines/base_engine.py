@@ -58,8 +58,7 @@ class BaseEngine:
         based on the engine's unique parametric attributes and optional active archetype.
         """
         tannin_text = (
-            "This engine is extremely tannin sensitive. Bitterness or astringency from whole grain bran "
-            "(such as red wheat tannins) will clash aggressively with the sweet, neutral flavors required."
+            "Preferred: Tannin Sensitive (Sweet/Neutral). You may recommend whole grains with tannins if you provide notes on how to balance their bitterness/astringency."
             if self.tannin_sensitive else
             "This engine is tannin tolerant. It welcomes rustic, savory caramelization, lactic/acetic sourness, "
             "and deep whole grain bran expressions."
@@ -70,7 +69,7 @@ class BaseEngine:
             f"Focus on the unique target chemistry of the {self.name}:\n"
             f"* Gluten & Structural Behavior: {self.gluten_behavior}\n"
             f"* Flavor Affinity & Botanical Compatibility: {self.flavor_affinity} ({tannin_text})\n"
-            f"* Required Protein Window: {self.target_protein_min}% to {self.target_protein_max}%\n"
+            f"* Preferred Protein Window: {self.target_protein_min}% to {self.target_protein_max}%\n"
             f"* Production Parameters: Thermodynamic focus is {self.production_profile.get('thermodynamic_focus')}, "
             f"rest strategy is {self.production_profile.get('environmental_rest_strategy')}, and permissible actions include [{actions}]."
         )
@@ -293,9 +292,17 @@ class BaseEngine:
         binder_pct = getattr(self, "default_binder_pct", 0.10) if len(sec_binders) > 0 else 0.0
 
         # Perform subclass-specific constraints (ceilings / floors)
-        effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
-            effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type
-        )
+        try:
+            effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
+                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type, sec_liquids=sec_liquids
+            )
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
+                    effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type
+                )
+            else:
+                raise
 
         # 3. Calculate Baker's Math Scaling
         flavor_inclusions = kwargs.get("flavor_inclusions", [])
@@ -331,10 +338,57 @@ class BaseEngine:
         else:
             yeast_weight = leaven_weight
 
+        STANDARD_UNIT_WEIGHTS = {
+            "egg": {"weight": 50, "singular": "large egg", "plural": "large eggs"},
+            "yolk": {"weight": 18, "singular": "large yolk", "plural": "large yolks"},
+            "egg white": {"weight": 30, "singular": "large white", "plural": "large whites"},
+            "lemon juice": {"weight": 45, "singular": "lemon, juiced", "plural": "lemons, juiced"},
+            "lemon zest": {"weight": 6, "singular": "lemon, zested", "plural": "lemons, zested"},
+            "lime juice": {"weight": 30, "singular": "lime, juiced", "plural": "limes, juiced"},
+            "lime zest": {"weight": 4, "singular": "lime, zested", "plural": "limes, zested"},
+            "garlic": {"weight": 5, "singular": "clove", "plural": "cloves"},
+            "vanilla bean": {"weight": 3, "singular": "whole bean", "plural": "whole beans"},
+            "active dry yeast": {"weight": 7, "singular": "packet", "plural": "packets"},
+            "instant yeast": {"weight": 7, "singular": "packet", "plural": "packets"},
+            "banana": {"weight": 115, "singular": "medium banana", "plural": "medium bananas"},
+            "butter": {"weight": 113, "singular": "stick", "plural": "sticks"},
+        }
+        LIQUID_TERMS = ["water", "milk", "buttermilk", "cream", "juice", "oil", "extract", "vanilla", "vinegar", "coffee", "tea", "broth", "stock", "liquor", "bourbon", "rum", "vodka"]
+
+        def annotate_unit_weight(name: str, weight: float) -> str:
+            name_lower = name.lower()
+            for key, data in STANDARD_UNIT_WEIGHTS.items():
+                if key in name_lower:
+                    if key == 'egg' and ('white' in name_lower or 'yolk' in name_lower):
+                        continue
+                    if key == 'butter' and 'buttermilk' in name_lower:
+                        continue
+                    unit_weight = data["weight"]
+                    units = weight / unit_weight
+                    rounded_units = round(units * 2) / 2
+                    if rounded_units > 0:
+                        unit_str = f"{int(rounded_units)}" if rounded_units.is_integer() else f"{rounded_units}"
+                        plural = data["plural"] if rounded_units > 1 else data["singular"]
+                        return f"{name} (~{unit_str} {plural})"
+            
+            if any(term in name_lower for term in LIQUID_TERMS):
+                if weight >= 120:
+                    fl_oz = round(weight / 30)
+                    return f"{name} (~{fl_oz} fl oz)"
+                elif weight >= 15:
+                    tbsp = round(weight / 15)
+                    return f"{name} (~{tbsp} Tbsp)"
+                elif weight > 0:
+                    tsp = round((weight / 5) * 2) / 2
+                    tsp_str = f"{int(tsp)}" if tsp.is_integer() else f"{tsp}"
+                    return f"{name} (~{tsp_str} tsp)"
+            return name
+
         def allocate_weights(items, total_weight, default_name):
             if not items:
                 if total_weight > 0:
-                    return [{"name": default_name, "weight": round(total_weight, 1)}]
+                    annotated_default = annotate_unit_weight(default_name, round(total_weight, 1))
+                    return [{"name": annotated_default, "weight": round(total_weight, 1)}]
                 return []
             
             # Legacy robust: if items is a dict instead of list of dicts, make it a list
@@ -355,7 +409,9 @@ class BaseEngine:
                     raw_name = item.get("name")
                     if raw_name is None:
                         raw_name = default_name
-                    results.append({"name": raw_name.replace("_", " ").title(), "weight": weight})
+                    clean_name = raw_name.replace("_", " ").title()
+                    annotated_name = annotate_unit_weight(clean_name, weight)
+                    results.append({"name": annotated_name, "weight": weight})
             return results
         # Re-compute weights dynamically pulling defaults from child engine
         def get_default(cat, fallback):

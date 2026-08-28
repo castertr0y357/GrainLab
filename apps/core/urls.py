@@ -5,7 +5,7 @@ from apps.core.views.calculator.phase2 import Phase2View
 from apps.core.views.calculator.phase3 import Phase3View
 from apps.core.views.calculator.phase4 import Phase4View
 from apps.core.views.calculator.final_recipe import FinalRecipeView, FinalRecipeAIView
-from apps.core.views.calculator.shared import save_recipe, shared_recipe, tweak_recipe
+from apps.core.views.calculator.shared import save_recipe, shared_recipe
 
 urlpatterns = [
     # Calculator Routes (Phases 1-4)
@@ -19,7 +19,6 @@ urlpatterns = [
     # Formula Sharing Routes
     path('recipe/save/', save_recipe, name='save_recipe'),
     path('recipe/<uuid:recipe_id>/', shared_recipe, name='shared_recipe'),
-    path('recipe/<uuid:recipe_id>/tweak/', tweak_recipe, name='tweak_recipe'),
     
     path('search/', views.SearchPresetsView.as_view(), name='search_presets'),
     path('generate-creative-ideas/', views.GenerateCreativeIdeasView.as_view(), name='generate_creative_ideas'),
@@ -52,4 +51,7 @@ urlpatterns = [
     path('generate-substitutes/', views.AiGenerateSubstitutesView.as_view(), name='generate_substitutes'),
     path('ai-process-alternatives/', views.AiProcessAlternativesView.as_view(), name='ai_process_alternatives'),
     path('ai-process-details/', views.AiProcessDetailsView.as_view(), name='ai_process_details'),
+    path('ai-recipe-percentages/', views.AiRecipePercentagesView.as_view(), name='ai_recipe_percentages'),
+    path('ai-recipe-tweaks/', views.AiRecipeTweaksView.as_view(), name='ai_recipe_tweaks'),
+    path('ai-apply-tweak/', views.AiApplyTweakView.as_view(), name='ai_apply_tweak'),
 ]

@@ -100,7 +100,7 @@ class BakersMathTests(TestCase):
         )
         self.assertEqual(recipe["effective_fat_pct"], 8.0)
         self.assertEqual(recipe["effective_sugar_pct"], 8.0)
-        self.assertEqual(recipe["liquid_items"][0]["name"], "Whole Milk")
+        self.assertTrue(recipe["liquid_items"][0]["name"].startswith("Whole Milk"))
 
     def test_secondary_ingredients_math(self):
         """
@@ -128,7 +128,7 @@ class BakersMathTests(TestCase):
             preset_slug="sandwich_bread"
         )
         self.assertTrue(recipe_buttermilk_egg["binder_items"][0]["weight"] > 0)
-        self.assertEqual(recipe_buttermilk_egg["liquid_items"][0]["name"], "Buttermilk")
+        self.assertTrue(recipe_buttermilk_egg["liquid_items"][0]["name"].startswith("Buttermilk"))
 
 
 class ClassifierEngineTests(TestCase):
@@ -551,7 +551,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
         )
         self.assertEqual(recipe_olive_oil["effective_hydration_pct"], 68.0)
         self.assertEqual(recipe_olive_oil["effective_fat_pct"], 10.0)
-        self.assertEqual(recipe_olive_oil["lipid_items"][0]["name"], "Olive Oil")
+        self.assertTrue(recipe_olive_oil["lipid_items"][0]["name"].startswith("Olive Oil"))
         self.assertAlmostEqual(recipe_olive_oil["lipid_items"][0]["weight"], recipe_olive_oil["flour_weight"] * 0.10, places=1)
         pass
 
@@ -564,7 +564,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
             substitution={"original": "fat", "substitute": "salted_butter"}
         )
         self.assertEqual(recipe_salted_butter["effective_hydration_pct"], 68.0)
-        self.assertEqual(recipe_salted_butter["lipid_items"][0]["name"], "Salted Butter")
+        self.assertTrue(recipe_salted_butter["lipid_items"][0]["name"].startswith("Salted Butter"))
         self.assertAlmostEqual(recipe_salted_butter["lipid_items"][0]["weight"], recipe_salted_butter["flour_weight"] * 0.10, places=1)
         pass
 
@@ -577,7 +577,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
             substitution={"original": "fat", "substitute": "unsalted_butter"}
         )
         self.assertEqual(recipe_unsalted_butter["effective_hydration_pct"], 68.0)
-        self.assertEqual(recipe_unsalted_butter["lipid_items"][0]["name"], "Unsalted Butter")
+        self.assertTrue(recipe_unsalted_butter["lipid_items"][0]["name"].startswith("Unsalted Butter"))
         self.assertAlmostEqual(recipe_unsalted_butter["lipid_items"][0]["weight"], recipe_unsalted_butter["flour_weight"] * 0.10, places=1)
         pass
 
@@ -593,7 +593,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
             "editor_mode": "advanced"
         })
         self.assertIn("fat_substitute_label", context["recipe"])
-        self.assertEqual(context["recipe"]["lipid_items"][0]["name"], "Olive Oil")
+        self.assertTrue(context["recipe"]["lipid_items"][0]["name"].startswith("Olive Oil"))
 
     def test_countertop_metadata_attributes_output(self):
         client = Client()

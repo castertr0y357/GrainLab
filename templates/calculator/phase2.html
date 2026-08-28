@@ -277,17 +277,7 @@ x-data="phase2App({
                 </template>
             </div>
 
-            <!-- Select Recipe & Proceed Button -->
-            <div x-show="selected_recipe_id" style="margin-top: 2rem;">
-                <button type="button" 
-                        class="nav-btn primary"
-                        style="width: 100%; height: 50px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition);"
-                        onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
-                        onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                        @click="confirmRecipeSelection()">
-                    SELECT RECIPE &amp; PROCEED →
-                </button>
-            </div>
+
         </div>
         </div> <!-- Closes x-show="active_archetype_id" -->
         </div> <!-- Closes x-show="!recipe_selected" -->
@@ -432,12 +422,18 @@ x-data="phase2App({
                         Milling Profile Parameters
                     </div>
                     
-                    <div x-show="!advisoryLoading">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="input-group">
                             <label>Mill Machinery Profile</label>
                             <input type="hidden" name="mill_type" :value="mill_type">
-                            <div class="pill-btn-group">
+                            
+                            <!-- Mill Skeleton -->
+                            <div x-show="millsAdvisoryLoading" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <div class="skeleton" style="height: 36px; width: 120px; border-radius: 9999px;"></div>
+                                <div class="skeleton" style="height: 36px; width: 100px; border-radius: 9999px;"></div>
+                            </div>
+                            <div x-show="!millsAdvisoryLoading">
+                                <div class="pill-btn-group">
                                 {% for mill in mills %}
                                 <button type="button" class="pill-btn" :class="mill_type === '{{ mill.id|escapejs }}' ? 'active' : ''"
                                         :style="getMillStyle('{{ mill.id|escapejs }}', '{{ mill.name|escapejs }}')"
@@ -473,11 +469,19 @@ x-data="phase2App({
                                     {% endfor %}
                                 </div>
                             </details>
+                            </div>
                         </div>
                         <div class="input-group">
                             <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Bran Separation</label>
                             <input type="hidden" name="is_sifted" :value="is_sifted ? 'on' : ''">
-                            <div class="pill-btn-group">
+                            
+                            <!-- Sifter Skeleton -->
+                            <div x-show="siftersAdvisoryLoading" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <div class="skeleton" style="height: 36px; width: 140px; border-radius: 9999px;"></div>
+                                <div class="skeleton" style="height: 36px; width: 110px; border-radius: 9999px;"></div>
+                            </div>
+                            <div x-show="!siftersAdvisoryLoading">
+                                <div class="pill-btn-group">
                                 <button type="button" class="pill-btn" :class="is_sifted === false ? 'active' : ''"
                                         :style="getSifterStyle(false)"
                                         x-show="isSifterRecommended(false)"
@@ -553,15 +557,6 @@ x-data="phase2App({
 
             </div>
 
-            <!-- Proceed button inside the main container -->
-            <button type="button" 
-                    class="nav-btn primary"
-                    style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition); margin-bottom: 1.5rem;"
-                    onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
-                    onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                    @click="document.getElementById('phase2-form').submit()">
-                GENERATE FORMULA &amp; PROCEED →
-            </button>
         </div> <!-- Closes div style="margin-top: 1.5rem;" -->
         </div> <!-- Closes x-show="recipe_selected" -->
     </div>
@@ -619,6 +614,8 @@ x-data="phase2App({
             </div>
         </div>
 
+
+
         <!-- Selected Recipe Details (Not yet proceeded) -->
         <div x-show="selected_recipe_id && !recipe_selected && !hovered_element" style="display: flex; flex-direction: column; gap: 1.25rem;">
             <!-- Menu Description -->
@@ -633,6 +630,37 @@ x-data="phase2App({
             <div>
                 <span style="font-size: 1.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🌾</span>
                 Hover over an ingredient below to see AI recommendations and technical reasoning.
+            </div>
+        </div>
+
+        <div style="margin-top: auto;">
+            <!-- Action Button: Stage 1 (Select Recipe) -->
+            <div x-show="!recipe_selected" style="margin-bottom: 0.5rem;">
+                <button type="button" 
+                        class="btn"
+                        :disabled="creativity_streaming || !selected_recipe_id"
+                        :style="(creativity_streaming || !selected_recipe_id) ? 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: not-allowed; border: none; border-radius: 999px; background-color: rgba(136, 136, 136, 0.2); color: #ccc; transition: all 0.2s; font-size: 0.85rem; text-transform: uppercase;' : 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: 999px; background-color: var(--success); color: #000; font-size: 0.85rem; text-transform: uppercase; transition: all 0.2s;'"
+                        x-on:mouseover="if(!(creativity_streaming || !selected_recipe_id)) { $el.style.opacity='0.9'; $el.style.transform='scale(1.02)'; }"
+                        x-on:mouseout="if(!(creativity_streaming || !selected_recipe_id)) { $el.style.opacity='1'; $el.style.transform='scale(1)'; }"
+                        @click="confirmRecipeSelection()">
+                    <span x-show="!creativity_streaming && selected_recipe_id">SELECT RECIPE &amp; PROCEED</span>
+                    <span x-show="!selected_recipe_id && !creativity_streaming">CHOOSE A RECIPE</span>
+                    <span x-show="creativity_streaming">GENERATING OPTIONS...</span>
+                </button>
+            </div>
+
+            <!-- Action Button: Stage 2 (Confirm Grains) -->
+            <div x-show="recipe_selected" style="margin-bottom: 0.5rem;">
+                <button type="button" 
+                        class="btn"
+                        :disabled="advisoryLoading"
+                        :style="advisoryLoading ? 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: not-allowed; border: none; border-radius: 999px; background-color: rgba(136, 136, 136, 0.2); color: #ccc; transition: all 0.2s; font-size: 0.85rem; text-transform: uppercase;' : 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: 999px; background-color: var(--success); color: #000; font-size: 0.85rem; text-transform: uppercase; transition: all 0.2s;'"
+                        x-on:mouseover="if(!advisoryLoading) { $el.style.opacity='0.9'; $el.style.transform='scale(1.02)'; }"
+                        x-on:mouseout="if(!advisoryLoading) { $el.style.opacity='1'; $el.style.transform='scale(1)'; }"
+                        @click="document.getElementById('phase2-form').submit()">
+                    <span x-show="!advisoryLoading">CONFIRM GRAINS &amp; PROCEED</span>
+                    <span x-show="advisoryLoading">ANALYZING GRAINS...</span>
+                </button>
             </div>
         </div>
     </div>

@@ -145,10 +145,25 @@
 - [x] Fix AI Flavor Explorations (Tier 2) recipe generator button to correctly invoke Creativity Level 2 instead of Level 1.
 - [x] Revise LLM prompt to heavily enforce dichotomy between Baseline Standard Profiles (highly traditional) and AI Flavor Explorations (wildly creative/avant-garde).
 
-## ðŸš€ Active Feature Tasks
+## 🚀 Active Feature Tasks
 - None (All tasks and audit updates completed successfully)
 
-## ðŸ§± Architectural Changes & Decisions
+## ✅ Recently Completed Items (From user requests)
+- [x] Fix Phase 3 "How are we making it?" display issue for saved formulas by properly parsing `process_recommendations_json` into the `phase4App` component's initial state.
+- [x] Renamed "AI 'What-if' Tweaks" to "Culinary Explorations" in the UI to sound more inspired.
+- [x] Implement dynamic recipe scaler with portionable support (0.5x increments for cookies, muffins, rolls; 1.0x increments for loaves, cakes) and AI-generated default yield amounts.
+- [x] Fix Alpine.js syntax errors (`Unexpected token '*'`, `Invalid or unexpected token`) in `final_recipe.html` by using `|default:"0"` template filters and safe fallback expressions.
+- [x] Fix `AttributeError: 'NoneType' object has no attribute 'get'` and 500 server errors on AI recipe generation endpoints by implementing defensive null-value handling for `secondary_ingredients`, `geometry_evaluation`, and `calibration` dictionaries in `calculation.py` and `phase2_client.py`.
+- [x] Add comprehensive unit test `test_calculate_final_recipe_none_secondary_ingredients` in `tests.py` verifying None safety in math calculations.
+- [x] Add a static "Directions" block to the final recipe page to display step-by-step instructions outside of Countertop mode.
+- [x] Clean up Phase 4 sidebar by removing deprecated Substitution and Sensory Benchmark cards, and dynamically hide bread-specific Thermal Profile metrics (DDT/Probe Temp) for non-yeasted bakes.
+- [x] Fix liquid mediums (e.g. lemon juice) not appearing in final cookie recipes by updating `cookie_engine.py` to allow a small hydration factor (5%) if an explicit non-water liquid is requested.
+- [x] Fix AI Tweak Exclusions: Update backend session state to prepend 'Applied: ' to tweak titles, and update `applyTweak` on the frontend to automatically discard remaining tweaks into history and fetch a fresh batch of tweaks so the UI doesn't remain blank.
+- [x] Fix 500 TypeError on recipe save by ensuring Django model objects (`FormFactor` and `Category`) in the calculator state are serialized to dictionaries before saving to the database JSONField.
+- [x] Refactor Countertop Live Timeline UI: Display all steps sequentially in a vertical list, add native countdown timers with pause/resume and next/previous controls, and move water temperature calibration into the sidebar thermal profile during mixing.
+- [x] Add Baking Profile block to the shared recipe page sidebar to display Bake Temp, Bake Time, and Steam requirements.
+- [x] Fix duplicate recipe name in main window and correct database naming behavior to persist the custom user/AI `recipe_name` from Phase 2 instead of regenerating a messy raw slug concatenation.
+## 🏗️ Architectural Changes & Decisions
 - SPA-feel using HTMX and Alpine.js with Gunicorn/Django serving html fragments.
 - High-contrast, mobile-friendly Vanilla CSS for kitchen environment safety.
 - Strict compliance with Separation of Infrastructure and Application Settings guidelines.

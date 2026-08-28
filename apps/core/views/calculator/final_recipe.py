@@ -25,10 +25,46 @@ class FinalRecipeView(View):
         
         # Calculate final recipe and inject into context
         from apps.core.services.calculation import calculate_final_recipe
+        import json
         try:
             recipe_context = calculate_final_recipe(state)
             context.update(recipe_context)
             context["recipe_compiled"] = True
+            
+            # Build ingredients list for AI tweaks
+            ingredients_list = []
+            recipe = recipe_context.get("recipe", {})
+            if recipe.get("wheat_berry_mix"):
+                ingredients_list.extend(recipe["wheat_berry_mix"].keys())
+            else:
+                gt = recipe.get("grain_type")
+                if gt == "whole_wheat": ingredients_list.append("Whole Wheat Flour")
+                elif gt == "spelt": ingredients_list.append("Spelt Flour")
+                elif gt == "kamut": ingredients_list.append("Kamut Flour")
+                elif gt == "einkorn": ingredients_list.append("Einkorn Flour")
+                else: ingredients_list.append("Flour Base")
+                
+            for item in recipe.get("liquid_items", []): ingredients_list.append(item.get("name", "Liquid"))
+            if not recipe.get("liquid_items") and recipe.get("added_water", 0) > 0: ingredients_list.append("Water")
+            for item in recipe.get("fat_items", []): ingredients_list.append(item.get("name", "Fat"))
+            for item in recipe.get("sugar_items", []): ingredients_list.append(item.get("name", "Sugar"))
+            for item in recipe.get("binder_items", []): ingredients_list.append(item.get("name", "Binder"))
+            
+            if recipe.get("salt_item"): ingredients_list.append(recipe["salt_item"].get("name", "Salt"))
+            elif recipe.get("salt", 0) > 0: ingredients_list.append("Fine Sea Salt")
+            
+            if recipe.get("commercial_yeast_item"): ingredients_list.append(recipe["commercial_yeast_item"].get("name", "Yeast"))
+            if recipe.get("starter_levain_item"): ingredients_list.append(recipe["starter_levain_item"].get("name", "Sourdough Starter"))
+            
+            for item in recipe.get("flavor_inclusions", []):
+                if isinstance(item, dict):
+                    ingredients_list.append(item.get("name", "Inclusion"))
+                elif isinstance(item, str):
+                    ingredients_list.append(item)
+                    
+            context["ingredients_json"] = json.dumps([{"name": ing} for ing in list(dict.fromkeys(ingredients_list))])
+            context["applied_tweaks_history_json"] = json.dumps(state.get("applied_tweaks_history", []))
+            
         except Exception as e:
             # If math fails or data is missing, we can still render but show error
             import logging

@@ -11,6 +11,8 @@ document.addEventListener('alpine:init', () => {
         enginesArchetypes: initialData.enginesArchetypes || {},
         engines_ff: initialData.engines_ff || {},
         recipe_name: initialData.recipe_name || '',
+        initialIngredientNames: initialData.initialIngredientNames || [],
+        appliedTweaksHistory: initialData.appliedTweaksHistory || [],
         
         default_yield_amount: initialData.default_yield_amount !== undefined ? parseFloat(initialData.default_yield_amount) : 1.0,
         yield_unit: initialData.yield_unit || 'loaf',
@@ -58,6 +60,9 @@ document.addEventListener('alpine:init', () => {
         stepTimeRemaining: 0,
         elapsedOvertime: 0,
         isAlarm: false,
+        
+        tweaksLoading: false,
+        suggestedTweaks: [],
         progressPercent: 0,
         bakeTemp: 450,
         bakeSteam: 'Yes',
@@ -72,6 +77,7 @@ document.addEventListener('alpine:init', () => {
         pitfalls: [],
         recipe: {},
         batchInsightsMap: {},
+        applyProgressText: '',
         
         hardware_registry: [
             { id: 'stand_mixer', name: 'Stand Mixer', category: 'high_torque' },
@@ -251,7 +257,7 @@ document.addEventListener('alpine:init', () => {
                 stream: 'true'
             });
 
-            let rawBuffer = "";
+
 
             fetch('/ai-process-details/?' + params.toString())
                 .then(async res => {
@@ -263,6 +269,7 @@ document.addEventListener('alpine:init', () => {
                     const reader = res.body.getReader();
                     const decoder = new TextDecoder("utf-8");
                     let buffer = "";
+                    let rawBuffer = "";
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
@@ -414,7 +421,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         streamAlternatives(categoryKey, payload, append) {
-            let rawBuffer = "";
+
             let initialCacheLength = append ? (this.processAlternativesCache[categoryKey]?.length || 0) : 0;
 
             fetch('/ai-process-alternatives/?stream=true', {
@@ -559,6 +566,11 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
                 
+                // Fire off tweaks fetch concurrently
+                if (this.global_ai_enabled) {
+                    this.fetchRecipeTweaks();
+                }
+                
                 const response = await fetch(`/recipe-final/${cat}/${arch}/ai/?stream=true`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
@@ -570,6 +582,17 @@ document.addEventListener('alpine:init', () => {
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = "";
+
+                // Fallback for bakeTemp in case AI fails or is disabled
+                if (this.bakeTemp === null && initialData.bakeTempF) {
+                    this.bakeTemp = initialData.bakeTempF;
+                }
+                if (this.bakeTimeMin === null && initialData.bakeTimeMin) {
+                    this.bakeTimeMin = initialData.bakeTimeMin;
+                }
+                if (this.bakeSteam === null && initialData.bakeSteam !== undefined) {
+                    this.bakeSteam = initialData.bakeSteam;
+                }
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -606,8 +629,199 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        async fetchRecipeTweaks() {
+            if (this.tweaksLoading) return;
+            this.tweaksLoading = true;
+            this.suggestedTweaks = [];
+            this.rawTweaksText = "";
+            
+            try {
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const cat = this.selected_master || pathParts[1];
+                const arch = this.preset_slug || pathParts[2];
+
+                const response = await fetch('/ai-recipe-tweaks/?stream=true', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        recipe_slug: arch,
+                        recipe_name: this.recipe_name,
+                        engine_id: cat,
+                        active_archetype_id: arch,
+                        current_ingredients: this.initialIngredientNames,
+                        applied_tweaks_history: this.appliedTweaksHistory
+                    })
+                });
+
+                if (!response.ok) throw new Error("Failed to fetch recipe tweaks");
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    let parts = buffer.split(/\r?\n\r?\n/);
+                    buffer = parts.pop();
+
+                    for (const part of parts) {
+                        if (part.startsWith('data: ')) {
+                            const dataStr = part.replace('data: ', '').trim();
+                            if (dataStr === "[DONE]" || !dataStr) continue;
+                            
+                            try {
+                                const parsed = JSON.parse(dataStr);
+                                if (parsed.text) {
+                                    this.rawTweaksText += parsed.text;
+                                    this.parseRawTweaks();
+                                }
+                            } catch(e) {
+                                console.error("Parse error on chunk:", dataStr, e);
+                            }
+                        }
+                    }
+                }
+                
+                try {
+                    // Try parsing the full JSON array at the end to get complete objects (especially new_ingredients)
+                    const finalTweaks = JSON.parse(this.rawTweaksText);
+                    if (Array.isArray(finalTweaks) && finalTweaks.length > 0) {
+                        this.suggestedTweaks = finalTweaks;
+                    }
+                } catch(e) {
+                    console.error("Failed final parse of tweaks array", e);
+                }
+            } catch (err) {
+                console.error("Failed to fetch AI Tweaks", err);
+            } finally {
+                this.tweaksLoading = false;
+            }
+        },
+        
+        parseRawTweaks() {
+            const tweakMatches = [...this.rawTweaksText.matchAll(/"type"\s*:\s*"tweak"(.*?)(?=\{\s*"type"|\]|$)/gs)];
+            let newTweaks = [];
+            for (let i = 0; i < tweakMatches.length; i++) {
+                const text = tweakMatches[i][0];
+                
+                const titleMatch = text.match(/"tweak_title"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                const title = titleMatch ? titleMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : 'Generating...';
+                
+                const reasoningMatch = text.match(/"reasoning"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                let reasoning = reasoningMatch ? reasoningMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+                
+                const outcomeMatch = text.match(/"expected_outcome"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                let outcome = outcomeMatch ? outcomeMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+                
+                const modsMatch = text.match(/"proposed_modifications"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                let modifications = modsMatch ? modsMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+                
+                let explanation = reasoning;
+                if (outcome) {
+                    explanation += (explanation ? " " : "") + outcome;
+                }
+                
+                newTweaks.push({
+                    tweak_title: title,
+                    reasoning: explanation,
+                    proposed_modifications: modifications
+                });
+            }
+            
+            // If the AI ran out of ideas, it might return an empty list or a single 'Out of Options' tweak.
+            if (newTweaks.length === 1 && newTweaks[0].tweak_title === 'Out of Options') {
+                newTweaks = []; // Clear it so the 'Generating more ideas' button is hidden
+            }
+            
+            this.suggestedTweaks = newTweaks;
+        },
+
+        async generateMoreIdeas() {
+            // Feed currently un-selected tweaks into history so they aren't repeated
+            this.suggestedTweaks.forEach(t => {
+                this.appliedTweaksHistory.push("Discarded: " + t.tweak_title);
+            });
+            this.suggestedTweaks = []; 
+            await this.fetchRecipeTweaks();
+        },
+
+        async applyTweak(tweak) {
+            this.tweaksLoading = true;
+            this.applyProgressText = "Balancing recipe formula...";
+            try {
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const cat = this.selected_master || pathParts[1];
+                const arch = this.preset_slug || pathParts[2];
+                
+                const response = await fetch('/ai-apply-tweak/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        recipe_slug: arch,
+                        recipe_name: this.recipe_name,
+                        engine_id: cat,
+                        active_archetype_id: arch,
+                        proposed_modifications: tweak.proposed_modifications,
+                        tweak_title: tweak.tweak_title
+                    })
+                });
+
+                if (response.ok) {
+                    this.appliedTweaksHistory.push("Applied: " + tweak.tweak_title);
+                    
+                    // Remove the applied tweak from suggestedTweaks so it vanishes
+                    this.suggestedTweaks = this.suggestedTweaks.filter(t => t.tweak_title !== tweak.tweak_title);
+                    
+                    // Feed remaining un-selected tweaks into history so they aren't repeated
+                    this.suggestedTweaks.forEach(t => {
+                        this.appliedTweaksHistory.push("Discarded: " + t.tweak_title);
+                    });
+                    
+                    // Clear applyProgressText so that fetchAIInsights can show its loading state and stream visually
+                    this.applyProgressText = "";
+                    
+                    await this.fetchAIInsights();
+                    
+                    // Fetch new tweaks to replace the applied and discarded ones
+                    await this.fetchRecipeTweaks();
+                }
+            } catch (err) {
+                console.error("Failed to apply tweak:", err);
+                this.tweaksLoading = false;
+                this.applyProgressText = "";
+            } finally {
+                // Do not set this.applyProgressText = "" here if we are already streaming, 
+                // because fetchAIInsights might take time.
+                // Actually, fetchAIInsights manages its own aiLoading state, so we just clear tweaksLoading.
+                this.tweaksLoading = false;
+            }
+        },
+
         parseRawStream() {
             if (!this.rawStreamText) return;
+            
+            const sensoryMatch = this.rawStreamText.match(/"sensory_benchmark"\s*:\s*"((?:[^"\\]|\\.)*)/);
+            if (sensoryMatch) {
+                this.sensory_description = sensoryMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+            }
+
+            const pitfallsMatch = this.rawStreamText.match(/"contextual_pitfalls"\s*:\s*\[(.*?)\]/s);
+            if (pitfallsMatch) {
+                const pitfallsText = pitfallsMatch[1];
+                const pitfallItems = [...pitfallsText.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
+                if (pitfallItems.length > 0) {
+                    this.pitfalls = pitfallItems.map(m => m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'));
+                }
+            }
             
             const profileMatch = this.rawStreamText.match(/"type"\s*:\s*"baking_profile"(.*?)(?=\{\s*"type"|\]|$)/s);
             if (profileMatch) {
@@ -705,18 +919,21 @@ document.addEventListener('alpine:init', () => {
         
         // Inherit all methods from original actions.js
         startTimer() {
+            this.timerRunning = true;
             if(this.timerInterval) clearInterval(this.timerInterval);
             this.timerInterval = setInterval(() => {
                 if(this.stepTimeRemaining > 0) {
                     this.stepTimeRemaining--;
                 } else {
                     clearInterval(this.timerInterval);
+                    this.timerRunning = false;
                     this.isAlarm = true;
                     this.playAlarm();
                 }
             }, 1000);
         },
         pauseTimer() {
+            this.timerRunning = false;
             if(this.timerInterval) clearInterval(this.timerInterval);
         },
         nextStep() {
@@ -727,6 +944,14 @@ document.addEventListener('alpine:init', () => {
                 this.startTimer();
             } else {
                 this.countertopMode = false;
+            }
+        },
+        prevStep() {
+            this.stopAlarm();
+            if(this.currentStepIndex > 0) {
+                this.currentStepIndex--;
+                this.stepTimeRemaining = this.steps[this.currentStepIndex].duration_sec;
+                this.startTimer();
             }
         },
         playAlarm() {
@@ -1100,7 +1325,8 @@ document.addEventListener('alpine:init', () => {
         
         // Show the cards container immediately, so we can see them stream in
         this.creativity_loading = false;
-
+        this.creativity_streaming = true;
+        
         if (this.creativityRecipesAbortController) {
             this.creativityRecipesAbortController.abort();
             this.creativityRecipesAbortController = null;
@@ -1109,10 +1335,19 @@ document.addEventListener('alpine:init', () => {
         const signal = this.creativityRecipesAbortController.signal;
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const baseUrl = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
         
-        fetch(url, { signal })
-            .then(async res => {
+        let recipesLevel1 = [];
+        let recipesLevel2 = [];
+        
+        const updateUI = () => {
+            this.creativity_recipes = [...recipesLevel1, ...recipesLevel2];
+        };
+
+        const fetchLevel = async (level) => {
+            const url = `${baseUrl}&level=${level}`;
+            try {
+                const res = await fetch(url, { signal });
                 if (!res.ok) {
                     let errData;
                     try { errData = await res.json(); } catch(e) {}
@@ -1122,6 +1357,7 @@ document.addEventListener('alpine:init', () => {
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder("utf-8");
                 let buffer = "";
+    
                 
                 while (true) {
                     const { value, done } = await reader.read();
@@ -1129,7 +1365,7 @@ document.addEventListener('alpine:init', () => {
                     
                     buffer += decoder.decode(value, { stream: true });
                     const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Keep the incomplete line in the buffer
+                    buffer = lines.pop();
                     
                     for (const line of lines) {
                         if (line.startsWith('event: close')) {
@@ -1139,33 +1375,61 @@ document.addEventListener('alpine:init', () => {
                             if (dataStr && dataStr !== '{}') {
                                 try {
                                     const parsed = JSON.parse(dataStr);
-                                    // Normalize keys
-                                    const norm = {};
-                                    for (const key in parsed) {
-                                        norm[key.toLowerCase()] = parsed[key];
+                                    if (typeof parsed === 'string') {
+                                        rawBuffer += parsed;
+                                        const objects = this.extractPartialObjects(rawBuffer);
+                                        
+                                        const newRecipes = [];
+                                        const targetArray = level === 1 ? recipesLevel1 : recipesLevel2;
+                                        
+                                        for (let i = 0; i < objects.length; i++) {
+                                            const objStr = objects[i];
+                                            const parsedObj = this.repairAndParse(objStr);
+                                            
+                                            if (parsedObj) {
+                                                const norm = {};
+                                                for (const key in parsedObj) {
+                                                    norm[key.toLowerCase()] = parsedObj[key];
+                                                }
+                                                newRecipes.push(norm);
+                                            } else {
+                                                if (targetArray[i]) {
+                                                    newRecipes.push(targetArray[i]);
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (level === 1) {
+                                            recipesLevel1 = newRecipes;
+                                        } else {
+                                            recipesLevel2 = newRecipes;
+                                        }
+                                        
+                                        updateUI();
                                     }
-                                    // Append incrementally to trigger Alpine reactivity
-                                    this.creativity_recipes.push(norm);
                                 } catch (e) {
-                                    console.error('JSON parse error', e);
+                                    console.error('Error parsing chunk', e);
                                 }
                             }
                         }
                     }
                 }
-            })
-            .catch(err => {
-                if (err.name === 'AbortError') return;
-                console.error('[GrainLab] Failed fetching creativity recipes:', err);
-                this.phase4Error = err.message || "Failed fetching creativity recipes.";
-            })
-            .finally(() => {
-                if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {
-                    this.creativityRecipesAbortController = null;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(`Error fetching creativity recipes level ${level}:`, err);
                 }
-            });
-    },
+            }
+        };
 
+        // Fire both levels simultaneously
+        Promise.all([fetchLevel(1), fetchLevel(2)]).then(() => {
+            this.creativity_streaming = false;
+            // Clean up abort controller if completed normally
+            if (this.creativityRecipesAbortController && !this.creativityRecipesAbortController.signal.aborted) {
+                this.creativityRecipesAbortController = null;
+            }
+        });
+    },
 
     startRecipeGenerationProgress() {
         if (this.recipe_gen_interval) clearTimeout(this.recipe_gen_interval);

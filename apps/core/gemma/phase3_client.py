@@ -237,7 +237,7 @@ def evaluate_grains_batch(grains: list, engine, preset_name: str = None, preset_
             f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
             f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
             f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-            f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+            f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
         )
         task_instructions = (
             "Evaluate each raw material grain provided in the user context against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification."
@@ -636,18 +636,34 @@ def stream_recipe_variants(engine_id: str, active_archetype_id: str, inventory: 
     for item in stream_gemma_api(system_prompt, user_prompt):
         yield item
 
-def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list):
+def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list, level: str = ""):
     """
     Streaming generator for creativity recipes.
     """
     import json
+    
+    if level == "1":
+        level_instruction = "- Creativity Level 1: Baseline Standard Profiles. (Simple, classic, highly traditional, reliable profiles. NO unusual flavors).\n"
+        count = 5
+        temperature = 0.1
+    elif level == "2":
+        level_instruction = "- Creativity Level 2: Advanced Modern Profiles. (Wildly creative, unconventional, artisanal, or avant-garde flavor combinations).\n"
+        count = 5
+        temperature = 0.5
+    else:
+        level_instruction = (
+            "- Creativity Level 1: Baseline Standard Profiles. (Simple, classic, highly traditional, reliable profiles. NO unusual flavors).\n"
+            "- Creativity Level 2: Advanced Modern Profiles. (Wildly creative, unconventional, artisanal, or avant-garde flavor combinations).\n"
+        )
+        count = 10
+        temperature = 0.1
+
     system_prompt = (
-        "You are a baking science expert. Given an engine type, target archetype, and inventory grain list, "
-        "generate exactly 10 distinct recipe profiles matching these two Creativity Levels (exactly 5 recipes per level):\n"
-        f"CRITICAL: All 10 generated recipe profiles must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
+        f"You are a baking science expert. Given an engine type, target archetype, and inventory grain list, "
+        f"generate exactly {count} distinct recipe profiles matching this Creativity Level (exactly {count} recipes):\n"
+        f"CRITICAL: All generated recipe profiles must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
-        "- Creativity Level 1: Baseline Standard Profiles. (Simple, classic, highly traditional, reliable profiles. NO unusual flavors).\n"
-        "- Creativity Level 2: Advanced Modern Profiles. (Wildly creative, unconventional, artisanal, or avant-garde flavor combinations).\n"
+        f"{level_instruction}"
         "\n"
         "CRITICAL: The recipe profiles MUST be 100% unique. Do NOT generate duplicate recipes.\n"
         "CRITICAL: Do NOT append words like 'Classic', 'Modern', 'Variant', or 'Level' to the variant names. The names should be simple and natural.\n"
@@ -658,7 +674,7 @@ def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventor
         "  \"recipes\": [\n"
         "    {\n"
         "      \"recipe_id\": \"unique_slug\",\n"
-        "      \"creativity_level\": 1,  // must be 1 or 2\n"
+        "      \"creativity_level\": " + ("1" if level == "1" else ("2" if level == "2" else "1")) + ",\n"
         "      \"recipe_name\": \"Human readable title (representing a culinary/flavor target)\",\n"
         "      \"description\": \"1-2 sentence description explaining the flavor structure\",\n"
         "      \"menu_description\": \"A rich, descriptive flavor profile written in the style of a high-end restaurant menu item description.\"\n"
@@ -674,7 +690,7 @@ def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventor
         "inventory": inventory,
     })
 
-    for item in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
+    for item in stream_gemma_api(system_prompt, user_prompt, yield_raw=True, temperature=temperature):
         yield item
 
 def stream_creativity_variants(engine_id: str, creativity_level: int, active_archetype_id: str, inventory: list, exclude_names: list = None, count: int = 5):
@@ -725,6 +741,20 @@ def sanitize_ai_recipe_json(engine_id: str, result: dict) -> dict:
     sec = result.get("secondary_ingredients", {})
     if not isinstance(sec, dict):
         return result
+
+    # Deduplicate across categories to prevent the same ingredient acting as two roles
+    seen_names = set()
+    for cat_name in ["lipids", "liquids", "binders", "sweeteners", "leaveners", "additives"]:
+        cat_items = sec.get(cat_name, [])
+        if isinstance(cat_items, list):
+            new_items = []
+            for item in cat_items:
+                if isinstance(item, dict):
+                    name = str(item.get("name", "")).strip().lower()
+                    if name and name not in seen_names:
+                        seen_names.add(name)
+                        new_items.append(item)
+            sec[cat_name] = new_items
 
     # 1. Leavener Limits
     leaveners = sec.get("leaveners", [])
@@ -802,16 +832,15 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "  \"required_actions\": [\"ACTION_STRING\"],\n"
         "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"],\n"
         "  \"secondary_ingredients\": {\n"
-        "    \"lipids\": [{ \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
-        "    \"liquids\": [{ \"category_name\": \"Liquid Medium\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
-        "    \"binders\": [{ \"category_name\": \"Binder\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
-        "    \"sweeteners\": [{ \"category_name\": \"Sweetener\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
-        "    \"leaveners\": [{ \"category_name\": \"Leavener\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
-        "    \"additives\": [{ \"category_name\": \"Additive\", \"name\": \"string\", \"bakers_percentage\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" }]\n"
+        "    \"lipids\": [{ \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
+        "    \"liquids\": [{ \"category_name\": \"Liquid Medium\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
+        "    \"binders\": [{ \"category_name\": \"Binder\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
+        "    \"sweeteners\": [{ \"category_name\": \"Sweetener\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
+        "    \"leaveners\": [{ \"category_name\": \"Leavener\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }],\n"
+        "    \"additives\": [{ \"category_name\": \"Additive\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }]\n"
         "  }\n"
         "}\n\n"
         "ABSOLUTE CATEGORY RULES — violating any of these is a critical error:\n"
-        "  - The 'bakers_percentage' field must be a float representing the true Baker's Percentage (relative to 100% flour) of this ingredient. For example, if you use a secondary lipid at 20% relative to flour weight, use 20.0. DO NOT just output 1.0; you MUST calculate the specific optimal percentage for each item.\n"
         "  - The 'liquids' key MUST only contain true fluid media: water, milk, cream, buttermilk, juice, coffee, or similar pourable liquids.\n"
         "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
         "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
@@ -861,79 +890,124 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
     if True:
         return None
 
-def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False):
+def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False, target: str = "all"):
     """
     Streaming version of generate_recipe_details.
     Yields JSON string chunks as Server-Sent Events from the LLM.
     """
     import json
     from grainlab.engines import router
+    from apps.core.gemma.core_client import SystemSetting
     
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
     ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
-        "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, recommended grain selections, and required secondary ingredients.\n"
-        "CRITICAL RULE FOR SECONDARY INGREDIENTS:\n"
-        "You MUST provide your absolute best recommendations for each required category (e.g., 'lipids', 'liquids', 'binders', 'leaveners').\n"
-        "You MAY provide multiple ingredients for a single category if a blend yields a superior result (e.g., blending butter and oil for lipids, or using both brown and white sugar for sweeteners).\n"
-        "For each recommended ingredient, you MUST provide the specific `name` (e.g. 'Unsalted Butter'), the target `temperature` (e.g. 'Room Temp'), and a concise `reasoning` explaining why it is the perfect fit.\n"
-        "CRITICAL RULE FOR ADDITIVES:\n"
-        "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
-        "CRITICAL RULE FOR FLOUR BLEND:\n"
-        "Evaluate the 'selected_grains' and assign a functional percentage to each (totaling 100). Do NOT just split them evenly (e.g., 50/50). Use your baking science expertise to determine the optimal ratio. For example, if blending a strong structural grain with a weaker flavor grain (like Rye or Einkorn), use the strong grain as the base (70-80%) and the flavor grain as an accent (20-30%).\n"
-        "The keys in 'flour_blend' MUST be the exact names from 'selected_grains', but converted to lowercase and with ALL non-alphanumeric characters (including spaces, dashes, parentheses) replaced by underscores. For example, 'Spelt Wheat (Ancient)' MUST become 'spelt_wheat__ancient_'.\n"
-        "CRITICAL RULE FOR CORE RATIOS (BAKER'S PERCENTAGES):\n"
-        "You MUST output the optimal Baker's Percentages for the base recipe structure, where the total flour is always 100%. For example, a classic cookie needs 100-150% sugar and 80-100% fat. A bread might need 75% hydration and 0% sugar. Output these strictly as floats (e.g., 120.0 for 120%).\n"
-        "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
-        "You MUST ONLY select actions from the permissible actions list provided by the engine. Do not hallucinate or guess actions like 'knead' or 'fold' unless they are explicitly allowed.\n"
-        "Each response must match this JSON schema exactly:\n"
-        "{\n"
-        "  \"default_yield_amount\": 24,\n"
-        "  \"yield_unit\": \"cookies\",\n"
-        "  \"is_portionable\": true,\n"
-        "  \"target_fat_pct\": 85.0,\n"
-        "  \"target_sugar_pct\": 120.0,\n"
-        "  \"target_hydration_pct\": 0.0,\n"
-        "  \"target_binder_pct\": 10.0,\n"
-        "  \"target_leaven_pct\": 1.5,\n"
-        "  \"target_salt_pct\": 2.0,\n"
-        "  \"target_friction_factor\": 10.0,\n"
-        "  \"target_bake_temp\": 450,\n"
-        "  \"target_bake_time\": 45,\n"
-        "  \"sidebar_science_profile\": \"A concise 2-3 sentence technical overview of this recipe's expected structural mechanics, flavor development, and hydration physics.\",\n"
-        "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
-        "  \"flour_blend\": [{ \"type\": \"blend\", \"ratios\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20}, \"reasoning\": \"string\" }],\n"
-        "  \"fat_starting_temp\": \"room_temp\",\n"
-        "  \"required_actions\": [\"ACTION_STRING\"],\n"
-        "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"],\n"
-        "  \"secondary_ingredients\": [\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"lipids\", \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"ratio\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"liquids\", \"category_name\": \"Liquid Medium\", \"name\": \"string\", \"ratio\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"binders\", \"category_name\": \"Binder\", \"name\": \"string\", \"ratio\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"sweeteners\", \"category_name\": \"Sweetener\", \"name\": \"string\", \"ratio\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"leaveners\", \"category_name\": \"Leavener\", \"name\": \"string\", \"ratio\": 1.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"additives\", \"category_name\": \"Additive\", \"name\": \"string\", \"ratio\": 15.0, \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
-        "    { \"type\": \"secondary\", \"category_key\": \"additives\", \"category_name\": \"Additive\", \"name\": \"string\", \"ratio\": 5.0, \"temperature\": \"string\", \"reasoning\": \"string\" }\n"
-        "  ]\n"
-        "}\n\n"
-        "CRITICAL RULE: You MAY generate multiple objects for the same category_key (e.g. two sweeteners). If a recipe has multiple distinct flavors (e.g. 'Lemon Blueberry'), you MUST generate multiple distinct 'additives' objects (one for Lemon, one for Blueberry).\n"
-        "CRITICAL RULE: Ensure their 'ratio' fields are true Baker's Percentages relative to flour weight and are expressed as full numbers (e.g. output 15.0 for 15%, do NOT output 0.15).\n"
-        "ABSOLUTE CATEGORY RULES — violating any of these is a critical error:\n"
-        "  - The 'liquids' key MUST only contain true fluid media: water, milk, cream, buttermilk, juice, coffee, or similar pourable liquids.\n"
-        "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
-        "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
-        "  - If a recipe does not require a liquid medium (e.g., cookies or shortbread where all moisture comes from eggs and butter), set 'liquids' to null.\n"
-        "Do not include markdown blocks, just raw JSON."
+        "the human-readable recipe name, and a list of active selected grains, generate the requested JSON payload.\n"
     )
+
+    if target == "base":
+        system_prompt += (
+            "CRITICAL RULE FOR FLOUR BLEND:\n"
+            "Evaluate the 'selected_grains' and assign a functional percentage to each (totaling 100). Do NOT just split them evenly (e.g., 50/50). Use your baking science expertise to determine the optimal ratio. For example, if blending a strong structural grain with a weaker flavor grain (like Rye or Einkorn), use the strong grain as the base (70-80%) and the flavor grain as an accent (20-30%).\n"
+            "The keys in 'flour_blend' MUST be the exact names from 'selected_grains', but converted to lowercase and with ALL non-alphanumeric characters (including spaces, dashes, parentheses) replaced by underscores. For example, 'Spelt Wheat (Ancient)' MUST become 'spelt_wheat__ancient_'.\n"
+            "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
+            "You MUST ONLY select actions from the permissible actions list provided by the engine. Do not hallucinate or guess actions like 'knead' or 'fold' unless they are explicitly allowed.\n"
+            "Each response must match this JSON schema exactly:\n"
+            "{\n"
+            "  \"default_yield_amount\": 24,\n"
+            "  \"yield_unit\": \"cookies\",\n"
+            "  \"is_portionable\": true,\n"
+            "  \"sidebar_science_profile\": \"A concise 2-3 sentence technical overview of this recipe's expected structural mechanics, flavor development, and hydration physics.\",\n"
+            "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+            "  \"flour_blend\": [{ \"type\": \"blend\", \"ratios\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20}, \"reasoning\": \"string\" }],\n"
+            "  \"fat_starting_temp\": \"room_temp\",\n"
+            "  \"required_actions\": [\"ACTION_STRING\"],\n"
+            "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"]\n"
+            "}\n\n"
+            "Do not include markdown blocks, just raw JSON."
+        )
+    elif target == "ingredients":
+        system_prompt += (
+            "CRITICAL RULE FOR SECONDARY INGREDIENTS:\n"
+            "You MUST provide your absolute best recommendations for each required category (e.g., 'lipids', 'liquids', 'binders', 'leaveners').\n"
+            "You MAY provide multiple ingredients for a single category if a blend yields a superior result (e.g., blending butter and oil for lipids, or using both brown and white sugar for sweeteners).\n"
+            "For each recommended ingredient, you MUST provide the specific `name` (e.g. 'Unsalted Butter'), the target `temperature` (e.g. 'Room Temp'), and a concise `reasoning` explaining why it is the perfect fit.\n"
+            "CRITICAL RULE FOR ADDITIVES:\n"
+            "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
+            "CRITICAL RULE: You MAY generate multiple objects for the same category_key (e.g. two sweeteners). If a recipe has multiple distinct flavors (e.g. 'Lemon Blueberry'), you MUST generate multiple distinct 'additives' objects (one for Lemon, one for Blueberry).\n"
+            "ABSOLUTE CATEGORY RULES — violating any of these is a critical error:\n"
+            "  - The 'liquids' key MUST only contain true fluid media: water, milk, cream, buttermilk, juice, coffee, or similar pourable liquids.\n"
+            "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
+            "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
+            "  - If a recipe does not require a liquid medium (e.g., cookies or shortbread where all moisture comes from eggs and butter), set 'liquids' to null.\n"
+            "Each response must match this JSON schema exactly:\n"
+            "{\n"
+            "  \"secondary_ingredients\": [\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"lipids\", \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"liquids\", \"category_name\": \"Liquid Medium\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"binders\", \"category_name\": \"Binder\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"sweeteners\", \"category_name\": \"Sweetener\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"leaveners\", \"category_name\": \"Leavener\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"additives\", \"category_name\": \"Additive\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }\n"
+            "  ]\n"
+            "}\n\n"
+            "Do not include markdown blocks, just raw JSON."
+        )
+    else:
+        system_prompt += (
+            "CRITICAL RULE FOR SECONDARY INGREDIENTS:\n"
+            "You MUST provide your absolute best recommendations for each required category (e.g., 'lipids', 'liquids', 'binders', 'leaveners').\n"
+            "You MAY provide multiple ingredients for a single category if a blend yields a superior result (e.g., blending butter and oil for lipids, or using both brown and white sugar for sweeteners).\n"
+            "For each recommended ingredient, you MUST provide the specific `name` (e.g. 'Unsalted Butter'), the target `temperature` (e.g. 'Room Temp'), and a concise `reasoning` explaining why it is the perfect fit.\n"
+            "CRITICAL RULE FOR ADDITIVES:\n"
+            "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
+            "CRITICAL RULE FOR FLOUR BLEND:\n"
+            "Evaluate the 'selected_grains' and assign a functional percentage to each (totaling 100). Do NOT just split them evenly (e.g., 50/50). Use your baking science expertise to determine the optimal ratio. For example, if blending a strong structural grain with a weaker flavor grain (like Rye or Einkorn), use the strong grain as the base (70-80%) and the flavor grain as an accent (20-30%).\n"
+            "The keys in 'flour_blend' MUST be the exact names from 'selected_grains', but converted to lowercase and with ALL non-alphanumeric characters (including spaces, dashes, parentheses) replaced by underscores. For example, 'Spelt Wheat (Ancient)' MUST become 'spelt_wheat__ancient_'.\n"
+            "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
+            "You MUST ONLY select actions from the permissible actions list provided by the engine. Do not hallucinate or guess actions like 'knead' or 'fold' unless they are explicitly allowed.\n"
+            "Each response must match this JSON schema exactly:\n"
+            "{\n"
+            "  \"default_yield_amount\": 24,\n"
+            "  \"yield_unit\": \"cookies\",\n"
+            "  \"is_portionable\": true,\n"
+            "  \"sidebar_science_profile\": \"A concise 2-3 sentence technical overview of this recipe's expected structural mechanics, flavor development, and hydration physics.\",\n"
+            "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
+            "  \"flour_blend\": [{ \"type\": \"blend\", \"ratios\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20}, \"reasoning\": \"string\" }],\n"
+            "  \"fat_starting_temp\": \"room_temp\",\n"
+            "  \"required_actions\": [\"ACTION_STRING\"],\n"
+            "  \"required_hardware\": [\"stand_mixer\", \"dough_whisk\"],\n"
+            "  \"secondary_ingredients\": [\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"lipids\", \"category_name\": \"Fat / Lipid\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"liquids\", \"category_name\": \"Liquid Medium\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"binders\", \"category_name\": \"Binder\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"sweeteners\", \"category_name\": \"Sweetener\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"leaveners\", \"category_name\": \"Leavener\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" },\n"
+            "    { \"type\": \"secondary\", \"category_key\": \"additives\", \"category_name\": \"Additive\", \"name\": \"string\", \"temperature\": \"string\", \"reasoning\": \"string\" }\n"
+            "  ]\n"
+            "}\n\n"
+            "CRITICAL RULE: You MAY generate multiple objects for the same category_key (e.g. two sweeteners). If a recipe has multiple distinct flavors (e.g. 'Lemon Blueberry'), you MUST generate multiple distinct 'additives' objects (one for Lemon, one for Blueberry).\n"
+            "ABSOLUTE CATEGORY RULES — violating any of these is a critical error:\n"
+            "  - The 'liquids' key MUST only contain true fluid media: water, milk, cream, buttermilk, juice, coffee, or similar pourable liquids.\n"
+            "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
+            "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
+            "  - If a recipe does not require a liquid medium (e.g., cookies or shortbread where all moisture comes from eggs and butter), set 'liquids' to null.\n"
+            "Do not include markdown blocks, just raw JSON."
+        )
     
+    engine = router.get_engine_for_preset(recipe_slug, category_slug)
+    permissible_actions = engine.production_profile.get("permissible_action_types", [])
+    if target in ["all", "base"]:
+        system_prompt += f"\n\n🚨 [PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
+
     culinary_directive = engine.get_ai_culinary_directive()
     if culinary_directive:
         system_prompt += f"\n\n🚨 [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
 
     additive_directive = getattr(engine, "get_additive_scaling_directive", lambda: "")()
-    if additive_directive:
+    if additive_directive and target in ["all", "ingredients"]:
         system_prompt += f"\n\n🚨 [ADDITIVE SCALING DIRECTIVE]\n{additive_directive}"
 
     if ai_thinking_enabled:
@@ -951,7 +1025,7 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
     })
     import logging
     logger = logging.getLogger("grainlab.gemma")
-    logger.info(f"[Gemma Client] - Phase 3 AI PROMPT FED TO STREAM_RECIPE_DETAILS: {user_prompt}")
+    logger.info(f"[Gemma Client] - Phase 3 AI PROMPT FED TO STREAM_RECIPE_DETAILS (target={target}): {user_prompt}")
 
     from apps.core.gemma.core_client import stream_gemma_api
     for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
@@ -1170,3 +1244,61 @@ def stream_generate_substitutes(engine_id: str, active_archetype_id: str, recipe
     for chunk in stream_gemma_api(system_prompt, user_prompt):
         yield chunk
 
+def generate_recipe_percentages(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, secondary_ingredients: list) -> dict | None:
+    """
+    Asks the LLM to calculate strict Baker's Percentages for an already generated list of secondary ingredients.
+    """
+    import json
+    
+    ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
+    ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
+
+    system_prompt = (
+        "You are a baking science expert. Given an engine type, target archetype, a recipe name, and a list of secondary ingredients, "
+        "your ONLY job is to calculate the precise optimal Baker's Percentage for each provided ingredient, as well as the base core ratios.\n"
+        "CRITICAL RULE FOR CORE RATIOS (BAKER'S PERCENTAGES):\n"
+        "You MUST output the optimal Baker's Percentages for the base recipe structure, where the total flour is always 100%. For example, a classic cookie needs 100-150% sugar and 80-100% fat. A bread might need 75% hydration and 0% sugar. Output these strictly as floats (e.g., 120.0 for 120%).\n"
+        "CRITICAL RULE FOR INGREDIENT PERCENTAGES:\n"
+        "Ensure the 'bakers_percentage' field for each ingredient is a true Baker's Percentage relative to flour weight and is expressed as a full number (e.g. output 15.0 for 15%, do NOT output 0.15).\n"
+        "Each response must match this JSON schema exactly:\n"
+        "{\n"
+        "  \"target_fat_pct\": 85.0,\n"
+        "  \"target_sugar_pct\": 120.0,\n"
+        "  \"target_hydration_pct\": 0.0,\n"
+        "  \"target_binder_pct\": 10.0,\n"
+        "  \"target_leaven_pct\": 1.5,\n"
+        "  \"target_salt_pct\": 2.0,\n"
+        "  \"target_friction_factor\": 10.0,\n"
+        "  \"target_bake_temp\": 450,\n"
+        "  \"target_bake_time\": 45,\n"
+        "  \"percentages\": {\n"
+        "    \"Ingredient Name 1\": 20.0,\n"
+        "    \"Ingredient Name 2\": 5.0\n"
+        "  }\n"
+        "}\n\n"
+        "Do not include markdown blocks, just raw JSON."
+    )
+    
+    if ai_thinking_enabled:
+        system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
+    else:
+        system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
+
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "recipe_slug": recipe_slug,
+        "recipe_name": recipe_name,
+        "secondary_ingredients": secondary_ingredients
+    })
+
+    logger.info(f"[Gemma Client] - Info - Calling generate_recipe_percentages for: {recipe_slug}")
+
+    try:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
+        if result and isinstance(result, dict) and "percentages" in result:
+            return result
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_percentages: {str(e)}")
+
+    return None

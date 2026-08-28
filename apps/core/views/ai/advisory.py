@@ -55,6 +55,7 @@ class AiGrainAdvisoryView(View):
             })
         
         stream = request.GET.get("stream", "false").lower() == "true"
+        target = request.GET.get("target", "all").lower()
         
         ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
         
@@ -66,7 +67,8 @@ class AiGrainAdvisoryView(View):
                     generator = gemma.stream_grain_evaluations(
                         preset_slug, category_slug, 
                         preset_name=preset_name,
-                        active_archetype_id=active_archetype_id
+                        active_archetype_id=active_archetype_id,
+                        target=target
                     )
                     for item in generator:
                         yield f"data: {json.dumps(item)}\n\n"

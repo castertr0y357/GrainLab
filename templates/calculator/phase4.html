@@ -18,6 +18,7 @@ x-data="phase4App({
     mixing_method: '{{ state.mixing_method|default:"hand_knead"|escapejs }}',
     active_action: '{{ state.active_action|default:"stretch_fold"|escapejs }}',
     leaven: '{{ state.leaven|default:"starter"|escapejs }}',
+    processRecommendations: JSON.parse('{{ process_recommendations_json|default:"{}"|escapejs }}' || '{}'),
     recipeCompiled: {{ recipe_compiled|yesno:"true,false"|default:"false" }}
 })"
 {% endblock %}
@@ -56,33 +57,34 @@ x-data="phase4App({
                 <!-- Skeletons when loading and NO data yet -->
                 <template x-if="processRecommendationsLoading && Object.keys(processRecommendations).length === 0">
                     <div style="display: contents;">
-                        <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; border: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                        <div class="card" style="padding: 1rem; background-color: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 0.75rem; justify-content: center; align-items: center; min-height: 120px;">
                             <div class="spinner" style="width: 24px; height: 24px; border-width: 2px; border-top-color: var(--accent);"></div>
                         </div>
                     </div>
                 </template>
 
                 <template x-for="(categoryData, categoryKey) in processRecommendations" :key="categoryKey">
-                    <div style="background: var(--bg-body); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; min-height: 120px;">
-                        <div style="flex: 1;">
-                            <h5 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;" 
-                                x-text="categoryKey.replace('_', ' ')"></h5>
-                            <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem;" 
-                                 x-text="categoryData.name"></div>
-                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" 
-                               x-text="categoryData.explanation"></p>
+                    <div class="card" style="padding: 1rem; background-color: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 0.75rem; min-height: 160px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
+                            <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;" x-text="categoryKey.replace('_', ' ')"></label>
+                            <button type="button" 
+                                    @click="openProcessAlternatives(categoryKey)"
+                                    class="pill-btn" style="white-space: nowrap; font-size: 0.85rem; padding: 0.4rem 0.8rem; flex-shrink: 0;">
+                                <i class="fa-solid fa-code-branch" style="margin-right: 0.4rem;"></i> Alternatives
+                            </button>
                         </div>
-                        <button type="button" 
-                                @click="openProcessAlternatives(categoryKey)"
-                                class="pill-btn" style="white-space: nowrap; font-size: 0.85rem; padding: 0.4rem 0.8rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-code-branch" style="margin-right: 0.4rem;"></i> Alternatives
-                        </button>
+                        <div style="border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-bottom: 0.25rem;" x-text="categoryData.name"></div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.5rem;" x-text="categoryData.explanation"></div>
+                        </div>
                     </div>
                 </template>
 
                 <!-- Single skeleton when loading but SOME data has arrived -->
                 <template x-if="processRecommendationsLoading && Object.keys(processRecommendations).length > 0">
-                    <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; border: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                    <div class="card" style="padding: 1rem; background-color: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 0.75rem; justify-content: center; align-items: center; min-height: 120px;">
                         <div class="spinner" style="width: 24px; height: 24px; border-width: 2px; border-top-color: var(--accent);"></div>
                     </div>
                 </template>
@@ -127,14 +129,18 @@ x-data="phase4App({
                                     <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;" 
                                          x-text="alt.name"></div>
                                 </div>
-                                <button type="button" 
-                                        @click="swapProcessRecommendation(activeProcessCategory, alt); closeProcessAlternatives();"
-                                        class="pill-btn" style="white-space: nowrap; font-size: 0.85rem; padding: 0.4rem 0.8rem; flex-shrink: 0; background: rgba(255,136,0,0.15); color: var(--accent); border-color: var(--accent);">
-                                    Select
-                                </button>
                             </div>
                             <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.4;" 
                                x-text="alt.difference_explanation"></p>
+                            <div style="margin-top: auto; padding-top: 0.5rem;">
+                                <button type="button" 
+                                        @click="swapProcessRecommendation(activeProcessCategory, alt); closeProcessAlternatives();"
+                                        :disabled="processAlternativesLoading"
+                                        class="pill-btn" style="width: 100%; white-space: nowrap; font-size: 0.85rem; padding: 0.5rem 0.8rem; background: rgba(255,136,0,0.15); color: var(--accent); border-color: var(--accent);">
+                                    <span x-show="!processAlternativesLoading">Select Alternative</span>
+                                    <span x-show="processAlternativesLoading"><i class="fa-solid fa-spinner fa-spin"></i> Waiting...</span>
+                                </button>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -148,16 +154,7 @@ x-data="phase4App({
 
 
             
-            <div style="margin-top: 1.5rem;">
-                <button type="submit" onclick="document.getElementById('calculator-form').submit();" class="btn btn-primary" style="width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.1em;">
-                    COMPILE RECIPE & TIMELINE
-                </button>
-                <div style="margin-top: 10px; display: flex; gap: 10px;">
-                   <a href="{% url 'calculator_phase3' category=state.selected_master archetype=state.preset_slug %}" class="btn btn-secondary" style="flex: 1; text-align: center; line-height: 50px; height: 50px;">
-                       BACK
-                   </a>
-                </div>
-            </div>
+
         </div>
 {% endblock %}
 
@@ -166,6 +163,25 @@ x-data="phase4App({
     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
         <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
         <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name || enginesArchetypes[selected_master]?.[preset_slug]?.label || '{{ recipe.title|default:"Final Calibration Phase"|escapejs }}'"></div>
+    </div>
+    
+    <div style="margin-top: auto; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px;">
+        <button type="submit" 
+                class="btn"
+                :disabled="processRecommendationsLoading"
+                :style="processRecommendationsLoading ? 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: not-allowed; border: none; border-radius: 999px; background-color: rgba(136, 136, 136, 0.2); color: #ccc; transition: all 0.2s; font-size: 0.85rem; text-transform: uppercase;' : 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; background-color: var(--success); color: #000; border: none; border-radius: 999px; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; transition: all 0.2s;'"
+                onmouseover="if(!this.disabled) { this.style.opacity='0.9'; this.style.transform='scale(1.02)'; }"
+                onmouseout="if(!this.disabled) { this.style.opacity='1'; this.style.transform='scale(1)'; }"
+                @click.prevent="if(!processRecommendationsLoading) { document.getElementById('calculator-form').submit(); }">
+            <span x-show="!processRecommendationsLoading">COMPILE RECIPE & TIMELINE</span>
+            <span x-show="processRecommendationsLoading"><i class="fa-solid fa-spinner fa-spin"></i> GENERATING...</span>
+        </button>
+        <a href="{% url 'calculator_phase3' category=state.selected_master archetype=state.preset_slug %}" class="btn" 
+           style="display: block; width: 100%; text-align: center; line-height: 50px; height: 50px; border: 1px solid var(--border); border-radius: 999px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); transition: all 0.2s; text-decoration: none;"
+           onmouseover="this.style.color='var(--text-primary)'; this.style.borderColor='var(--text-primary)';"
+           onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border)';">
+            BACK
+        </a>
     </div>
     <!-- Panel B: AIInsightCard for non-grain items when AI active -->
     <div x-show="global_ai_enabled && hovered_element && !hovered_element.startsWith('grain_')" style="display: flex; flex-direction: column; gap: 1.25rem;">

@@ -264,13 +264,16 @@ def generate_process_details(engine_id: str, active_archetype_id: str, recipe_sl
 
     return None
 
-def stream_process_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, flavor_inclusions: list = None):
+def stream_process_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, flavor_inclusions: list = None, target: str = "all"):
     """
     Streaming version of generate_process_details.
     Yields JSON string chunks as Server-Sent Events from the LLM.
     """
+    import logging
+    logger = logging.getLogger("grainlab.gemma")
     logger.info(f"[Gemma Client] - Info - Calling stream_process_details for: {recipe_slug}")
     from apps.core.gemma.core_client import SystemSetting
+    import json
     
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
     ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
@@ -278,44 +281,82 @@ def stream_process_details(engine_id: str, active_archetype_id: str, recipe_slug
     system_prompt = (
         "You are an expert baking science assistant. Your task is to recommend optimal process parameters "
         "for a specific bread or pastry recipe based on its characteristics.\n"
-        "Provide the top recommended option for the relevant categories among: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
-        "CRITICAL: You MUST omit any category that is completely irrelevant or contradictory for the specific recipe type. For example, cookies generally do not need a 'proofing_environment' or 'baking_vessel'. If a category is unnecessary, simply do not include it in the JSON.\n"
-        "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
-        "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
-        "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
-        "Your response MUST be a pure JSON array matching this schema exactly:\n"
-        "[\n"
-        "  { \"type\": \"process\", \"category\": \"mixing_method\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-        "  { \"type\": \"process\", \"category\": \"dough_handling\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-        "  { \"type\": \"process\", \"category\": \"proofing_environment\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-        "  { \"type\": \"process\", \"category\": \"baking_vessel\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-        "  { \"type\": \"process\", \"category\": \"shaping_style\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-        "  { \"type\": \"slider\", \"tweak_id\": \"string\", \"explanation\": \"string (HTML formatted)\", \"recommended_value\": 0 }\n"
-        "]\n"
-        "Do not include markdown blocks, just the raw JSON array."
     )
+
+    if target == "processes":
+        system_prompt += (
+            "Provide the top recommended option for all 5 categories: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
+            "Adapt the interpretation of each category to the specific recipe type. For example, for cookies or quick breads, 'proofing_environment' might refer to resting or chilling the dough, 'baking_vessel' refers to the baking sheet or pan, and 'shaping_style' refers to scooping, rolling, or depositing.\n"
+            "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
+            "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
+            "Your response MUST be a pure JSON array matching this schema exactly:\n"
+            "[\n"
+            "  { \"type\": \"process\", \"category\": \"mixing_method\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"dough_handling\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"proofing_environment\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"baking_vessel\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"shaping_style\", \"name\": \"string\", \"explanation\": \"string\" }\n"
+            "]\n"
+            "Do not include markdown blocks, just the raw JSON array."
+        )
+    elif target == "tweaks":
+        system_prompt += (
+            "If `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
+            "Your response MUST be a pure JSON array matching this schema exactly:\n"
+            "[\n"
+            "  { \"type\": \"slider\", \"tweak_id\": \"string\", \"explanation\": \"string (HTML formatted)\", \"recommended_value\": 0 }\n"
+            "]\n"
+            "Do not include markdown blocks, just the raw JSON array."
+        )
+    else:
+        system_prompt += (
+            "Provide the top recommended option for all 5 categories: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
+            "Adapt the interpretation of each category to the specific recipe type. For example, for cookies or quick breads, 'proofing_environment' might refer to resting or chilling the dough, 'baking_vessel' refers to the baking sheet or pan, and 'shaping_style' refers to scooping, rolling, or depositing.\n"
+            "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
+            "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
+            "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
+            "Your response MUST be a pure JSON array matching this schema exactly:\n"
+            "[\n"
+            "  { \"type\": \"process\", \"category\": \"mixing_method\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"dough_handling\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"proofing_environment\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"baking_vessel\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"process\", \"category\": \"shaping_style\", \"name\": \"string\", \"explanation\": \"string\" },\n"
+            "  { \"type\": \"slider\", \"tweak_id\": \"string\", \"explanation\": \"string (HTML formatted)\", \"recommended_value\": 0 }\n"
+            "]\n"
+            "Do not include markdown blocks, just the raw JSON array."
+        )
 
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
     else:
         system_prompt += "\n[CRITICAL] Do NOT use thinking/reasoning steps. Respond immediately with the direct answer."
 
-    from grainlab.engines.router import ENGINES
-    engine = ENGINES.get(engine_id)
-    supported_tweaks = getattr(engine, "supported_tweaks", []) if engine else []
-    tweak_labels = getattr(engine, "tweak_labels", {}) if engine else {}
+    # Look up preset to find relevant tweaks
+    from apps.core.models import BreadPreset
+    preset = BreadPreset.objects.filter(slug=recipe_slug).first()
+    supported_tweaks = []
+    if preset:
+        for tweak in preset.supported_tweaks.all():
+            supported_tweaks.append({
+                "id": tweak.id,
+                "name": tweak.name,
+                "description": tweak.description,
+                "left_pole": tweak.left_pole_description,
+                "right_pole": tweak.right_pole_description
+            })
 
-    user_prompt = json.dumps({
+    user_prompt_data = {
         "engine_id": engine_id,
         "active_archetype_id": active_archetype_id,
         "recipe_slug": recipe_slug,
         "recipe_name": recipe_name,
-        "supported_tweaks": supported_tweaks,
-        "tweak_labels": tweak_labels,
-        "flavor_inclusions": flavor_inclusions or []
-    })
+        "flavor_inclusions": flavor_inclusions,
+        "supported_tweaks": supported_tweaks
+    }
+    user_prompt = json.dumps(user_prompt_data)
     
-    logger.info(f"[Gemma Client] - Phase 4 AI PROMPT FED TO STREAM_PROCESS_DETAILS: {user_prompt}")
+    logger.info(f"[Gemma Client] - Phase 4 AI PROMPT FED TO STREAM_PROCESS_DETAILS (target={target}): {user_prompt}")
 
     from apps.core.gemma.core_client import stream_gemma_api
     for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
@@ -405,3 +446,77 @@ def generate_process_alternatives(engine_id: str, active_archetype_id: str, reci
         logger.error(f"[Gemma Client] - Error - Failed calling generate_process_alternatives: {str(e)}")
 
     return None
+
+def stream_recipe_tweaks(engine_id: str, active_archetype_id: str, recipe_name: str, current_ingredients: list, applied_tweaks_history: list):
+    system_prompt = (
+        "You are an expert baking scientist. Given the current ingredient list, propose creative and unique recipe tweaks (enhancements, flavor profiles, or structural shifts). "
+        "CRITICAL EXCLUSION RULE: You will be provided with an 'applied_tweaks_history' list containing tweaks that were already applied or discarded. You MUST NEVER suggest any concept, ingredient addition, or tweak that is semantically similar to any item in this history list. "
+        "CRITICAL: You are generating enhancements for a recipe that CONTAINS EXACTLY the provided ingredients. Treat the provided ingredient list as absolute truth. DO NOT use phrases like 'assuming butter is used' if butter is listed. Be definitive and confident.\n"
+        "If you cannot think of any new creative tweaks because the applied_tweaks_history covers everything, return a single item with tweak_title set exactly to 'Out of Options'.\n"
+        "Return a pure JSON array of objects, exactly matching this schema:\n"
+        "[\n"
+        "  {\n"
+        "    \"type\": \"tweak\",\n"
+        "    \"tweak_title\": \"Name of the tweak (e.g., 'Make it Chewier', 'Add Garlic & Herb')\",\n"
+        "    \"reasoning\": \"A short 1-2 sentence explanation of why this works, referencing specific ingredients present in the base recipe.\",\n"
+        "    \"expected_outcome\": \"How this affects the final product.\",\n"
+        "    \"proposed_modifications\": [\n"
+        "      \"Increase whole eggs slightly to bind the dough\",\n"
+        "      \"Change mixing method to high_torque for better gluten development\",\n"
+        "      \"Reduce fat to compensate\"\n"
+        "    ]\n"
+        "  }\n"
+        "]\n"
+    )
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "recipe_name": recipe_name,
+        "current_ingredients": current_ingredients,
+        "applied_tweaks_history": applied_tweaks_history
+    })
+    
+    from apps.core.gemma.core_client import stream_gemma_api
+    for chunk in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
+        if chunk:
+            yield chunk
+
+def generate_recipe_tweaks(engine_id: str, active_archetype_id: str, recipe_name: str, current_ingredients: list, applied_tweaks_history: list) -> dict:
+    return None
+
+def generate_tweak_application_state(engine_id, active_archetype_id, recipe_slug, recipe_name, proposed_modifications, current_state) -> dict:
+    system_prompt = (
+        "You are an expert baking scientist. Categorize a list of newly applied ingredients into the correct backend categories and baker's percentages. "
+        "CRITICAL: If modifying an existing base ingredient (like flour, fat, sugar, or binders/eggs), output the updated `target_xxx_pct` INSTEAD of adding it to secondary_ingredients. For example, if adjusting eggs, adjust target_binder_pct. Do not duplicate base ingredients in secondary_ingredients."
+        "Return a pure JSON object matching this schema:\n"
+        "{\n"
+        "  \"secondary_ingredients\": {\n"
+        "    \"additives\": [{\"name\": \"Ingredient Name\", \"notes\": \"...\"}],\n"
+        "    \"liquids\": [],\n"
+        "    \"fats\": [],\n"
+        "    \"sugars\": [],\n"
+        "    \"binders\": []\n"
+        "  },\n"
+        "  \"percentages\": {\n"
+        "    \"Ingredient Name\": 5.0\n"
+        "  },\n"
+        "  \"target_fat_pct\": 15.0,\n"
+        "  \"target_sugar_pct\": 10.0,\n"
+        "  \"target_hydration_pct\": 75.0,\n"
+        "  \"target_leaven_pct\": 20.0,\n"
+        "  \"target_salt_pct\": 2.0,\n"
+        "  \"target_binder_pct\": 35.0,\n"
+        "  \"target_mixing_method\": \"stand_mixer\",\n"
+        "  \"target_flour_blend\": {\"soft_white_wheat\": 75, \"spelt\": 20, \"rye\": 5}\n"
+        "}\n"
+        "If modifying the flour blend (rebalancing grain ratios), provide the new `target_flour_blend` mapping. Make sure they add up to 100%. "
+        "If a base parameter like hydration or fat doesn't change, omit it from the root object. Omit empty categories."
+    )
+    user_prompt = json.dumps({
+        "engine_id": engine_id,
+        "recipe_slug": recipe_slug,
+        "proposed_modifications": proposed_modifications,
+        "current_state": current_state
+    })
+    from apps.core.gemma.core_client import call_gemma_api
+    return call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "percentages"])

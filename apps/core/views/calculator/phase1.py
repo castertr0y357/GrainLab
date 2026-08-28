@@ -18,6 +18,13 @@ class Phase1View(View):
 
     def post(self, request):
         # Process the form submission to transition to Phase 2
+        from apps.core.services.calculator_session import get_calculator_state, clear_calculator_state, update_calculator_state
+        state = get_calculator_state(request)
+        global_ai_enabled = state.get('global_ai_enabled', True)
+        
+        # Clear out old state that might be lingering
+        clear_calculator_state(request)
+        
         selected_master = request.POST.get('selected_master')
         preset_slug = request.POST.get('preset_slug', '')
         preset_name = request.POST.get('preset_name', '')
@@ -27,6 +34,7 @@ class Phase1View(View):
             'selected_master': selected_master,
             'preset_slug': preset_slug,
             'preset_name': preset_name,
+            'global_ai_enabled': global_ai_enabled,
         }
         
         # If there's an active engine selected (preset + category), save it

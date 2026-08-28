@@ -5,8 +5,10 @@ import os
 from pathlib import Path
 import logging
 import shutil
+import time
+import shutil
 from apps.core.gemma.core_client import CATEGORY_TO_ENGINE
-from apps.core.gemma.phase3_client import generate_recipe_details
+from apps.core.gemma.phase3_client import generate_recipe_details, generate_recipe_percentages
 from apps.core.gemma.phase4_client import generate_process_details
 from apps.core.services.calculation import calculate_final_recipe
 from grainlab.engines.router import ENGINES
@@ -210,6 +212,8 @@ class Command(BaseCommand):
 
         # We want to run across all engines and all archetypes, but only 1 recipe per archetype
         categories_to_run = list(CATEGORY_TO_ENGINE.items())
+        if test_mode:
+            categories_to_run = [(k, v) for k, v in categories_to_run if v == "cookie"]
 
         for category_slug, engine_id in categories_to_run:
             engine_instance = ENGINES.get(engine_id)
@@ -221,26 +225,65 @@ class Command(BaseCommand):
             archetype_ids = list(archetypes_dict.keys())
 
             for archetype_id in archetype_ids:
-                tests_to_run = [
-                    {"name": "Standard Validation Profile (Sweet)", "type": "sweet"},
-                    {"name": "Standard Validation Profile (Savory)", "type": "savory"},
-                    {"name": "Flourless Validation Profile (Sweet)", "type": "flourless_sweet"},
-                    {"name": "Flourless Validation Profile (Savory)", "type": "flourless_savory"}
-                ]
+                if archetype_id != "drop_cookie":
+                    continue
+                    
+                tests_to_run = [{"name": f"Classic Chocolate Chip Cookie (Run {i})", "type": f"sweet_run_{i}"} for i in range(1, 3)]
 
                 for test in tests_to_run:
                     self.stdout.write(f"Running engine '{engine_id}', archetype '{archetype_id}', profile: '{test['name']}'...")
                     
                     try:
                         current_grains = [] if 'flourless' in test['type'] else dummy_grains
+                        run_name = f"{test['name']} (Run {int(time.time())})"
                         recipe_data = generate_recipe_details(
                             engine_id=engine_id,
                             active_archetype_id=archetype_id,
                             recipe_slug=f"qa-test-{engine_id}",
-                            recipe_name=test['name'],
+                            recipe_name=run_name,
                             selected_grains=json.dumps(current_grains) if isinstance(current_grains, list) else current_grains,
                             category_slug=category_slug
                         )
+
+                        flat_secondary = []
+                        for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
+                            if isinstance(items, list):
+                                flat_secondary.extend([i.get("name") for i in items])
+                            else:
+                                flat_secondary.append(items.get("name"))
+                                
+                        if "flavor_inclusions" in recipe_data:
+                            flat_secondary.extend([i.get("name") for i in recipe_data["flavor_inclusions"]])
+                            
+                        flat_secondary = [name for name in flat_secondary if name]
+                        
+                        if flat_secondary:
+                            percentages_data = generate_recipe_percentages(
+                                engine_id=engine_id,
+                                active_archetype_id=archetype_id,
+                                recipe_slug=f"qa-test-{engine_id}",
+                                recipe_name=run_name,
+                                secondary_ingredients=flat_secondary
+                            )
+                            if percentages_data and "percentages" in percentages_data:
+                                for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
+                                    if isinstance(items, list):
+                                        for item in items:
+                                            if item.get("name") in percentages_data["percentages"]:
+                                                item["bakers_percentage"] = percentages_data["percentages"][item.get("name")]
+                                    else:
+                                        if items.get("name") in percentages_data["percentages"]:
+                                            items["bakers_percentage"] = percentages_data["percentages"][items.get("name")]
+                                            
+                                if "flavor_inclusions" in recipe_data:
+                                    for item in recipe_data["flavor_inclusions"]:
+                                        if item.get("name") in percentages_data["percentages"]:
+                                            item["bakers_percentage"] = percentages_data["percentages"][item.get("name")]
+                                            
+                                for target_key in ["target_fat_pct", "target_sugar_pct", "target_hydration_pct", "target_binder_pct", "target_leaven_pct", "target_salt_pct"]:
+                                    if target_key in percentages_data:
+                                        recipe_data[target_key] = percentages_data[target_key]
+
 
                         active_arch = engine_instance.archetypes.get(archetype_id, {})
                         ff_slug = active_arch.get("default_form_factor")
@@ -254,7 +297,7 @@ class Command(BaseCommand):
                                 "preset_slug": archetype_id,
 
                                 "global_ai_enabled": True,
-                                "recipe_name": test['name'],
+                                "recipe_name": run_name,
                                 "active_berries": current_grains if isinstance(current_grains, list) else json.loads(current_grains),
                                 "secondary_ingredients": json.dumps(recipe_data.get('secondary_ingredients', {})),
                                 "dynamic_directions": json.dumps(recipe_data.get('dynamic_directions', {}))
@@ -393,6 +436,47 @@ class Command(BaseCommand):
                             for check in evaluations:
                                 if not check['passed']:
                                     self.stderr.write(f"    - {check['reason']}")
+                                    
+                        from apps.core.gemma.phase4_client import generate_recipe_tweaks
+                        
+                        # TWEAK LOOP TESTING
+                        applied_tweaks_history = []
+                        current_ingredients = flat_secondary
+                        
+                        for tweak_round in range(2):
+                            self.stdout.write(f"    -> Running Tweak Round {tweak_round+1}...")
+                            tweak_data = generate_recipe_tweaks(
+                                engine_id=engine_id,
+                                active_archetype_id=archetype_id,
+                                recipe_name=run_name,
+                                current_ingredients=current_ingredients,
+                                applied_tweaks_history=applied_tweaks_history
+                            )
+                            if tweak_data.get("is_max_optimized"):
+                                self.stdout.write(f"      -> AI declared recipe is MAX OPTIMIZED: {tweak_data.get('optimization_message')}")
+                                md_content += f"\n## Tweak Round {tweak_round+1}\n**OPTIMIZED**: {tweak_data.get('optimization_message')}\n"
+                                break
+                            
+                            tweaks = tweak_data.get("tweaks", [])
+                            if not tweaks:
+                                self.stdout.write("      -> No tweaks generated.")
+                                break
+                                
+                            chosen_tweak = tweaks[0]
+                            self.stdout.write(f"      -> Chose tweak: {chosen_tweak.get('title')}")
+                            applied_tweaks_history.append(chosen_tweak.get('title'))
+                            
+                            md_content += f"\n## Tweak Round {tweak_round+1}\n"
+                            md_content += f"**Chosen**: {chosen_tweak.get('title')}\n"
+                            md_content += f"**Description**: {chosen_tweak.get('description')}\n"
+                            md_content += f"**New Ingredients**: {', '.join(chosen_tweak.get('new_ingredients', []))}\n"
+                            
+                            current_ingredients = chosen_tweak.get('new_ingredients', current_ingredients)
+                            
+                        # Resave the markdown file to include tweaks
+                        with open(md_path, 'w', encoding='utf-8') as f:
+                            f.write(md_content)
+                        
                         
                     except Exception as e:
                         self.stderr.write(f"  [FAILED] {str(e)}")

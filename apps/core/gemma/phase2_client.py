@@ -155,7 +155,7 @@ def get_grain_advisory_ai(
                 f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
                 f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
                 f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+                f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
                 f"* Sifting/Bran Separation Constraint: {sifting_req}\n"
                 f"\n[RAW MATERIAL INVENTORY]\n{inventory_text}\n"
                 f"\n[AVAILABLE MILL MACHINERY]\n{mills_text}\n"
@@ -163,8 +163,8 @@ def get_grain_advisory_ai(
             task_instructions = (
                 f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
                 "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
-                f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: For bran separation options, you MUST use exactly 'RECOMMENDED' or 'NOT-RECOMMENDED'. Do NOT use 'SUB-OPTIMAL' or any other value.\n"
-                "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: For mill types, you MUST use exactly 'RECOMMENDED' or 'NOT-RECOMMENDED'. Do NOT use 'SUB-OPTIMAL' or any other value. Output exactly ONE evaluation per mill and ONE per sifter option."
+                f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each.\n"
+                "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each. Output exactly ONE evaluation per mill and ONE per sifter option."
             )
             response_schema = (
                 "{\n"
@@ -203,13 +203,13 @@ def get_grain_advisory_ai(
                 f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
                 f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
                 f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-                f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+                f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
                 f"* Sifting/Bran Separation Constraint: {sifting_req}\n"
             )
             task_instructions = (
                 "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
-                f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: For bran separation options, you MUST use exactly 'RECOMMENDED' or 'NOT-RECOMMENDED'. Do NOT use 'SUB-OPTIMAL' or any other value. The reasoning for not-recommended options MUST be specific to the physical/chemical properties of that option (e.g., 'Whole grain bran interrupts the gluten network, causing a denser crumb') rather than simply stating it is worse than the recommended option.\n"
-                "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: For mill types, you MUST use exactly 'RECOMMENDED' or 'NOT-RECOMMENDED'. Do NOT use 'SUB-OPTIMAL' or any other value. Provide exactly ONE evaluation per mill, and provide specific mechanical or thermal reasoning for not-recommended items (e.g., 'Impact mills generate too much heat for this delicate dough') rather than just stating it's not the best choice."
+                f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each. The reasoning for not-recommended or sub-optimal options MUST be specific to the physical/chemical properties of that option (e.g., 'Whole grain bran interrupts the gluten network, causing a denser crumb') rather than simply stating it is worse than the recommended option.\n"
+                "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each. Provide exactly ONE evaluation per mill, and provide specific mechanical or thermal reasoning for not-recommended or sub-optimal items (e.g., 'Impact mills generate too much heat for this delicate dough') rather than just stating it's not the best choice."
             )
             response_schema = (
                 "{\n"
@@ -586,7 +586,8 @@ def stream_grain_evaluations(
     preset_slug: str,
     category_slug: str = None,
     preset_name: str = None,
-    active_archetype_id: str = None
+    active_archetype_id: str = None,
+    target: str = "all"
 ):
     """
     Streaming generator for grain evaluations.
@@ -624,43 +625,103 @@ def stream_grain_evaluations(
         f"\n[AVAILABLE MILL MACHINERY]\n{mills_text}\n"
     )
 
-    task_instructions = (
-        f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
-        "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification.\n"
-        f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each.\n"
-        "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: Provide exactly ONE evaluation per mill and ONE evaluation per sifter option."
-    )
+    task_instructions = ""
+    response_schema = ""
 
-    response_schema = (
-        "{\n"
-        "  \"evaluations\": [\n"
-        "    {\n"
-        "      \"type\": \"grain\",\n"
-        "      \"id\": \"string (Exact ID of the grain from inventory)\",\n"
-        "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-        "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
-        "    },\n"
-        "    {\n"
-        "      \"type\": \"mill\",\n"
-        "      \"id\": \"string (ID of the mill)\",\n"
-        "      \"tier\": \"recommended | not-recommended\",\n"
-        "      \"reasoning\": \"1 sentence explaining why this mill is recommended or not for the archetype.\"\n"
-        "    },\n"
-        "    {\n"
-        "      \"type\": \"sifter\",\n"
-        "      \"id\": \"sifted\",\n"
-        "      \"tier\": \"recommended | not-recommended\",\n"
-        "      \"reasoning\": \"1 sentence explaining why bran separation helps or hurts.\"\n"
-        "    },\n"
-        "    {\n"
-        "      \"type\": \"sifter\",\n"
-        "      \"id\": \"unsifted\",\n"
-        "      \"tier\": \"recommended | not-recommended\",\n"
-        "      \"reasoning\": \"1 sentence explaining why whole grain helps or hurts.\"\n"
-        "    }\n"
-        "  ]\n"
-        "}"
-    )
+    if target == "grains":
+        task_instructions = (
+            f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
+            "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification."
+        )
+        response_schema = (
+            "{\n"
+            "  \"evaluations\": [\n"
+            "    {\n"
+            "      \"type\": \"grain\",\n"
+            "      \"id\": \"string (Exact ID of the grain from inventory)\",\n"
+            "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+            "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
+            "    }\n"
+            "  ]\n"
+            "}"
+        )
+    elif target == "mills":
+        task_instructions = (
+            "Evaluate EACH mill type from the 'mills' list provided against the mechanics. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: Provide exactly ONE evaluation per mill."
+        )
+        response_schema = (
+            "{\n"
+            "  \"evaluations\": [\n"
+            "    {\n"
+            "      \"type\": \"mill\",\n"
+            "      \"id\": \"string (ID of the mill)\",\n"
+            "      \"tier\": \"recommended | not-recommended\",\n"
+            "      \"reasoning\": \"1 sentence explaining why this mill is recommended or not for the archetype.\"\n"
+            "    }\n"
+            "  ]\n"
+            "}"
+        )
+    elif target == "sifters":
+        task_instructions = (
+            f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: Provide exactly ONE evaluation per sifter option."
+        )
+        response_schema = (
+            "{\n"
+            "  \"evaluations\": [\n"
+            "    {\n"
+            "      \"type\": \"sifter\",\n"
+            "      \"id\": \"sifted\",\n"
+            "      \"tier\": \"recommended | not-recommended\",\n"
+            "      \"reasoning\": \"1 sentence explaining why bran separation helps or hurts.\"\n"
+            "    },\n"
+            "    {\n"
+            "      \"type\": \"sifter\",\n"
+            "      \"id\": \"unsifted\",\n"
+            "      \"tier\": \"recommended | not-recommended\",\n"
+            "      \"reasoning\": \"1 sentence explaining why whole grain helps or hurts.\"\n"
+            "    }\n"
+            "  ]\n"
+            "}"
+        )
+    else:
+        # Fallback to the original monolithic logic
+        task_instructions = (
+            f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
+            "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification.\n"
+            f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each.\n"
+            "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: Provide exactly ONE evaluation per mill and ONE evaluation per sifter option."
+        )
+
+        response_schema = (
+            "{\n"
+            "  \"evaluations\": [\n"
+            "    {\n"
+            "      \"type\": \"grain\",\n"
+            "      \"id\": \"string (Exact ID of the grain from inventory)\",\n"
+            "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+            "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
+            "    },\n"
+            "    {\n"
+            "      \"type\": \"mill\",\n"
+            "      \"id\": \"string (ID of the mill)\",\n"
+            "      \"tier\": \"recommended | not-recommended\",\n"
+            "      \"reasoning\": \"1 sentence explaining why this mill is recommended or not for the archetype.\"\n"
+            "    },\n"
+            "    {\n"
+            "      \"type\": \"sifter\",\n"
+            "      \"id\": \"sifted\",\n"
+            "      \"tier\": \"recommended | not-recommended\",\n"
+            "      \"reasoning\": \"1 sentence explaining why bran separation helps or hurts.\"\n"
+            "    },\n"
+            "    {\n"
+            "      \"type\": \"sifter\",\n"
+            "      \"id\": \"unsifted\",\n"
+            "      \"tier\": \"recommended | not-recommended\",\n"
+            "      \"reasoning\": \"1 sentence explaining why whole grain helps or hurts.\"\n"
+            "    }\n"
+            "  ]\n"
+            "}"
+        )
 
     system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
     user_prompt = "{}"

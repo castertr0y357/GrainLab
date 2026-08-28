@@ -25,7 +25,8 @@ x-data="phase3App({
     recipe_name: '{{ state.recipe_name|default:""|escapejs }}',
     preset_slug: '{{ state.preset_slug|default:""|escapejs }}',
     active_berries: JSON.parse('{{ active_berries_json|default:"[]"|escapejs }}'),
-    flavor_inclusions: JSON.parse('{{ flavor_inclusions_json|default:"[]"|escapejs }}')
+    flavor_inclusions: JSON.parse('{{ flavor_inclusions_json|default:"[]"|escapejs }}'),
+    calculatingPercentages: false
 })"
 {% endblock %}
 
@@ -52,14 +53,7 @@ x-init="initializePhase3()"
             Phase 3: Core Configuration
         </div>
 
-        {% if state.is_tweaking %}
-        <div style="background-color: rgba(129, 199, 132, 0.1); border-left: 4px solid var(--success); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-            <h4 style="color: var(--success); margin: 0 0 0.25rem 0; font-weight: 700; font-size: 0.85rem; text-transform: uppercase;">🛠️ Tweak Mode Active</h4>
-            <p style="font-size: 0.8rem; color: var(--text-primary); margin: 0; line-height: 1.4;">
-                You are tweaking a saved formula. Grain selections are locked. Adjust your hydration and configuration below to generate a new iteration!
-            </p>
-        </div>
-        {% endif %}
+
         <!-- Component 0: Grain Formulation -->
         <div class="card" style="padding: 1.25rem; background-color: var(--bg-card); margin-bottom: 1.5rem;"
              x-show="activeBerries && activeBerries.length > 1">
@@ -193,7 +187,7 @@ x-init="initializePhase3()"
                 <h4 style="font-size: 1.05rem; margin-bottom: 1.25rem; color: var(--accent); font-weight: 600;">Specialty Ingredients</h4>
                 
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <template x-for="item in flavor_inclusions" :key="item.name">
+                    <template x-for="(item, index) in flavor_inclusions" :key="index">
                         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;"
                              @mouseenter="setHoveredElement('specialty_' + item.name)"
                              @mouseleave="clearHoveredElement()"
@@ -206,15 +200,6 @@ x-init="initializePhase3()"
                 </div>
             </div>
 
-            <!-- Proceed button -->
-            <button type="button" 
-                    class="nav-btn primary"
-                    style="width: 100%; height: 52px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #81c784; border-radius: var(--radius-sm); background: rgba(129, 199, 132, 0.05); color: #81c784; box-shadow: 0 0 10px rgba(129, 199, 132, 0.1); transition: var(--transition); margin-top: 1.5rem;"
-                    onmouseover="this.style.background='#81c784'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(129, 199, 132, 0.3)';"
-                    onmouseout="this.style.background='rgba(129, 199, 132, 0.05)'; this.style.color='#81c784'; this.style.boxShadow='0 0 10px rgba(129, 199, 132, 0.1)';"
-                    @click="document.getElementById('phase3-form').submit()">
-                PROCEED TO FORMULA READOUT →
-            </button>
         </div>
 {% endblock %}
 
@@ -238,6 +223,19 @@ x-init="initializePhase3()"
     <div x-show="recipe_name" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
         <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
         <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+    </div>
+    
+    <div x-show="!phase3Loading" style="margin-bottom: 1.5rem;">
+        <button type="button" 
+                class="btn"
+                :disabled="calculatingPercentages"
+                :style="calculatingPercentages ? 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: not-allowed; border: none; border-radius: 999px; background-color: rgba(136, 136, 136, 0.2); color: #ccc; transition: all 0.2s; font-size: 0.85rem; text-transform: uppercase;' : 'width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; border: none; border-radius: 999px; background-color: var(--success); color: #000; font-size: 0.85rem; text-transform: uppercase; transition: all 0.2s;'"
+                x-on:mouseover="if(!calculatingPercentages) { $el.style.opacity='0.9'; $el.style.transform='scale(1.02)'; }"
+                x-on:mouseout="if(!calculatingPercentages) { $el.style.opacity='1'; $el.style.transform='scale(1)'; }"
+                @click="document.getElementById('phase3-form').submit()">
+            <span x-show="!calculatingPercentages">CONFIRM CHOICES</span>
+            <span x-show="calculatingPercentages">CALCULATING PERCENTAGES...</span>
+        </button>
     </div>
 
     <!-- Panel B: Pragmatic Magic Layer (AIInsightCard for non-grain items when AI active) -->

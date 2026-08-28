@@ -15,6 +15,8 @@ x-data="phase4App({
     global_ai_enabled: {{ state.global_ai_enabled|yesno:"true,false" }},
     enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}' || '{}'),
     engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}' || '{}'),
+    initialIngredientNames: JSON.parse('{{ ingredients_json|default:"[]"|escapejs }}'),
+    appliedTweaksHistory: JSON.parse('{{ applied_tweaks_history_json|default:"[]"|escapejs }}'),
     recipeCompiled: true
 })"
 {% endblock %}
@@ -24,7 +26,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
 {% endblock %}
 
 {% block phase_left_panel %}
-    <!-- AI Streaming Placeholder (Removed) -->
+
 
     <!-- SCALER UI -->
     <div style="background-color: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
@@ -55,7 +57,12 @@ x-init="loadCompiledData(); fetchAIInsights();"
             <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: <span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="!global_ai_enabled || recipeIngredients.length === 0">
+        <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center; justify-content: center; padding: 2rem 0;" x-show="applyProgressText !== ''" style="display: none;">
+            <div class="spinner" style="width: 2.5rem; height: 2.5rem; border: 3px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span style="font-size: 1.1rem; color: var(--text-primary); font-weight: 500;" x-text="applyProgressText"></span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="(applyProgressText === '') && (!global_ai_enabled || recipeIngredients.length === 0)">
             <!-- Flour Base Weight Row -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-primary); font-weight: 600;">Flour Base</span>
@@ -265,7 +272,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
         </div>
 
         <!-- DYNAMIC AI FORMULA -->
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="global_ai_enabled && recipeIngredients.length > 0">
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="(applyProgressText === '') && (global_ai_enabled && recipeIngredients.length > 0)">
             <template x-for="(ingredients, categoryName) in groupedIngredients" :key="categoryName">
                 <div>
                     <!-- Category Total Row -->
@@ -327,19 +334,19 @@ x-init="loadCompiledData(); fetchAIInsights();"
     <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
         <h3 style="color: var(--accent); margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">Directions</h3>
         
-        <div x-show="aiLoading && steps.length === 0" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem;">
+        <div x-show="(aiLoading || applyProgressText !== '') && steps.length === 0" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem;">
             <div class="spinner" style="width: 1.25rem; height: 1.25rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <span style="font-size: 0.9rem; color: var(--text-muted);">Generating precise instructions...</span>
+            <span style="font-size: 0.9rem; color: var(--text-muted);" x-text="applyProgressText !== '' ? applyProgressText : 'Generating precise instructions...'"></span>
         </div>
         
-        <ol x-show="steps.length > 0" style="margin: 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; color: var(--text-primary);">
+        <ol x-show="steps.length > 0 && applyProgressText === ''" style="margin: 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; color: var(--text-primary);">
             <template x-for="(step, idx) in steps" :key="step.key">
                 <li style="line-height: 1.5; padding-left: 0.5rem;">
                     <div style="font-weight: 700; color: var(--text-primary); font-size: 1.05rem;" x-text="step.name"></div>
                     <div style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.35rem;" x-text="step.desc || ''"></div>
                     <div style="color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; display: flex; gap: 1rem;">
                         <span x-text="'⏱️ ' + (step.duration_sec >= 60 ? Math.round(step.duration_sec / 60) + 'm' : step.duration_sec + 's')"></span>
-                        <span x-show="step.is_mix || step.is_knead" x-text="'🌡️ Water Temp Target: ' + waterTemp + '°F'"></span>
+                        <span x-show="(step.is_mix || step.is_knead) && requiresThermalProfile" x-text="'🌡️ Water Temp Target: ' + waterTemp + '°F'"></span>
                     </div>
                 </li>
             </template>
@@ -399,17 +406,31 @@ x-init="loadCompiledData(); fetchAIInsights();"
     </div>
     
     <div x-show="!countertopMode">
-        <button type="button" @click="startCountertopMode()" x-show="steps.length > 0" class="btn btn-primary" style="width: 100%; background-color: var(--success); height: 50px; margin-bottom: 10px;">
+        <button type="button" @click="startCountertopMode()" class="btn" 
+                :disabled="aiLoading || steps.length === 0"
+                :style="{ opacity: (aiLoading || steps.length === 0) ? 0.5 : 1, cursor: (aiLoading || steps.length === 0) ? 'not-allowed' : 'pointer' }"
+                style="width: 100%; background-color: var(--success); color: #000; height: 50px; margin-bottom: 10px; border: none; border-radius: 999px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;"
+                onmouseover="if(!this.disabled){this.style.opacity='0.9'; this.style.transform='scale(1.02)';}"
+                onmouseout="if(!this.disabled){this.style.opacity='1'; this.style.transform='scale(1)';}">
             START BAKE
         </button>
         <form action="{% url 'save_recipe' %}" method="POST" style="margin-bottom: 10px;">
             {% csrf_token %}
-            <button type="submit" class="btn btn-secondary" style="width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.1em; background-color: var(--accent); color: #000; border: none;">
+            <button type="submit" class="btn" 
+                    :disabled="aiLoading || steps.length === 0"
+                    :style="{ opacity: (aiLoading || steps.length === 0) ? 0.5 : 1, cursor: (aiLoading || steps.length === 0) ? 'not-allowed' : 'pointer' }"
+                    style="width: 100%; height: 50px; font-weight: 700; letter-spacing: 0.05em; background-color: var(--accent); color: #000; border: none; border-radius: 999px; font-size: 0.85rem; text-transform: uppercase; transition: all 0.2s;"
+                    onmouseover="if(!this.disabled){this.style.opacity='0.9'; this.style.transform='scale(1.02)';}"
+                    onmouseout="if(!this.disabled){this.style.opacity='1'; this.style.transform='scale(1)';}">
                 💾 SAVE & SHARE RECIPE
             </button>
         </form>
-        <a href="{% url 'calculator_phase4' category=state.selected_master archetype=state.preset_slug %}" class="btn btn-secondary" style="display: block; width: 100%; text-align: center; line-height: 50px; height: 50px;">
-            BACK TO TWEAKING
+        <a href="{% url 'calculator_phase4' category=state.selected_master archetype=state.preset_slug %}" class="btn" 
+           :style="{ opacity: aiLoading ? 0.5 : 1, cursor: aiLoading ? 'not-allowed' : 'pointer', pointerEvents: aiLoading ? 'none' : 'auto' }"
+           style="display: block; width: 100%; text-align: center; line-height: 50px; height: 50px; border: 1px solid var(--border); border-radius: 999px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); transition: all 0.2s; text-decoration: none;"
+           onmouseover="if(this.style.pointerEvents !== 'none'){this.style.color='var(--text-primary)'; this.style.borderColor='var(--text-primary)';}"
+           onmouseout="if(this.style.pointerEvents !== 'none'){this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border)';}">
+            BACK
         </a>
     </div>
 
@@ -443,6 +464,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
 
 
 
+
     <!-- AI CRAFT ELEVATORS -->
     <div x-show="globalElevateRecipe && globalElevateRecipe.length > 0" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
         <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">AI Craft Elevators</div>
@@ -455,8 +477,61 @@ x-init="loadCompiledData(); fetchAIInsights();"
             </template>
         </div>
     </div>
+    
+    <!-- AI ENHANCEMENTS (Moved from left panel) -->
+    <template x-if="global_ai_enabled">
+        <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em;">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.35rem;"></i> AI Enhancements
+                </h4>
+            </div>
 
-    <!-- Old Pitfall Alerts Removed -->
+            <!-- Loading State -->
+            <template x-if="tweaksLoading && suggestedTweaks.length === 0">
+                <div class="card" style="padding: 1rem; background-color: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; min-height: 80px;">
+                    <div class="spinner" style="width: 24px; height: 24px; border-width: 2px; border-top-color: var(--accent);"></div>
+                </div>
+            </template>
+
+            <!-- Tweaks List -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <template x-for="(tweak, idx) in suggestedTweaks" :key="idx">
+                    <div class="card" style="padding: 1rem; background-color: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); position: relative;">
+                        <h5 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary); font-weight: 600;" x-text="tweak.tweak_title"></h5>
+                        <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;" x-text="tweak.reasoning || tweak.explanation"></p>
+                        <button type="button" class="btn" @click="applyTweak(tweak)" :disabled="tweaksLoading"
+                                style="width: 100%; height: 36px; line-height: 36px; padding: 0; font-size: 0.8rem; border-radius: 50px; background-color: rgba(255,255,255,0.1); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+                            <span x-show="!tweaksLoading">Apply Enhancement</span>
+                            <span x-show="tweaksLoading"><i class="fa-solid fa-spinner fa-spin"></i> Applying...</span>
+                        </button>
+                    </div>
+                </template>
+            </div>
+            
+            <template x-if="suggestedTweaks.length > 0 && tweaksLoading">
+                <div style="text-align: center; margin-top: 1rem; color: var(--text-muted); font-size: 0.8rem;">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Generating more ideas...
+                </div>
+            </template>
+            
+            <template x-if="!tweaksLoading && suggestedTweaks.length > 0">
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button type="button" @click="generateMoreIdeas()" class="btn" style="background: none; border: none; color: var(--accent); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; text-decoration: underline;">
+                        Generate more ideas...
+                    </button>
+                </div>
+            </template>
+            
+            <template x-if="!tweaksLoading && suggestedTweaks.length === 0">
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button type="button" @click="generateMoreIdeas()" class="btn" style="background: none; border: none; color: var(--accent); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; text-decoration: underline;">
+                        Generate tweaks
+                    </button>
+                </div>
+            </template>
+        </div>
+    </template>
     
     <div id="geometry-metadata" style="display: none;"
      data-geometry-status="{{ geometry_evaluation.status|default:'recommended' }}"

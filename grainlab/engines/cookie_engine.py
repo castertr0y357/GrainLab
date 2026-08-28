@@ -213,10 +213,18 @@ class CookieEngine(BaseEngine):
             desc += 'Flour is fully matured. It will provide a highly stable, predictable structure and excellent tender mouthfeel.'
         return desc
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast', **kwargs) -> tuple[float, float, float, float, float]:
         # Cookies have zero added water (hydration comes entirely from eggs and butter).
-        # We force this to 0.0 to prevent the system from falling back to default bread water percentages.
-        cookie_hyd = max(0.0, min(0.15, hydration))
+        # We allow a small amount (5%) if an explicit flavor liquid (like lemon juice) is requested.
+        sec_liquids = kwargs.get("sec_liquids", [])
+        has_liquid = False
+        for liq in sec_liquids:
+            name = str(liq.get("name", "")).lower()
+            if name and name not in ["none", "pure water", "water"]:
+                has_liquid = True
+                break
+        
+        cookie_hyd = 0.05 if has_liquid else 0.0
         # Wider guardrails to allow AI flavor chemistry to dictate final cookie richness.
         # Max 1.20 for fat (e.g. shortbreads), max 2.00 for sugar (e.g. extremely chewy brittle cookies)
         cookie_fat = max(0.20, min(1.20, fat))

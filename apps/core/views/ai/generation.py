@@ -101,6 +101,7 @@ class GenerateCreativityRecipesView(View):
         engine_id = request.GET.get("engine_id", "").strip()
         active_archetype_id = request.GET.get("active_archetype_id", "").strip()
         inventory_ids_raw = request.GET.get("inventory_ids", "").strip()
+        level = request.GET.get("level", "").strip()
 
         # Sanitize archetype_id from any recipe or level suffix
         if active_archetype_id:
@@ -139,7 +140,7 @@ class GenerateCreativityRecipesView(View):
                 })
 
         from django.http import StreamingHttpResponse
-        generator = gemma.stream_creativity_recipes(engine_id, active_archetype_id, inventory)
+        generator = gemma.stream_creativity_recipes(engine_id, active_archetype_id, inventory, level=level)
         
         def event_stream():
             # In case of fallback, stream_creativity_recipes will yield the mock items

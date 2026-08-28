@@ -22,6 +22,8 @@ document.addEventListener('alpine:init', () => {
         selected_recipe_id: null,
         recipe_selected: false,
         advisoryLoading: false,
+        millsAdvisoryLoading: false,
+        siftersAdvisoryLoading: false,
         advisory_steps: [],
         activeBerries: initialData.berries || [],
         mill_type: null,
@@ -679,10 +681,19 @@ document.addEventListener('alpine:init', () => {
         const signal = this.creativityRecipesAbortController.signal;
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const url = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const baseUrl = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
         
-        fetch(url, { signal })
-            .then(async res => {
+        let recipesLevel1 = [];
+        let recipesLevel2 = [];
+        
+        const updateUI = () => {
+            this.creativity_recipes = [...recipesLevel1, ...recipesLevel2];
+        };
+
+        const fetchLevel = async (level) => {
+            const url = `${baseUrl}&level=${level}`;
+            try {
+                const res = await fetch(url, { signal });
                 if (!res.ok) {
                     let errData;
                     try { errData = await res.json(); } catch(e) {}
@@ -700,7 +711,7 @@ document.addEventListener('alpine:init', () => {
                     
                     buffer += decoder.decode(value, { stream: true });
                     const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Keep the incomplete line in the buffer
+                    buffer = lines.pop();
                     
                     for (const line of lines) {
                         if (line.startsWith('event: close')) {
@@ -710,16 +721,13 @@ document.addEventListener('alpine:init', () => {
                             if (dataStr && dataStr !== '{}') {
                                 try {
                                     const parsed = JSON.parse(dataStr);
-                                    
                                     if (typeof parsed === 'string') {
-                                        // Streaming raw text chunks
                                         rawBuffer += parsed;
                                         const objects = this.extractPartialObjects(rawBuffer);
-                                        console.log('rawBuffer', rawBuffer);
-                                        console.log('extracted objects', objects);
                                         
-                                        // Update the creativity_recipes array with the latest state
                                         const newRecipes = [];
+                                        const targetArray = level === 1 ? recipesLevel1 : recipesLevel2;
+                                        
                                         for (let i = 0; i < objects.length; i++) {
                                             const objStr = objects[i];
                                             const parsedObj = this.repairAndParse(objStr);
@@ -731,42 +739,42 @@ document.addEventListener('alpine:init', () => {
                                                 }
                                                 newRecipes.push(norm);
                                             } else {
-                                                // If parsing fails for a partial object, retain the last known good state
-                                                if (this.creativity_recipes[i]) {
-                                                    newRecipes.push(this.creativity_recipes[i]);
+                                                if (targetArray[i]) {
+                                                    newRecipes.push(targetArray[i]);
                                                 }
                                             }
                                         }
-                                        // Trigger reactivity
-                                        this.creativity_recipes = newRecipes;
                                         
-                                    } else {
-                                        // Fallback dictionary mode
-                                        const norm = {};
-                                        for (const key in parsed) {
-                                            norm[key.toLowerCase()] = parsed[key];
+                                        if (level === 1) {
+                                            recipesLevel1 = newRecipes;
+                                        } else {
+                                            recipesLevel2 = newRecipes;
                                         }
-                                        this.creativity_recipes.push(norm);
+                                        
+                                        updateUI();
                                     }
                                 } catch (e) {
-                                    console.error('JSON parse error', e);
+                                    console.error('Error parsing chunk', e);
                                 }
                             }
                         }
                     }
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 if (err.name !== 'AbortError') {
-                    console.error('[GrainLab] Failed fetching creativity recipes:', err);
+                    console.error(`Error fetching creativity recipes level ${level}:`, err);
                 }
-            })
-            .finally(() => {
-                this.creativity_streaming = false;
-                if (this.creativityRecipesAbortController && this.creativityRecipesAbortController.signal === signal) {
-                    this.creativityRecipesAbortController = null;
-                }
-            });
+            }
+        };
+
+        // Fire both levels simultaneously
+        Promise.all([fetchLevel(1), fetchLevel(2)]).then(() => {
+            this.creativity_streaming = false;
+            // Clean up abort controller if completed normally
+            if (this.creativityRecipesAbortController && !this.creativityRecipesAbortController.signal.aborted) {
+                this.creativityRecipesAbortController = null;
+            }
+        });
     },
 
 
@@ -983,6 +991,8 @@ document.addEventListener('alpine:init', () => {
 
     fetchRecipeDetails(recipe) {
         this.advisoryLoading = true;
+        this.millsAdvisoryLoading = true;
+        this.siftersAdvisoryLoading = true;
         this.advisory_resolved = false;
         this.recipe_details_data = null;
         
@@ -1004,7 +1014,9 @@ document.addEventListener('alpine:init', () => {
             global_ai_enabled: this.global_ai_enabled
         });
         const urlDetails = `/ai-recipe-details/?${params.toString()}`;
-        const urlAdvisory = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true&stream=true`;
+        const urlAdvisoryGrains = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true&stream=true&target=grains`;
+        const urlAdvisoryMills = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true&stream=true&target=mills`;
+        const urlAdvisorySifters = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true&stream=true&target=sifters`;
         
         // Reset evaluations before streaming
         this.grainEvaluations = [];
@@ -1027,66 +1039,72 @@ document.addEventListener('alpine:init', () => {
             return res.json();
         });
         
-        const advisoryPromise = fetch(urlAdvisory, { signal }).then(async res => {
-            if (!res.ok) {
-                let errData;
-                try { errData = await res.json(); } catch(e) {}
-                throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
-            }
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let buffer = "";
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop();
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const dataStr = line.substring(6).trim();
-                        if (dataStr === '[DONE]') break;
-                        if (dataStr && dataStr !== '{}') {
-                            try {
-                                const parsed = JSON.parse(dataStr);
-                                
-                                // Normalize tiers if AI responds creatively
-                                if (parsed.tier) parsed.tier = parsed.tier.toLowerCase().trim();
-                                if (parsed.tier === 'optimal') parsed.tier = 'recommended';
-                                else if (parsed.tier === 'not recommended') parsed.tier = 'not-recommended';
-                                else if (parsed.tier === 'sub optimal' || parsed.tier === 'suboptimal') parsed.tier = 'sub-optimal';
-
-                                if (parsed.type === 'grain') {
-                                    // Match by exact ID or by grain name (case-insensitive) in case LLM returns the name instead of UUID
-                                    const berry = this.activeBerries.find(b => 
-                                        b.id.toString() === parsed.id.toString() || 
-                                        (b.name && b.name.toLowerCase() === parsed.id.toString().toLowerCase())
-                                    );
+        const createStreamPromise = (url) => {
+            return fetch(url, { signal }).then(async res => {
+                if (!res.ok) {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) {}
+                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                }
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataStr = line.substring(6).trim();
+                            if (dataStr === '[DONE]') break;
+                            if (dataStr && dataStr !== '{}') {
+                                try {
+                                    const parsed = JSON.parse(dataStr);
                                     
-                                    if (berry) {
-                                        console.log(`[Advisory] Matched grain: ${berry.name} (${parsed.tier})`);
-                                        this.grainEvaluations.push({ grain_id: berry.id, tier: parsed.tier, reasoning: parsed.reasoning });
-                                        berry.classification = parsed.tier;
-                                        berry.reasoning = parsed.reasoning;
-                                        if (parsed.tier === 'recommended') berry.selected = true;
-                                    } else {
-                                        console.warn(`[Advisory] Warning: Could not match grain id/name returned by AI: "${parsed.id}"`);
+                                    // Normalize tiers if AI responds creatively
+                                    if (parsed.tier) parsed.tier = parsed.tier.toLowerCase().trim();
+                                    if (parsed.tier === 'optimal') parsed.tier = 'recommended';
+                                    else if (parsed.tier === 'not recommended') parsed.tier = 'not-recommended';
+                                    else if (parsed.tier === 'sub optimal' || parsed.tier === 'suboptimal') parsed.tier = 'sub-optimal';
+
+                                    if (parsed.type === 'grain') {
+                                        // Match by exact ID or by grain name (case-insensitive) in case LLM returns the name instead of UUID
+                                        const berry = this.activeBerries.find(b => 
+                                            b.id.toString() === parsed.id.toString() || 
+                                            (b.name && b.name.toLowerCase() === parsed.id.toString().toLowerCase())
+                                        );
+                                        
+                                        if (berry) {
+                                            console.log(`[Advisory] Matched grain: ${berry.name} (${parsed.tier})`);
+                                            this.grainEvaluations.push({ grain_id: berry.id, tier: parsed.tier, reasoning: parsed.reasoning });
+                                            berry.classification = parsed.tier;
+                                            berry.reasoning = parsed.reasoning;
+                                            if (parsed.tier === 'recommended') berry.selected = true;
+                                        } else {
+                                            console.warn(`[Advisory] Warning: Could not match grain id/name returned by AI: "${parsed.id}"`);
+                                        }
+                                    } else if (parsed.type === 'mill') {
+                                        console.log(`[Advisory] Mill evaluation: ${parsed.id} (${parsed.tier})`);
+                                        this.mill_evaluations.push({ mill_id: parsed.id, tier: parsed.tier, reasoning: parsed.reasoning });
+                                    } else if (parsed.type === 'sifter') {
+                                        console.log(`[Advisory] Sifter evaluation: ${parsed.id} (${parsed.tier})`);
+                                        this.sifter_evaluations[parsed.id] = { tier: parsed.tier, reasoning: parsed.reasoning };
                                     }
-                                } else if (parsed.type === 'mill') {
-                                    console.log(`[Advisory] Mill evaluation: ${parsed.id} (${parsed.tier})`);
-                                    this.mill_evaluations.push({ mill_id: parsed.id, tier: parsed.tier, reasoning: parsed.reasoning });
-                                } else if (parsed.type === 'sifter') {
-                                    console.log(`[Advisory] Sifter evaluation: ${parsed.id} (${parsed.tier})`);
-                                    this.sifter_evaluations[parsed.id] = { tier: parsed.tier, reasoning: parsed.reasoning };
-                                }
-                            } catch (e) { console.error('SSE Parse Error', e); }
+                                } catch (e) { console.error('SSE Parse Error', e); }
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        };
+
+        const grainsAdvisoryPromise = createStreamPromise(urlAdvisoryGrains);
+        const millsAdvisoryPromise = createStreamPromise(urlAdvisoryMills).finally(() => { this.millsAdvisoryLoading = false; });
+        const siftersAdvisoryPromise = createStreamPromise(urlAdvisorySifters).finally(() => { this.siftersAdvisoryLoading = false; });
         
-        Promise.all([detailsPromise, advisoryPromise])
+        Promise.all([detailsPromise, grainsAdvisoryPromise, millsAdvisoryPromise, siftersAdvisoryPromise])
             .then(([detailsData]) => {
                 this.recipe_details_data = detailsData;
                 
