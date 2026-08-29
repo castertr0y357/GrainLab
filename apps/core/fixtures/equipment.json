@@ -1,0 +1,55 @@
+[
+    {
+        "name": "KitchenAid Professional 600",
+        "equipment_type": "mixer",
+        "friction_heat_factor": 10.0,
+        "ai_analyzed": true,
+        "notes": "Planetary stand mixer. High speed mixing can introduce significant heat to dough.",
+        "details": {
+            "capacity_grams": 1000,
+            "recommended_speed": "Speed 2"
+        }
+    },
+    {
+        "name": "Ankarsrum Assistant Mixer",
+        "equipment_type": "mixer",
+        "friction_heat_factor": 6.0,
+        "ai_analyzed": true,
+        "notes": "Rotating bowl spiral mixer. Low friction design, preserves dough temperature well.",
+        "details": {
+            "capacity_grams": 2500,
+            "recommended_speed": "Medium low"
+        }
+    },
+    {
+        "name": "KoMo Classic Mill",
+        "equipment_type": "mill",
+        "friction_heat_factor": 0.0,
+        "ai_analyzed": true,
+        "notes": "Stoneburr grain mill, 360W motor. Beautiful solid wood casing.",
+        "details": {
+            "capacity_grams": 1000
+        }
+    },
+    {
+        "name": "Mockmill Lino 100",
+        "equipment_type": "mill",
+        "friction_heat_factor": 0.0,
+        "ai_analyzed": true,
+        "notes": "Stoneburr grain mill, 200W motor. Fast throughput with minimum heat transfer.",
+        "details": {
+            "capacity_grams": 500,
+            "extraction_rate_pct": 100
+        }
+    },
+    {
+        "name": "Hand Kneading (Manual)",
+        "equipment_type": "mixer",
+        "friction_heat_factor": 2.0,
+        "ai_analyzed": true,
+        "notes": "Human-powered mixing. Low friction, relies on hand stretches to build structure.",
+        "details": {
+            "capacity_grams": 5000
+        }
+    }
+]

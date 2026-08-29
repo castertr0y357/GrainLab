@@ -25,6 +25,7 @@ urlpatterns = [
     path('load-preset/<int:preset_id>/', views.LoadPresetView.as_view(), name='load_preset'),
     path('settings/', views.SettingsPageView.as_view(), name='settings_page'),
     path('settings/save/', views.SaveSettingsView.as_view(), name='save_settings'),
+    path('settings/discover-models/', views.DiscoverModelsView.as_view(), name='discover_models'),
     path('sourdough-calibrate/', views.SourdoughCalibrateView.as_view(), name='sourdough_calibrate'),
     
     # Inventory routes

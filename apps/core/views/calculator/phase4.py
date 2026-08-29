@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect
 from django.views import View
 import json
 from apps.core.models import WheatBerry, DoughCategory
-from apps.core.services.calculator_session import get_calculator_state, get_engines_archetypes_json, get_engines_ff_json
+from apps.core.services.calculator.session import get_calculator_state, get_engines_archetypes_json, get_engines_ff_json, update_calculator_state, clear_calculator_state
+from apps.core.forms.calculator.phase4_forms import Phase4Form
+
 class Phase4View(View):
     def get(self, request, category, archetype):
         state = get_calculator_state(request)
@@ -12,7 +14,6 @@ class Phase4View(View):
             return redirect('calculator_phase2', category=category)
             
         if state.get('selected_master') != category or state.get('preset_slug') != archetype:
-            from apps.core.services.calculator_session import update_calculator_state
             update_calculator_state(request, {
                 'selected_master': category, 
                 'preset_slug': archetype,
@@ -44,7 +45,7 @@ class Phase4View(View):
         }
         
         # Calculate final recipe and inject into context
-        from apps.core.services.calculation import calculate_final_recipe
+        from apps.core.services.calculator.calculation import calculate_final_recipe
         try:
             recipe_context = calculate_final_recipe(state)
             context.update(recipe_context)
@@ -58,55 +59,24 @@ class Phase4View(View):
         return render(request, 'calculator/phase4.html', context)
 
     def post(self, request, category, archetype):
-        # Handle form submissions on phase 4, such as saving the finalized recipe,
-        # printing, or resetting to start over.
-        action = request.POST.get('action')
+        form = Phase4Form(request.POST)
         
-        if action == 'reset':
-            from apps.core.services.calculator_session import clear_calculator_state
-            clear_calculator_state(request)
-            return redirect('calculator_phase1')
+        if form.is_valid():
+            action = form.cleaned_data.get('action')
             
-        from apps.core.services.calculator_session import update_calculator_state
-        import json
-        
-        # Parse process_recommendations safely
-        process_recs = {}
-        raw_recs = request.POST.get('process_recommendations')
-        if raw_recs:
-            try:
-                process_recs = json.loads(raw_recs)
-            except json.JSONDecodeError:
-                pass
-                
-        # Parse flavor_inclusions safely
-        flavor_inclusions = []
-        raw_inclusions = request.POST.get('flavor_inclusions')
-        if raw_inclusions:
-            try:
-                flavor_inclusions = json.loads(raw_inclusions)
-            except json.JSONDecodeError:
-                pass
+            if action == 'reset':
+                clear_calculator_state(request)
+                return redirect('calculator_phase1')
 
-        # Parse secondary_ingredients safely
-        secondary_ingredients = {}
-        raw_secondary = request.POST.get('secondary_ingredients')
-        if raw_secondary:
-            try:
-                secondary_ingredients = json.loads(raw_secondary)
-            except json.JSONDecodeError:
-                pass
-
-        update_calculator_state(request, {
-            'texture': request.POST.get('texture'),
-            'crumb': request.POST.get('crumb'),
-            'starter': request.POST.get('starter'),
-            'mixing_method': request.POST.get('mixing_method'),
-            'active_action': request.POST.get('active_action'),
-            'process_recommendations': process_recs,
-            'flavor_inclusions': flavor_inclusions,
-            'secondary_ingredients': secondary_ingredients,
-        })
+            update_calculator_state(request, {
+                'texture': form.cleaned_data.get('texture'),
+                'crumb': form.cleaned_data.get('crumb'),
+                'starter': form.cleaned_data.get('starter'),
+                'mixing_method': form.cleaned_data.get('mixing_method'),
+                'active_action': form.cleaned_data.get('active_action'),
+                'process_recommendations': form.cleaned_data.get('process_recommendations'),
+                'flavor_inclusions': form.cleaned_data.get('flavor_inclusions'),
+                'secondary_ingredients': form.cleaned_data.get('secondary_ingredients'),
+            })
             
-        # Redirect to final recipe view
         return redirect('calculator_final_recipe', category=category, archetype=archetype)

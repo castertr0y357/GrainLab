@@ -2,7 +2,6 @@ import logging
 import math
 import uuid
 import json
-from concurrent.futures import ThreadPoolExecutor
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -11,13 +10,12 @@ from django.views.decorators.http import require_POST
 from django.views import View
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
-from apps.core import bakers_math
+from apps.core.utils import math as bakers_math
 from apps.core import gemma
-from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
-from apps.core.services.calculator_session import get_engines_ff_json, get_engines_archetypes_json
+from apps.core.background_tasks import executor, run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+from apps.core.services.calculator.session import get_engines_ff_json, get_engines_archetypes_json
 
 logger = logging.getLogger("grainlab.views")
-executor = ThreadPoolExecutor(max_workers=2)
 
 
 class SearchPresetsView(View):

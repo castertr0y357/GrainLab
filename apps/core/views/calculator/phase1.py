@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.views import View
 from apps.core.models import DoughCategory, FormFactor, BreadPreset
-from apps.core.services.calculator_session import get_calculator_state, update_calculator_state
-from grainlab.engines.router import get_engine_for_preset
+from apps.core.services.calculator.session import get_calculator_state, update_calculator_state
+from apps.core.engines.router import get_engine_for_preset
 import json
 
 class Phase1View(View):
@@ -18,7 +18,7 @@ class Phase1View(View):
 
     def post(self, request):
         # Process the form submission to transition to Phase 2
-        from apps.core.services.calculator_session import get_calculator_state, clear_calculator_state, update_calculator_state
+        from apps.core.services.calculator.session import get_calculator_state, clear_calculator_state, update_calculator_state
         state = get_calculator_state(request)
         global_ai_enabled = state.get('global_ai_enabled', True)
         

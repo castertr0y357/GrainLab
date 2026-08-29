@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.views import View
-from apps.core.services.calculator_session import get_calculator_state, get_engines_archetypes_json, get_engines_ff_json
+from apps.core.services.calculator.session import get_calculator_state, get_engines_archetypes_json, get_engines_ff_json
 
 class FinalRecipeView(View):
     def get(self, request, category, archetype):
@@ -10,7 +10,7 @@ class FinalRecipeView(View):
             pass
             
         if state.get('selected_master') != category or state.get('preset_slug') != archetype:
-            from apps.core.services.calculator_session import update_calculator_state
+            from apps.core.services.calculator.session import update_calculator_state
             update_calculator_state(request, {
                 'selected_master': category, 
                 'preset_slug': archetype,
@@ -24,7 +24,7 @@ class FinalRecipeView(View):
         }
         
         # Calculate final recipe and inject into context
-        from apps.core.services.calculation import calculate_final_recipe
+        from apps.core.services.calculator.calculation import calculate_final_recipe
         import json
         try:
             recipe_context = calculate_final_recipe(state)
@@ -79,7 +79,7 @@ class FinalRecipeView(View):
         action = request.POST.get('action')
         
         if action == 'reset':
-            from apps.core.services.calculator_session import clear_calculator_state
+            from apps.core.services.calculator.session import clear_calculator_state
             clear_calculator_state(request)
             return redirect('calculator_phase1')
             
@@ -89,8 +89,8 @@ from django.http import JsonResponse
 
 class FinalRecipeAIView(View):
     def get(self, request, category, archetype):
-        from apps.core.services.calculator_session import get_calculator_state
-        from apps.core.services.calculation import calculate_final_recipe
+        from apps.core.services.calculator.session import get_calculator_state
+        from apps.core.services.calculator.calculation import calculate_final_recipe
         state = get_calculator_state(request)
         if not state:
             state = {

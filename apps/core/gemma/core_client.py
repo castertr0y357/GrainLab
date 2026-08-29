@@ -5,7 +5,7 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from apps.core.models import SystemSetting
-from apps.core.bakers_math import get_local_contextual_pitfalls, get_local_sensory_benchmark
+from apps.core.utils.math import get_local_contextual_pitfalls, get_local_sensory_benchmark
 
 
 logger = logging.getLogger("grainlab.gemma")
@@ -252,8 +252,8 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
         payload["reasoning_effort"] = ai_thinking_effort
 
     try:
-        # Enforce a 60-second timeout to allow the model sufficient time to load and generate responses
-        response = requests.post(url, headers=headers, json=payload, timeout=60.0)
+        # Enforce a 600-second timeout to allow the model sufficient time to load and generate responses
+        response = requests.post(url, headers=headers, json=payload, timeout=600.0)
         logger.info(f"[AI] - HTTP Response Code: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
@@ -315,8 +315,8 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
             {"role": "user", "content": user_prompt}
         ],
         "temperature": temperature,
-        "max_tokens": 4096,
-        "num_predict": 4096,
+        "max_tokens": 16384,
+        "num_predict": 16384,
         "stream": True
     }
     
@@ -325,7 +325,7 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
         payload["reasoning_effort"] = ai_thinking_effort
 
     try:
-        response = requests.post(url, headers=headers, json=payload, stream=True, timeout=60.0)
+        response = requests.post(url, headers=headers, json=payload, stream=True, timeout=600.0)
         
         if response.status_code == 200:
             def character_stream():
@@ -339,11 +339,15 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
                         try:
                             data = json.loads(line_str)
                             if "message" in data and "content" in data["message"]:
-                                yield data["message"]["content"]
+                                content = data["message"]["content"]
+                                if content is not None:
+                                    yield content
                             elif "choices" in data and len(data["choices"]) > 0:
                                 delta = data["choices"][0].get("delta", {})
                                 if "content" in delta:
-                                    yield delta["content"]
+                                    content = delta["content"]
+                                    if content is not None:
+                                        yield content
                         except Exception:
                             pass
 
@@ -351,7 +355,8 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
             def logging_stream_wrapper(gen):
                 full_raw_text = ""
                 for chunk in gen:
-                    full_raw_text += chunk
+                    if chunk is not None:
+                        full_raw_text += str(chunk)
                     yield chunk
                 logger.info(f"\\n\\n[AI Stream Debug] - Full Raw LLM Response:\\n{full_raw_text}\\n\\n")
 

@@ -2,21 +2,20 @@ import logging
 import math
 import uuid
 import json
-from concurrent.futures import ThreadPoolExecutor
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views import View
+import requests
 
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
-from apps.core import bakers_math
+from apps.core.utils import math as bakers_math
 from apps.core import gemma
-from apps.core.views.tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+from apps.core.background_tasks import executor, run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 
 logger = logging.getLogger("grainlab.views")
-executor = ThreadPoolExecutor(max_workers=2)
 
 class SettingsPageView(View):
     def get(self, request):
@@ -74,4 +73,46 @@ class SourdoughCalibrateView(View):
         }
         return render(request, "partials/sourdough_diagnostic_output.html", context)
 
+
+class DiscoverModelsView(View):
+    def get(self, request):
+        """
+        Discovers available models from the provided AI API URL.
+        """
+        api_url = request.GET.get("ai_api_url", "").strip()
+        if not api_url:
+            api_url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
+            
+        current_model = SystemSetting.get_val("ai_model_name", "gemma:12b")
+            
+        # Try to form the models URL
+        models_url = api_url.split("/chat/completions")[0]
+        if models_url.endswith("/v1"):
+            models_url = models_url + "/models"
+        else:
+            models_url = models_url.rstrip("/") + "/v1/models"
+            
+        models = []
+        error_msg = None
+        try:
+            # Short timeout to avoid hanging the UI
+            response = requests.get(models_url, timeout=3)
+            if response.status_code == 200:
+                data = response.json()
+                if "data" in data:
+                    models = [m.get("id") for m in data["data"] if "id" in m]
+                elif "models" in data:
+                    # Some Ollama raw endpoints return {"models": [{"name": ...}]}
+                    models = [m.get("name") for m in data["models"] if "name" in m]
+            else:
+                error_msg = f"API returned status {response.status_code}"
+        except Exception as e:
+            error_msg = f"Connection failed: {str(e)}"
+            
+        context = {
+            "models": models,
+            "error_msg": error_msg,
+            "current_model": current_model,
+        }
+        return render(request, "partials/model_discovery_output.html", context)
 

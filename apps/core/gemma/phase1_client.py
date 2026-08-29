@@ -1,7 +1,7 @@
 import json
 import logging
 from apps.core.gemma.core_client import stream_gemma_api, assemble_system_prompt
-from grainlab.engines.router import ENGINES
+from apps.core.engines.router import ENGINES
 
 logger = logging.getLogger("grainlab.gemma")
 

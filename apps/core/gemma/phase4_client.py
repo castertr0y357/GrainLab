@@ -241,7 +241,7 @@ def generate_process_details(engine_id: str, active_archetype_id: str, recipe_sl
             "Do not include markdown blocks, just raw JSON."
         )
 
-        from grainlab.engines.router import ENGINES
+        from apps.core.engines.router import ENGINES
         engine = ENGINES.get(engine_id)
         supported_tweaks = getattr(engine, "supported_tweaks", []) if engine else []
         tweak_labels = getattr(engine, "tweak_labels", {}) if engine else {}

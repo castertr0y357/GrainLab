@@ -44,9 +44,19 @@
                 </span>
             </div>
 
-            <div class="input-group" style="margin-bottom: 1rem;">
+            <div class="input-group" style="margin-bottom: 1rem;" id="model-input-container">
                 <label for="ai_model_name">Model Identifier</label>
-                <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="width:100%;" value="{{ ai_model_name }}">
+                <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                    <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="flex-grow: 1;" value="{{ ai_model_name }}">
+                    <button type="button" class="nav-btn secondary" 
+                            hx-get="{% url 'discover_models' %}" 
+                            hx-include="#ai_api_url"
+                            hx-target="#model-input-container" 
+                            hx-swap="innerHTML"
+                            style="padding: 0 1rem; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;">
+                        Discover
+                    </button>
+                </div>
             </div>
 
             <!-- Thinking Toggles -->

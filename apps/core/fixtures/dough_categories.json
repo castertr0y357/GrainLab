@@ -1,0 +1,123 @@
+[
+    {
+        "name": "Lean & Crusty",
+        "slug": "lean-crusty",
+        "base_hydration": 0.68,
+        "base_fat": 0.0,
+        "base_sugar": 0.0,
+        "base_salt": 0.02,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Crispy crust and airy interior. Standard sourdough or country bread style."
+    },
+    {
+        "name": "Enriched & Soft",
+        "slug": "enriched-soft",
+        "base_hydration": 0.62,
+        "base_fat": 0.08,
+        "base_sugar": 0.08,
+        "base_salt": 0.02,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Soft crumb enriched with butter, oil, eggs, or milk. Sandwich bread, buns, or brioche style."
+    },
+    {
+        "name": "Alkaline Bath",
+        "slug": "alkaline-bath",
+        "base_hydration": 0.53,
+        "base_fat": 0.02,
+        "base_sugar": 0.02,
+        "base_salt": 0.02,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Doughs boiled in an alkaline bath (e.g. baking soda/lye) to develop character skin shine and texture."
+    },
+    {
+        "name": "Flatbreads & Griddles",
+        "slug": "flatbreads-griddles",
+        "base_hydration": 0.58,
+        "base_fat": 0.05,
+        "base_sugar": 0.0,
+        "base_salt": 0.02,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Flat griddled or quick-baked flatbreads."
+    },
+    {
+        "name": "Quick Breads & Scones",
+        "slug": "quick-breads-scones",
+        "base_hydration": 0.6,
+        "base_fat": 0.1,
+        "base_sugar": 0.15,
+        "base_salt": 0.015,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Leavened with baking powder or baking soda. Quick breads, biscuits, and scones."
+    },
+    {
+        "name": "Cakes & Batters",
+        "slug": "cakes-batters",
+        "base_hydration": 0.9,
+        "base_fat": 0.3,
+        "base_sugar": 0.4,
+        "base_salt": 0.005,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "High moisture content forming pourable batters or foam-emulsified structures."
+    },
+    {
+        "name": "Pastry & Lamination",
+        "slug": "pastry-lamination",
+        "base_hydration": 0.55,
+        "base_fat": 0.1,
+        "base_sugar": 0.05,
+        "base_salt": 0.015,
+        "base_yeast": 0.01,
+        "base_starter": 0.0,
+        "description": "Laminated butter sheets or short pastries (croissants, puff pastry, tart doughs)."
+    },
+    {
+        "name": "Choux Paste",
+        "slug": "choux-paste",
+        "base_hydration": 0.8,
+        "base_fat": 0.4,
+        "base_sugar": 0.0,
+        "base_salt": 0.01,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Cooked flour paste emulsified with eggs for hollow baked pastry shells."
+    },
+    {
+        "name": "Cookies & Shortbread",
+        "slug": "cookies-shortbread",
+        "base_hydration": 0.15,
+        "base_fat": 0.5,
+        "base_sugar": 0.5,
+        "base_salt": 0.005,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Low-moisture baking with high spread factor and tender chew/snap crumb."
+    },
+    {
+        "name": "Fried Doughs",
+        "slug": "fried-doughs",
+        "base_hydration": 0.58,
+        "base_fat": 0.05,
+        "base_sugar": 0.05,
+        "base_salt": 0.015,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Yeasted or chemically leavened doughs fried in hot oil."
+    },
+    {
+        "name": "Fresh Pasta & Noodles",
+        "slug": "fresh-pasta-noodles",
+        "base_hydration": 0.38,
+        "base_fat": 0.0,
+        "base_sugar": 0.0,
+        "base_salt": 0.0,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Dense, compacted, unleavened semolina or wheat noodle dough."
+    }
+]

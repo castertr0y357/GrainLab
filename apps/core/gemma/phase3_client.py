@@ -848,7 +848,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "Do not include markdown blocks, just raw JSON."
     )
     
-    from grainlab.engines import router
+    from apps.core.engines import router
     engine = router.get_engine_for_preset(recipe_slug, category_slug)
     permissible_actions = engine.production_profile.get("permissible_action_types", [])
     system_prompt += f"\n\n🚨 [PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
@@ -896,7 +896,7 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
     Yields JSON string chunks as Server-Sent Events from the LLM.
     """
     import json
-    from grainlab.engines import router
+    from apps.core.engines import router
     from apps.core.gemma.core_client import SystemSetting
     
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"

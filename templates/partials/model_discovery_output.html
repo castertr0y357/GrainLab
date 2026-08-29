@@ -1,0 +1,36 @@
+<label for="ai_model_name">Model Identifier</label>
+<div style="display: flex; gap: 0.5rem; align-items: stretch;">
+    {% if error_msg %}
+        <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="flex-grow: 1; border-color: var(--danger);" value="{{ current_model }}" title="{{ error_msg }}">
+        <button type="button" class="nav-btn secondary" 
+                hx-get="{% url 'discover_models' %}" 
+                hx-include="#ai_api_url"
+                hx-target="#model-input-container" 
+                hx-swap="innerHTML"
+                style="padding: 0 1rem; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--danger); cursor: pointer;"
+                title="{{ error_msg }}">
+            Failed
+        </button>
+    {% else %}
+        {% if models %}
+            <select name="ai_model_name" id="ai_model_name" class="form-select" style="flex-grow: 1;">
+                {% for model in models %}
+                    <option value="{{ model }}" {% if model == current_model %}selected{% endif %}>{{ model }}</option>
+                {% endfor %}
+            </select>
+        {% else %}
+            <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="flex-grow: 1;" value="{{ current_model }}">
+        {% endif %}
+        <button type="button" class="nav-btn secondary" 
+                hx-get="{% url 'discover_models' %}" 
+                hx-include="#ai_api_url"
+                hx-target="#model-input-container" 
+                hx-swap="innerHTML"
+                style="padding: 0 1rem; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--success); cursor: pointer;">
+            Refresh
+        </button>
+    {% endif %}
+</div>
+{% if error_msg %}
+    <span style="font-size: 0.8rem; color: var(--danger);">{{ error_msg }}</span>
+{% endif %}

@@ -1,0 +1,1285 @@
+[
+{
+    "model": "core.doughcategory",
+    "pk": 1,
+    "fields": {
+        "name": "Lean & Crusty",
+        "slug": "lean-crusty",
+        "base_hydration": 0.68,
+        "base_fat": 0.0,
+        "base_sugar": 0.0,
+        "base_salt": 0.02,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Crispy crust and airy interior. Standard sourdough or country bread style."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 2,
+    "fields": {
+        "name": "Enriched & Soft",
+        "slug": "enriched-soft",
+        "base_hydration": 0.62,
+        "base_fat": 0.08,
+        "base_sugar": 0.08,
+        "base_salt": 0.02,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Soft crumb enriched with butter, oil, eggs, or milk. Sandwich bread, buns, or brioche style."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 3,
+    "fields": {
+        "name": "Alkaline Bath",
+        "slug": "alkaline-bath",
+        "base_hydration": 0.53,
+        "base_fat": 0.02,
+        "base_sugar": 0.02,
+        "base_salt": 0.02,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Doughs boiled in an alkaline bath (e.g. baking soda/lye) to develop character skin shine and texture."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 4,
+    "fields": {
+        "name": "Flatbreads & Griddles",
+        "slug": "flatbreads-griddles",
+        "base_hydration": 0.58,
+        "base_fat": 0.05,
+        "base_sugar": 0.0,
+        "base_salt": 0.02,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Flat griddled or quick-baked flatbreads."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 5,
+    "fields": {
+        "name": "Quick Breads & Scones",
+        "slug": "quick-breads-scones",
+        "base_hydration": 0.6,
+        "base_fat": 0.1,
+        "base_sugar": 0.15,
+        "base_salt": 0.015,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Leavened with baking powder or baking soda. Quick breads, biscuits, and scones."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 6,
+    "fields": {
+        "name": "Cakes & Batters",
+        "slug": "cakes-batters",
+        "base_hydration": 0.9,
+        "base_fat": 0.3,
+        "base_sugar": 0.4,
+        "base_salt": 0.005,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "High moisture content forming pourable batters or foam-emulsified structures."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 7,
+    "fields": {
+        "name": "Pastry & Lamination",
+        "slug": "pastry-lamination",
+        "base_hydration": 0.55,
+        "base_fat": 0.1,
+        "base_sugar": 0.05,
+        "base_salt": 0.015,
+        "base_yeast": 0.01,
+        "base_starter": 0.0,
+        "description": "Laminated butter sheets or short pastries (croissants, puff pastry, tart doughs)."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 8,
+    "fields": {
+        "name": "Choux Paste",
+        "slug": "choux-paste",
+        "base_hydration": 0.8,
+        "base_fat": 0.4,
+        "base_sugar": 0.0,
+        "base_salt": 0.01,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Cooked flour paste emulsified with eggs for hollow baked pastry shells."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 9,
+    "fields": {
+        "name": "Cookies & Shortbread",
+        "slug": "cookies-shortbread",
+        "base_hydration": 0.15,
+        "base_fat": 0.5,
+        "base_sugar": 0.5,
+        "base_salt": 0.005,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Low-moisture baking with high spread factor and tender chew/snap crumb."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 10,
+    "fields": {
+        "name": "Fried Doughs",
+        "slug": "fried-doughs",
+        "base_hydration": 0.58,
+        "base_fat": 0.05,
+        "base_sugar": 0.05,
+        "base_salt": 0.015,
+        "base_yeast": 0.015,
+        "base_starter": 0.0,
+        "description": "Yeasted or chemically leavened doughs fried in hot oil."
+    }
+},
+{
+    "model": "core.doughcategory",
+    "pk": 11,
+    "fields": {
+        "name": "Fresh Pasta & Noodles",
+        "slug": "fresh-pasta-noodles",
+        "base_hydration": 0.38,
+        "base_fat": 0.0,
+        "base_sugar": 0.0,
+        "base_salt": 0.0,
+        "base_yeast": 0.0,
+        "base_starter": 0.0,
+        "description": "Dense, compacted, unleavened semolina or wheat noodle dough."
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 1,
+    "fields": {
+        "name": "Standard 9x5 Loaf Pan",
+        "slug": "standard-9x5-pan",
+        "is_portioned": false,
+        "target_weight": 900.0,
+        "unit_weight": 900.0,
+        "default_count": 1,
+        "bake_temp_f": 375,
+        "bake_time_min": 45,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 2,
+    "fields": {
+        "name": "Free-form / Shaped Loaf (Boule)",
+        "slug": "freeform-loaf",
+        "is_portioned": false,
+        "target_weight": 750.0,
+        "unit_weight": 750.0,
+        "default_count": 1,
+        "bake_temp_f": 425,
+        "bake_time_min": 35,
+        "steam_required": true,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 3,
+    "fields": {
+        "name": "Portioned Sheet Pan (Buns/Rolls)",
+        "slug": "portioned-buns-rolls",
+        "is_portioned": true,
+        "target_weight": 1080.0,
+        "unit_weight": 90.0,
+        "default_count": 12,
+        "bake_temp_f": 375,
+        "bake_time_min": 20,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 4,
+    "fields": {
+        "name": "Baguette / Long Loaf",
+        "slug": "baguette-long-loaf",
+        "is_portioned": true,
+        "target_weight": 900.0,
+        "unit_weight": 300.0,
+        "default_count": 3,
+        "bake_temp_f": 450,
+        "bake_time_min": 25,
+        "steam_required": true,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 5,
+    "fields": {
+        "name": "Sheet Pan",
+        "slug": "sheet-pan",
+        "is_portioned": false,
+        "target_weight": 800.0,
+        "unit_weight": 800.0,
+        "default_count": 1,
+        "bake_temp_f": 420,
+        "bake_time_min": 25,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 6,
+    "fields": {
+        "name": "Cast Iron Dutch Oven",
+        "slug": "cast-iron-dutch-oven",
+        "is_portioned": false,
+        "target_weight": 750.0,
+        "unit_weight": 750.0,
+        "default_count": 1,
+        "bake_temp_f": 450,
+        "bake_time_min": 40,
+        "steam_required": true,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 7,
+    "fields": {
+        "name": "Open Baking Stone / Steel",
+        "slug": "open-baking-stone-steel",
+        "is_portioned": false,
+        "target_weight": 750.0,
+        "unit_weight": 750.0,
+        "default_count": 1,
+        "bake_temp_f": 450,
+        "bake_time_min": 35,
+        "steam_required": true,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 8,
+    "fields": {
+        "name": "Pullman Pan (Lidded)",
+        "slug": "pullman-pan-lidded",
+        "is_portioned": false,
+        "target_weight": 900.0,
+        "unit_weight": 900.0,
+        "default_count": 1,
+        "bake_temp_f": 375,
+        "bake_time_min": 45,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 9,
+    "fields": {
+        "name": "Individual Portion Sheet",
+        "slug": "individual-portion-sheet",
+        "is_portioned": true,
+        "target_weight": 1080.0,
+        "unit_weight": 90.0,
+        "default_count": 12,
+        "bake_temp_f": 375,
+        "bake_time_min": 20,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 10,
+    "fields": {
+        "name": "Perforated Baking Sheet",
+        "slug": "perforated-baking-sheet",
+        "is_portioned": true,
+        "target_weight": 880.0,
+        "unit_weight": 110.0,
+        "default_count": 8,
+        "bake_temp_f": 425,
+        "bake_time_min": 20,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 11,
+    "fields": {
+        "name": "Standard Silicon Mat Sheet",
+        "slug": "standard-silicon-mat-sheet",
+        "is_portioned": true,
+        "target_weight": 880.0,
+        "unit_weight": 110.0,
+        "default_count": 8,
+        "bake_temp_f": 425,
+        "bake_time_min": 25,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 12,
+    "fields": {
+        "name": "Heavy Cast-Iron Skillet / Griddle",
+        "slug": "heavy-cast-iron-skillet",
+        "is_portioned": true,
+        "target_weight": 640.0,
+        "unit_weight": 80.0,
+        "default_count": 8,
+        "bake_temp_f": 500,
+        "bake_time_min": 5,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 13,
+    "fields": {
+        "name": "High-Heat Oven Baking Stone",
+        "slug": "high-heat-oven-stone",
+        "is_portioned": true,
+        "target_weight": 640.0,
+        "unit_weight": 80.0,
+        "default_count": 8,
+        "bake_temp_f": 500,
+        "bake_time_min": 5,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 14,
+    "fields": {
+        "name": "Standard 8x4 Loaf Pan",
+        "slug": "standard-8x4-loaf-pan",
+        "is_portioned": false,
+        "target_weight": 800.0,
+        "unit_weight": 800.0,
+        "default_count": 1,
+        "bake_temp_f": 350,
+        "bake_time_min": 50,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 15,
+    "fields": {
+        "name": "Muffin / Cupcake Tin",
+        "slug": "muffin-cupcake-tin",
+        "is_portioned": true,
+        "target_weight": 840.0,
+        "unit_weight": 70.0,
+        "default_count": 12,
+        "bake_temp_f": 375,
+        "bake_time_min": 20,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 16,
+    "fields": {
+        "name": "Individual Wedge Sheet",
+        "slug": "individual-wedge-sheet",
+        "is_portioned": true,
+        "target_weight": 840.0,
+        "unit_weight": 70.0,
+        "default_count": 12,
+        "bake_temp_f": 400,
+        "bake_time_min": 18,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 17,
+    "fields": {
+        "name": "Straight-Sided Round Tin",
+        "slug": "straight-sided-round-tin",
+        "is_portioned": true,
+        "target_weight": 1000.0,
+        "unit_weight": 500.0,
+        "default_count": 2,
+        "bake_temp_f": 350,
+        "bake_time_min": 30,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 18,
+    "fields": {
+        "name": "High-Border Sheet Cake Pan",
+        "slug": "high-border-sheet-pan",
+        "is_portioned": false,
+        "target_weight": 1000.0,
+        "unit_weight": 1000.0,
+        "default_count": 1,
+        "bake_temp_f": 350,
+        "bake_time_min": 25,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 19,
+    "fields": {
+        "name": "Cupcake Liner Matrix",
+        "slug": "cupcake-liner-matrix",
+        "is_portioned": true,
+        "target_weight": 1000.0,
+        "unit_weight": 41.67,
+        "default_count": 24,
+        "bake_temp_f": 350,
+        "bake_time_min": 20,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 20,
+    "fields": {
+        "name": "Perforated Sheet + Air Mat",
+        "slug": "perforated-sheet-air-mat",
+        "is_portioned": true,
+        "target_weight": 540.0,
+        "unit_weight": 90.0,
+        "default_count": 6,
+        "bake_temp_f": 400,
+        "bake_time_min": 20,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 21,
+    "fields": {
+        "name": "Fluted Ring Tart Pan",
+        "slug": "fluted-ring-tart-pan",
+        "is_portioned": false,
+        "target_weight": 400.0,
+        "unit_weight": 400.0,
+        "default_count": 1,
+        "bake_temp_f": 375,
+        "bake_time_min": 25,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 22,
+    "fields": {
+        "name": "Extrusion Piping Sheet / Silpat",
+        "slug": "extrusion-piping-sheet",
+        "is_portioned": true,
+        "target_weight": 540.0,
+        "unit_weight": 45.0,
+        "default_count": 12,
+        "bake_temp_f": 425,
+        "bake_time_min": 20,
+        "steam_required": true,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 23,
+    "fields": {
+        "name": "Heavy Aluminum Cookie Sheet",
+        "slug": "heavy-aluminum-sheet",
+        "is_portioned": true,
+        "target_weight": 960.0,
+        "unit_weight": 40.0,
+        "default_count": 24,
+        "bake_temp_f": 350,
+        "bake_time_min": 12,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 24,
+    "fields": {
+        "name": "Continuous Bar Pan / Single Layer",
+        "slug": "continuous-bar-pan",
+        "is_portioned": false,
+        "target_weight": 960.0,
+        "unit_weight": 960.0,
+        "default_count": 1,
+        "bake_temp_f": 350,
+        "bake_time_min": 25,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 25,
+    "fields": {
+        "name": "High-Volume Cast Iron Oil Vat",
+        "slug": "high-volume-oil-vat",
+        "is_portioned": true,
+        "target_weight": 780.0,
+        "unit_weight": 65.0,
+        "default_count": 12,
+        "bake_temp_f": 375,
+        "bake_time_min": 5,
+        "steam_required": false,
+        "is_enriched_profile": true
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 26,
+    "fields": {
+        "name": "Mechanical Sheeter Sheets / Cutters",
+        "slug": "mechanical-sheeter",
+        "is_portioned": true,
+        "target_weight": 480.0,
+        "unit_weight": 120.0,
+        "default_count": 4,
+        "bake_temp_f": 0,
+        "bake_time_min": 0,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.formfactor",
+    "pk": 27,
+    "fields": {
+        "name": "High-Pressure Extrusion Dies",
+        "slug": "high-pressure-dies",
+        "is_portioned": true,
+        "target_weight": 480.0,
+        "unit_weight": 120.0,
+        "default_count": 4,
+        "bake_temp_f": 0,
+        "bake_time_min": 0,
+        "steam_required": false,
+        "is_enriched_profile": false
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 1,
+    "fields": {
+        "name": "Sourdough Boule",
+        "slug": "sourdough-boule",
+        "dough_category": 1,
+        "form_factor": 6,
+        "hydration_override": 0.72,
+        "fat_override": 0.0,
+        "sugar_override": 0.0,
+        "starter_override": 0.2,
+        "flour_type_default": "whole_wheat",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 10,
+        "classifier_crumb": 75,
+        "accessibility_definition": "Leavened entirely with wild yeast. Features a crisp, dark blistered crust and open, Custardy interior.",
+        "cultural_anchor": "The hallmark of artisanal baking, rooted in traditional French sourdough methods.",
+        "crumb_preview": "Open"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 2,
+    "fields": {
+        "name": "Baguette",
+        "slug": "baguette",
+        "dough_category": 1,
+        "form_factor": 7,
+        "hydration_override": 0.68,
+        "fat_override": 0.0,
+        "sugar_override": 0.0,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 15,
+        "classifier_crumb": 60,
+        "accessibility_definition": "Long, thin crusty loaf, scored deeply to expand and form sharp, golden ears.",
+        "cultural_anchor": "An iconic symbol of French culinary heritage, legally protected under national baking guidelines.",
+        "crumb_preview": "Balanced"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 3,
+    "fields": {
+        "name": "Ciabatta",
+        "slug": "ciabatta",
+        "dough_category": 1,
+        "form_factor": 7,
+        "hydration_override": 0.82,
+        "fat_override": 0.02,
+        "sugar_override": 0.0,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 10,
+        "classifier_crumb": 90,
+        "accessibility_definition": "Extremely high hydration dough yielding a flat, irregular shape resembling a slipper with giant pockets of air.",
+        "cultural_anchor": "Developed in 1982 by a baker in Adria, Italy, to compete with the popularity of French baguettes.",
+        "crumb_preview": "Open"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 4,
+    "fields": {
+        "name": "French Loaf",
+        "slug": "french-loaf",
+        "dough_category": 1,
+        "form_factor": 1,
+        "hydration_override": 0.65,
+        "fat_override": 0.02,
+        "sugar_override": 0.02,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 35,
+        "classifier_crumb": 40,
+        "accessibility_definition": "Softer, everyday style crusty white bread baked in a standard pan to optimize slice sizing.",
+        "cultural_anchor": "A kitchen staple developed for uniform slicing, combining artisan flavor with sandwich utility.",
+        "crumb_preview": "Balanced"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 5,
+    "fields": {
+        "name": "Artisan Pizza",
+        "slug": "artisan-pizza",
+        "dough_category": 1,
+        "form_factor": 7,
+        "hydration_override": 0.7,
+        "fat_override": 0.03,
+        "sugar_override": 0.0,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 20,
+        "classifier_crumb": 70,
+        "accessibility_definition": "Fermented slow and hot, stretched thin by hand to achieve a charred, puffy Neapolitan-style cornicione.",
+        "cultural_anchor": "Deeply tied to Naples, Italy, where the art of pizza making is recognized as UNESCO intangible heritage.",
+        "crumb_preview": "Open"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 6,
+    "fields": {
+        "name": "Everyday Sandwich",
+        "slug": "everyday-sandwich",
+        "dough_category": 2,
+        "form_factor": 1,
+        "hydration_override": 0.62,
+        "fat_override": 0.06,
+        "sugar_override": 0.06,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 70,
+        "classifier_crumb": 20,
+        "accessibility_definition": "Soft, uniform sandwich crumb with low crumbly scatter, structured with mild butter/oil fats and sweet sugar accents.",
+        "cultural_anchor": "Standard modern American pan bread, the baseline of household pantry boxes.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 7,
+    "fields": {
+        "name": "Brioche",
+        "slug": "brioche",
+        "dough_category": 2,
+        "form_factor": 1,
+        "hydration_override": 0.52,
+        "fat_override": 0.25,
+        "sugar_override": 0.12,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "mandatory",
+        "classifier_texture": 95,
+        "classifier_crumb": 15,
+        "accessibility_definition": "Ultra-rich pastry bread loaded with butter and eggs, yielding a tender, paper-thin golden crumb.",
+        "cultural_anchor": "Born in Normandy, France, representing the pinnacle of classic French enrichment techniques.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 8,
+    "fields": {
+        "name": "Challah",
+        "slug": "challah",
+        "dough_category": 2,
+        "form_factor": 9,
+        "hydration_override": 0.5,
+        "fat_override": 0.08,
+        "sugar_override": 0.08,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 80,
+        "classifier_crumb": 15,
+        "accessibility_definition": "Egg-enriched braided loaf, egg-washed to achieve a dark, burnished chestnut shine.",
+        "cultural_anchor": "A traditional Jewish bread baked for the Sabbath and holidays, rich with symbolism.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 9,
+    "fields": {
+        "name": "Cinnamon Rolls",
+        "slug": "cinnamon-rolls",
+        "dough_category": 2,
+        "form_factor": 9,
+        "hydration_override": 0.6,
+        "fat_override": 0.12,
+        "sugar_override": 0.15,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 90,
+        "classifier_crumb": 10,
+        "accessibility_definition": "Rolled scroll shapes enclosing butter-cinnamon-sugar layers, glazed warm with cream cheese frosting.",
+        "cultural_anchor": "Svenska kanelbullar variants, customized across modern cafes globally.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 10,
+    "fields": {
+        "name": "Burger Buns",
+        "slug": "burger-buns",
+        "dough_category": 2,
+        "form_factor": 9,
+        "hydration_override": 0.6,
+        "fat_override": 0.08,
+        "sugar_override": 0.06,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 85,
+        "classifier_crumb": 20,
+        "accessibility_definition": "Portioned soft rounds, topped with sesame, engineered to hold up under hot burger juices without breaking.",
+        "cultural_anchor": "The ultimate partner to the classic American smash burger.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 11,
+    "fields": {
+        "name": "Pretzel",
+        "slug": "pretzel",
+        "dough_category": 3,
+        "form_factor": 10,
+        "hydration_override": 0.52,
+        "fat_override": 0.03,
+        "sugar_override": 0.02,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 20,
+        "classifier_crumb": 10,
+        "accessibility_definition": "Twisted loop shapes or rolls, dipped in a warm lye/baking-soda bath before baking to develop a signature crusty sheen.",
+        "cultural_anchor": "Traditional Bavarian soft bread, heavily associated with German beer halls and seasonal festivals.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 12,
+    "fields": {
+        "name": "Bagel",
+        "slug": "bagel",
+        "dough_category": 3,
+        "form_factor": 10,
+        "hydration_override": 0.55,
+        "fat_override": 0.0,
+        "sugar_override": 0.02,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 15,
+        "classifier_crumb": 15,
+        "accessibility_definition": "Boiled in a hot alkaline bath before baking to gelatinize surface starches, locking in crust crunch and chewiness.",
+        "cultural_anchor": "Traditional Jewish bakery bread, famously boiled and baked, originating in Poland.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 13,
+    "fields": {
+        "name": "Naan",
+        "slug": "naan",
+        "dough_category": 4,
+        "form_factor": 12,
+        "hydration_override": 0.6,
+        "fat_override": 0.05,
+        "sugar_override": 0.02,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 65,
+        "classifier_crumb": 35,
+        "accessibility_definition": "Fast hot-pan skillet bake. Best cooked in a screaming hot cast-iron skillet to mimic a tandoor oven.",
+        "cultural_anchor": "Classic South Asian flatbread, traditionally brushed with ghee and served alongside curries.",
+        "crumb_preview": "Balanced"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 14,
+    "fields": {
+        "name": "Southern Buttermilk Biscuits",
+        "slug": "biscuits",
+        "dough_category": 5,
+        "form_factor": 16,
+        "hydration_override": 0.6,
+        "fat_override": 0.12,
+        "sugar_override": 0.0,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 55,
+        "classifier_crumb": 30,
+        "accessibility_definition": "Tender layered biscuits, leavened chemically, baked hot for high flake growth.",
+        "cultural_anchor": "The soul of Southern breakfast cooking.",
+        "crumb_preview": "Balanced"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 15,
+    "fields": {
+        "name": "Yellow Layer Cake",
+        "slug": "yellow-cake",
+        "dough_category": 6,
+        "form_factor": 17,
+        "hydration_override": 0.85,
+        "fat_override": 0.25,
+        "sugar_override": 0.35,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 90,
+        "classifier_crumb": 10,
+        "accessibility_definition": "Emulsified butter batter baking, soft structure setting rapidly in oven.",
+        "cultural_anchor": "Traditional birthday slice standard.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 16,
+    "fields": {
+        "name": "Classic Croissants",
+        "slug": "croissants",
+        "dough_category": 7,
+        "form_factor": 20,
+        "hydration_override": 0.55,
+        "fat_override": 0.1,
+        "sugar_override": 0.05,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 50,
+        "classifier_crumb": 80,
+        "accessibility_definition": "Laminated croissant dough sheets with single folds, high steam puffing rise.",
+        "cultural_anchor": "The pride of Parisian viennoiserie.",
+        "crumb_preview": "Open"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 17,
+    "fields": {
+        "name": "Chocolate ╔clairs",
+        "slug": "eclairs",
+        "dough_category": 8,
+        "form_factor": 22,
+        "hydration_override": 0.8,
+        "fat_override": 0.4,
+        "sugar_override": 0.0,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 30,
+        "classifier_crumb": 90,
+        "accessibility_definition": "Pre-gelatinized starch paste, egg-integrated V-stage, hot steam puffing.",
+        "cultural_anchor": "High-end French patisserie log shells.",
+        "crumb_preview": "Open"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 18,
+    "fields": {
+        "name": "Chewy Chocolate Chip Cookies",
+        "slug": "cookies",
+        "dough_category": 9,
+        "form_factor": 23,
+        "hydration_override": 0.15,
+        "fat_override": 0.45,
+        "sugar_override": 0.5,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 80,
+        "classifier_crumb": 5,
+        "accessibility_definition": "Low moisture baking with high spread coefficient, chewy center, crisp edges.",
+        "cultural_anchor": "The ultimate home-baked classic cookie.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 19,
+    "fields": {
+        "name": "Yeast-Raised Donuts",
+        "slug": "donuts",
+        "dough_category": 10,
+        "form_factor": 25,
+        "hydration_override": 0.58,
+        "fat_override": 0.06,
+        "sugar_override": 0.06,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 75,
+        "classifier_crumb": 25,
+        "accessibility_definition": "Yeasted dough fried in hot oil, flipping at intervals to rise light.",
+        "cultural_anchor": "The corner donut shop benchmark.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.breadpreset",
+    "pk": 20,
+    "fields": {
+        "name": "Fresh Egg Tagliatelle",
+        "slug": "tagliatelle",
+        "dough_category": 11,
+        "form_factor": 26,
+        "hydration_override": 0.38,
+        "fat_override": 0.0,
+        "sugar_override": 0.0,
+        "starter_override": 0.0,
+        "flour_type_default": "all_purpose",
+        "flour_maturity_default": "matured",
+        "sifting_requirement": "optional",
+        "classifier_texture": 5,
+        "classifier_crumb": 5,
+        "accessibility_definition": "Stiff unleavened semolina compacted dough, run through mechanical roller setting passes.",
+        "cultural_anchor": "Emilian traditional egg pasta.",
+        "crumb_preview": "Even"
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "190b0477-18e5-4f6c-ae67-5b3102e96e9a",
+    "fields": {
+        "deleted_at": null,
+        "name": "Spelt Wheat (Ancient)",
+        "protein_content": 11.5,
+        "hardness": "ancient",
+        "moisture_absorption_coef": 1.05,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "Ancient hulled wheat species. Very extensible but weak gluten strength."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "30027933-af68-40a4-ba4e-8e88c7008371",
+    "fields": {
+        "deleted_at": null,
+        "name": "Hard Red Winter Wheat",
+        "protein_content": 13.0,
+        "hardness": "hard",
+        "moisture_absorption_coef": 1.0,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "Moderate-high protein hard wheat with standard gluten elasticity and extensibility."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "44b3548c-eefc-4f44-9c2a-1d6395e272a0",
+    "fields": {
+        "deleted_at": null,
+        "name": "Hard White Wheat",
+        "protein_content": 12.5,
+        "hardness": "hard",
+        "moisture_absorption_coef": 1.0,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "Mild, light-colored hard wheat."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "581cfd48-4a68-49b5-a00a-fb880be93513",
+    "fields": {
+        "deleted_at": null,
+        "name": "Kamut (Ancient)",
+        "protein_content": 13.5,
+        "hardness": "ancient",
+        "moisture_absorption_coef": 1.06,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "Ancient Khorasan wheat. High protein content, extensible gluten structure."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "643fda90-671a-4098-a124-0c3e1472ef0f",
+    "fields": {
+        "deleted_at": null,
+        "name": "Rye (Ancient)",
+        "protein_content": 10.0,
+        "hardness": "ancient",
+        "moisture_absorption_coef": 1.08,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "Ancient rye grass grain. High pentosan concentration and weak gluten strength."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "980c5b68-2668-463c-b5ff-95b16271efbf",
+    "fields": {
+        "deleted_at": null,
+        "name": "Hard Red Spring Wheat",
+        "protein_content": 14.5,
+        "hardness": "hard",
+        "moisture_absorption_coef": 1.02,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "High-protein hard wheat with strong, elastic gluten structure."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "c94655b0-d4f3-41c3-83b2-008b11fa96dd",
+    "fields": {
+        "deleted_at": null,
+        "name": "Einkorn (Ancient)",
+        "protein_content": 12.5,
+        "hardness": "ancient",
+        "moisture_absorption_coef": 1.04,
+        "is_active": false,
+        "ai_analyzed": true,
+        "notes": "Ancient cultivated wheat species. Weaker gluten structure."
+    }
+},
+{
+    "model": "core.wheatberry",
+    "pk": "f4d79840-5851-4f4c-930c-b640682eb77b",
+    "fields": {
+        "deleted_at": null,
+        "name": "Soft White Wheat",
+        "protein_content": 9.5,
+        "hardness": "soft",
+        "moisture_absorption_coef": 0.97,
+        "is_active": true,
+        "ai_analyzed": true,
+        "notes": "Low-protein soft wheat with weak, tender gluten structure."
+    }
+},
+{
+    "model": "core.equipment",
+    "pk": "678b4f0d-b5d8-4615-8091-9a373da9ea76",
+    "fields": {
+        "deleted_at": null,
+        "name": "KoMo Classic Mill",
+        "equipment_type": "mill",
+        "friction_heat_factor": 0.0,
+        "ai_analyzed": true,
+        "notes": "Stoneburr grain mill, 360W motor. Beautiful solid wood casing.",
+        "details": {
+            "capacity_grams": 1000
+        }
+    }
+},
+{
+    "model": "core.equipment",
+    "pk": "6d8159fb-761f-4b7f-84e4-3407c095c705",
+    "fields": {
+        "deleted_at": null,
+        "name": "KitchenAid Professional 600",
+        "equipment_type": "mixer",
+        "friction_heat_factor": 10.0,
+        "ai_analyzed": true,
+        "notes": "Planetary stand mixer. High speed mixing can introduce significant heat to dough.",
+        "details": {
+            "capacity_grams": 1000,
+            "recommended_speed": "Speed 2"
+        }
+    }
+},
+{
+    "model": "core.equipment",
+    "pk": "ae25ed5f-ff94-4201-88bc-826410802c1e",
+    "fields": {
+        "deleted_at": null,
+        "name": "Ankarsrum Assistant Mixer",
+        "equipment_type": "mixer",
+        "friction_heat_factor": 6.0,
+        "ai_analyzed": true,
+        "notes": "Rotating bowl spiral mixer. Low friction design, preserves dough temperature well.",
+        "details": {
+            "capacity_grams": 2500,
+            "recommended_speed": "Medium low"
+        }
+    }
+},
+{
+    "model": "core.equipment",
+    "pk": "b84faa2e-e181-493f-8fa9-cb01142832c3",
+    "fields": {
+        "deleted_at": null,
+        "name": "Hand Kneading (Manual)",
+        "equipment_type": "mixer",
+        "friction_heat_factor": 2.0,
+        "ai_analyzed": true,
+        "notes": "Human-powered mixing. Low friction, relies on hand stretches to build structure.",
+        "details": {
+            "capacity_grams": 5000
+        }
+    }
+},
+{
+    "model": "core.equipment",
+    "pk": "cc790dd6-202c-4e63-a0e6-10fb489270cc",
+    "fields": {
+        "deleted_at": null,
+        "name": "Mockmill 200 Grain Mill",
+        "equipment_type": "mill",
+        "friction_heat_factor": 0.0,
+        "ai_analyzed": true,
+        "notes": "Stoneburr grain mill, 200W motor. Fast throughput with minimum heat transfer.",
+        "details": {
+            "capacity_grams": 500,
+            "extraction_rate_pct": 100
+        }
+    }
+},
+{
+    "model": "core.equipment",
+    "pk": "f11cad73-206c-49c6-a221-e4b12bbc8da2",
+    "fields": {
+        "deleted_at": null,
+        "name": "Mockmill Lino 100",
+        "equipment_type": "mill",
+        "friction_heat_factor": 0.0,
+        "ai_analyzed": true,
+        "notes": "Stoneburr grain mill, 200W motor. Fast throughput with minimum heat transfer.",
+        "details": {
+            "capacity_grams": 500,
+            "extraction_rate_pct": 100
+        }
+    }
+},
+{
+    "model": "core.systemsetting",
+    "pk": 1,
+    "fields": {
+        "key": "ai_enabled",
+        "value": "True"
+    }
+},
+{
+    "model": "core.systemsetting",
+    "pk": 2,
+    "fields": {
+        "key": "ai_api_url",
+        "value": "http://host.docker.internal:11434/v1"
+    }
+},
+{
+    "model": "core.systemsetting",
+    "pk": 3,
+    "fields": {
+        "key": "ai_model_name",
+        "value": "gemma4:e4b"
+    }
+},
+{
+    "model": "core.systemsetting",
+    "pk": 4,
+    "fields": {
+        "key": "ai_thinking_enabled",
+        "value": "True"
+    }
+},
+{
+    "model": "core.systemsetting",
+    "pk": 5,
+    "fields": {
+        "key": "ai_thinking_effort",
+        "value": "medium"
+    }
+}
+]

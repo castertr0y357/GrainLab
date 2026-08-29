@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views import View
-from apps.core.services.calculator_session import get_calculator_state, update_calculator_state
-from apps.core.services.calculator_session import get_engines_archetypes_json, get_engines_ff_json
+from apps.core.services.calculator.session import get_calculator_state, update_calculator_state
+from apps.core.services.calculator.session import get_engines_archetypes_json, get_engines_ff_json
 from apps.core.models import Equipment, WheatBerry
 import json
 

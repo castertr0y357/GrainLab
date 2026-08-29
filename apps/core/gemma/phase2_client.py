@@ -25,7 +25,7 @@ def get_grain_advisory_ai(
     Evaluates raw kitchen inventory against target archetype mechanics using the dynamic pipeline.
     """
     from apps.core.models import WheatBerry, BreadPreset
-    from grainlab.engines import router
+    from apps.core.engines import router
     import json
     
     preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
@@ -318,7 +318,7 @@ def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset
     using the active sub-engine mechanics.
     """
     from apps.core.models import WheatBerry, BreadPreset
-    from grainlab.engines import router
+    from apps.core.engines import router
  
     preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
     if not category_slug and preset and preset.dough_category:
@@ -347,7 +347,7 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     import json
     import re
     from apps.core.models import BreadPreset, WheatBerry
-    from grainlab.engines import router
+    from apps.core.engines import router
     
     preset = BreadPreset.objects.filter(slug=preset_slug).first()
     preset_name = preset.name if preset else (preset_slug.replace("-", " ").title() if preset_slug else "Custom / Manual Blend")
@@ -594,7 +594,7 @@ def stream_grain_evaluations(
     Yields evaluation objects (grains, mills, and sifters) individually using a flat schema.
     """
     from apps.core.models import WheatBerry, BreadPreset, Equipment
-    from grainlab.engines import router
+    from apps.core.engines import router
     from apps.core.gemma.core_client import stream_gemma_api, assemble_system_prompt
     import json
 

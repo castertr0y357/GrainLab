@@ -196,3 +196,5 @@
 - [x] Add a static "Directions" block to the final recipe page to display step-by-step instructions outside of Countertop mode.
 - [x] Clean up Phase 4 sidebar by removing deprecated Substitution and Sensory Benchmark cards, and dynamically hide bread-specific Thermal Profile metrics (DDT/Probe Temp) for non-yeasted bakes.
 
+- [x] Refactored monolithic tests.py into an apps/core/tests/ package.
+- [x] Refactored seed_db.py data into JSON fixtures.

@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from apps.core.models import SavedRecipe
-from apps.core.services.calculator_session import get_calculator_state, update_calculator_state, get_engines_archetypes_json, get_engines_ff_json
-from apps.core.services.calculation import calculate_final_recipe
+from apps.core.services.calculator.session import get_calculator_state, update_calculator_state, get_engines_archetypes_json, get_engines_ff_json
+from apps.core.services.calculator.calculation import calculate_final_recipe
 
 def save_recipe(request):
     if request.method == "POST":

@@ -10,8 +10,8 @@ import shutil
 from apps.core.gemma.core_client import CATEGORY_TO_ENGINE
 from apps.core.gemma.phase3_client import generate_recipe_details, generate_recipe_percentages
 from apps.core.gemma.phase4_client import generate_process_details
-from apps.core.services.calculation import calculate_final_recipe
-from grainlab.engines.router import ENGINES
+from apps.core.services.calculator.calculation import calculate_final_recipe
+from apps.core.engines.router import ENGINES
 
 logger = logging.getLogger('grainlab.gemma')
 
