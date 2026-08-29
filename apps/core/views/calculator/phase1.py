@@ -11,7 +11,6 @@ class Phase1View(View):
         context = {
             'categories': DoughCategory.objects.all(),
             'form_factors': FormFactor.objects.all(),
-            'presets': BreadPreset.objects.all(),
             'state': state,
         }
         return render(request, 'calculator/phase1.html', context)

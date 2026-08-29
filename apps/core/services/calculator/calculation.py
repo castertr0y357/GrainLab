@@ -1,13 +1,15 @@
 import logging
 import math
 import json
-from apps.core.background_tasks import executor
+
 
 from django.shortcuts import get_object_or_404
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment
 from apps.core.utils import math as bakers_math
 from apps.core import gemma
 from apps.core.engines import router
+from django.db.models import F, FloatField
+from django.db.models.functions import Power, Sqrt
 
 logger = logging.getLogger("grainlab.services")
 
@@ -321,18 +323,13 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         raise e
 
     # 4. Classifier Engine: Euclidean distance match
-    all_presets = BreadPreset.objects.select_related('dough_category', 'form_factor').all()
-    classified_preset = None
-    min_distance = float('inf')
-
-    for p in all_presets:
-        dist = math.sqrt(
-            (p.classifier_texture - texture_score) ** 2 +
-            (p.classifier_crumb - crumb_score) ** 2
+    classified_preset = BreadPreset.objects.annotate(
+        distance=Sqrt(
+            Power(F('classifier_texture') - texture_score, 2) +
+            Power(F('classifier_crumb') - crumb_score, 2),
+            output_field=FloatField()
         )
-        if dist < min_distance:
-            min_distance = dist
-            classified_preset = p
+    ).order_by('distance').first()
 
     # 5. Fetch AI Diagnostics (Sensory benchmark & pitfalls)
     eff_hyd = recipe["effective_hydration_pct"] / 100.0

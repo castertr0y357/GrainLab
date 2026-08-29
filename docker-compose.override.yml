@@ -5,3 +5,7 @@ services:
     volumes:
       - .:/app
     command: python manage.py runserver 0.0.0.0:${LOCAL_PORT:-8000}
+
+  celery:
+    volumes:
+      - .:/app

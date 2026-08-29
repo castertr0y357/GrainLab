@@ -11,6 +11,12 @@ services:
     networks:
       - app_network
 
+  redis:
+    image: redis:alpine
+    restart: always
+    networks:
+      - app_network
+
   web:
     build: .
     environment:
@@ -18,8 +24,27 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
       - MOCK_MODE=${MOCK_MODE}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - db
+      - redis
+    networks:
+      - app_network
+
+  celery:
+    build: .
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-grainlab_user}:${DB_PASSWORD}@db:${DB_PORT:-5432}/${DB_NAME:-grainlab}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - MOCK_MODE=${MOCK_MODE}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery -A grainlab worker -l info
+    depends_on:
+      - db
+      - redis
     networks:
       - app_network
 

@@ -1,4 +1,4 @@
-from .executor import executor
+
 from .base import run_async_task
 from .ai_analysis import (
     ai_analyze_wheat_berry_task,

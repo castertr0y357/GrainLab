@@ -13,7 +13,7 @@ import requests
 from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
 from apps.core.utils import math as bakers_math
 from apps.core import gemma
-from apps.core.background_tasks import executor, run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+from apps.core.background_tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
 
 logger = logging.getLogger("grainlab.views")
 
