@@ -10,6 +10,32 @@ class PastaEngine(BaseEngine):
     gluten_behavior = "High Plastic Deformation, Zero Leavening. Requires an ultra-dense, low-hydration network that maintains a firm, snap-resistant 'al dente' structural bite when boiled."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes rich egg, nutty semolina, or distinctive alkaline noodle mineral complexities."
     tannin_sensitive = False
+    variations = {
+        "delicate_silky": {
+            "label": "Delicate & Silky (Egg Pasta)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "optimal_protein_window": "8.5% - 10.0%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected DELICATE & SILKY. This is ideal for ravioli or thin ribbons. "
+                "Rely on low-protein soft wheats (like Type 00 or Soft White Wheat) to create a tender, melt-in-the-mouth "
+                "texture. Rely heavily on whole eggs or egg yolks for hydration and structure."
+            )
+        },
+        "sturdy_chewy": {
+            "label": "Sturdy & Chewy (Extruded/Rustic)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "highly_elastic_rigid",
+                "optimal_protein_window": "12.0% - 14.0%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected STURDY & CHEWY. This pasta must hold up to heavy sauces and boiling. "
+                "Favor extremely hard, high-protein grains (like Durum / Semolina or Hard Red Wheat). "
+                "Limit egg usage and favor water to develop a rigid gluten structure with 'al dente' bite."
+            )
+        }
+    }
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "mechanical_compaction",

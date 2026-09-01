@@ -309,23 +309,7 @@ def stream_process_details(engine_id: str, active_archetype_id: str, recipe_slug
             "Do not include markdown blocks, just the raw JSON array."
         )
     else:
-        system_prompt += (
-            "Provide the top recommended option for all 5 categories: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
-            "Adapt the interpretation of each category to the specific recipe type. For example, for cookies or quick breads, 'proofing_environment' might refer to resting or chilling the dough, 'baking_vessel' refers to the baking sheet or pan, and 'shaping_style' refers to scooping, rolling, or depositing.\n"
-            "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
-            "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
-            "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
-            "Your response MUST be a pure JSON array matching this schema exactly:\n"
-            "[\n"
-            "  { \"type\": \"process\", \"category\": \"mixing_method\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-            "  { \"type\": \"process\", \"category\": \"dough_handling\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-            "  { \"type\": \"process\", \"category\": \"proofing_environment\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-            "  { \"type\": \"process\", \"category\": \"baking_vessel\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-            "  { \"type\": \"process\", \"category\": \"shaping_style\", \"name\": \"string\", \"explanation\": \"string\" },\n"
-            "  { \"type\": \"slider\", \"tweak_id\": \"string\", \"explanation\": \"string (HTML formatted)\", \"recommended_value\": 0 }\n"
-            "]\n"
-            "Do not include markdown blocks, just the raw JSON array."
-        )
+        raise ValueError(f"Invalid target '{target}'. Must be 'processes' or 'tweaks'.")
 
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
@@ -444,7 +428,6 @@ def generate_process_alternatives(engine_id: str, active_archetype_id: str, reci
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_process_alternatives: {str(e)}")
-
     return None
 
 def stream_recipe_tweaks(engine_id: str, active_archetype_id: str, recipe_name: str, current_ingredients: list, applied_tweaks_history: list):
@@ -509,7 +492,7 @@ def generate_tweak_application_state(engine_id, active_archetype_id, recipe_slug
         "  \"target_mixing_method\": \"stand_mixer\",\n"
         "  \"target_flour_blend\": {\"soft_white_wheat\": 75, \"spelt\": 20, \"rye\": 5}\n"
         "}\n"
-        "If modifying the flour blend (rebalancing grain ratios), provide the new `target_flour_blend` mapping. Make sure they add up to 100%. "
+        "If modifying the flour blend (rebalancing grain ratios), provide the new `target_flour_blend` mapping. Provide relative proportional weights for the blend; the backend will automatically normalize these values to 100%. "
         "If a base parameter like hydration or fat doesn't change, omit it from the root object. Omit empty categories."
     )
     user_prompt = json.dumps({
@@ -519,4 +502,13 @@ def generate_tweak_application_state(engine_id, active_archetype_id, recipe_slug
         "current_state": current_state
     })
     from apps.core.gemma.core_client import call_gemma_api
-    return call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "percentages"])
+    result = call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "percentages"])
+    if result:
+        blend = result.get("target_flour_blend")
+        if isinstance(blend, dict) and len(blend) > 0:
+            total_weight = sum(blend.values())
+            if total_weight > 0:
+                normalized_blend = {k: round((v / total_weight) * 100, 1) for k, v in blend.items()}
+                result["target_flour_blend"] = normalized_blend
+        return result
+    return {}

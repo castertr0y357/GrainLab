@@ -14,6 +14,32 @@ class BatterEngine(BaseEngine):
     tweak_labels = {
         "enrichment": ["Dense / Fudgy", "Light / Spongy"]
     }
+    variations = {
+        "light_airy": {
+            "label": "Light & Airy (Sponge)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "optimal_protein_window": "7.0% - 8.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected LIGHT & AIRY. This is a sponge or chiffon style batter. "
+                "Focus heavily on mechanical aeration (whipped eggs) and use ultra-low protein soft wheats "
+                "(like Pastry or Cake flour). Gluten development must be avoided entirely to keep the crumb delicate."
+            )
+        },
+        "dense_rich": {
+            "label": "Dense & Rich (Pound/Fudge)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "low_extensible",
+                "optimal_protein_window": "9.0% - 10.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected DENSE & RICH. This is a pound cake or fudgy brownie style batter. "
+                "The crumb should be tight and heavy. You can use slightly higher protein soft wheats or all-purpose "
+                "to support the heavy ratio of fats (butter/oil) and sugars."
+            )
+        }
+    }
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
@@ -241,7 +267,7 @@ class BatterEngine(BaseEngine):
         return "This is a batter. Recommend a specific emulsification style (e.g. whipped egg foam, creamed butter) to aerate the dough, and ensure zero yeast is used. This is a liquid batter (pancakes, waffles, cakes). Requires chemical leaveners, high hydration (milk/buttermilk), and binders (eggs). Adjust sweeteners based on whether it is a sweet batter (pancakes, cakes) or a savory batter."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like berries or chips), use true baker's percentages (flour = 100%). For liquid batters, these typically range from 20.0 to 80.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like berries or chips), use true baker's percentages (flour = 100%). For liquid batters, these typically range from 20.0 to 80.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0%."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         preset_slug = kwargs.get("preset_slug") or ""

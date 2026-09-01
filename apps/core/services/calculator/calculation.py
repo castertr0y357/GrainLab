@@ -284,6 +284,8 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         elif not isinstance(flour_blend, dict):
             flour_blend = {}
 
+        inferred_flavor_profile = state.get("inferred_flavor_profile", "neutral")
+
         recipe = bakers_math.calculate_recipe(
             base_hydration=hydration_pct,
             base_fat=fat_pct,
@@ -312,7 +314,8 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             secondary_leaveners=secondary_leaveners,
             secondary_additives=secondary_additives,
             flavor_inclusions=flavor_inclusions,
-            flour_blend=flour_blend
+            flour_blend=flour_blend,
+            inferred_flavor_profile=inferred_flavor_profile
         )
 
         if ai_enabled and substitution and 'offset' in locals() and offset:

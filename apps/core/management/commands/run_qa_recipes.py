@@ -213,7 +213,7 @@ class Command(BaseCommand):
         # We want to run across all engines and all archetypes, but only 1 recipe per archetype
         categories_to_run = list(CATEGORY_TO_ENGINE.items())
         if test_mode:
-            categories_to_run = [(k, v) for k, v in categories_to_run if v == "cookie"]
+            categories_to_run = [(k, v) for k, v in categories_to_run if v in ("cookie", "pan")]
 
         for category_slug, engine_id in categories_to_run:
             engine_instance = ENGINES.get(engine_id)
@@ -223,48 +223,92 @@ class Command(BaseCommand):
 
             archetypes_dict = getattr(engine_instance, "archetypes", {})
             archetype_ids = list(archetypes_dict.keys())
+            if test_mode:
+                if engine_id == "cookie":
+                    archetype_ids = ["drop_cookie"]
+                elif engine_id == "pan":
+                    archetype_ids = ["tin_loaf"]
+            variations_dict = getattr(engine_instance, "variations", {})
+            variation_ids = list(variations_dict.keys()) if variations_dict else [None]
 
             for archetype_id in archetype_ids:
-                if archetype_id != "drop_cookie":
-                    continue
-                    
-                tests_to_run = [{"name": f"Classic Chocolate Chip Cookie (Run {i})", "type": f"sweet_run_{i}"} for i in range(1, 3)]
+                tests_to_run = [
+                    {"name": f"{archetype_id.replace('_', ' ').title()} - Savory", "type": "savory"},
+                    {"name": f"{archetype_id.replace('_', ' ').title()} - Sweet", "type": "sweet"},
+                    {"name": f"{archetype_id.replace('_', ' ').title()} - Flourless Savory", "type": "flourless_savory"},
+                    {"name": f"{archetype_id.replace('_', ' ').title()} - Flourless Sweet", "type": "flourless_sweet"},
+                ]
 
                 for test in tests_to_run:
-                    self.stdout.write(f"Running engine '{engine_id}', archetype '{archetype_id}', profile: '{test['name']}'...")
-                    
-                    try:
-                        current_grains = [] if 'flourless' in test['type'] else dummy_grains
-                        run_name = f"{test['name']} (Run {int(time.time())})"
-                        recipe_data = generate_recipe_details(
-                            engine_id=engine_id,
-                            active_archetype_id=archetype_id,
-                            recipe_slug=f"qa-test-{engine_id}",
-                            recipe_name=run_name,
-                            selected_grains=json.dumps(current_grains) if isinstance(current_grains, list) else current_grains,
-                            category_slug=category_slug
-                        )
-
-                        flat_secondary = []
-                        for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
-                            if isinstance(items, list):
-                                flat_secondary.extend([i.get("name") for i in items])
-                            else:
-                                flat_secondary.append(items.get("name"))
-                                
-                        if "flavor_inclusions" in recipe_data:
-                            flat_secondary.extend([i.get("name") for i in recipe_data["flavor_inclusions"]])
-                            
-                        flat_secondary = [name for name in flat_secondary if name]
+                    for var_id in variation_ids:
+                        var_label = variations_dict[var_id]['label'] if var_id else "Default"
+                        test_display_name = f"{test['name']} [{var_label}]" if var_id else test['name']
+                        self.stdout.write(f"Running engine '{engine_id}', archetype '{archetype_id}', profile: '{test_display_name}'...")
                         
-                        if flat_secondary:
-                            percentages_data = generate_recipe_percentages(
+                        try:
+                            qa_grain_evals_md = ""
+                            if 'flourless' in test['type']:
+                                current_grains = []
+                            else:
+                                from apps.core.models import WheatBerry
+                                from apps.core.gemma.phase3_client import evaluate_grains_batch
+                                active_berries = list(WheatBerry.objects.filter(is_active=True))
+                                if active_berries:
+                                    grain_evals = evaluate_grains_batch(active_berries, engine_instance, preset_slug=var_id, active_archetype_id=archetype_id)
+                                    
+                                    rec_list = [wb.name for wb in active_berries if grain_evals.get(str(wb.id), {}).get("tier") == "recommended"]
+                                    sub_list = [wb.name for wb in active_berries if grain_evals.get(str(wb.id), {}).get("tier") == "sub-optimal"]
+                                    not_rec_list = [wb.name for wb in active_berries if grain_evals.get(str(wb.id), {}).get("tier") == "not-recommended"]
+                                    
+                                    qa_grain_evals_md = "\n    ## Grain Recommendations (Phase 2)\n"
+                                    qa_grain_evals_md += f"    - **Recommended**: {', '.join(rec_list) if rec_list else 'None'}\n"
+                                    qa_grain_evals_md += f"    - **Sub-optimal**: {', '.join(sub_list) if sub_list else 'None'}\n"
+                                    qa_grain_evals_md += f"    - **Not Recommended**: {', '.join(not_rec_list) if not_rec_list else 'None'}\n\n"
+                                    
+                                    recommended = [wb for wb in active_berries if grain_evals.get(str(wb.id), {}).get("tier") == "recommended"]
+                                    if not recommended:
+                                        recommended = [wb for wb in active_berries if grain_evals.get(str(wb.id), {}).get("tier") == "sub-optimal"]
+                                    picked = recommended[:2]
+                                    current_grains = [{"id": str(wb.id), "name": wb.name} for wb in picked]
+                                else:
+                                    current_grains = json.loads(dummy_grains)
+                                
+                                if not current_grains:
+                                    current_grains = json.loads(dummy_grains)
+
+                            run_name = f"{test_display_name} (Run {int(time.time())})"
+                            effective_recipe_slug = var_id if var_id else f"qa-test-{engine_id}"
+                            
+                            recipe_data = generate_recipe_details(
                                 engine_id=engine_id,
                                 active_archetype_id=archetype_id,
-                                recipe_slug=f"qa-test-{engine_id}",
+                                recipe_slug=effective_recipe_slug,
                                 recipe_name=run_name,
-                                secondary_ingredients=flat_secondary
+                                selected_grains=json.dumps(current_grains) if isinstance(current_grains, list) else current_grains,
+                                category_slug=category_slug
                             )
+
+                            flat_secondary = []
+                            for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
+                                if isinstance(items, list):
+                                    flat_secondary.extend([i.get("name") for i in items])
+                                else:
+                                    flat_secondary.append(items.get("name"))
+                                    
+                            if "flavor_inclusions" in recipe_data:
+                                flat_secondary.extend([i.get("name") for i in recipe_data["flavor_inclusions"]])
+                                
+                            flat_secondary = [name for name in flat_secondary if name]
+                            
+                            if flat_secondary:
+                                percentages_data = generate_recipe_percentages(
+                                    engine_id=engine_id,
+                                    active_archetype_id=archetype_id,
+                                    recipe_slug=effective_recipe_slug,
+                                    recipe_name=run_name,
+                                    secondary_ingredients=flat_secondary,
+                                    inferred_flavor_profile=recipe_data.get("inferred_flavor_profile", "neutral")
+                                )
                             if percentages_data and "percentages" in percentages_data:
                                 for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
                                     if isinstance(items, list):
@@ -285,204 +329,214 @@ class Command(BaseCommand):
                                         recipe_data[target_key] = percentages_data[target_key]
 
 
-                        active_arch = engine_instance.archetypes.get(archetype_id, {})
-                        ff_slug = active_arch.get("default_form_factor")
-                        if not ff_slug:
-                            ff_dict = getattr(engine_instance, "permissible_form_factors", {})
-                            ff_slug = next(iter(ff_dict.keys())) if ff_dict else None
-                        try:
-                            # Mock the state from Phase 1/2/3 to pass to Phase 4
-                            mock_state = {
-                                "selected_master": category_slug,
-                                "preset_slug": archetype_id,
+                            active_arch = engine_instance.archetypes.get(archetype_id, {})
+                            ff_slug = active_arch.get("default_form_factor")
+                            if not ff_slug:
+                                ff_dict = getattr(engine_instance, "permissible_form_factors", {})
+                                ff_slug = next(iter(ff_dict.keys())) if ff_dict else None
+                            try:
+                                # Mock the state from Phase 1/2/3 to pass to Phase 4
+                                mock_state = {
+                                    "selected_master": category_slug,
+                                    "preset_slug": archetype_id,
 
-                                "global_ai_enabled": True,
-                                "recipe_name": run_name,
-                                "active_berries": current_grains if isinstance(current_grains, list) else json.loads(current_grains),
-                                "secondary_ingredients": json.dumps(recipe_data.get('secondary_ingredients', {})),
-                                "dynamic_directions": json.dumps(recipe_data.get('dynamic_directions', {}))
-                            }
-                            
-                            # Phase 4
-                            final_recipe = calculate_final_recipe(mock_state, run_ai=True)
-                            bake_temp = final_recipe.get("bake_temp_f", 400)
-                            bake_time = final_recipe.get("bake_time_min", 30)
-                            
-                            # Generate timeline (just for the evaluation checks)
-                            bake_time_int = int(bake_time) if str(bake_time).isdigit() else 30
-                            timeline = engine_instance.get_live_timeline_steps(
-                                recipe_data=recipe_data,
-                                estimated_bulk_minutes=120,
-                                estimated_proof_minutes=60,
-                                bake_time_min=bake_time_int,
-                                mixing_method="stand_mixer",
-                                preset_slug=archetype_id
-                            )
-                        except Exception as e:
-                            timeline = []
-                            self.stderr.write(f"  [WARNING] Failed to generate phase 4 or timeline for {engine_id}: {e}")
-                            bake_temp = 0
-                            bake_time = 0
-
-                        # Call generate_process_details for the "how are we making it" metadata
-                        try:
-                            process_details = generate_process_details(
-                                engine_id=engine_id,
-                                active_archetype_id=archetype_id,
-                                recipe_slug=f"qa-test-{engine_id}",
-                                recipe_name=test['name']
-                            )
-                        except Exception as e:
-                            self.stderr.write(f"  [WARNING] Failed to generate process details: {e}")
-                            process_details = {}
-
-                        evaluations = evaluate_recipe(recipe_data, test['type'], engine_id, timeline, final_recipe=final_recipe, process_details=process_details)
-                        
-                        # Add Phase 4 evaluation checks
-                        is_pasta = engine_id == 'pasta'
-                        
-                        if is_pasta:
-                            if bake_temp not in [0, 212]:
-                                evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": False, "reason": f"Bake temp {bake_temp}F invalid for pasta (should be 0 or 212)"})
-                            else:
-                                evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": True, "reason": f"Bake temp {bake_temp}F is realistic for pasta."})
-                        else:
-                            if bake_temp < 300 or bake_temp > 550:
-                                evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": False, "reason": f"Bake temp {bake_temp}F outside bounds (300-550)"})
-                            else:
-                                evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": True, "reason": f"Bake temp {bake_temp}F is realistic."})
-                            
-                        if bake_time < 1 or bake_time > 120:
-                            evaluations.append({"rule": "Phase 4 - Time Limit", "passed": False, "reason": f"Bake time {bake_time}m outside bounds (1-120)"})
-                        else:
-                            evaluations.append({"rule": "Phase 4 - Time Limit", "passed": True, "reason": f"Bake time {bake_time}m is realistic."})
-                            
-                        all_passed = all(check['passed'] for check in evaluations)
-
-                        results.append({
-                            "engine": engine_id,
-                            "archetype": archetype_id,
-                            "profile": test['type'],
-                            "all_passed": all_passed,
-                            "evaluations": evaluations,
-                            "recipe": recipe_data
-                        })
-                        
-                        # Generate Output MD
-                        qa_dir = Path("QA_recipes")
-                        qa_dir.mkdir(exist_ok=True)
-                        md_path = qa_dir / f"{category_slug}_{archetype_id}_{test['type']}.md"
-                        
-                        ff = final_recipe.get("ff") if final_recipe else None
-                        bake_temp = final_recipe.get("bake_temp_f", "N/A") if final_recipe else "N/A"
-                        bake_time = final_recipe.get("bake_time_min", "N/A") if final_recipe else "N/A"
-                        steam = final_recipe.get("steam_required", False) if final_recipe else False
-                        
-                        process_md = ""
-                        if process_details and "process_recommendations" in process_details:
-                            process_md += "## How Are We Making It (AI Recommendations)\n"
-                            for key, val in process_details["process_recommendations"].items():
-                                process_md += f"- **{key.title().replace('_', ' ')}**: {val.get('name', '')} - {val.get('explanation', '')}\n"
-
-                        ingredients_md = ""
-                        for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
-                            if items:
-                                ingredients_md += f"\n### {cat_key.capitalize()}\n"
-                                for item in items:
-                                    ingredients_md += f"- **{item.get('name')}**: {item.get('bakers_percentage')}% ({item.get('temperature', '')})\n"
-
-                        actions = recipe_data.get("required_actions", [])
-                        
-                        timeline_md = ""
-                        for step in timeline:
-                            mins = int(step.get('duration_sec', 0) / 60)
-                            timeline_md += f"**{step.get('key', 'step').title()}. {step.get('name', '')}** ({mins} min)\n{step.get('desc', '')}\n\n"
-                        
-                        md_content = f"""# {test['name']}
-**Category:** {category_slug}  
-**Archetype:** {archetype_id}  
-**QA Status:** {'PASS' if all_passed else 'FAIL'}
-
-## Ingredients (AI Generated)
-{ingredients_md}
-
-## Final Compiled Formula (Scaled)
-```text\nSalt: {((final_recipe.get('recipe', {}).get('salt_weight', 0) / final_recipe.get('recipe', {}).get('flour_weight', 1)) if final_recipe.get('recipe', {}).get('flour_weight', 0) > 0 else 0) * 100:.2f}%\nTotal Mass: {final_recipe.get('recipe', {}).get('target_mass', 0):.1f}g\nYield Count: {getattr(ff, 'default_count', 1) if not isinstance(ff, type(None)) else 1}\n```\n
-## Required Actions
-{chr(10).join(f"- {a}" for a in actions)}
-
-
-## Directions
-{timeline_md}
-{process_md}
-## Baking Profile
-- **Baking Vessel (System Mapped):** {getattr(ff, 'name', 'Unknown') if ff else 'Unknown'}
-- **Temperature:** {bake_temp}°F
-- **Time:** {bake_time} minutes
-- **Steam Mode:** {'Yes' if steam else 'No'}
-
-## QA Rule Audit
-"""
-                        for check in evaluations:
-                            md_content += f"- **{check['rule']}**: {'PASS' if check['passed'] else 'FAIL'} - {check['reason']}\n"
-
-                        with open(md_path, 'w', encoding='utf-8') as f:
-                            f.write(md_content)
-
-                        if all_passed:
-                            self.stdout.write(self.style.SUCCESS(f"  [SUCCESS] All checks passed. Output: {md_path}"))
-                        else:
-                            self.stderr.write(f"  [FAIL] Violations found. Output: {md_path}")
-                            for check in evaluations:
-                                if not check['passed']:
-                                    self.stderr.write(f"    - {check['reason']}")
-                                    
-                        from apps.core.gemma.phase4_client import generate_recipe_tweaks
-                        
-                        # TWEAK LOOP TESTING
-                        applied_tweaks_history = []
-                        current_ingredients = flat_secondary
-                        
-                        for tweak_round in range(2):
-                            self.stdout.write(f"    -> Running Tweak Round {tweak_round+1}...")
-                            tweak_data = generate_recipe_tweaks(
-                                engine_id=engine_id,
-                                active_archetype_id=archetype_id,
-                                recipe_name=run_name,
-                                current_ingredients=current_ingredients,
-                                applied_tweaks_history=applied_tweaks_history
-                            )
-                            if tweak_data.get("is_max_optimized"):
-                                self.stdout.write(f"      -> AI declared recipe is MAX OPTIMIZED: {tweak_data.get('optimization_message')}")
-                                md_content += f"\n## Tweak Round {tweak_round+1}\n**OPTIMIZED**: {tweak_data.get('optimization_message')}\n"
-                                break
-                            
-                            tweaks = tweak_data.get("tweaks", [])
-                            if not tweaks:
-                                self.stdout.write("      -> No tweaks generated.")
-                                break
+                                    "global_ai_enabled": True,
+                                    "recipe_name": run_name,
+                                    "active_berries": current_grains if isinstance(current_grains, list) else json.loads(current_grains),
+                                    "secondary_ingredients": json.dumps(recipe_data.get('secondary_ingredients', {})),
+                                    "dynamic_directions": json.dumps(recipe_data.get('dynamic_directions', {})),
+                                    "inferred_flavor_profile": recipe_data.get("inferred_flavor_profile", "neutral")
+                                }
                                 
-                            chosen_tweak = tweaks[0]
-                            self.stdout.write(f"      -> Chose tweak: {chosen_tweak.get('title')}")
-                            applied_tweaks_history.append(chosen_tweak.get('title'))
+                                # Phase 4
+                                final_recipe = calculate_final_recipe(mock_state, run_ai=True)
+                                bake_temp = final_recipe.get("bake_temp_f", 400)
+                                bake_time = final_recipe.get("bake_time_min", 30)
+                                
+                                # Generate timeline (just for the evaluation checks)
+                                bake_time_int = int(bake_time) if str(bake_time).isdigit() else 30
+                                timeline = engine_instance.get_live_timeline_steps(
+                                    recipe_data=recipe_data,
+                                    estimated_bulk_minutes=120,
+                                    estimated_proof_minutes=60,
+                                    bake_time_min=bake_time_int,
+                                    mixing_method="stand_mixer",
+                                    preset_slug=archetype_id
+                                )
+                            except Exception as e:
+                                timeline = []
+                                self.stderr.write(f"  [WARNING] Failed to generate phase 4 or timeline for {engine_id}: {e}")
+                                bake_temp = 0
+                                bake_time = 0
+
+                            # Call generate_process_details for the "how are we making it" metadata
+                            try:
+                                process_details = generate_process_details(
+                                    engine_id=engine_id,
+                                    active_archetype_id=archetype_id,
+                                    recipe_slug=f"qa-test-{engine_id}",
+                                    recipe_name=test['name']
+                                )
+                            except Exception as e:
+                                self.stderr.write(f"  [WARNING] Failed to generate process details: {e}")
+                                process_details = {}
+
+                            evaluations = evaluate_recipe(recipe_data, test['type'], engine_id, timeline, final_recipe=final_recipe, process_details=process_details)
                             
-                            md_content += f"\n## Tweak Round {tweak_round+1}\n"
-                            md_content += f"**Chosen**: {chosen_tweak.get('title')}\n"
-                            md_content += f"**Description**: {chosen_tweak.get('description')}\n"
-                            md_content += f"**New Ingredients**: {', '.join(chosen_tweak.get('new_ingredients', []))}\n"
+                            # Add Phase 4 evaluation checks
+                            is_pasta = engine_id == 'pasta'
                             
-                            current_ingredients = chosen_tweak.get('new_ingredients', current_ingredients)
+                            if is_pasta:
+                                if bake_temp not in [0, 212]:
+                                    evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": False, "reason": f"Bake temp {bake_temp}F invalid for pasta (should be 0 or 212)"})
+                                else:
+                                    evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": True, "reason": f"Bake temp {bake_temp}F is realistic for pasta."})
+                            else:
+                                if bake_temp < 300 or bake_temp > 550:
+                                    evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": False, "reason": f"Bake temp {bake_temp}F outside bounds (300-550)"})
+                                else:
+                                    evaluations.append({"rule": "Phase 4 - Temp Limit", "passed": True, "reason": f"Bake temp {bake_temp}F is realistic."})
+                                
+                            if bake_time < 1 or bake_time > 120:
+                                evaluations.append({"rule": "Phase 4 - Time Limit", "passed": False, "reason": f"Bake time {bake_time}m outside bounds (1-120)"})
+                            else:
+                                evaluations.append({"rule": "Phase 4 - Time Limit", "passed": True, "reason": f"Bake time {bake_time}m is realistic."})
+                                
+                            all_passed = all(check['passed'] for check in evaluations)
+
+                            results.append({
+                                "engine": engine_id,
+                                "archetype": archetype_id,
+                                "profile": test['type'],
+                                "all_passed": all_passed,
+                                "evaluations": evaluations,
+                                "recipe": recipe_data
+                            })
                             
-                        # Resave the markdown file to include tweaks
-                        with open(md_path, 'w', encoding='utf-8') as f:
-                            f.write(md_content)
-                        
-                        
-                    except Exception as e:
-                        self.stderr.write(f"  [FAILED] {str(e)}")
-                        results.append({
-                            "engine": engine_id,
-                            "archetype": archetype_id,
+                            # Generate Output MD
+                            qa_dir = Path("QA_recipes")
+                            qa_dir.mkdir(exist_ok=True)
+                            md_path = qa_dir / f"{category_slug}_{archetype_id}_{test['type']}_{var_id or 'default'}.md"
+                            
+                            ff = final_recipe.get("ff") if final_recipe else None
+                            bake_temp = final_recipe.get("bake_temp_f", "N/A") if final_recipe else "N/A"
+                            bake_time = final_recipe.get("bake_time_min", "N/A") if final_recipe else "N/A"
+                            steam = final_recipe.get("steam_required", False) if final_recipe else False
+                            
+                            process_md = ""
+                            if process_details and "process_recommendations" in process_details:
+                                process_md += "## How Are We Making It (AI Recommendations)\n"
+                                for key, val in process_details["process_recommendations"].items():
+                                    process_md += f"- **{key.title().replace('_', ' ')}**: {val.get('name', '')} - {val.get('explanation', '')}\n"
+
+                            ingredients_md = ""
+                            flour_blend = recipe_data.get("flour_blend", {})
+                            if flour_blend:
+                                ingredients_md += "\n### Flour Blend (Phase 3 AI Optimization)\n"
+                                for grain, pct in flour_blend.items():
+                                    ingredients_md += f"- **{grain}**: {pct}%\n"
+                                    
+                            for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
+                                if items:
+                                    ingredients_md += f"\n### {cat_key.capitalize()}\n"
+                                    for item in items:
+                                        ingredients_md += f"- **{item.get('name')}**: {item.get('bakers_percentage')}% ({item.get('temperature', '')})\n"
+
+                            actions = recipe_data.get("required_actions", [])
+                            
+                            timeline_md = ""
+                            for step in timeline:
+                                mins = int(step.get('duration_sec', 0) / 60)
+                                timeline_md += f"**{step.get('key', 'step').title()}. {step.get('name', '')}** ({mins} min)\n{step.get('desc', '')}\n\n"
+                            
+                            md_content = f"""# {test['name']}
+    **Category:** {category_slug}  
+    **Archetype:** {archetype_id}  
+    **QA Status:** {'PASS' if all_passed else 'FAIL'}
+{qa_grain_evals_md}
+    ## Ingredients (AI Generated)
+    {ingredients_md}
+
+    ## Final Compiled Formula (Scaled)
+    ```text\nSalt: {((final_recipe.get('recipe', {}).get('salt_weight', 0) / final_recipe.get('recipe', {}).get('flour_weight', 1)) if final_recipe.get('recipe', {}).get('flour_weight', 0) > 0 else 0) * 100:.2f}%\nTotal Mass: {final_recipe.get('recipe', {}).get('target_mass', 0):.1f}g\nYield Count: {getattr(ff, 'default_count', 1) if not isinstance(ff, type(None)) else 1}\n```\n
+    ## Required Actions
+    {chr(10).join(f"- {a}" for a in actions)}
+
+
+    ## Directions
+    {timeline_md}
+    {process_md}
+    ## Baking Profile
+    - **Baking Vessel (System Mapped):** {getattr(ff, 'name', 'Unknown') if ff else 'Unknown'}
+    - **Temperature:** {bake_temp}°F
+    - **Time:** {bake_time} minutes
+    - **Steam Mode:** {'Yes' if steam else 'No'}
+
+    ## QA Rule Audit
+    """
+                            for check in evaluations:
+                                md_content += f"- **{check['rule']}**: {'PASS' if check['passed'] else 'FAIL'} - {check['reason']}\n"
+
+                            with open(md_path, 'w', encoding='utf-8') as f:
+                                f.write(md_content)
+
+                            if all_passed:
+                                self.stdout.write(self.style.SUCCESS(f"  [SUCCESS] All checks passed. Output: {md_path}"))
+                            else:
+                                self.stderr.write(f"  [FAIL] Violations found. Output: {md_path}")
+                                for check in evaluations:
+                                    if not check['passed']:
+                                        self.stderr.write(f"    - {check['reason']}")
+                                        
+                            from apps.core.gemma.phase4_client import generate_recipe_tweaks
+                            
+                            # TWEAK LOOP TESTING
+                            applied_tweaks_history = []
+                            current_ingredients = flat_secondary
+                            
+                            for tweak_round in range(2):
+                                self.stdout.write(f"    -> Running Tweak Round {tweak_round+1}...")
+                                tweak_data = generate_recipe_tweaks(
+                                    engine_id=engine_id,
+                                    active_archetype_id=archetype_id,
+                                    recipe_name=run_name,
+                                    current_ingredients=current_ingredients,
+                                    applied_tweaks_history=applied_tweaks_history
+                                )
+                                if not tweak_data:
+                                    self.stdout.write("      -> AI returned None for tweaks.")
+                                    break
+                                if tweak_data.get("is_max_optimized"):
+                                    self.stdout.write(f"      -> AI declared recipe is MAX OPTIMIZED: {tweak_data.get('optimization_message')}")
+                                    md_content += f"\n## Tweak Round {tweak_round+1}\n**OPTIMIZED**: {tweak_data.get('optimization_message')}\n"
+                                    break
+                                
+                                tweaks = tweak_data.get("tweaks", [])
+                                if not tweaks:
+                                    self.stdout.write("      -> No tweaks generated.")
+                                    break
+                                    
+                                chosen_tweak = tweaks[0]
+                                self.stdout.write(f"      -> Chose tweak: {chosen_tweak.get('title')}")
+                                applied_tweaks_history.append(chosen_tweak.get('title'))
+                                
+                                md_content += f"\n## Tweak Round {tweak_round+1}\n"
+                                md_content += f"**Chosen**: {chosen_tweak.get('title')}\n"
+                                md_content += f"**Description**: {chosen_tweak.get('description')}\n"
+                                md_content += f"**New Ingredients**: {', '.join(chosen_tweak.get('new_ingredients', []))}\n"
+                                
+                                current_ingredients = chosen_tweak.get('new_ingredients', current_ingredients)
+                                
+                            # Resave the markdown file to include tweaks
+                            with open(md_path, 'w', encoding='utf-8') as f:
+                                f.write(md_content)
+                            
+                            
+                        except Exception as e:
+                            self.stderr.write(f"  [FAILED] {str(e)}")
+                            results.append({
+                                "engine": engine_id,
+                                "archetype": archetype_id,
                             "profile": test['type'],
                             "error": str(e)
                         })

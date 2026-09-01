@@ -8,6 +8,32 @@ class FlatEngine(BaseEngine):
     gluten_behavior = "High Extensibility, Low Elasticity. Dough must roll to millimeter thickness without tearing or snapping back violently."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Enhances toasted, nutty conduction-heat surface blistering."
     tannin_sensitive = False
+    variations = {
+        "thin_crust": {
+            "label": "Thin & Crispy",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "highly_extensible",
+                "optimal_protein_window": "10.0% - 11.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected THIN & CRISPY crust. The dough must be highly extensible to roll or stretch "
+                "very thin without snapping back. Incorporate a small amount of oil to shorten the dough slightly for crispness. "
+                "Do not use overly strong bread flour, as it will fight being stretched thin."
+            )
+        },
+        "thick_chewy": {
+            "label": "Thick & Chewy (Deep Dish)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "strong_elastic",
+                "optimal_protein_window": "12.0% - 14.0%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected THICK & CHEWY crust. Use high-protein hard wheats (e.g., Hard Red Spring, "
+                "Bread Flour) to build a robust gluten network capable of trapping large gas bubbles and supporting a "
+                "thick, bready crumb. High hydration is necessary for an open crumb."
+            )
+        }
+    }
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "moderate_shearing",

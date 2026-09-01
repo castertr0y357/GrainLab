@@ -145,10 +145,15 @@ class FryEngine(BaseEngine):
         },
     }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast', flavor_profile: str = 'neutral', **kwargs) -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(0.80, hydration))
         f = max(0.0, min(0.40, fat))
         s = max(0.0, min(0.40, sugar))
+        
+        # Prevent "soup" by capping hydration if fat is very high
+        if f > 0.30 and hyd > 0.85:
+            hyd = 0.85
+            
         if leaven_type == 'sourdough':
             leaven = max(0.0, min(0.60, leaven))
         elif leaven_type == 'chemical':
@@ -162,7 +167,7 @@ class FryEngine(BaseEngine):
         return "Provide the target frying oil pre-heat temperature (typically around 375°F to allow a drop to 365°F during frying). This is a fried dough (donuts, beignets). Enriched dough requiring lipids and leaveners. Use sweeteners and eggs for sweet donuts, but omit sweeteners for savory fried doughs (like savory fritters)."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like spices or glaze bases), use true baker's percentages (flour = 100%). For fried doughs, these typically range from 10.0 to 30.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like spices or glaze bases), use true baker's percentages (flour = 100%). For fried doughs, these typically range from 10.0 to 30.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For commercial yeast (active/instant), strictly limit to 0.5 to 1.5. For sourdough starter, strictly limit to 10.0 to 25.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 8

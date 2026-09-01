@@ -14,6 +14,35 @@ class CookieEngine(BaseEngine):
     tweak_labels = {
         "enrichment": ["Crispy / Chewy", "Soft / Cakey"]
     }
+    variations = {
+        "thin_crispy": {
+            "label": "Thin & Crispy",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "desired_horizontal_flow": "high_spread",
+                "optimal_protein_window": "8.0% - 9.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected THIN & CRISPY. Maximize spread by using high proportions of white sugar "
+                "and melted or liquid fats. Favor low-protein soft wheats (e.g., Pastry Flour, Soft White Wheat) "
+                "to completely inhibit gluten formation and ensure a delicate, brittle snap. Increase bake time slightly."
+            )
+        },
+        "soft_chewy": {
+            "label": "Soft & Chewy",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "desired_horizontal_flow": "minimal_spread",
+                "optimal_protein_window": "10.0% - 12.0%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected SOFT & CHEWY. Prevent excessive spread by using creamed cold fats "
+                "and higher proportions of brown sugar/molasses. Favor higher-protein hard wheats (e.g., Hard Red Wheat, "
+                "Bread Flour) to build enough gluten structure to maintain thickness and deliver a chewy bite. "
+                "Reduce bake time to keep the center doughy."
+            )
+        }
+    }
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
@@ -242,7 +271,7 @@ class CookieEngine(BaseEngine):
         return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient. This is a cookie archetype. You MUST include a chemical leavener (baking soda/powder). It requires heavy lipids. For sweet cookies, use heavy sugars. For savory shortbreads/crackers, omit sugar and use savory fats (cheese, butter). Liquids are rarely needed unless specified."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). For cookies, these MUST be scaled heavily, typically ranging from 50.0 to 150.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). For cookies, these MUST be scaled heavily, typically ranging from 50.0 to 150.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0%."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         cream_min = 5

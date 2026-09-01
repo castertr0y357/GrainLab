@@ -158,7 +158,7 @@ class BathEngine(BaseEngine):
         return "Instruct the user to prepare an alkaline bath (lye or malted water) to gelatinize starches prior to baking. This is a boiled-bath bread (bagels, pretzels). Yeast-leavened with a dense structure. Requires a liquid medium. Modest or no lipids. Use sweet additions (cinnamon/sugar) for sweet variants, and savory additions/toppings (garlic, salt, cheese) for savory variants."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like cinnamon raisins or pretzel toppings), use true baker's percentages (flour = 100%). For boiled-bath doughs, these typically range from 5.0 to 20.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like cinnamon raisins or pretzel toppings), use true baker's percentages (flour = 100%). For boiled-bath doughs, these typically range from 5.0 to 20.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For commercial yeast (active/instant), strictly limit to 0.5 to 1.5. For sourdough starter, strictly limit to 10.0 to 25.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         mix_min = 6

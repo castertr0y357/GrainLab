@@ -1,6 +1,8 @@
 # Project Status: GrainLab
 
 ## ðŸ“ Summary of Completed Tasks
+- [x] Integrate AI-inferred flavor profile classification (Sweet vs Savory vs Neutral) to securely enforce math constraints inside `BaseEngine` calculate flow
+- [x] Implement robust multi-engine QA test suite (`run_qa_recipes`) evaluating AI structural math via phase 3 pipeline
 - [x] Initialize Git repository
 - [x] Sync project rules files (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.windsurfrules`)
 - [x] Create detailed `implementation_plan.md` for building the entire web application

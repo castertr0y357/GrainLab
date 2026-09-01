@@ -27,7 +27,7 @@ def _get_api_config() -> tuple[str, str]:
         url = url.rstrip("/") + "/chat/completions"
     return url, model
 
-def assemble_system_prompt(engine, data_context: str, task_instructions: str, response_schema_example: str = None, active_archetype_id: str = None) -> str:
+def assemble_system_prompt(engine, data_context: str, task_instructions: str, response_schema_example: str = None, active_archetype_id: str = None, include_global_rules: bool = True, active_variation_id: str = None) -> str:
     """
     Constructs the system prompt in the modular fixed order:
     1. Persona & Objective (Global Master Shell Kernel - Part 1)
@@ -41,6 +41,7 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
         "Your tone must be highly practical, conversational, insightful, and focused entirely on the sensory experience of eating and the physical reality of cooking.\n"
         "Do NOT use corporate filler, generic placeholders, or fluff words like: anomalies, parameter, workspace, matrix, configuration, optimization, performance, detected, or baseline.\n"
     )
+
     
     global_ruleset = (
         "[GLOBAL RULESET]\n"
@@ -60,7 +61,7 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
     
     # Overhaul Nuance Injection: invoke culinary_nuance_directive method passing active_archetype_id
     if hasattr(engine, "culinary_nuance_directive") and callable(engine.culinary_nuance_directive):
-        nuance_directive = engine.culinary_nuance_directive(active_archetype_id)
+        nuance_directive = engine.culinary_nuance_directive(active_archetype_id=active_archetype_id, active_variation_id=active_variation_id)
     else:
         nuance_directive = getattr(engine, "culinary_nuance_directive", "Standard baking physics and generic flour interactions.")
         
@@ -71,7 +72,7 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
     
     schema_text = ""
     if response_schema_example:
-        schema_text = f"\nReturn ONLY raw JSON with no markdown fences, matching this schema:\n{response_schema_example}"
+        schema_text = f"\nReturn JSON matching this schema:\n{response_schema_example}"
         
     instruction_block = (
         f"\n[SPECIFIC TASK INSTRUCTIONS]\n"
@@ -81,7 +82,7 @@ def assemble_system_prompt(engine, data_context: str, task_instructions: str, re
     
     prompt = [
         persona_objective,
-        global_ruleset,
+        global_ruleset if include_global_rules else "",
         data_context_header,
         nuance_injection,
         instruction_block
@@ -237,7 +238,7 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     payload = {
         "model": model,
         "messages": [
-            {"role": "system", "content": system_prompt + " You MUST respond with raw JSON ONLY. No markdown formatting, no codeblocks."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": normalized_user_prompt}
         ],
         "temperature": 0.7,
@@ -311,13 +312,14 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
     payload = {
         "model": model,
         "messages": [
-            {"role": "system", "content": system_prompt + " You MUST respond with raw JSON ONLY. No markdown formatting, no codeblocks."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
         "temperature": temperature,
         "max_tokens": 16384,
         "num_predict": 16384,
-        "stream": True
+        "stream": True,
+        "response_format": {"type": "json_object"}
     }
     
     # Optional OpenAI compatible reasoning effort
@@ -712,18 +714,32 @@ def get_archetype_mechanics(engine, active_archetype_id=None, preset_slug=None) 
         archetype_display = archetype_data.get("label", first_key)
 
     if archetype_data:
-        return archetype_display, archetype_data.get("target_archetype_mechanics", {
+        target_mechanics = archetype_data.get("target_archetype_mechanics", {
             "required_gluten_elasticity": "high_retention",
             "desired_horizontal_flow": "controlled_expansion",
             "moisture_lipid_ratio": "balanced_emulsion",
-            "optimal_protein_window": "11.0% - 13.0%"
+            "optimal_protein_window": "11.0% - 13.0%",
+            "target_flavor_profile": "neutral_sweet"
         })
+        target_mechanics = dict(target_mechanics)
+        
+        if preset_slug:
+            variations = getattr(engine, "variations", {})
+            if preset_slug in variations:
+                var_data = variations[preset_slug]
+                if "mechanics_overrides" in var_data:
+                    target_mechanics.update(var_data["mechanics_overrides"])
+                if "label" in var_data:
+                    archetype_display += f" [{var_data['label']}]"
+
+        return archetype_display, target_mechanics
     
     return "Default Archetype", {
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
-        "optimal_protein_window": "11.0% - 13.0%"
+        "optimal_protein_window": "11.0% - 13.0%",
+        "target_flavor_profile": "neutral_sweet"
     }
 
 def get_contextual_pitfalls(category_slug: str, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:

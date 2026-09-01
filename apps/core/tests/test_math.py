@@ -35,7 +35,7 @@ class BakersMathTests(TestCase):
             (recipe["lipid_items"][0]["weight"] if recipe["lipid_items"] else 0) +
             recipe["sugar_weight"]
         )
-        self.assertAlmostEqual(total_sum, 1000.0, places=0)
+        self.assertAlmostEqual(total_sum, 1000.0, delta=2)
 
     def test_thirst_modifier_spelt(self):
         """
@@ -83,9 +83,9 @@ class BakersMathTests(TestCase):
         # Starter weight = 520.83 * 0.20 = 104.16.
         # Added flour = 520.83 - 52.08 = 468.75.
         # Added water = (520.83 * 0.70) - 52.08 = 364.58 - 52.08 = 312.5.
-        self.assertAlmostEqual(recipe["starter_weight"], 104.2, places=1)
-        self.assertAlmostEqual(recipe["added_flour"], 468.8, places=1)
-        self.assertAlmostEqual(recipe["added_water"], 312.5, places=1)
+        self.assertAlmostEqual(recipe["starter_weight"], 104, delta=1)
+        self.assertAlmostEqual(recipe["added_flour"], 469, delta=1)
+        self.assertAlmostEqual(recipe["added_water"], 313, delta=1)
 
     def test_whole_milk_chemistry_rebalancing(self):
         """

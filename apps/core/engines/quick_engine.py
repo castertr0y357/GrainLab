@@ -10,6 +10,32 @@ class QuickEngine(BaseEngine):
     gluten_behavior = "Zero Gluten Development. Mechanical kneading is banned; structure relies entirely on chemical leavening reactions to yield a tender, crumbly interior."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires clean, buttery fats to come forward without whole-grain astringency."
     tannin_sensitive = True
+    variations = {
+        "light_fluffy": {
+            "label": "Light & Fluffy",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "optimal_protein_window": "8.0% - 9.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected LIGHT & FLUFFY. The crumb must be extremely tender and well-aerated. "
+                "Favor low-protein soft wheats (Pastry flour, Spelt) and rely heavily on chemical leavening. "
+                "Use liquid fats (oil or melted butter) and buttermilk to keep the crumb perfectly soft."
+            )
+        },
+        "dense_moist": {
+            "label": "Dense & Moist (Bakery Style)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "moderate",
+                "optimal_protein_window": "9.5% - 11.0%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected DENSE & MOIST. The crumb should be rich, heavy, and satisfying. "
+                "You can use slightly stronger grains or whole grains here. Increase heavy inclusions, use sour cream "
+                "or yogurt for moisture, and ensure the batter is thick enough to suspend large chunks of fruit or chocolate."
+            )
+        }
+    }
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
         "mechanical_energy_threshold": "minimal_folding",
@@ -231,7 +257,7 @@ class QuickEngine(BaseEngine):
         return "Quick breads require chemical leavening. Specify the correct amount of baking powder, and if acidic liquids are present, include baking soda. Zero yeast should be used. This is a quick bread (biscuits, scones, muffins). For sweet profiles (muffins, sweet scones), use sugar and sweet inclusions. For savory profiles (savory biscuits), omit sugar and use savory additions. You MUST include a chemical leavener (baking powder/soda), lipids, and liquids."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like berries, nuts, or chocolate chips), use true baker's percentages (flour = 100%). For quick breads, these typically range from 30.0 to 100.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like berries, nuts, or chocolate chips), use true baker's percentages (flour = 100%). For quick breads, these typically range from 30.0 to 100.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0%."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         dry_min = 2

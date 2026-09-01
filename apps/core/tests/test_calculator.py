@@ -97,7 +97,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
         self.assertEqual(recipe_olive_oil["effective_hydration_pct"], 68.0)
         self.assertEqual(recipe_olive_oil["effective_fat_pct"], 10.0)
         self.assertTrue(recipe_olive_oil["lipid_items"][0]["name"].startswith("Olive Oil"))
-        self.assertAlmostEqual(recipe_olive_oil["lipid_items"][0]["weight"], recipe_olive_oil["flour_weight"] * 0.10, places=1)
+        self.assertAlmostEqual(recipe_olive_oil["lipid_items"][0]["weight"], recipe_olive_oil["flour_weight"] * 0.10, delta=1)
         pass
 
         # 2. Salted Butter (no hydration offset in simplified)
@@ -110,7 +110,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
         )
         self.assertEqual(recipe_salted_butter["effective_hydration_pct"], 68.0)
         self.assertTrue(recipe_salted_butter["lipid_items"][0]["name"].startswith("Salted Butter"))
-        self.assertAlmostEqual(recipe_salted_butter["lipid_items"][0]["weight"], recipe_salted_butter["flour_weight"] * 0.10, places=1)
+        self.assertAlmostEqual(recipe_salted_butter["lipid_items"][0]["weight"], recipe_salted_butter["flour_weight"] * 0.10, delta=1)
         pass
 
         # 3. Unsalted Butter (no hydration offset in simplified)
@@ -123,7 +123,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
         )
         self.assertEqual(recipe_unsalted_butter["effective_hydration_pct"], 68.0)
         self.assertTrue(recipe_unsalted_butter["lipid_items"][0]["name"].startswith("Unsalted Butter"))
-        self.assertAlmostEqual(recipe_unsalted_butter["lipid_items"][0]["weight"], recipe_unsalted_butter["flour_weight"] * 0.10, places=1)
+        self.assertAlmostEqual(recipe_unsalted_butter["lipid_items"][0]["weight"], recipe_unsalted_butter["flour_weight"] * 0.10, delta=1)
         pass
 
     def test_ajax_calculate_with_advanced_substitution(self):

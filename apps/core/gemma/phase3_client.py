@@ -142,8 +142,8 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
         task_instructions = (
             "1. Relational Matching: Analyze how the raw ingredient's chemical attributes will behave under the thermal, hydraulic, and mechanical demands of the target archetype.\n"
             "2. Determine Compatibility Tier: Select exactly one tier string: \"RECOMMENDED\", \"SUB-OPTIMAL\", or \"NOT RECOMMENDED\".\n"
-            "   - If the grain's native properties directly support or enhance the mechanical goals (even if it breaks traditional wheat rules, like an ancient grain with zero gluten maximizing tenderness where minimal elasticity is requested), classify it as RECOMMENDED.\n"
-            "   - If the grain's native properties directly conflict with the physical targets (like an extreme-tensile bread flour causing toughness where high horizontal flow is requested), classify it as NOT RECOMMENDED.\n"
+            "   - Commercial All-Purpose flour is not an option. If the grain's native properties directly support or enhance the mechanical goals (even if it breaks traditional wheat rules), OR if it would be an excellent component in a blended flour to hit the target metrics, classify it as RECOMMENDED.\n"
+            "   - If the grain's native properties directly conflict with the physical targets (like an extreme-tensile bread flour causing toughness where high horizontal flow is requested) and cannot easily be balanced in a blend, classify it as NOT RECOMMENDED.\n"
             "3. Chemistry-Driven Critique: Write a concise, 2-sentence conversational analysis explaining the precise molecular interaction (e.g., starch gelatinization, protein cross-linking, pentosan water-hoarding, lipid crystallization) driving your tier selection."
         )
         response_schema = (
@@ -154,7 +154,7 @@ def evaluate_single_grain(wb, engine, preset_name: str = None, preset_slug: str 
             "  }\n"
             "}"
         )
-        system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
+        system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id, include_global_rules=False, active_variation_id=preset_slug)
         
         user_prompt = json.dumps({
             "grain_id": str(wb.id),
@@ -227,73 +227,73 @@ def evaluate_grains_batch(grains: list, engine, preset_name: str = None, preset_
     if not uncached_grains:
         return results
         
-    # 2. If there are uncached grains, query the LLM or run fallback
-    if True:
-        archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
-        
-        data_context = (
-            f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
-            f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
-            f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
-            f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
-            f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-            f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+    # 2. If there are uncached grains, query the LLM in a single batch call
+    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+    
+    grains_list = []
+    for wb in uncached_grains:
+        prof = get_grain_registry_profile(wb.name)
+        grains_list.append(
+            f"- ID: {wb.id} ({wb.name})\n"
+            f"  Protein: {prof.get('crude_protein_percentage', '12.0%')}, Gluten Capacity: {prof.get('gluten_binding_capacity', 'high')}\n"
+            f"  Moisture Retention (Pentosans): {prof.get('pentosan_concentration', 'low_standard')}\n"
+            f"  Flavor/Tannin Profile: {prof.get('bran_tannin_profile', 'none_neutral')}\n"
         )
-        task_instructions = (
-            "Evaluate each raw material grain provided in the user context against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification."
-        )
-        response_schema = (
-            "{\n"
-            "  \"grain_evaluations\": [\n"
-            "    {\n"
-            "      \"grain_id\": \"string (UUID of the grain)\",\n"
-            "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-            "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
-            "    }\n"
-            "  ]\n"
-            "}"
-        )
-        system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema)
-        
-        payload = {
-            "engine_id": engine_id,
-            "active_archetype_id": active_archetype_id,
-            "grains": [
-                {
-                    "id": str(wb.id),
-                    "name": wb.name,
-                    "crude_protein_percentage": get_grain_registry_profile(wb.name).get("crude_protein_percentage"),
-                    "gluten_binding_capacity": get_grain_registry_profile(wb.name).get("gluten_binding_capacity"),
-                    "pentosan_concentration": get_grain_registry_profile(wb.name).get("pentosan_concentration"),
-                    "bran_tannin_profile": get_grain_registry_profile(wb.name).get("bran_tannin_profile")
-                }
-                for wb in uncached_grains
-            ]
-        }
-        
-        try:
-            res = call_gemma_api(system_prompt, json.dumps(payload), expected_keys=["grain_evaluations"])
-            if res and isinstance(res, dict) and "grain_evaluations" in res:
-                for ev in res["grain_evaluations"]:
-                    ev_id = str(ev.get("grain_id", "")).strip()
-                    # Find matching grain from uncached_grains to get the exact UUID
-                    matched_wb = None
-                    for wb in uncached_grains:
-                        if str(wb.id) == ev_id or wb.name.lower() in ev_id.lower() or ev_id.lower() in wb.name.lower():
-                            matched_wb = wb
-                            break
-                    if matched_wb:
-                        grain_id = str(matched_wb.id)
-                        res_dict = {
-                            "tier": ev.get("tier", "SUB-OPTIMAL").lower().replace("_", "-"),
-                            "reasoning": ev.get("reasoning", "Analyzed successfully.")
-                        }
-                        # Write to persistent cache
-                        cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
-                        cache.set(cache_key, res_dict, timeout=None)
-                        results[grain_id] = res_dict
-        except Exception as e:
-            logger.error(f"[Gemma Client] - Batch Error - Failed batch evaluation: {e}")
+    grains_text = "".join(grains_list)
+    
+    data_context = (
+        f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
+        f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+        f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
+        f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
+        f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
+        f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+        f"* Target Flavor Profile: {mechanics.get('target_flavor_profile', 'neutral_sweet')}\n\n"
+        f"[RAW MATERIAL INVENTORY (TO EVALUATE)]\n{grains_text}\n"
+    )
+    task_instructions = (
+        "GrainLab celebrates the unique, vibrant properties of freshly milled whole grains! When evaluating the inventory, look for grains that shine as powerful structural components. "
+        "Classify a grain as RECOMMENDED if its native chemistry directly supports the target mechanics and its flavor profile complements the target flavor profile, OR if it contributes essential characteristics to a custom whole-grain flour blend without overpowering the desired flavor. "
+        "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification highlighting its potential and flavor fit. "
+        "You MUST evaluate ALL provided raw material grains against the target mechanics. DO NOT skip or group any grains together."
+    )
+    response_schema = (
+        "{\n"
+        "  \"grain_evaluations\": [\n"
+        "    {\n"
+        "      \"grain_id\": \"string (UUID of the grain)\",\n"
+        "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
+        "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
+        "    }\n"
+        "  ]\n"
+        "}"
+    )
+    system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id, include_global_rules=False, active_variation_id=preset_slug)
+    
+    payload = {
+        "engine_id": engine_id,
+        "active_archetype_id": active_archetype_id,
+        "action": "batch_evaluate_grains"
+    }
+    
+    try:
+        res = call_gemma_api(system_prompt, json.dumps(payload), expected_keys=["grain_evaluations"])
+        if res and isinstance(res, dict) and "grain_evaluations" in res:
+            for ev in res["grain_evaluations"]:
+                g_id = str(ev.get("grain_id", ""))
+                tier = ev.get("tier", "SUB-OPTIMAL").lower().replace("_", "-")
+                reasoning = ev.get("reasoning", "Analyzed successfully.")
+                if not g_id:
+                    continue
+                    
+                matched_wb = next((g for g in uncached_grains if str(g.id) == g_id), None)
+                if matched_wb:
+                    res_dict = {"tier": tier, "reasoning": reasoning}
+                    cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{g_id}"
+                    cache.set(cache_key, res_dict, timeout=None)
+                    results[g_id] = res_dict
+    except Exception as e:
+        logger.error(f"[Gemma Client] - Batch Error - Failed batch grain evaluation: {e}")
             
     # 3. For any grains that are still not evaluated, evaluate using programmatic fallback
     for wb in uncached_grains:
@@ -403,30 +403,6 @@ def generate_dynamic_flavors(cat_slug: str, level: int, count: int = 8, exclude_
         gen_idx += 1
         
     return variants
-
-def get_fallback_creativity_recipes(engine_id: str, active_archetype_id: str, pref_slugs: list) -> dict:
-    cat_slug = engine_id
-    if cat_slug not in ENGINE_FLAVORS:
-        for k, v in CATEGORY_TO_ENGINE.items():
-            if v == engine_id:
-                cat_slug = k
-                break
-                
-    flavors_data = ENGINE_FLAVORS.get(cat_slug)
-    if not flavors_data:
-        flavors_data = ENGINE_FLAVORS["cookies-shortbread"]
-        
-    recipes = []
-    for lvl in [1, 2]:
-        for idx, item in enumerate(flavors_data[lvl]):
-            recipes.append({
-                "recipe_id": f"{active_archetype_id}_level{lvl}_{idx+1}",
-                "recipe_name": item["name"],
-                "creativity_level": lvl,
-                "description": item["desc"],
-                "menu_description": f"A delightful artisanal version of {item['name']}, baked fresh with heritage grains."
-            })
-    return {"recipes": recipes}
 
 def get_fallback_variants(engine_id: str, active_archetype_id: str, creativity_level: int, pref_slugs: list, exclude_names: list = None) -> dict:
     cat_slug = engine_id
@@ -603,12 +579,10 @@ def stream_recipe_variants(engine_id: str, active_archetype_id: str, inventory: 
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
         f"generate exactly {count} distinct recipe variants optimized for fresh-milled whole grains.\n"
-        f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
-        "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
-        f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
-        "CRITICAL: The variants MUST be 100% unique. Do NOT generate duplicate recipes.\n"
-        "CRITICAL: Do NOT append words like 'Classic', 'Modern', 'Variant', or 'Level' to the variant names. The names should be simple and natural.\n"
-        "CRITICAL: The variants must be defined by the culinary/flavor profile of the dough/batter/bread itself (e.g. Honey Oat, Roasted Garlic Herb, Cinnamon Swirl, Jalapeno Cheddar). Do NOT generate recipes for fillings, toppings, or sandwiches (e.g. never suggest 'Ham & Swiss' or 'Roast Beef'). The names must not just use the specific grain names (e.g. do not call them 'Spelt Cookie' or 'Rye Batard'). The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
+        f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'.\n"
+        f"Provide unique variants distinct from these existing recipes: {exclude_names or []}.\n"
+        "Use simple and natural variant names without structural suffix words like 'Classic', 'Modern', 'Variant', or 'Level'.\n"
+        "Focus exclusively on the culinary/flavor profile of the dough/batter/bread itself (e.g., Honey Oat, Roasted Garlic Herb, Cinnamon Swirl, Jalapeno Cheddar). The names should represent the baked good, not a sandwich or topping. The grains in the inventory should be used to accentuate and pair with these flavor targets, and specified in the recommended_grain_ids list.\n"
         "\n"
         "Each variant must match this JSON schema:\n"
         "{\n"
@@ -642,20 +616,14 @@ def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventor
     """
     import json
     
-    if level == "1":
-        level_instruction = "- Creativity Level 1: Baseline Standard Profiles. (Simple, classic, highly traditional, reliable profiles. NO unusual flavors).\n"
-        count = 5
-        temperature = 0.1
-    elif level == "2":
+    if level == "2":
         level_instruction = "- Creativity Level 2: Advanced Modern Profiles. (Wildly creative, unconventional, artisanal, or avant-garde flavor combinations).\n"
         count = 5
         temperature = 0.5
     else:
-        level_instruction = (
-            "- Creativity Level 1: Baseline Standard Profiles. (Simple, classic, highly traditional, reliable profiles. NO unusual flavors).\n"
-            "- Creativity Level 2: Advanced Modern Profiles. (Wildly creative, unconventional, artisanal, or avant-garde flavor combinations).\n"
-        )
-        count = 10
+        level = "1"
+        level_instruction = "- Creativity Level 1: Baseline Standard Profiles. (Simple, classic, highly traditional, reliable profiles. NO unusual flavors).\n"
+        count = 5
         temperature = 0.1
 
     system_prompt = (
@@ -674,7 +642,7 @@ def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventor
         "  \"recipes\": [\n"
         "    {\n"
         "      \"recipe_id\": \"unique_slug\",\n"
-        "      \"creativity_level\": " + ("1" if level == "1" else ("2" if level == "2" else "1")) + ",\n"
+        "      \"creativity_level\": " + level + ",\n"
         "      \"recipe_name\": \"Human readable title (representing a culinary/flavor target)\",\n"
         "      \"description\": \"1-2 sentence description explaining the flavor structure\",\n"
         "      \"menu_description\": \"A rich, descriptive flavor profile written in the style of a high-end restaurant menu item description.\"\n"
@@ -820,6 +788,8 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
         "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
         "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
         "You MUST ONLY select actions from the permissible actions list provided by the engine. Do not hallucinate or guess actions like 'knead' or 'fold' unless they are explicitly allowed.\n"
+        "CRITICAL RULE FOR FLOUR BLEND:\n"
+        "You must use the provided 'active selected grains' to formulate a 'flour_blend' (percentages must sum to 100). If the active grains are not a perfect match for the archetype on their own, you MUST blend them (e.g., blending a high protein hard wheat with a low protein soft wheat to approximate an All-Purpose flour protein level) to achieve the required mechanics.\n"
         "Each response must match this JSON schema exactly:\n"
         "{\n"
         "  \"default_yield_amount\": 24,\n"
@@ -963,6 +933,8 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
             "For each recommended ingredient, you MUST provide the specific `name` (e.g. 'Unsalted Butter'), the target `temperature` (e.g. 'Room Temp'), and a concise `reasoning` explaining why it is the perfect fit.\n"
             "CRITICAL RULE FOR ADDITIVES:\n"
             "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
+            "CRITICAL RULE FOR FLAVOR PROFILE:\n"
+            "You MUST infer the intended flavor profile ('sweet', 'savory', or 'neutral') based strictly on the provided recipe_name and archetype.\n"
             "CRITICAL RULE FOR FLOUR BLEND:\n"
             "Evaluate the 'selected_grains' and assign a functional percentage to each (totaling 100). Do NOT just split them evenly (e.g., 50/50). Use your baking science expertise to determine the optimal ratio. For example, if blending a strong structural grain with a weaker flavor grain (like Rye or Einkorn), use the strong grain as the base (70-80%) and the flavor grain as an accent (20-30%).\n"
             "The keys in 'flour_blend' MUST be the exact names from 'selected_grains', but converted to lowercase and with ALL non-alphanumeric characters (including spaces, dashes, parentheses) replaced by underscores. For example, 'Spelt Wheat (Ancient)' MUST become 'spelt_wheat__ancient_'.\n"
@@ -973,6 +945,7 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
             "  \"default_yield_amount\": 24,\n"
             "  \"yield_unit\": \"cookies\",\n"
             "  \"is_portionable\": true,\n"
+            "  \"inferred_flavor_profile\": \"sweet|savory|neutral\",\n"
             "  \"sidebar_science_profile\": \"A concise 2-3 sentence technical overview of this recipe's expected structural mechanics, flavor development, and hydration physics.\",\n"
             "  \"recommended_grain_ids\": [\"grain_name_slug\"],\n"
             "  \"flour_blend\": [{ \"type\": \"blend\", \"ratios\": {\"grain_name_slug\": 80, \"another_grain_slug\": 20}, \"reasoning\": \"string\" }],\n"
@@ -1132,6 +1105,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
         pref_slugs = ["hard_red_spring_wheat"]
         
     return {
+        "inferred_flavor_profile": result.get("inferred_flavor_profile", "neutral"),
         "default_yield_amount": 1,
         "yield_unit": "loaf",
         "is_portionable": False,
@@ -1244,7 +1218,7 @@ def stream_generate_substitutes(engine_id: str, active_archetype_id: str, recipe
     for chunk in stream_gemma_api(system_prompt, user_prompt):
         yield chunk
 
-def generate_recipe_percentages(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, secondary_ingredients: list) -> dict | None:
+def generate_recipe_percentages(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, secondary_ingredients: list, inferred_flavor_profile: str = "neutral") -> dict | None:
     """
     Asks the LLM to calculate strict Baker's Percentages for an already generated list of secondary ingredients.
     """
@@ -1289,6 +1263,7 @@ def generate_recipe_percentages(engine_id: str, active_archetype_id: str, recipe
         "active_archetype_id": active_archetype_id,
         "recipe_slug": recipe_slug,
         "recipe_name": recipe_name,
+        "inferred_flavor_profile": inferred_flavor_profile,
         "secondary_ingredients": secondary_ingredients
     })
 
@@ -1297,6 +1272,11 @@ def generate_recipe_percentages(engine_id: str, active_archetype_id: str, recipe
     try:
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
         if result and isinstance(result, dict) and "percentages" in result:
+            if engine_id == "pasta":
+                result["target_bake_temp"] = 212
+                # Pasta is fresh, boil time should be minimal (3 mins) instead of oven bake times
+                if result.get("target_bake_time", 20) > 10:
+                    result["target_bake_time"] = 3
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_percentages: {str(e)}")

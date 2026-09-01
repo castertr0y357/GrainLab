@@ -249,131 +249,141 @@ document.addEventListener('alpine:init', () => {
             this.processRecommendations = {};
             this.slider_recommendations = {};
             
-            const params = new URLSearchParams({
+            const createParams = (target) => new URLSearchParams({
                 engine_id: this.selected_master,
                 active_archetype_id: this.preset_slug,
                 recipe_slug: this.preset_slug,
                 recipe_name: 'Phase 4 Recipe',
-                stream: 'true'
+                stream: 'true',
+                target: target
             });
 
-
-
-            fetch('/ai-process-details/?' + params.toString())
-                .then(async res => {
-                    if (!res.ok) {
-                        let errData;
-                        try { errData = await res.json(); } catch(e) {}
-                        throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
-                    }
-                    const reader = res.body.getReader();
-                    const decoder = new TextDecoder("utf-8");
-                    let buffer = "";
-                    let rawBuffer = "";
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        
-                        buffer += decoder.decode(value, { stream: true });
-                        const lines = buffer.split('\n');
-                        buffer = lines.pop(); // Keep the incomplete line in the buffer
-                        
-                        for (let line of lines) {
-                            if (line.startsWith("data: ")) {
-                                const dataStr = line.substring(6).trim();
-                                if (dataStr === "[DONE]" || !dataStr) continue;
-                                
-                                try {
-                                    const parsedObj = JSON.parse(dataStr);
-                                    if (typeof parsedObj === 'string') {
-                                        rawBuffer += parsedObj;
-                                    } else if (parsedObj.text) {
-                                        rawBuffer += parsedObj.text;
-                                    } else {
-                                        // Legacy / non-raw object
-                                        rawBuffer += JSON.stringify(parsedObj);
+            const streamFetch = (params) => {
+                return fetch('/ai-process-details/?' + params.toString())
+                    .then(async res => {
+                        if (!res.ok) {
+                            let errData;
+                            try { errData = await res.json(); } catch(e) {}
+                            throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
+                        }
+                        const reader = res.body.getReader();
+                        const decoder = new TextDecoder("utf-8");
+                        let buffer = "";
+                        let rawBuffer = "";
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            
+                            buffer += decoder.decode(value, { stream: true });
+                            const lines = buffer.split('\n');
+                            buffer = lines.pop(); 
+                            
+                            for (let line of lines) {
+                                if (line.startsWith("data: ")) {
+                                    const dataStr = line.substring(6).trim();
+                                    if (dataStr === "[DONE]" || !dataStr) continue;
+                                    
+                                    try {
+                                        const parsedObj = JSON.parse(dataStr);
+                                        if (typeof parsedObj === 'string') {
+                                            rawBuffer += parsedObj;
+                                        } else if (parsedObj.text) {
+                                            rawBuffer += parsedObj.text;
+                                        } else {
+                                            rawBuffer += JSON.stringify(parsedObj);
+                                        }
+                                    } catch(e) {
+                                        rawBuffer += dataStr;
                                     }
-                                } catch(e) {
-                                    // if it's already a raw string without json wrapper
-                                    rawBuffer += dataStr;
-                                }
 
-                                const items = this.extractPhase4State(rawBuffer);
-                                
-                                const newRecommendations = {};
-                                for (const parsed of items) {
-                                    if (!parsed) continue;
-                                    if (parsed.type === "process" && parsed.category) {
-                                        if (parsed.name && parsed.name.toLowerCase() !== 'none' && parsed.name.toLowerCase() !== 'n/a') {
-                                            if (!this.processRecommendations[parsed.category]) {
-                                                this.processRecommendations[parsed.category] = parsed;
+                                    const items = this.extractPhase4State(rawBuffer);
+                                    
+                                    for (const parsed of items) {
+                                        if (!parsed) continue;
+                                        if (parsed.type === "process" && parsed.category) {
+                                            if (parsed.name && parsed.name.toLowerCase() !== 'none' && parsed.name.toLowerCase() !== 'n/a') {
+                                                if (!this.processRecommendations[parsed.category]) {
+                                                    this.processRecommendations[parsed.category] = parsed;
+                                                } else {
+                                                    this.processRecommendations[parsed.category].name = parsed.name;
+                                                    this.processRecommendations[parsed.category].explanation = parsed.explanation;
+                                                }
+                                                if (parsed.category === 'dough_handling') {
+                                                    this.active_action = parsed.name || this.active_action;
+                                                }
+                                            }
+
+                                        } else if (parsed.type === "slider" && parsed.tweak_id) {
+                                            if (!this.slider_recommendations[parsed.tweak_id]) {
+                                                this.slider_recommendations[parsed.tweak_id] = parsed;
                                             } else {
-                                                this.processRecommendations[parsed.category].name = parsed.name;
-                                                this.processRecommendations[parsed.category].explanation = parsed.explanation;
+                                                this.slider_recommendations[parsed.tweak_id].recommended_value = parsed.recommended_value;
+                                                this.slider_recommendations[parsed.tweak_id].explanation = parsed.explanation;
                                             }
-                                            if (parsed.category === 'dough_handling') {
-                                                this.active_action = parsed.name || this.active_action;
-                                            }
-                                        }
-
-                                    } else if (parsed.type === "inclusion" && parsed.name && parsed.bakers_percentage !== undefined && parsed.bakers_percentage !== null) {
-                                        const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-                                        const lowerParsed = normalize(parsed.name);
-                                        let matched = false;
-                                        const incIndex = this.flavor_inclusions.findIndex(inc => {
-                                            const lowerInc = normalize(inc.name);
-                                            return lowerInc === lowerParsed || lowerInc.includes(lowerParsed) || lowerParsed.includes(lowerInc);
-                                        });
-                                        if (incIndex !== -1) {
-                                            console.log(`[Phase 4 AI Stream] Generated Percentage for inclusion ${parsed.name}: ${parsed.bakers_percentage}%`);
-                                            if (!this.flavor_inclusions[incIndex].ratio && !this.flavor_inclusions[incIndex].bakers_percentage) {
-                                                this.flavor_inclusions[incIndex].bakers_percentage = parsed.bakers_percentage;
-                                            }
-                                            matched = true;
-                                        }
-
-                                        if (this.secondary_ingredients && Array.isArray(this.secondary_ingredients.additives)) {
-                                            const addIndex = this.secondary_ingredients.additives.findIndex(add => {
-                                                const lowerAdd = normalize(add.name);
-                                                return lowerAdd === lowerParsed || lowerAdd.includes(lowerParsed) || lowerParsed.includes(lowerAdd);
+                                        } else if (parsed.type === "inclusion" && parsed.name && parsed.bakers_percentage !== undefined && parsed.bakers_percentage !== null) {
+                                            const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                            const lowerParsed = normalize(parsed.name);
+                                            let matched = false;
+                                            const incIndex = this.flavor_inclusions.findIndex(inc => {
+                                                const lowerInc = normalize(inc.name);
+                                                return lowerInc === lowerParsed || lowerInc.includes(lowerParsed) || lowerParsed.includes(lowerInc);
                                             });
-                                            if (addIndex !== -1) {
-                                                console.log(`[Phase 4 AI Stream] Generated Percentage for additive ${parsed.name}: ${parsed.bakers_percentage}%`);
-                                                if (!this.secondary_ingredients.additives[addIndex].ratio && !this.secondary_ingredients.additives[addIndex].bakers_percentage) {
-                                                    this.secondary_ingredients.additives[addIndex].bakers_percentage = parsed.bakers_percentage;
+                                            if (incIndex !== -1) {
+                                                console.log(`[Phase 4 AI Stream] Generated Percentage for inclusion ${parsed.name}: ${parsed.bakers_percentage}%`);
+                                                if (!this.flavor_inclusions[incIndex].ratio && !this.flavor_inclusions[incIndex].bakers_percentage) {
+                                                    this.flavor_inclusions[incIndex].bakers_percentage = parsed.bakers_percentage;
                                                 }
                                                 matched = true;
                                             }
-                                        }
 
-                                        if (!matched) {
-                                            const existingIndex = this.flavor_inclusions.findIndex(inc => normalize(inc.name) === lowerParsed);
-                                            if (existingIndex !== -1) {
-                                                if (!this.flavor_inclusions[existingIndex].ratio && !this.flavor_inclusions[existingIndex].bakers_percentage) {
-                                                    this.flavor_inclusions[existingIndex].bakers_percentage = parsed.bakers_percentage;
-                                                }
-                                            } else {
-                                                console.warn(`[Phase 4 AI Stream] Generated percentage for ${parsed.name} (${parsed.bakers_percentage}%) but couldn't match it to any phase 3 inclusion or additive! Adding it to inclusions anyway.`);
-                                                this.flavor_inclusions.push({
-                                                    name: parsed.name,
-                                                    volume_description: "To taste",
-                                                    bakers_percentage: parsed.bakers_percentage
+                                            if (this.secondary_ingredients && Array.isArray(this.secondary_ingredients.additives)) {
+                                                const addIndex = this.secondary_ingredients.additives.findIndex(add => {
+                                                    const lowerAdd = normalize(add.name);
+                                                    return lowerAdd === lowerParsed || lowerAdd.includes(lowerParsed) || lowerParsed.includes(lowerAdd);
                                                 });
+                                                if (addIndex !== -1) {
+                                                    console.log(`[Phase 4 AI Stream] Generated Percentage for additive ${parsed.name}: ${parsed.bakers_percentage}%`);
+                                                    if (!this.secondary_ingredients.additives[addIndex].ratio && !this.secondary_ingredients.additives[addIndex].bakers_percentage) {
+                                                        this.secondary_ingredients.additives[addIndex].bakers_percentage = parsed.bakers_percentage;
+                                                    }
+                                                    matched = true;
+                                                }
+                                            }
+
+                                            if (!matched) {
+                                                const existingIndex = this.flavor_inclusions.findIndex(inc => normalize(inc.name) === lowerParsed);
+                                                if (existingIndex !== -1) {
+                                                    if (!this.flavor_inclusions[existingIndex].ratio && !this.flavor_inclusions[existingIndex].bakers_percentage) {
+                                                        this.flavor_inclusions[existingIndex].bakers_percentage = parsed.bakers_percentage;
+                                                    }
+                                                } else {
+                                                    console.warn(`[Phase 4 AI Stream] Generated percentage for ${parsed.name} (${parsed.bakers_percentage}%) but couldn't match it to any phase 3 inclusion or additive! Adding it to inclusions anyway.`);
+                                                    this.flavor_inclusions.push({
+                                                        name: parsed.name,
+                                                        volume_description: "To taste",
+                                                        bakers_percentage: parsed.bakers_percentage
+                                                    });
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+                    });
+            };
+
+            Promise.allSettled([
+                streamFetch(createParams('processes')),
+                streamFetch(createParams('tweaks'))
+            ]).then((results) => {
+                results.forEach((result, idx) => {
+                    if (result.status === 'rejected') {
+                        console.error(`Error fetching process details stream ${idx}:`, result.reason);
                     }
-                })
-                .then(() => {
-                    this.processRecommendationsLoading = false;
-                })
-                .catch(err => {
-                    console.error('Error fetching process details:', err);
-                    this.processRecommendationsLoading = false;
                 });
+                this.processRecommendationsLoading = false;
+            });
         },
 
 

@@ -19,10 +19,7 @@ def process_grain_advisory(cleaned_data):
 
     ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
     
-    stream = cleaned_data.get("stream", False)
-    only_evaluations = cleaned_data.get("only_evaluations", False)
-    
-    if stream and ai_enabled and only_evaluations:
+    if ai_enabled:
         def event_stream():
             try:
                 generator = gemma.stream_grain_evaluations(
@@ -39,61 +36,12 @@ def process_grain_advisory(cleaned_data):
             yield "data: [DONE]\n\n"
         return True, event_stream
         
-    advisory = None
-    if ai_enabled:
-        try:
-            advisory = gemma.get_grain_advisory_ai(
-                preset_slug, category_slug, 
-                selected_grains=cleaned_data.get("selected_grains"),
-                only_evaluations=only_evaluations,
-                only_elevate=cleaned_data.get("only_elevate"),
-                preset_name=cleaned_data.get("preset_name"),
-                active_archetype_id=cleaned_data.get("active_archetype_id"),
-                lipid=cleaned_data.get("lipid"),
-                liquid=cleaned_data.get("liquid"),
-                binder=cleaned_data.get("binder")
-            )
-        except Exception as e:
-            logger.error(f"[AI] - Advisory - Failed fetching advisory from Gemma: {e}")
-            return False, {"error": "Failed fetching advisory"}
-    else:
-        advisory = gemma.get_local_grain_advisory(
-            preset_slug, category_slug, 
-            preset_name=cleaned_data.get("preset_name"), 
-            active_archetype_id=cleaned_data.get("active_archetype_id")
-        )
-        if cleaned_data.get("only_elevate"):
-            mock_data = gemma.get_mock_gemma_response(
-                system_prompt="",
-                user_prompt=json.dumps({
-                    "preset_slug": preset_slug,
-                    "category_slug": category_slug,
-                    "active_archetype_id": cleaned_data.get("active_archetype_id"),
-                    "selected_grains": [s.strip() for s in cleaned_data.get("selected_grains", "").split(",") if s.strip()]
-                }),
-                expected_keys=["elevate_recipe"]
-            )
-            advisory = {"elevate_recipe": mock_data.get("elevate_recipe", [])}
-            
-    if advisory is None:
-        advisory = {}
-
-    if only_evaluations:
-        result = {
-            "grain_evaluations": advisory.get("grain_evaluations", []),
-            "mill_evaluations": advisory.get("mill_evaluations", []),
-            "sifter_evaluations": advisory.get("sifter_evaluations", {})
-        }
-    elif cleaned_data.get("only_elevate"):
-        result = {"elevate_recipe": advisory.get("elevate_recipe", [])}
-    else:
-        result = {
-            "grain_evaluations": advisory.get("grain_evaluations", []),
-            "elevate_recipe": advisory.get("elevate_recipe", []),
-            "mill_evaluations": advisory.get("mill_evaluations", []),
-            "sifter_evaluations": advisory.get("sifter_evaluations", {})
-        }
-    return False, result
+    return False, {
+        "grain_evaluations": [],
+        "elevate_recipe": [],
+        "mill_evaluations": [],
+        "sifter_evaluations": {}
+    }
 
 
 def get_inactive_grain_recommendations(preset_slug: str, category_slug: str = None, active_archetype_id: str = None) -> list[dict]:

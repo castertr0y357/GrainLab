@@ -150,7 +150,7 @@ class HearthEngine(BaseEngine):
         return "This is a lean hearth bread (e.g. sourdough, artisan loaf). For traditional lean loaves, omit lipids, sweeteners, and eggs. For specific hybrid savory or sweet artisan loaves, use minimal fats/sweeteners. Always include a yeast/sourdough leavener and a liquid medium."
         
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like seeds, nuts, or olives), use true baker's percentages (flour = 100%). For lean hearth doughs, these typically range from 10.0 to 25.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like seeds, nuts, or olives), use true baker's percentages (flour = 100%). For lean hearth doughs, these typically range from 10.0 to 25.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For commercial yeast (active/instant), strictly limit to 0.5 to 1.5. For sourdough starter, strictly limit to 10.0 to 25.0."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         # Desired Dough Temp (DDT) factoring friction is processed in water temp calculations.

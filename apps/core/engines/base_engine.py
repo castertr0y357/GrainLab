@@ -53,7 +53,7 @@ class BaseEngine(AIPromptBuilder):
     }
     secondary_ingredients = {}
 
-    def culinary_nuance_directive(self, active_archetype_id: str = None) -> str:
+    def culinary_nuance_directive(self, active_archetype_id: str = None, active_variation_id: str = None) -> str:
         """
         Dynamically construct a highly specific culinary nuance directive 
         based on the engine's unique parametric attributes and optional active archetype.
@@ -83,8 +83,16 @@ class BaseEngine(AIPromptBuilder):
         if not archetype:
             return global_criteria
             
-        mechanics = archetype.get("target_archetype_mechanics", {})
+        # Create a copy so we don't permanently modify the class definition
+        mechanics = dict(archetype.get("target_archetype_mechanics", {}))
         arch_directive = archetype.get("culinary_nuance_directive", "")
+        variation_directive = ""
+        
+        if active_variation_id and hasattr(self, 'variations'):
+            variation = self.variations.get(active_variation_id, {})
+            overrides = variation.get("mechanics_overrides", {})
+            mechanics.update(overrides)
+            variation_directive = variation.get("culinary_nuance_directive_append", "")
         
         gluten = mechanics.get("required_gluten_elasticity", "N/A")
         flow = mechanics.get("desired_horizontal_flow", "N/A")
@@ -105,6 +113,9 @@ class BaseEngine(AIPromptBuilder):
         
         if arch_directive:
             stacked_text += f"\n\n[SPECIFIC CULINARY NUANCE DIRECTIVE]\n{arch_directive}"
+            
+        if variation_directive:
+            stacked_text += f"\n\n[VARIATION DIRECTIVE]\n{variation_directive}"
             
         return stacked_text
 
@@ -275,8 +286,9 @@ class BaseEngine(AIPromptBuilder):
 
         # Perform subclass-specific constraints (ceilings / floors)
         try:
+            flavor_profile = kwargs.get("inferred_flavor_profile", "neutral")
             effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
-                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type, sec_liquids=sec_liquids
+                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type, flavor_profile=flavor_profile, sec_liquids=sec_liquids, sec_binders=sec_binders
             )
         except TypeError as e:
             if "unexpected keyword argument" in str(e):
@@ -369,8 +381,8 @@ class BaseEngine(AIPromptBuilder):
         def allocate_weights(items, total_weight, default_name):
             if not items:
                 if total_weight > 0:
-                    annotated_default = annotate_unit_weight(default_name, round(total_weight, 1))
-                    return [{"name": annotated_default, "weight": round(total_weight, 1)}]
+                    annotated_default = annotate_unit_weight(default_name, int(round(total_weight)))
+                    return [{"name": annotated_default, "weight": int(round(total_weight))}]
                 return []
             
             # Legacy robust: if items is a dict instead of list of dicts, make it a list
@@ -386,7 +398,7 @@ class BaseEngine(AIPromptBuilder):
                 if not isinstance(item, dict):
                     continue
                 ratio = float(item.get("ratio", 1.0))
-                weight = round(total_weight * (ratio / total_ratio), 1)
+                weight = int(round(total_weight * (ratio / total_ratio)))
                 if weight > 0:
                     raw_name = item.get("name")
                     if raw_name is None:
@@ -431,7 +443,7 @@ class BaseEngine(AIPromptBuilder):
                 if "salt" in name.lower() and pct <= 0.04:
                     continue
                     
-                weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
+                weight = int(round(flour_weight * pct)) if pct > 0 else 0
                 if weight > 0:
                     processed_inclusions.append({
                         "name": name,
@@ -455,7 +467,7 @@ class BaseEngine(AIPromptBuilder):
                 if "salt" in name.lower() and pct <= 0.04:
                     continue
                     
-                weight = round(flour_weight * pct, 1) if pct > 0 else 0.0
+                weight = int(round(flour_weight * pct)) if pct > 0 else 0
                 if weight > 0:
                     processed_additives.append({
                         "name": name,
@@ -465,25 +477,25 @@ class BaseEngine(AIPromptBuilder):
                     })
 
         return {
-            "target_mass": round(target_mass, 1),
-            "flour_weight": round(flour_weight, 1),
+            "target_mass": int(round(target_mass)),
+            "flour_weight": int(round(flour_weight)),
             "flavor_inclusions": processed_inclusions,
-            "water_weight": round(water_weight, 1),
+            "water_weight": int(round(water_weight)),
             "effective_hydration_pct": round(effective_hydration * 100, 1),
             "effective_fat_pct": round(effective_fat * 100, 1),
             "effective_sugar_pct": round(effective_sugar * 100, 1),
-            "added_flour": round(added_flour, 1),
-            "added_water": round(added_water, 1),
+            "added_flour": int(round(added_flour)),
+            "added_water": int(round(added_water)),
             "liquid_items": liquid_items,
-            "yeast_weight": round(yeast_weight, 1),
+            "yeast_weight": int(round(yeast_weight)),
             "leavener_items": leavener_items,
-            "fat_weight": round(fat_weight, 1),
+            "fat_weight": int(round(fat_weight)),
             "lipid_items": lipid_items,
-            "sugar_weight": round(sugar_weight, 1),
+            "sugar_weight": int(round(sugar_weight)),
             "sweetener_items": sweetener_items,
-            "salt_weight": round(salt_weight, 1),
-            "starter_weight": round(starter_weight, 1),
-            "binder_weight": round(binder_weight, 1),
+            "salt_weight": int(round(salt_weight)),
+            "starter_weight": int(round(starter_weight)),
+            "binder_weight": int(round(binder_weight)),
             "binder_items": binder_items,
             "inclusions": processed_inclusions,
             "additive_items": processed_additives,
@@ -495,12 +507,12 @@ class BaseEngine(AIPromptBuilder):
             "required_water_temp_f": round(required_water_temp_f, 1),
             "required_water_temp_c": round((required_water_temp_f - 32) * 5 / 9, 1),
             "substitution_notes": ["Simplified Baker's Math formulation."],
-            "wheat_berry_mix": {name: round(flour_weight * share, 1) for name, share in berry_shares.items() if share > 0.0} if active_berries else None,
+            "wheat_berry_mix": {name: int(round(flour_weight * share)) for name, share in berry_shares.items() if share > 0.0} if active_berries else None,
             "structural_warning": None,
             "fat_substitute_label": fat_substitute_label,
         }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
+    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast', flavor_profile: str = 'neutral', **kwargs) -> tuple[float, float, float, float, float]:
         """Sub-classes override this to inject custom mathematical validations.
         Base limits to prevent completely broken AI formulas."""
         hyd = max(0.0, min(1.50, hydration))

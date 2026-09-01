@@ -10,335 +10,6 @@ from apps.core.gemma.core_client import call_gemma_api
 logger = logging.getLogger("grainlab.gemma")
 
 
-def get_grain_advisory_ai(
-    preset_slug: str,
-    category_slug: str = None,
-    selected_grains: str = None,
-    only_evaluations: bool = False,
-    preset_name: str = None,
-    active_archetype_id: str = None,
-    lipid: str = None,
-    liquid: str = None,
-    binder: str = None
-) -> dict | None:
-    """
-    Evaluates raw kitchen inventory against target archetype mechanics using the dynamic pipeline.
-    """
-    from apps.core.models import WheatBerry, BreadPreset
-    from apps.core.engines import router
-    import json
-    
-    preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
-    if not category_slug and preset and preset.dough_category:
-        category_slug = preset.dough_category.slug
-    engine = router.get_engine_for_preset(preset_slug, category_slug)
-    
-    active_berries = list(WheatBerry.objects.filter(is_active=True))
-    if not active_berries:
-        return {"grain_evaluations": []}
-
-    if True:
-        selected_ids = [s.strip() for s in selected_grains.split(",") if s.strip()] if selected_grains else []
-        selected_berries = [wb for wb in active_berries if str(wb.id) in selected_ids]
-        selected_names = [wb.name for wb in selected_berries]
-
-        archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
-        sifting_req = preset.get_sifting_requirement_display() if preset else "Optional (Variable)"
-
-        # Resolve recommended grains and specialty ingredients natively part of the preset_slug
-        recommended_slugs = []
-        specialty_ingredients = []
-        
-        # Read specialty inclusions directly from the localized request payload at the moment of execution
-        has_selections = (lipid is not None) or (liquid is not None) or (binder is not None)
-        if has_selections:
-            if lipid and lipid != "none":
-                specialty_ingredients.append(lipid.replace("_", " "))
-            if liquid and liquid != "none" and liquid != "pure_water" and liquid != "water":
-                specialty_ingredients.append(liquid.replace("_", " "))
-            if binder and binder != "none":
-                specialty_ingredients.append(binder.replace("_", " "))
-        elif preset_slug:
-            native_details = get_local_recipe_details(
-                recipe_slug=preset_slug,
-                recipe_name=preset_name or preset_slug,
-                engine_id=engine.slug if engine else "default",
-                active_archetype_id=active_archetype_id or "default",
-                selected_grains=selected_grains
-            )
-            recommended_slugs = native_details.get("recommended_grain_ids", [])
-            sec_ingredients = native_details.get("secondary_ingredients") or {}
-            
-            # Handle lipids
-            lipids = sec_ingredients.get("lipids")
-            if not lipids:
-                native_lipid = "none"
-            elif isinstance(lipids, list):
-                if len(lipids) > 0:
-                    first_lipid = lipids[0]
-                    if isinstance(first_lipid, dict):
-                        native_lipid = first_lipid.get("name", "none")
-                    else:
-                        native_lipid = str(first_lipid)
-                else:
-                    native_lipid = "none"
-            else:
-                native_lipid = lipids.get("required", "none")
-
-            # Handle liquids
-            liquids = sec_ingredients.get("liquids")
-            if not liquids:
-                native_liquid = "pure_water"
-            elif isinstance(liquids, list):
-                if len(liquids) > 0:
-                    first_liquid = liquids[0]
-                    if isinstance(first_liquid, dict):
-                        native_liquid = first_liquid.get("name", "pure_water")
-                    else:
-                        native_liquid = str(first_liquid)
-                else:
-                    native_liquid = "pure_water"
-            else:
-                native_liquid = liquids.get("required", "pure_water")
-                
-            # Handle binders
-            binders = sec_ingredients.get("binders")
-            if not binders:
-                native_binder = "none"
-            elif isinstance(binders, list):
-                if len(binders) > 0:
-                    first_binder = binders[0]
-                    if isinstance(first_binder, dict):
-                        native_binder = first_binder.get("name", "none")
-                    else:
-                        native_binder = str(first_binder)
-                else:
-                    native_binder = "none"
-            else:
-                native_binder = binders.get("required", "none")
-            
-            if native_lipid != "none":
-                specialty_ingredients.append(native_lipid.replace("_", " "))
-            if native_liquid != "none" and native_liquid != "pure_water" and native_liquid != "water":
-                specialty_ingredients.append(native_liquid.replace("_", " "))
-            if native_binder != "none":
-                specialty_ingredients.append(native_binder.replace("_", " "))
-                
-        # Resolve recommended grain names from slugs
-        native_grain_names = []
-        for slug in recommended_slugs:
-            for wb in active_berries:
-                import re
-                wb_slug = re.sub(r'[^a-z0-9]', '_', wb.name.lower()).strip('_')
-                wb_slug = re.sub(r'_+', '_', wb_slug)
-                if wb_slug == slug or slug in wb_slug or wb_slug in slug:
-                    native_grain_names.append(wb.name)
-                    break
-        
-        # If the user has not selected an item, pass empty array bounds [] to force the model to reason about macro mechanics
-        if selected_names:
-            active_grains_list = selected_names
-        else:
-            active_grains_list = []
-
-        expected_keys = ["grain_evaluations"]
-
-        if only_evaluations:
-            from apps.core.models import Equipment
-            mills = Equipment.objects.filter(equipment_type='mill').order_by('name')
-            mills_text = "\n".join([f"- {m.id} ({m.name})" for m in mills])
-            inventory_text = "\n".join([f"- {b.id} ({b.name}) [Protein: {b.protein_content}%, Hardness: {b.hardness}]" for b in active_berries])
-            
-            data_context = (
-                f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
-                f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
-                f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
-                f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
-                f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-                f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
-                f"* Sifting/Bran Separation Constraint: {sifting_req}\n"
-                f"\n[RAW MATERIAL INVENTORY]\n{inventory_text}\n"
-                f"\n[AVAILABLE MILL MACHINERY]\n{mills_text}\n"
-            )
-            task_instructions = (
-                f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
-                "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
-                f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each.\n"
-                "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each. Output exactly ONE evaluation per mill and ONE per sifter option."
-            )
-            response_schema = (
-                "{\n"
-                "  \"grain_evaluations\": [\n"
-                "    {\n"
-                "      \"grain_id\": \"string (UUID of the grain)\",\n"
-                "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-                "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
-                "    }\n"
-                "  ],\n"
-                "  \"mill_evaluations\": [\n"
-                "    {\n"
-                "      \"mill_id\": \"string (ID of the mill)\",\n"
-                "      \"tier\": \"recommended | not-recommended\",\n"
-                "      \"reasoning\": \"1 sentence explaining why this mill is recommended or not for the archetype.\"\n"
-                "    }\n"
-                "  ],\n"
-                "  \"sifter_evaluations\": {\n"
-                "    \"sifted\": {\n"
-                "      \"tier\": \"recommended | not-recommended\",\n"
-                "      \"reasoning\": \"1 sentence explaining why bran separation helps or hurts.\"\n"
-                "    },\n"
-                "    \"unsifted\": {\n"
-                "      \"tier\": \"recommended | not-recommended\",\n"
-                "      \"reasoning\": \"1 sentence explaining why whole grain helps or hurts.\"\n"
-                "    }\n"
-                "  }\n"
-                "}"
-            )
-            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
-            expected_keys = ["grain_evaluations"]
-        else:
-            data_context = (
-                f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
-                f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
-                f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
-                f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
-                f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
-                f"* Preferred Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
-                f"* Sifting/Bran Separation Constraint: {sifting_req}\n"
-            )
-            task_instructions = (
-                "Evaluate each raw material grain against the mechanics and assign RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED compatibility tier, and write a 2-sentence chemistry justification.\n"
-                f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each. The reasoning for not-recommended or sub-optimal options MUST be specific to the physical/chemical properties of that option (e.g., 'Whole grain bran interrupts the gluten network, causing a denser crumb') rather than simply stating it is worse than the recommended option.\n"
-                "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED, SUB-OPTIMAL, or NOT-RECOMMENDED) and write a 1-sentence reason for each. Provide exactly ONE evaluation per mill, and provide specific mechanical or thermal reasoning for not-recommended or sub-optimal items (e.g., 'Impact mills generate too much heat for this delicate dough') rather than just stating it's not the best choice."
-            )
-            response_schema = (
-                "{\n"
-                "  \"grain_evaluations\": [\n"
-                "    {\n"
-                "      \"grain_id\": \"string (UUID of the grain)\",\n"
-                "      \"tier\": \"recommended | sub-optimal | not-recommended\",\n"
-                "      \"reasoning\": \"A concise 2-sentence analytical justification.\"\n"
-                "    }\n"
-                "  ],\n"
-                "  \"mill_evaluations\": [\n"
-                "    {\n"
-                "      \"mill_id\": \"string (ID of the mill)\",\n"
-                "      \"tier\": \"recommended | not-recommended\",\n"
-                "      \"reasoning\": \"1 sentence explaining why this mill is recommended or not for the archetype.\"\n"
-                "    }\n"
-                "  ],\n"
-                "  \"sifter_evaluations\": {\n"
-                "    \"sifted\": {\n"
-                "      \"tier\": \"recommended | not-recommended\",\n"
-                "      \"reasoning\": \"1 sentence explaining why bran separation helps or hurts.\"\n"
-                "    },\n"
-                "    \"unsifted\": {\n"
-                "      \"tier\": \"recommended | not-recommended\",\n"
-                "      \"reasoning\": \"1 sentence explaining why whole grain helps or hurts.\"\n"
-                "    }\n"
-                "  }\n"
-                "}"
-            )
-            system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
-
-        from apps.core.models import Equipment
-        mills_qs = Equipment.objects.filter(equipment_type='mill', deleted_at__isnull=True)
-        payload = {
-            "engine_id": engine.slug if engine else "default",
-            "active_archetype_id": active_archetype_id,
-            "selected_grains": selected_names,
-            "grains": active_grains_list,
-            "specialty_ingredients": specialty_ingredients,
-            "mills": [{"id": str(m.id), "name": m.name} for m in mills_qs],
-            "inventory": [
-                {
-                    "id": str(wb.id),
-                    "name": wb.name,
-                    "crude_protein_percentage": get_grain_registry_profile(wb.name).get("crude_protein_percentage"),
-                    "gluten_binding_capacity": get_grain_registry_profile(wb.name).get("gluten_binding_capacity"),
-                    "pentosan_concentration": get_grain_registry_profile(wb.name).get("pentosan_concentration"),
-                    "bran_tannin_profile": get_grain_registry_profile(wb.name).get("bran_tannin_profile")
-                }
-                for wb in active_berries
-            ]
-        }
-        
-        user_prompt = json.dumps(payload)
-        import re
-        res = call_gemma_api(system_prompt, user_prompt, expected_keys=expected_keys)
-        if res and isinstance(res, dict):
-            evaluations = res.get("grain_evaluations", [])
-            if isinstance(evaluations, list):
-                for evaluation in evaluations:
-                    if not isinstance(evaluation, dict):
-                        continue
-                    matched_wb = None
-                    # 1. Exact match on grain_id
-                    for wb in active_berries:
-                        if str(wb.id) == str(evaluation.get("grain_id", "")).strip():
-                            matched_wb = wb
-                            break
-                    # 2. Case-insensitive name match or slug match on grain_id
-                    if not matched_wb:
-                        for wb in active_berries:
-                            wb_slug = re.sub(r'[^a-z0-9]', '', wb.name.lower())
-                            id_slug = re.sub(r'[^a-z0-9]', '', str(evaluation.get("grain_id", "")).lower())
-                            if wb_slug == id_slug or wb_slug in id_slug or id_slug in wb_slug:
-                                matched_wb = wb
-                                break
-                    # 3. Matching via grain name inside reasoning
-                    if not matched_wb:
-                        reasoning_lower = evaluation.get("reasoning", "").lower()
-                        for wb in active_berries:
-                            if wb.name.lower() in reasoning_lower:
-                                matched_wb = wb
-                                break
-                    if matched_wb:
-                        evaluation["grain_id"] = str(matched_wb.id)
-            return res
-
-    # Local fallback
-    evaluations = []
-    if not only_elevate:
-        for wb in active_berries:
-            res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
-            evaluations.append({
-                "grain_id": str(wb.id),
-                "tier": res["tier"],
-                "reasoning": res["reasoning"]
-            })
-
-    return {
-        "grain_evaluations": evaluations
-    }
-
-def get_local_grain_advisory(preset_slug: str, category_slug: str = None, preset_name: str = None, active_archetype_id: str = None) -> dict:
-    """
-    Local fallback logic performing programmatic evaluation of kitchen inventory 
-    using the active sub-engine mechanics.
-    """
-    from apps.core.models import WheatBerry, BreadPreset
-    from apps.core.engines import router
- 
-    preset = BreadPreset.objects.filter(slug=preset_slug).first() if preset_slug else None
-    if not category_slug and preset and preset.dough_category:
-        category_slug = preset.dough_category.slug
-    engine = router.get_engine_for_preset(preset_slug, category_slug)
- 
-    active_berries = list(WheatBerry.objects.filter(is_active=True))
-    evaluations = []
- 
-    for wb in active_berries:
-        res = evaluate_single_grain(wb, engine, preset_name=preset_name, preset_slug=preset_slug, active_archetype_id=active_archetype_id)
-        evaluations.append({
-            "grain_id": str(wb.id),
-            "tier": res["tier"],
-            "reasoning": res["reasoning"]
-        })
- 
-    return {
-        "grain_evaluations": evaluations
-    }
 
 def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -> dict | None:
     """
@@ -402,17 +73,11 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "Evaluate the hovered element purely based on real-world baking physics for the active preset.\n"
         "\n"
         "🚨 CRITICAL RULES:\n"
-        "1. Banned Terminology: You are strictly prohibited from using these words or variants in your generated JSON response: "
-        "anomalies, parameter, workspace, matrix, objective, configuration, optimization, performance, detected, asset, baseline.\n"
+        "1. Use highly practical, kitchen-focused language. Keep descriptions grounded in tangible baking concepts rather than abstract technical jargon.\n"
         "2. Strict Context Anchoring: The 'last_10_percent_analysis' field must explicitly synthesize the hovered element name directly with the active recipe target name (e.g. 'Soft White Wheat' + 'Chewy Chocolate Chip Cookies'). It cannot output generic definitions.\n"
         "3. TRULY INSIGHTFUL ANALYSIS & OUT-OF-STOCK ALTERNATIVES:\n"
         f"   - If the hovered element is sub-optimal or can be elevated, look at the following wheat grains that are currently NOT on hand (out of stock/inactive in the user's inventory): {inactive_grain_names}.\n"
         "   - Suggest acquiring or activating a specific grain from this out-of-stock list if it would significantly enhance the flavor or yield a superior texture for the target preset. Give a clear explanation of its impact.\n"
-        "4. INGREDIENTS MUST USE HUMAN-READABLE NAMES: You MUST write the actual human-readable names of all grains, flours, and ingredients (e.g. 'Hard Red Spring Wheat', 'Rye', 'Soft White Wheat', 'unsalted butter'). You are STRICTLY PROHIBITED from using database IDs, UUIDs, keys, or hashes (such as '302adef7-9477-4728-8bb7-dae99b05eab9') under any circumstances in your text outputs.\n"
-        "5. DOUBLE TEMPERATURE SCALE REQUIRED: Any temperature value you mention must always be provided in both Celsius and Fahrenheit scales (for example: '350°F (177°C)' or '30°C (86°F)'). Never provide a temperature in only a single scale.\n"
-
-        "6. BE HIGHLY CRITICAL AND DISCERNING: Do NOT lazily categorize everything as 'High Priority' or 'Recommended'. Most options in a kitchen are 'Sub-Optimal', 'Low Priority', or 'Standard Baseline'. ONLY rate something as 'High Priority / Worth the Extra Step' or 'Recommended' if it provides a MASSIVE, noticeable improvement to the final texture or flavor for that specific recipe. You are a harsh, pragmatic critic. If it's a minor difference, rate it 'Low Priority'.\n"
-
         "\n"
         "Return a JSON object containing:\n"
         "- 'recommendation_tier': a string of 'highly-recommended', 'recommended', 'standard', 'sub-optimal', or 'not-recommended' representing the rating of this choice for the active preset.\n"
@@ -460,11 +125,24 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
     try:
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["recommendation_tier", "labor_roi_rating", "last_10_percent_analysis", "elevate_recipe"])
         if result and "labor_roi_rating" in result and "last_10_percent_analysis" in result:
+            def append_celsius(match):
+                f_val = int(match.group(1))
+                c_val = round((f_val - 32) * 5.0/9.0)
+                # Return standard °F (°C) format
+                return f"{f_val}°F ({c_val}°C)"
+            
+            analysis = result["last_10_percent_analysis"]
+            # Look for 350F or 350°F
+            analysis = re.sub(r"(\d+)\s*(?:°F|F)\b", append_celsius, analysis)
+            
+            elevate = result.get("elevate_recipe", "")
+            elevate = re.sub(r"(\d+)\s*(?:°F|F)\b", append_celsius, elevate)
+            
             return {
                 "recommendation_tier": result.get("recommendation_tier", "recommended"),
                 "labor_roi": result["labor_roi_rating"],
-                "last_10_percent_analysis": result["last_10_percent_analysis"],
-                "elevate_recipe": result.get("elevate_recipe", "")
+                "last_10_percent_analysis": analysis,
+                "elevate_recipe": elevate
             }
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling sidebar insight API: {str(e)}")
@@ -611,7 +289,16 @@ def stream_grain_evaluations(
     sifting_req = preset.get_sifting_requirement_display() if preset else "Optional (Variable)"
     mills = Equipment.objects.filter(equipment_type='mill').order_by('name')
     mills_text = "\n".join([f"- {m.id} ({m.name})" for m in mills])
-    inventory_text = "\n".join([f"- {b.id} ({b.name}) [Protein: {b.protein_content}%, Hardness: {b.hardness}]" for b in active_berries])
+    inventory_list = []
+    for b in active_berries:
+        prof = get_grain_registry_profile(b.name)
+        inventory_list.append(
+            f"- ID: {b.id} ({b.name})\n"
+            f"  Protein: {prof.get('crude_protein_percentage', '12.0%')}, Hardness: {b.hardness}\n"
+            f"  Gluten Capacity: {prof.get('gluten_binding_capacity', 'high')}, Moisture Retention (Pentosans): {prof.get('pentosan_concentration', 'low_standard')}\n"
+            f"  Flavor/Tannin Profile: {prof.get('bran_tannin_profile', 'none_neutral')}\n"
+        )
+    inventory_text = "".join(inventory_list)
 
     data_context = (
         f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
@@ -620,6 +307,7 @@ def stream_grain_evaluations(
         f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
         f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
         f"* Target Protein Window: {mechanics.get('optimal_protein_window')}\n"
+        f"* Target Flavor Profile: {mechanics.get('target_flavor_profile', 'neutral_sweet')}\n"
         f"* Sifting/Bran Separation Constraint: {sifting_req}\n"
         f"\n[RAW MATERIAL INVENTORY]\n{inventory_text}\n"
         f"\n[AVAILABLE MILL MACHINERY]\n{mills_text}\n"
@@ -631,6 +319,7 @@ def stream_grain_evaluations(
     if target == "grains":
         task_instructions = (
             f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
+            "Commercial All-Purpose flour is not an option. If a grain is not a perfect match on its own but would be an excellent component in a blended flour to hit the target metrics, classify it as RECOMMENDED. "
             "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification."
         )
         response_schema = (
@@ -687,6 +376,7 @@ def stream_grain_evaluations(
         # Fallback to the original monolithic logic
         task_instructions = (
             f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
+            "Commercial All-Purpose flour is not an option. If a grain is not a perfect match on its own but would be an excellent component in a blended flour to hit the target metrics, classify it as RECOMMENDED. "
             "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification.\n"
             f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each.\n"
             "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: Provide exactly ONE evaluation per mill and ONE evaluation per sifter option."
@@ -723,7 +413,7 @@ def stream_grain_evaluations(
             "}"
         )
 
-    system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id)
+    system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id, include_global_rules=False)
     user_prompt = "{}"
     
     import logging

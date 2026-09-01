@@ -11,6 +11,32 @@ class PastryEngine(BaseEngine):
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires an ultra-clean, sweet backdrop to highlight intense layered butter fat distribution."
     tannin_sensitive = True
     supported_tweaks = ["hydration", "leavening", "enrichment"]
+    variations = {
+        "flaky_tender": {
+            "label": "Flaky & Tender (Top Crust)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "minimal_to_none",
+                "optimal_protein_window": "8.0% - 9.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected FLAKY & TENDER. This is ideal for top crusts or delicate tarts. "
+                "Favor low-protein soft wheats (e.g., Pastry Flour). Emphasize keeping fats cold and in large chunks "
+                "to create steam pockets, while minimizing water to prevent tough gluten formation."
+            )
+        },
+        "sturdy_crisp": {
+            "label": "Sturdy & Crisp (Bottom Crust)",
+            "mechanics_overrides": {
+                "required_gluten_elasticity": "moderate_extensible",
+                "optimal_protein_window": "10.0% - 11.5%"
+            },
+            "culinary_nuance_directive_append": (
+                "CRITICAL: The user selected STURDY & CRISP. This dough must support heavy, wet fillings (like fruit or custard) "
+                "without becoming soggy. Favor moderate protein wheats (e.g., All-Purpose) and instruct the user to "
+                "work the fat in more thoroughly (mealy texture) to waterproof the flour proteins."
+            )
+        }
+    }
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
         "mechanical_energy_threshold": "minimal_folding",
@@ -203,7 +229,7 @@ class PastryEngine(BaseEngine):
         return "Specify the exact butter block weight required for lamination (around 28% of total dough mass), and detail the lamination fold style (e.g., book folds vs letter folds) and zero yeast if it is a shortcrust pastry. This is laminated or pie pastry (croissants, puff, pie crust). Requires extreme lipids (butter blocks). NEVER include chemical leaveners for puff/pie crust (croissants may use yeast). Cold temperatures are strictly required."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like fruit fillings or almond paste), use true baker's percentages (flour = 100%). For pastries, these typically range from 10.0 to 50.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
+        return "When generating ratios for inclusions or additives (like fruit fillings or almond paste), use true baker's percentages (flour = 100%). For pastries, these typically range from 10.0 to 50.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0% to prevent emulsification failure."
 
     def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
         preset_slug = kwargs.get("preset_slug") or ""
