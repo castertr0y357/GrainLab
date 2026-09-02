@@ -918,9 +918,33 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
+        wakeLock: null,
+        
+        async requestWakeLock() {
+            if (document.documentElement.dataset.keepAwake === 'true' && 'wakeLock' in navigator) {
+                try {
+                    this.wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock is active');
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            }
+        },
+        
+        releaseWakeLock() {
+            if (this.wakeLock !== null) {
+                this.wakeLock.release()
+                    .then(() => {
+                        this.wakeLock = null;
+                        console.log('Wake Lock released');
+                    });
+            }
+        },
+        
         startCountertopMode() {
             this.countertopMode = true;
             this.currentStepIndex = 0;
+            this.requestWakeLock();
             if(this.steps.length > 0) {
                 this.stepTimeRemaining = this.steps[0].duration_sec;
                 this.startTimer();
@@ -954,6 +978,7 @@ document.addEventListener('alpine:init', () => {
                 this.startTimer();
             } else {
                 this.countertopMode = false;
+                this.releaseWakeLock();
             }
         },
         prevStep() {
@@ -965,7 +990,19 @@ document.addEventListener('alpine:init', () => {
             }
         },
         playAlarm() {
-            // Audio context can be added here
+            if (document.documentElement.dataset.audioAlerts === 'true') {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    osc.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                } catch (e) {
+                    console.error("Audio playback failed", e);
+                }
+            }
             console.log("Alarm playing!");
         },
         stopAlarm() {

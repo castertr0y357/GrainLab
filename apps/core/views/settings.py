@@ -28,6 +28,25 @@ class SettingsPageView(View):
             "ai_model_name": SystemSetting.get_val("ai_model_name", "gemma:12b"),
             "ai_thinking_enabled": SystemSetting.get_val("ai_thinking_enabled", "True") == "True",
             "ai_thinking_effort": SystemSetting.get_val("ai_thinking_effort", "medium"),
+            
+            # New Settings
+            "weight_unit": SystemSetting.get_val("weight_unit", "grams"),
+            "temperature_unit": SystemSetting.get_val("temperature_unit", "celsius"),
+            "date_time_format": SystemSetting.get_val("date_time_format", "24h"),
+            "default_ambient_temperature": SystemSetting.get_val("default_ambient_temperature", "72"),
+            "default_ambient_humidity": SystemSetting.get_val("default_ambient_humidity", "50"),
+            "default_mixer": SystemSetting.get_val("default_mixer", ""),
+            "default_proofing_environment": SystemSetting.get_val("default_proofing_environment", ""),
+            "theme_preference": SystemSetting.get_val("theme_preference", "system"),
+            "keep_screen_awake": SystemSetting.get_val("keep_screen_awake", "True") == "True",
+            "timeline_audio_alerts": SystemSetting.get_val("timeline_audio_alerts", "True") == "True",
+            "fractional_scaling_increment": SystemSetting.get_val("fractional_scaling_increment", "0.5"),
+            "soft_delete_retention_days": SystemSetting.get_val("soft_delete_retention_days", "30"),
+            "export_format_default": SystemSetting.get_val("export_format_default", "json"),
+            
+            # Inventory for dropdowns
+            "mixers": Equipment.objects.filter(equipment_type="mixer", deleted_at__isnull=True),
+            "proofing_environments": Equipment.objects.filter(equipment_type="proofing_box", deleted_at__isnull=True),
         }
         return render(request, "settings.html", context)
 
@@ -42,12 +61,27 @@ class SaveSettingsView(View):
         ai_model_name = request.POST.get("ai_model_name", "").strip()
         ai_thinking_enabled = request.POST.get("ai_thinking_enabled") in ("on", "true", "True")
         ai_thinking_effort = request.POST.get("ai_thinking_effort", "medium")
-    
+        
         SystemSetting.set_val("ai_enabled", ai_enabled)
         SystemSetting.set_val("ai_api_url", ai_api_url)
         SystemSetting.set_val("ai_model_name", ai_model_name)
         SystemSetting.set_val("ai_thinking_enabled", ai_thinking_enabled)
         SystemSetting.set_val("ai_thinking_effort", ai_thinking_effort)
+        
+        # New Settings
+        SystemSetting.set_val("weight_unit", request.POST.get("weight_unit", "grams"))
+        SystemSetting.set_val("temperature_unit", request.POST.get("temperature_unit", "celsius"))
+        SystemSetting.set_val("date_time_format", request.POST.get("date_time_format", "24h"))
+        SystemSetting.set_val("default_ambient_temperature", request.POST.get("default_ambient_temperature", "72"))
+        SystemSetting.set_val("default_ambient_humidity", request.POST.get("default_ambient_humidity", "50"))
+        SystemSetting.set_val("default_mixer", request.POST.get("default_mixer", ""))
+        SystemSetting.set_val("default_proofing_environment", request.POST.get("default_proofing_environment", ""))
+        SystemSetting.set_val("theme_preference", request.POST.get("theme_preference", "system"))
+        SystemSetting.set_val("keep_screen_awake", request.POST.get("keep_screen_awake") in ("on", "true", "True"))
+        SystemSetting.set_val("timeline_audio_alerts", request.POST.get("timeline_audio_alerts") in ("on", "true", "True"))
+        SystemSetting.set_val("fractional_scaling_increment", request.POST.get("fractional_scaling_increment", "0.5"))
+        SystemSetting.set_val("soft_delete_retention_days", request.POST.get("soft_delete_retention_days", "30"))
+        SystemSetting.set_val("export_format_default", request.POST.get("export_format_default", "json"))
     
         return HttpResponse(
             "<div class='feedback-box' style='border-left-color: var(--success);'>"

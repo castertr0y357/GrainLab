@@ -4,6 +4,7 @@
 {% block content %}
 <div class="card" style="max-width: 600px; margin: 2rem auto;"
      x-data="{ 
+         activeTab: 'ai',
          ai_enabled: {% if ai_enabled %}true{% else %}false{% endif %},
          thinking_enabled: {% if ai_thinking_enabled %}true{% else %}false{% endif %},
          submitting: false
@@ -11,6 +12,13 @@
     <h2 style="color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
         ⚙️ Application Preferences
     </h2>
+    
+    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;">
+        <button type="button" @click="activeTab = 'ai'" :style="activeTab === 'ai' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">AI Settings</button>
+        <button type="button" @click="activeTab = 'ux'" :style="activeTab === 'ux' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Localization & UX</button>
+        <button type="button" @click="activeTab = 'env'" :style="activeTab === 'env' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Environment</button>
+        <button type="button" @click="activeTab = 'workflow'" :style="activeTab === 'workflow' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Workflow</button>
+    </div>
 
     <form hx-post="{% url 'save_settings' %}" 
           hx-target="#settings-feedback" 
@@ -20,66 +28,194 @@
           @htmx:after-request="submitting = false">
         {% csrf_token %}
         
-        <!-- Parent AI Integration Toggle -->
-        <div class="switch-container">
-            <div>
-                <strong>Local AI Assistance (Gemma)</strong>
-                <div style="font-size: 0.85rem; color: var(--text-muted);">
-                    When active, queries local edge model for custom sensory benchmarks and step analysis.
-                </div>
-            </div>
-            <label class="switch">
-                <input type="checkbox" name="ai_enabled" x-model="ai_enabled">
-                <span class="slider-round"></span>
-            </label>
-        </div>
-
-        <!-- Dependent Inputs (Hidden when AI is disabled) -->
-        <div x-show="ai_enabled" x-transition style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-            <div class="input-group" style="margin-bottom: 1rem;">
-                <label for="ai_api_url">API Base URL</label>
-                <input type="text" name="ai_api_url" id="ai_api_url" class="num-input" style="width:100%;" value="{{ ai_api_url }}">
-                <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Ollama default is http://host.docker.internal:11434/v1
-                </span>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 1rem;" id="model-input-container">
-                <label for="ai_model_name">Model Identifier</label>
-                <div style="display: flex; gap: 0.5rem; align-items: stretch;">
-                    <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="flex-grow: 1;" value="{{ ai_model_name }}">
-                    <button type="button" class="nav-btn secondary" 
-                            hx-get="{% url 'discover_models' %}" 
-                            hx-include="#ai_api_url"
-                            hx-target="#model-input-container" 
-                            hx-swap="innerHTML"
-                            style="padding: 0 1rem; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;">
-                        Discover
-                    </button>
-                </div>
-            </div>
-
-            <!-- Thinking Toggles -->
-            <div class="switch-container" style="margin-bottom: 1rem;">
+        <!-- TAB: AI -->
+        <div x-show="activeTab === 'ai'" x-transition>
+            <!-- Parent AI Integration Toggle -->
+            <div class="switch-container">
                 <div>
-                    <strong>AI Thinking/Reasoning</strong>
+                    <strong>Local AI Assistance (Gemma)</strong>
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        Enable chain-of-thought processing.
+                        When active, queries local edge model for custom sensory benchmarks and step analysis.
                     </div>
                 </div>
                 <label class="switch">
-                    <input type="checkbox" name="ai_thinking_enabled" x-model="thinking_enabled">
+                    <input type="checkbox" name="ai_enabled" x-model="ai_enabled">
                     <span class="slider-round"></span>
                 </label>
             </div>
 
-            <!-- Dependent Thinking Input -->
-            <div class="input-group" x-show="thinking_enabled" x-transition style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--accent);">
-                <label for="ai_thinking_effort">Thinking Effort Level</label>
-                <select name="ai_thinking_effort" id="ai_thinking_effort" class="form-select">
-                    <option value="low" {% if ai_thinking_effort == "low" %}selected{% endif %}>Low</option>
-                    <option value="medium" {% if ai_thinking_effort == "medium" %}selected{% endif %}>Medium</option>
-                    <option value="high" {% if ai_thinking_effort == "high" %}selected{% endif %}>High</option>
+            <!-- Dependent Inputs (Hidden when AI is disabled) -->
+            <div x-show="ai_enabled" x-transition style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label for="ai_api_url">API Base URL</label>
+                    <input type="text" name="ai_api_url" id="ai_api_url" class="num-input" style="width:100%;" value="{{ ai_api_url }}">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">
+                        Ollama default is http://host.docker.internal:11434/v1
+                    </span>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 1rem;" id="model-input-container">
+                    <label for="ai_model_name">Model Identifier</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                        <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="flex-grow: 1;" value="{{ ai_model_name }}">
+                        <button type="button" class="nav-btn secondary" 
+                                hx-get="{% url 'discover_models' %}" 
+                                hx-include="#ai_api_url"
+                                hx-target="#model-input-container" 
+                                hx-swap="innerHTML"
+                                style="padding: 0 1rem; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;">
+                            Discover
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Thinking Toggles -->
+                <div class="switch-container" style="margin-bottom: 1rem;">
+                    <div>
+                        <strong>AI Thinking/Reasoning</strong>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            Enable chain-of-thought processing.
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="ai_thinking_enabled" x-model="thinking_enabled">
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                <!-- Dependent Thinking Input -->
+                <div class="input-group" x-show="thinking_enabled" x-transition style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--accent);">
+                    <label for="ai_thinking_effort">Thinking Effort Level</label>
+                    <select name="ai_thinking_effort" id="ai_thinking_effort" class="form-select">
+                        <option value="low" {% if ai_thinking_effort == "low" %}selected{% endif %}>Low</option>
+                        <option value="medium" {% if ai_thinking_effort == "medium" %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if ai_thinking_effort == "high" %}selected{% endif %}>High</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: UX & Localization -->
+        <div x-show="activeTab === 'ux'" x-transition style="display: none;">
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="temperature_unit">Temperature Unit</label>
+                <select name="temperature_unit" id="temperature_unit" class="form-select">
+                    <option value="celsius" {% if temperature_unit == "celsius" %}selected{% endif %}>Celsius (°C)</option>
+                    <option value="fahrenheit" {% if temperature_unit == "fahrenheit" %}selected{% endif %}>Fahrenheit (°F)</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="weight_unit">Weight Unit</label>
+                <select name="weight_unit" id="weight_unit" class="form-select">
+                    <option value="grams" {% if weight_unit == "grams" %}selected{% endif %}>Grams (g)</option>
+                    <option value="ounces" {% if weight_unit == "ounces" %}selected{% endif %}>Ounces (oz)</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="date_time_format">Time Format</label>
+                <select name="date_time_format" id="date_time_format" class="form-select">
+                    <option value="24h" {% if date_time_format == "24h" %}selected{% endif %}>24-Hour</option>
+                    <option value="12h" {% if date_time_format == "12h" %}selected{% endif %}>12-Hour (AM/PM)</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="theme_preference">Theme</label>
+                <select name="theme_preference" id="theme_preference" class="form-select">
+                    <option value="system" {% if theme_preference == "system" %}selected{% endif %}>System Sync</option>
+                    <option value="light" {% if theme_preference == "light" %}selected{% endif %}>Light</option>
+                    <option value="dark" {% if theme_preference == "dark" %}selected{% endif %}>Dark</option>
+                </select>
+            </div>
+            
+            <div class="switch-container" style="margin-bottom: 1rem;">
+                <div>
+                    <strong>Keep Screen Awake</strong>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Prevents screen from sleeping during active Countertop Timeline.
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" name="keep_screen_awake" {% if keep_screen_awake %}checked{% endif %}>
+                    <span class="slider-round"></span>
+                </label>
+            </div>
+            
+            <div class="switch-container" style="margin-bottom: 1rem;">
+                <div>
+                    <strong>Timeline Audio Alerts</strong>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Play alert sounds when Countertop steps require attention.
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" name="timeline_audio_alerts" {% if timeline_audio_alerts %}checked{% endif %}>
+                    <span class="slider-round"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- TAB: Environment -->
+        <div x-show="activeTab === 'env'" x-transition style="display: none;">
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="default_ambient_temperature">Ambient Temperature (°F)</label>
+                <input type="number" name="default_ambient_temperature" id="default_ambient_temperature" class="num-input" style="width: 100%;" value="{{ default_ambient_temperature }}">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="default_ambient_humidity">Ambient Humidity (%)</label>
+                <input type="number" name="default_ambient_humidity" id="default_ambient_humidity" class="num-input" style="width: 100%;" value="{{ default_ambient_humidity }}">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="default_mixer">Default Mixer</label>
+                <select name="default_mixer" id="default_mixer" class="form-select">
+                    <option value="">-- None --</option>
+                    {% for mixer in mixers %}
+                        <option value="{{ mixer.id }}" {% if default_mixer == mixer.id|stringformat:"s" %}selected{% endif %}>{{ mixer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="default_proofing_environment">Default Proofing Environment</label>
+                <select name="default_proofing_environment" id="default_proofing_environment" class="form-select">
+                    <option value="">-- None --</option>
+                    {% for box in proofing_environments %}
+                        <option value="{{ box.id }}" {% if default_proofing_environment == box.id|stringformat:"s" %}selected{% endif %}>{{ box.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- TAB: Workflow -->
+        <div x-show="activeTab === 'workflow'" x-transition style="display: none;">
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="fractional_scaling_increment">Fractional Scaling Increments</label>
+                <select name="fractional_scaling_increment" id="fractional_scaling_increment" class="form-select">
+                    <option value="0.1" {% if fractional_scaling_increment == "0.1" %}selected{% endif %}>0.1x (Precise)</option>
+                    <option value="0.5" {% if fractional_scaling_increment == "0.5" %}selected{% endif %}>0.5x (Half-batch)</option>
+                    <option value="1.0" {% if fractional_scaling_increment == "1.0" %}selected{% endif %}>1.0x (Whole batches only)</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="soft_delete_retention_days">Inventory Trash Retention (Days)</label>
+                <select name="soft_delete_retention_days" id="soft_delete_retention_days" class="form-select">
+                    <option value="14" {% if soft_delete_retention_days == "14" %}selected{% endif %}>14 Days</option>
+                    <option value="30" {% if soft_delete_retention_days == "30" %}selected{% endif %}>30 Days</option>
+                    <option value="0" {% if soft_delete_retention_days == "0" %}selected{% endif %}>Never empty (Keep forever)</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="export_format_default">Default Export Format</label>
+                <select name="export_format_default" id="export_format_default" class="form-select">
+                    <option value="pdf" {% if export_format_default == "pdf" %}selected{% endif %}>PDF Document</option>
+                    <option value="md" {% if export_format_default == "md" %}selected{% endif %}>Markdown</option>
+                    <option value="json" {% if export_format_default == "json" %}selected{% endif %}>JSON Payload</option>
                 </select>
             </div>
         </div>

@@ -26,6 +26,38 @@
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="light"] {
+    --bg-primary: hsl(30, 20%, 96%);
+    --bg-secondary: hsl(30, 15%, 92%);
+    --bg-card: hsl(0, 0%, 100%);
+    --bg-input: hsl(30, 15%, 98%);
+    --text-primary: hsl(28, 14%, 12%);
+    --text-secondary: hsl(28, 12%, 35%);
+    --text-muted: hsl(28, 10%, 45%);
+    --accent: hsl(28, 80%, 45%);
+    --accent-hover: hsl(28, 90%, 40%);
+    --accent-glow: hsla(28, 80%, 45%, 0.15);
+    --border: hsl(30, 20%, 85%);
+    --border-glow: hsla(28, 80%, 45%, 0.3);
+}
+
+@media (prefers-color-scheme: light) {
+    [data-theme="system"] {
+        --bg-primary: hsl(30, 20%, 96%);
+        --bg-secondary: hsl(30, 15%, 92%);
+        --bg-card: hsl(0, 0%, 100%);
+        --bg-input: hsl(30, 15%, 98%);
+        --text-primary: hsl(28, 14%, 12%);
+        --text-secondary: hsl(28, 12%, 35%);
+        --text-muted: hsl(28, 10%, 45%);
+        --accent: hsl(28, 80%, 45%);
+        --accent-hover: hsl(28, 90%, 40%);
+        --accent-glow: hsla(28, 80%, 45%, 0.15);
+        --border: hsl(30, 20%, 85%);
+        --border-glow: hsla(28, 80%, 45%, 0.3);
+    }
+}
+
 /* Global Reset */
 * {
     box-sizing: border-box;

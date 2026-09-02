@@ -154,6 +154,7 @@
 - None (All tasks and audit updates completed successfully)
 
 ## ✅ Recently Completed Items (From user requests)
+- [x] Add new App Settings section (Localization, Kitchen, UX, Workflow). Implement `SystemSetting` DB persistence, globally expose variables via `apps/core/context_processors.py`, update `settings.html` form inputs, apply `theme_preference` via `[data-theme]` CSS, and wire up `keep_screen_awake` (WakeLock API) and `audio_alerts` (AudioContext API) in `phase4.js` Countertop mode.
 - [x] Fix Phase 3 "How are we making it?" display issue for saved formulas by properly parsing `process_recommendations_json` into the `phase4App` component's initial state.
 - [x] Renamed "AI 'What-if' Tweaks" to "Culinary Explorations" in the UI to sound more inspired.
 - [x] Implement dynamic recipe scaler with portionable support (0.5x increments for cookies, muffins, rolls; 1.0x increments for loaves, cakes) and AI-generated default yield amounts.
