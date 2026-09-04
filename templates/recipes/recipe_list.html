@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data="recipeListApp()" class="recipe-list-container">
+    <div class="page-header" style="margin-bottom: 2rem;">
+        <h1>Saved Recipes</h1>
+        <p class="subtitle">All your compiled formulas and recipes.</p>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="glass-bar" style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); backdrop-filter: blur(10px); margin-bottom: 2rem; position: sticky; top: 20px; z-index: 10;">
+        <div style="flex-grow: 1; min-width: 250px; position: relative;">
+            <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
+            <input type="text" x-model="searchQuery" placeholder="Search recipes by name or type..." style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: white;">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem;" class="hide-scrollbar">
+            <button @click="activeCategory = 'all'" :class="activeCategory === 'all' ? 'active-chip' : 'chip'" style="padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; cursor: pointer; color: white; white-space: nowrap; transition: 0.2s;">All Recipes</button>
+            
+            {% regroup recipes by display_category as category_list %}
+            {% for cat in category_list %}
+            <button @click="activeCategory = '{{ cat.grouper|escapejs }}'" :class="activeCategory === '{{ cat.grouper|escapejs }}' ? 'active-chip' : 'chip'" style="padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; cursor: pointer; color: white; white-space: nowrap; transition: 0.2s;">
+                {{ cat.grouper }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recipes Grid -->
+    <div class="recipes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for recipe in recipes %}
+        <a href="{% url 'shared_recipe' recipe.id %}" 
+           class="card recipe-card stagger-anim" 
+           x-show="matches('{{ recipe.display_category|escapejs }}', '{{ recipe.name|escapejs }}')"
+           x-transition.opacity.duration.400ms
+           style="animation-delay: {{ forloop.counter0|add:1 }}00ms; text-decoration: none; color: inherit; display: flex; flex-direction: column; position: relative; overflow: hidden; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s;"
+           @mousemove="handleMouseMove($event)"
+           @mouseleave="handleMouseLeave($event)">
+            
+            <!-- Mouse Glow Overlay -->
+            <div class="glow-overlay" style="position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: radial-gradient(circle 150px at var(--mouse-x, 0) var(--mouse-y, 0), rgba(255, 136, 0, 0.15), transparent 80%);"></div>
+
+            <!-- Background Watermark -->
+            <span class="watermark" style="position: absolute; bottom: -20px; right: -20px; font-size: 8rem; opacity: 0.04; pointer-events: none; user-select: none;">{{ recipe.category_icon }}</span>
+
+            <div class="card-header" style="position: relative; z-index: 1;">
+                <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem; color: var(--text-primary);">{{ recipe.name|default:"Untitled Recipe" }}</h3>
+                <span class="badge" style="font-size: 0.8rem; background: rgba(0, 0, 0, 0.3); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-muted);">{{ recipe.created_at|date:"M j, Y" }}</span>
+            </div>
+            
+            <div class="card-body" style="flex-grow: 1; padding: 1.25rem 0; position: relative; z-index: 1;">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <span style="background: rgba(255, 136, 0, 0.15); color: var(--accent); padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid rgba(255, 136, 0, 0.2);">{{ recipe.category_icon }} {{ recipe.display_category }}</span>
+                    <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.1);">{{ recipe.archetype_icon }} {{ recipe.display_archetype|default:"Standard" }}</span>
+                </div>
+            </div>
+            
+            <div class="card-footer" style="margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; color: var(--accent); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 1;">
+                <span>View Formula</span>
+                <span style="transition: transform 0.2s;" class="arrow">&rarr;</span>
+            </div>
+        </a>
+        {% empty %}
+        
+        {% endfor %}
+    </div>
+
+    <!-- Empty State (Fallback if no recipes exist at all) -->
+    {% if not recipes %}
+    <div class="premium-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 6rem 2rem; background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.05) 100%); border: 1px dashed rgba(255,255,255,0.1); border-radius: 24px; position: relative; overflow: hidden;">
+        <!-- Pulsing background glow -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,136,0,0.1) 0%, transparent 70%); animation: pulse-glow 4s ease-in-out infinite;"></div>
+        
+        <div style="position: relative; z-index: 1;">
+            <!-- Animated SVG -->
+            <svg class="empty-svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1.5rem auto; display: block; opacity: 0.8;">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                <path class="float-star" d="M18 4l1 1 1-1-1-1z" fill="var(--accent)" stroke="none"/>
+                <path class="float-star-2" d="M6 18l1.5 1.5 1.5-1.5-1.5-1.5z" fill="var(--accent)" stroke="none"/>
+            </svg>
+            
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; color: white;">Your Recipe Box is Empty</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">Harness the power of the GrainLab formulation engine to create your first scientifically balanced recipe.</p>
+            
+            <a href="{% url 'calculator_phase1' %}" class="btn-premium-pulse" style="display: inline-block; text-decoration: none;">
+                Start Compiling
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Client-side Empty State (when search yields no results) -->
+    {% if recipes %}
+    <div x-show="totalVisible === 0" style="display: none; grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; color: var(--text-muted);" x-transition>
+        <span style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.5;">🔍</span>
+        <h3>No recipes match your search</h3>
+        <p>Try adjusting your filters or search terms.</p>
+        <button @click="searchQuery = ''; activeCategory = 'all';" class="chip" style="margin-top: 1rem; padding: 0.5rem 1rem; border-radius: 9999px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; cursor: pointer;">Clear Filters</button>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('recipeListApp', () => ({
+            searchQuery: '',
+            activeCategory: 'all',
+            totalVisible: {{ recipes|length }},
+            
+            matches(category, name) {
+                const searchMatch = this.searchQuery === '' || name.toLowerCase().includes(this.searchQuery.toLowerCase());
+                const categoryMatch = this.activeCategory === 'all' || category === this.activeCategory;
+                
+                return searchMatch && categoryMatch;
+            },
+
+            handleMouseMove(e) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+                e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+                e.currentTarget.querySelector('.glow-overlay').style.opacity = '1';
+            },
+
+            handleMouseLeave(e) {
+                e.currentTarget.querySelector('.glow-overlay').style.opacity = '0';
+            },
+
+            init() {
+                // Update totalVisible count whenever filters change to show/hide the client-side empty state
+                this.$watch('searchQuery', () => this.recalcVisible());
+                this.$watch('activeCategory', () => this.recalcVisible());
+            },
+            
+            recalcVisible() {
+                // Wait for Alpine to update DOM
+                setTimeout(() => {
+                    this.totalVisible = document.querySelectorAll('.recipe-card:not([style*="display: none"])').length;
+                }, 50);
+            }
+        }))
+    });
+</script>
+
+<style>
+    .recipe-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        border-color: rgba(255, 136, 0, 0.4) !important;
+    }
+    
+    .recipe-card:hover .arrow {
+        transform: translateX(4px);
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .chip:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .active-chip {
+        background: var(--accent) !important;
+        border-color: var(--accent) !important;
+        color: #000 !important;
+        font-weight: 600;
+    }
+    
+    /* Input focus styling */
+    input:focus {
+        outline: none;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 2px rgba(255, 136, 0, 0.2);
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+        50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    @keyframes float-1 {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-10px) scale(1.2); opacity: 0.5; }
+    }
+    
+    @keyframes float-2 {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(10px) scale(1.2); opacity: 0.5; }
+    }
+
+    .empty-svg .float-star {
+        animation: float-1 3s ease-in-out infinite;
+        transform-origin: center;
+    }
+
+    .empty-svg .float-star-2 {
+        animation: float-2 4s ease-in-out infinite;
+        transform-origin: center;
+    }
+
+    .btn-premium-pulse {
+        padding: 0.75rem 2rem;
+        border-radius: 9999px;
+        background: linear-gradient(135deg, var(--accent) 0%, #ff6b00 100%);
+        color: #000;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 0 15px rgba(255,136,0,0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-premium-pulse:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(255,136,0,0.6);
+    }
+    
+    /* Staggered entrance animation for cards */
+    .stagger-anim {
+        animation: slideUpFade 0.5s ease-out backwards;
+    }
+
+    @keyframes slideUpFade {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

@@ -19,6 +19,7 @@ urlpatterns = [
     # Formula Sharing Routes
     path('recipe/save/', save_recipe, name='save_recipe'),
     path('recipe/<uuid:recipe_id>/', shared_recipe, name='shared_recipe'),
+    path('recipes/', views.RecipeListView.as_view(), name='recipe_list'),
     
     path('search/', views.SearchPresetsView.as_view(), name='search_presets'),
     path('generate-creative-ideas/', views.GenerateCreativeIdeasView.as_view(), name='generate_creative_ideas'),

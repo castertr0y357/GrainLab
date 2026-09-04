@@ -4,3 +4,4 @@ from .settings import *
 from .inventory import *
 from .ai import *
 from .tasks import *
+from .recipes import *
