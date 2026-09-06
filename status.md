@@ -204,3 +204,5 @@
 
 - [x] Refactored monolithic tests.py into an apps/core/tests/ package.
 - [x] Refactored seed_db.py data into JSON fixtures.
+- [x] Removed dead LLM batch generation functions and their associated tests.
+- [x] Installed and configured Ruff and pre-commit for formatting and linting, fixing over 860 style issues project-wide.

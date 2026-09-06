@@ -1,33 +1,46 @@
 import json
 import logging
-from apps.core.gemma.core_client import stream_gemma_api, assemble_system_prompt
+
 from apps.core.engines.router import ENGINES
+from apps.core.gemma.core_client import assemble_system_prompt, stream_gemma_api
 
 logger = logging.getLogger("grainlab.gemma")
+
 
 def stream_creative_ideas(user_prompt: str):
     """
     Given a free-form user prompt, generates creative recipe ideas mapping to our internal engines.
     """
-    
+
     # Compile a dictionary of valid categories and archetypes
     frontend_slugs = [
-        'lean-crusty', 'enriched-soft', 'alkaline-bath', 'flatbreads-griddles',
-        'quick-breads-scones', 'cakes-batters', 'pastry-lamination', 'choux-paste',
-        'cookies-shortbread', 'fried-doughs', 'fresh-pasta-noodles'
+        "lean-crusty",
+        "enriched-soft",
+        "alkaline-bath",
+        "flatbreads-griddles",
+        "quick-breads-scones",
+        "cakes-batters",
+        "pastry-lamination",
+        "choux-paste",
+        "cookies-shortbread",
+        "fried-doughs",
+        "fresh-pasta-noodles",
     ]
     valid_targets = []
     for category_slug in frontend_slugs:
         engine = ENGINES.get(category_slug)
-        if not engine: continue
+        if not engine:
+            continue
         for archetype_id, details in engine.archetypes.items():
-            valid_targets.append({
-                "category_slug": category_slug,
-                "archetype_id": archetype_id,
-                "archetype_name": details.get("name", archetype_id),
-                "description": details.get("description", "")
-            })
-            
+            valid_targets.append(
+                {
+                    "category_slug": category_slug,
+                    "archetype_id": archetype_id,
+                    "archetype_name": details.get("name", archetype_id),
+                    "description": details.get("description", ""),
+                }
+            )
+
     context_str = json.dumps(valid_targets, indent=2)
 
     system_prompt = (
@@ -42,12 +55,12 @@ def stream_creative_ideas(user_prompt: str):
     task_instructions = (
         "Return a JSON stream of objects matching this schema:\n"
         "{\n"
-        "  \"generated_ideas\": [\n"
+        '  "generated_ideas": [\n'
         "    {\n"
-        "      \"recipe_name\": \"string (A creative, appetizing name)\",\n"
-        "      \"menu_description\": \"string (A 2-sentence description of the flavor and texture)\",\n"
-        "      \"category_slug\": \"string (Must exactly match a category_slug from the manifest)\",\n"
-        "      \"archetype_id\": \"string (Must exactly match an archetype_id from the manifest)\"\n"
+        '      "recipe_name": "string (A creative, appetizing name)",\n'
+        '      "menu_description": "string (A 2-sentence description of the flavor and texture)",\n'
+        '      "category_slug": "string (Must exactly match a category_slug from the manifest)",\n'
+        '      "archetype_id": "string (Must exactly match an archetype_id from the manifest)"\n'
         "    }\n"
         "  ]\n"
         "}"
@@ -58,6 +71,6 @@ def stream_creative_ideas(user_prompt: str):
     full_system = system_prompt + full_system
 
     logger.info(f"[AI] - Phase 1 Creative Prompt execution for: {user_prompt}")
-    
+
     # Stream the results
     yield from stream_gemma_api(full_system, user_prompt)

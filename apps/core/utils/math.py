@@ -1,27 +1,36 @@
+import logging
 import math
+
+logger = logging.getLogger(__name__)
+
 
 # --- From shared_math.py ---
 def f_to_c(f: float) -> float:
     return round((f - 32.0) * 5.0 / 9.0, 1)
 
+
 def c_to_f(c: float) -> float:
     return round((c * 9.0 / 5.0) + 32.0, 1)
 
-def scale_baking_profile(base_temp: float, base_time: float, base_weight: float, target_mass: float, is_portioned: bool) -> tuple[float, float]:
+
+def scale_baking_profile(
+    base_temp: float, base_time: float, base_weight: float, target_mass: float, is_portioned: bool
+) -> tuple[float, float]:
     """
     Algorithmically scale baking profile (temperature and time) based on mass and form factor.
     """
     mass_ratio = target_mass / base_weight if base_weight > 0 else 1.0
-    scaled_time = round(base_time * (mass_ratio ** 0.4))
-    
+    scaled_time = round(base_time * (mass_ratio**0.4))
+
     scaled_temp = base_temp
     if not is_portioned:
         if mass_ratio > 1.2:
             scaled_temp = base_temp - 10
         elif mass_ratio < 0.8:
             scaled_temp = base_temp + 10
-            
+
     return scaled_temp, scaled_time
+
 
 def calculate_yield_mass(is_portioned: bool, unit_weight: float, portion_count: int, target_weight: float) -> float:
     """
@@ -30,6 +39,7 @@ def calculate_yield_mass(is_portioned: bool, unit_weight: float, portion_count: 
     if is_portioned:
         return unit_weight * portion_count
     return target_weight
+
 
 # --- From bakers_math.py ---
 GRAIN_THIRST_MODIFIERS = {
@@ -52,6 +62,7 @@ FRICTION_FACTORS = {
     "bread_machine": 15.0,
 }
 
+
 def _get_val(obj, key, default=None):
     if hasattr(obj, key):
         return getattr(obj, key)
@@ -59,13 +70,18 @@ def _get_val(obj, key, default=None):
         return obj.get(key, default)
     return default
 
-def calculate_wheat_berry_shares(active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None) -> tuple[dict[str, float], float, str | None]:
+
+def calculate_wheat_berry_shares(
+    active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None
+) -> tuple[dict[str, float], float, str | None]:
     """
     Delegates to HearthEngine (BaseEngine) for shares calculations.
     """
     from apps.core.engines import router
+
     engine = router.get_engine_for_preset(preset_slug)
     return engine.calculate_wheat_berry_shares(active_berries, texture_score, crumb_score, preset_slug, preset_name)
+
 
 def calculate_recipe(
     base_hydration: float,
@@ -88,7 +104,7 @@ def calculate_recipe(
     preset_slug: str = None,
     preset_name: str = None,
     category_slug: str = None,
-    **kwargs
+    **kwargs,
 ) -> dict:
     """
     Resolves the active sub-engine and computes the recipe.
@@ -98,14 +114,12 @@ def calculate_recipe(
     if not preset_slug and not category_slug:
         try:
             from apps.core.models import BreadPreset
+
             all_presets = BreadPreset.objects.all()
             classified_preset = None
-            min_distance = float('inf')
+            min_distance = float("inf")
             for p in all_presets:
-                dist = math.sqrt(
-                    (p.classifier_texture - texture_score) ** 2 +
-                    (p.classifier_crumb - crumb_score) ** 2
-                )
+                dist = math.sqrt((p.classifier_texture - texture_score) ** 2 + (p.classifier_crumb - crumb_score) ** 2)
                 if dist < min_distance:
                     min_distance = dist
                     classified_preset = p
@@ -113,10 +127,11 @@ def calculate_recipe(
                 preset_slug = classified_preset.slug
                 if classified_preset.dough_category:
                     category_slug = classified_preset.dough_category.slug
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to auto-resolve BreadPreset during standalone calculation: {e}", exc_info=True)
 
     from apps.core.engines import router
+
     engine = router.get_engine_for_preset(preset_slug, category_slug)
     return engine.calculate_recipe(
         base_hydration=base_hydration,
@@ -138,15 +153,23 @@ def calculate_recipe(
         friction_override=friction_override,
         preset_slug=preset_slug,
         preset_name=preset_name,
-        **kwargs
+        **kwargs,
     )
 
-def get_local_sensory_benchmark(grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
+
+def get_local_sensory_benchmark(
+    grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None
+) -> str:
     from apps.core.engines import router
+
     engine = router.get_engine_for_preset(preset_slug, category_slug)
     return engine.get_sensory_benchmark(grain_type, flour_maturity, effective_hydration, category_slug, preset_slug)
 
-def get_local_contextual_pitfalls(category_slug: str, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list[dict[str, str]]:
+
+def get_local_contextual_pitfalls(
+    category_slug: str, effective_hydration: float, grain_type: str, preset_slug: str = None
+) -> list[dict[str, str]]:
     from apps.core.engines import router
+
     engine = router.get_engine_for_preset(preset_slug, category_slug)
     return engine.get_contextual_pitfalls(effective_hydration, grain_type, preset_slug)

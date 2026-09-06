@@ -1,5 +1,7 @@
-from django import forms
 import json
+
+from django import forms
+
 
 class Phase4Form(forms.Form):
     action = forms.CharField(required=False)
@@ -13,7 +15,7 @@ class Phase4Form(forms.Form):
     active_action = forms.CharField(required=False)
 
     def clean_process_recommendations(self):
-        val = self.cleaned_data.get('process_recommendations')
+        val = self.cleaned_data.get("process_recommendations")
         if not val:
             return {}
         try:
@@ -22,7 +24,7 @@ class Phase4Form(forms.Form):
             return {}
 
     def clean_flavor_inclusions(self):
-        val = self.cleaned_data.get('flavor_inclusions')
+        val = self.cleaned_data.get("flavor_inclusions")
         if not val:
             return []
         try:
@@ -31,7 +33,7 @@ class Phase4Form(forms.Form):
             return []
 
     def clean_secondary_ingredients(self):
-        val = self.cleaned_data.get('secondary_ingredients')
+        val = self.cleaned_data.get("secondary_ingredients")
         if not val:
             return {}
         try:

@@ -1,5 +1,6 @@
 from django import forms
 
+
 class GrainAdvisoryForm(forms.Form):
     preset_slug = forms.CharField(required=False)
     preset_name = forms.CharField(required=False)
@@ -14,9 +15,9 @@ class GrainAdvisoryForm(forms.Form):
     binder = forms.CharField(required=False)
     stream = forms.BooleanField(required=False, initial=False)
     target = forms.CharField(required=False, initial="all")
-    
+
     def clean_active_archetype_id(self):
-        val = self.cleaned_data.get('active_archetype_id', '')
+        val = self.cleaned_data.get("active_archetype_id", "")
         if val:
             for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
                 if suffix in val:
@@ -24,7 +25,7 @@ class GrainAdvisoryForm(forms.Form):
         return val
 
     def clean_preset_slug(self):
-        val = self.cleaned_data.get('preset_slug', '')
+        val = self.cleaned_data.get("preset_slug", "")
         if val:
             for suffix in ["_level", "_l1", "_l2", "_l3", "_v1", "_v2", "_v3", "_alt"]:
                 if suffix in val:

@@ -1,8 +1,9 @@
 import logging
 import uuid
+
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.http import HttpRequest, HttpResponse
 from django.views import View
 
 from apps.core.models import BackgroundTask
@@ -14,8 +15,8 @@ class TaskStatusView(View):
     def get(self, request: HttpRequest, task_id: uuid.UUID) -> HttpResponse:
         task = get_object_or_404(BackgroundTask, id=task_id)
         is_bulk = request.GET.get("bulk") == "true"
-        
-        if task.status in ('PENDING', 'RUNNING'):
+
+        if task.status in ("PENDING", "RUNNING"):
             if is_bulk:
                 return HttpResponse(
                     f'<div hx-get="{reverse("task_status", args=[task.id])}?bulk=true" '
@@ -36,12 +37,12 @@ class TaskStatusView(View):
                     f'  <span style="font-size: 0.8rem; color: var(--text-muted);">AI Running ({task.progress}%)...</span>'
                     f'</div>'
                 )
-                
-        elif task.status == 'SUCCESS':
+
+        elif task.status == "SUCCESS":
             response = HttpResponse(status=200)
-            response['HX-Redirect'] = reverse('inventory_page')
+            response["HX-Redirect"] = reverse("inventory_page")
             return response
-            
+
         else:  # FAILED
             return HttpResponse(
                 f'<div class="warning-box" style="margin: 0; padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">'
@@ -49,5 +50,3 @@ class TaskStatusView(View):
                 f'  <p style="margin:0; color: var(--text-secondary);">{task.error or "Unknown Ollama/Gemma error."}</p>'
                 f'</div>'
             )
-
-

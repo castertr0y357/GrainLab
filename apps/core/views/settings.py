@@ -1,21 +1,18 @@
 import logging
-import math
-import uuid
-import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.utils import timezone
-from django.views.decorators.http import require_POST
-from django.views import View
-import requests
 
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
-from apps.core.utils import math as bakers_math
+import requests
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.views import View
+
 from apps.core import gemma
-from apps.core.background_tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+from apps.core.models import (
+    Equipment,
+    SystemSetting,
+)
 
 logger = logging.getLogger("grainlab.views")
+
 
 class SettingsPageView(View):
     def get(self, request):
@@ -28,7 +25,6 @@ class SettingsPageView(View):
             "ai_model_name": SystemSetting.get_val("ai_model_name", "gemma:12b"),
             "ai_thinking_enabled": SystemSetting.get_val("ai_thinking_enabled", "True") == "True",
             "ai_thinking_effort": SystemSetting.get_val("ai_thinking_effort", "medium"),
-            
             # New Settings
             "weight_unit": SystemSetting.get_val("weight_unit", "grams"),
             "temperature_unit": SystemSetting.get_val("temperature_unit", "celsius"),
@@ -43,7 +39,6 @@ class SettingsPageView(View):
             "fractional_scaling_increment": SystemSetting.get_val("fractional_scaling_increment", "0.5"),
             "soft_delete_retention_days": SystemSetting.get_val("soft_delete_retention_days", "30"),
             "export_format_default": SystemSetting.get_val("export_format_default", "json"),
-            
             # Inventory for dropdowns
             "mixers": Equipment.objects.filter(equipment_type="mixer", deleted_at__isnull=True),
             "proofing_environments": Equipment.objects.filter(equipment_type="proofing_box", deleted_at__isnull=True),
@@ -61,13 +56,13 @@ class SaveSettingsView(View):
         ai_model_name = request.POST.get("ai_model_name", "").strip()
         ai_thinking_enabled = request.POST.get("ai_thinking_enabled") in ("on", "true", "True")
         ai_thinking_effort = request.POST.get("ai_thinking_effort", "medium")
-        
+
         SystemSetting.set_val("ai_enabled", ai_enabled)
         SystemSetting.set_val("ai_api_url", ai_api_url)
         SystemSetting.set_val("ai_model_name", ai_model_name)
         SystemSetting.set_val("ai_thinking_enabled", ai_thinking_enabled)
         SystemSetting.set_val("ai_thinking_effort", ai_thinking_effort)
-        
+
         # New Settings
         SystemSetting.set_val("weight_unit", request.POST.get("weight_unit", "grams"))
         SystemSetting.set_val("temperature_unit", request.POST.get("temperature_unit", "celsius"))
@@ -78,11 +73,13 @@ class SaveSettingsView(View):
         SystemSetting.set_val("default_proofing_environment", request.POST.get("default_proofing_environment", ""))
         SystemSetting.set_val("theme_preference", request.POST.get("theme_preference", "system"))
         SystemSetting.set_val("keep_screen_awake", request.POST.get("keep_screen_awake") in ("on", "true", "True"))
-        SystemSetting.set_val("timeline_audio_alerts", request.POST.get("timeline_audio_alerts") in ("on", "true", "True"))
+        SystemSetting.set_val(
+            "timeline_audio_alerts", request.POST.get("timeline_audio_alerts") in ("on", "true", "True")
+        )
         SystemSetting.set_val("fractional_scaling_increment", request.POST.get("fractional_scaling_increment", "0.5"))
         SystemSetting.set_val("soft_delete_retention_days", request.POST.get("soft_delete_retention_days", "30"))
         SystemSetting.set_val("export_format_default", request.POST.get("export_format_default", "json"))
-    
+
         return HttpResponse(
             "<div class='feedback-box' style='border-left-color: var(--success);'>"
             "<div class='feedback-header' style='color: var(--success);'>Settings Saved Successfully</div>"
@@ -99,9 +96,9 @@ class SourdoughCalibrateView(View):
         rise_speed = request.POST.get("rise_speed", "normal")
         mill_type = request.POST.get("mill_type", "stoneground")
         is_sifted = request.POST.get("is_sifted") in ("on", "true", "True")
-    
+
         calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted)
-    
+
         context = {
             "calibration": calibration,
         }
@@ -116,16 +113,16 @@ class DiscoverModelsView(View):
         api_url = request.GET.get("ai_api_url", "").strip()
         if not api_url:
             api_url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
-            
+
         current_model = SystemSetting.get_val("ai_model_name", "gemma:12b")
-            
+
         # Try to form the models URL
         models_url = api_url.split("/chat/completions")[0]
         if models_url.endswith("/v1"):
             models_url = models_url + "/models"
         else:
             models_url = models_url.rstrip("/") + "/v1/models"
-            
+
         models = []
         error_msg = None
         try:
@@ -142,11 +139,10 @@ class DiscoverModelsView(View):
                 error_msg = f"API returned status {response.status_code}"
         except Exception as e:
             error_msg = f"Connection failed: {str(e)}"
-            
+
         context = {
             "models": models,
             "error_msg": error_msg,
             "current_model": current_model,
         }
         return render(request, "partials/model_discovery_output.html", context)
-

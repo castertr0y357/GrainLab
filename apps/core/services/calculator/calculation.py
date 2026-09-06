@@ -1,48 +1,51 @@
-import logging
-import math
 import json
+import logging
 
-
-from django.shortcuts import get_object_or_404
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment
-from apps.core.utils import math as bakers_math
-from apps.core import gemma
-from apps.core.engines import router
 from django.db.models import F, FloatField
 from django.db.models.functions import Power, Sqrt
 
+from apps.core import gemma
+from apps.core.engines import router
+from apps.core.models import BreadPreset, DoughCategory, Equipment, FormFactor, SystemSetting, WheatBerry
+from apps.core.utils import math as bakers_math
+
 logger = logging.getLogger("grainlab.services")
+
 
 def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     """
     Main calculation route adapted for multi-phase state.
-    Processes Baker's Math and fail-safes, runs the Classifier Engine, 
+    Processes Baker's Math and fail-safes, runs the Classifier Engine,
     queries Gemma client (or fallbacks), and outputs recipe context.
     """
     # 1. Parse parameters from state
     cat_slug = state.get("selected_master") or state.get("dough_category")
     if not cat_slug:
         raise ValueError("Missing selected_master (or dough_category) in state.")
-    
+
     try:
         cat = DoughCategory.objects.get(slug=cat_slug)
     except DoughCategory.DoesNotExist:
         cat = DoughCategory.objects.first()
     preset_slug = state.get("preset_slug")
-    
+
     engine = router.get_engine_for_preset(preset_slug, cat.slug)
-    
+
     # Extract active archetype early to use its defaults
     archetype_id = state.get("active_archetype_id") or state.get("archetype_id") or preset_slug or ""
     active_arch = engine.archetypes.get(archetype_id, {})
-    
+
     ff_slug = state.get("form_factor")
     if not ff_slug:
         # Check archetype default first, then fallback to first engine form factor
         ff_slug = active_arch.get("default_form_factor")
         if not ff_slug:
-            ff_slug = list(getattr(engine, "permissible_form_factors", {}).keys())[0] if getattr(engine, "permissible_form_factors", {}) else None
-        
+            ff_slug = (
+                list(getattr(engine, "permissible_form_factors", {}).keys())[0]
+                if getattr(engine, "permissible_form_factors", {})
+                else None
+            )
+
     # Validate ff_slug is permissible for active engine
     permissible_slugs = list(getattr(engine, "permissible_form_factors", {}).keys())
     if ff_slug not in permissible_slugs and permissible_slugs:
@@ -50,26 +53,27 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             if FormFactor.objects.filter(slug=slug).exists():
                 ff_slug = slug
                 break
-                
+
     try:
         ff = FormFactor.objects.get(slug=ff_slug)
     except FormFactor.DoesNotExist:
         ff_config_dict = getattr(engine, "permissible_form_factors", {}).get(ff_slug, {})
         if not ff_config_dict:
             from django.http import Http404
+
             raise Http404(f"Form factor {ff_slug} not found.")
         ff = FormFactor(
             slug=ff_slug,
-            name=ff_config_dict.get('label', ff_slug),
-            is_portioned=ff_config_dict.get('is_portioned', False),
-            unit_weight=ff_config_dict.get('unit_weight', 50),
-            default_count=ff_config_dict.get('base_count', 12),
-            is_enriched_profile=ff_config_dict.get('is_enriched_profile', False),
-            bake_temp_f=ff_config_dict.get('bake_temp_f', 350),
-            bake_time_min=ff_config_dict.get('bake_time_min', 15),
-            steam_required=ff_config_dict.get('steam_required', False)
+            name=ff_config_dict.get("label", ff_slug),
+            is_portioned=ff_config_dict.get("is_portioned", False),
+            unit_weight=ff_config_dict.get("unit_weight", 50),
+            default_count=ff_config_dict.get("base_count", 12),
+            is_enriched_profile=ff_config_dict.get("is_enriched_profile", False),
+            bake_temp_f=ff_config_dict.get("bake_temp_f", 350),
+            bake_time_min=ff_config_dict.get("bake_time_min", 15),
+            steam_required=ff_config_dict.get("steam_required", False),
         )
-    
+
     ff_config = getattr(engine, "permissible_form_factors", {}).get(ff.slug, {})
     is_portioned = ff_config.get("is_portioned", ff.is_portioned)
     base_unit_weight = ff_config.get("unit_weight", ff.unit_weight)
@@ -80,7 +84,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         texture_score = int(state.get("texture", state.get("texture_score", 50)))
     except (ValueError, TypeError):
         texture_score = 50
-        
+
     try:
         crumb_score = int(state.get("crumb", state.get("crumb_score", 50)))
     except (ValueError, TypeError):
@@ -91,7 +95,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         base_hydration_pct = float(state.get("hydration_pct", -1)) / 100.0
     except (ValueError, TypeError):
         base_hydration_pct = -1.0
-        
+
     try:
         base_fat_pct = float(state.get("fat_pct", -1)) / 100.0
     except (ValueError, TypeError):
@@ -130,12 +134,12 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         room_temp = float(state.get("room_temp", 72))
     except (ValueError, TypeError):
         room_temp = 72.0
-        
+
     try:
         flour_temp = float(state.get("flour_temp", 70))
     except (ValueError, TypeError):
         flour_temp = 70.0
-        
+
     mixing_method = state.get("mixing_method", "stand_mixer")
 
     # Portioned handling
@@ -143,7 +147,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         unit_weight = float(state.get("unit_weight", base_unit_weight))
     except (ValueError, TypeError):
         unit_weight = float(base_unit_weight)
-        
+
     try:
         portion_count = int(state.get("portion_count", base_default_count))
     except (ValueError, TypeError):
@@ -156,7 +160,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             target_mass = float(state.get("target_weight", base_weight))
         except (ValueError, TypeError):
             target_mass = float(base_weight)
-            
+
     try:
         salt_val = state.get("salt_pct")
         if salt_val is not None:
@@ -165,7 +169,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             salt_pct = active_arch.get("default_salt_pct", getattr(engine, "default_salt_pct", 0.02))
     except (ValueError, TypeError):
         salt_pct = active_arch.get("default_salt_pct", getattr(engine, "default_salt_pct", 0.02))
-        
+
     try:
         leaven_val = state.get("leaven_pct")
         if leaven_val is not None:
@@ -204,14 +208,14 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             active_berries_state = json.loads(active_berries_state)
         except Exception:
             active_berries_state = []
-            
+
     selected_grain_ids = []
     for b in active_berries_state:
         if isinstance(b, dict) and "id" in b:
             selected_grain_ids.append(str(b["id"]))
         else:
             selected_grain_ids.append(str(b))
-            
+
     if selected_grain_ids:
         active_berries = list(WheatBerry.objects.filter(id__in=selected_grain_ids))
     else:
@@ -238,7 +242,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
                 hydration_pct = max(0.40, hydration_pct + offset.get("water_offset_pct", 0.0))
                 fat_pct = max(0.0, fat_pct + offset.get("fat_offset_pct", 0.0))
                 sugar_pct = max(0.0, sugar_pct + offset.get("sugar_offset_pct", 0.0))
-            
+
         secondary_ingredients = state.get("secondary_ingredients") or {}
         if isinstance(secondary_ingredients, str) and secondary_ingredients.strip():
             try:
@@ -247,7 +251,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
                 secondary_ingredients = {}
         elif not isinstance(secondary_ingredients, dict):
             secondary_ingredients = {}
-                
+
         secondary_lipids = secondary_ingredients.get("lipids") or []
         secondary_liquids = secondary_ingredients.get("liquids") or []
         secondary_binders = secondary_ingredients.get("binders") or []
@@ -274,7 +278,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
                 flavor_inclusions = []
         elif not isinstance(flavor_inclusions, list):
             flavor_inclusions = []
-                
+
         flour_blend = state.get("flour_blend") or {}
         if isinstance(flour_blend, str) and flour_blend.strip():
             try:
@@ -315,24 +319,27 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             secondary_additives=secondary_additives,
             flavor_inclusions=flavor_inclusions,
             flour_blend=flour_blend,
-            inferred_flavor_profile=inferred_flavor_profile
+            inferred_flavor_profile=inferred_flavor_profile,
         )
 
-        if ai_enabled and substitution and 'offset' in locals() and offset:
+        if ai_enabled and substitution and "offset" in locals() and offset:
             recipe["substitution_notes"] = [offset.get("explanation", "Balanced via AI substitution module.")]
-        
+
     except Exception as e:
         logger.error(f"[Calculator] - Math Error - Failed executing Baker's Math: {str(e)}")
         raise e
 
     # 4. Classifier Engine: Euclidean distance match
-    classified_preset = BreadPreset.objects.annotate(
-        distance=Sqrt(
-            Power(F('classifier_texture') - texture_score, 2) +
-            Power(F('classifier_crumb') - crumb_score, 2),
-            output_field=FloatField()
+    classified_preset = (
+        BreadPreset.objects.annotate(
+            distance=Sqrt(
+                Power(F("classifier_texture") - texture_score, 2) + Power(F("classifier_crumb") - crumb_score, 2),
+                output_field=FloatField(),
+            )
         )
-    ).order_by('distance').first()
+        .order_by("distance")
+        .first()
+    )
 
     # 5. Fetch AI Diagnostics (Sensory benchmark & pitfalls)
     eff_hyd = recipe["effective_hydration_pct"] / 100.0
@@ -358,15 +365,15 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         mass_ratio = 1.0
     else:
         mass_ratio = target_mass / base_weight if base_weight > 0 else 1.0
-    
-    scaled_time = round(base_time * (mass_ratio ** 0.4))
+
+    scaled_time = round(base_time * (mass_ratio**0.4))
     scaled_temp = base_temp
     if not is_portioned:
         if mass_ratio > 1.2:
             scaled_temp = base_temp - 10
         elif mass_ratio < 0.8:
             scaled_temp = base_temp + 10
-        
+
     # 7b. Query geometry advisory and apply offsets
     if run_ai:
         geom_advisory = gemma.get_geometry_advisory(preset_slug_resolved, preset_name, cat.slug, ff.slug) or {}
@@ -399,7 +406,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         rise_speed = state.get("flow_rise_speed", "normal")
         mill_type = state.get("mill_type", "stoneground")
         is_sifted = state.get("is_sifted") in ("on", "true", "True", True)
-    
+
         if run_ai:
             calibration = gemma.calibrate_fermentation(starter_feed_hours, rise_speed, mill_type, is_sifted) or {}
             estimated_bulk_hours = calibration.get("estimated_bulk_fermentation_hours", 4.0) or 4.0
@@ -407,12 +414,12 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         else:
             estimated_bulk_hours = 4.0
             estimated_proof_hours = 2.0
-    
+
     if room_temp < 70:
         estimated_bulk_hours += 1.0
     elif room_temp > 76:
-        estimated_bulk_hours = max(0.5 if leaven_type == 'yeast' else 3.0, estimated_bulk_hours - 1.0)
-    
+        estimated_bulk_hours = max(0.5 if leaven_type == "yeast" else 3.0, estimated_bulk_hours - 1.0)
+
     proofing_env = state.get("proofing_environment", "ambient")
     if proofing_env == "mat":
         estimated_proof_hours *= 0.9
@@ -430,7 +437,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         estimated_proof_minutes=estimated_proof_minutes,
         bake_time_min=scaled_time,
         mixing_method=mixing_method,
-        preset_slug=preset_slug_resolved
+        preset_slug=preset_slug_resolved,
     )
     countertop_steps_json = json.dumps(steps_list)
 

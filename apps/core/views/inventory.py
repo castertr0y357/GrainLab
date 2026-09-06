@@ -1,28 +1,26 @@
 import logging
-import math
 import uuid
-import json
-from django.shortcuts import render, get_object_or_404, redirect
+
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.utils import timezone
-from django.views.decorators.http import require_POST
 from django.views import View
 
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
-from apps.core.utils import math as bakers_math
-from apps.core import gemma
-from apps.core.background_tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+from apps.core.models import (
+    Equipment,
+    WheatBerry,
+)
 
 logger = logging.getLogger("grainlab.views")
+
 
 class InventoryPageView(View):
     def get(self, request):
         """
         Renders inventory page listing wheat berries and equipment.
         """
-        wheat_berries = WheatBerry.objects.all().order_by('name')
-        equipment = Equipment.objects.all().order_by('name')
+        wheat_berries = WheatBerry.objects.all().order_by("name")
+        equipment = Equipment.objects.all().order_by("name")
         context = {
             "wheat_berries": wheat_berries,
             "equipment": equipment,
@@ -49,11 +47,11 @@ class AddWheatBerryView(View):
                 hardness=hardness,
                 moisture_absorption_coef=absorption,
                 notes=notes,
-                is_active=is_active
+                is_active=is_active,
             )
 
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response
 
 
@@ -66,7 +64,7 @@ class ToggleWheatBerryActiveView(View):
         wb.is_active = not wb.is_active
         wb.save()
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response
 
 
@@ -78,7 +76,7 @@ class DeleteWheatBerryView(View):
         wb = get_object_or_404(WheatBerry, id=id)
         wb.delete()
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response
 
 
@@ -93,15 +91,10 @@ class AddEquipmentView(View):
         notes = request.POST.get("notes", "").strip()
 
         if name:
-            Equipment.objects.create(
-                name=name,
-                equipment_type=eq_type,
-                friction_heat_factor=friction,
-                notes=notes
-            )
+            Equipment.objects.create(name=name, equipment_type=eq_type, friction_heat_factor=friction, notes=notes)
 
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response
 
 
@@ -113,10 +106,8 @@ class DeleteEquipmentView(View):
         eq = get_object_or_404(Equipment, id=id)
         eq.delete()
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response
-
-
 
 
 class EditWheatBerryView(View):
@@ -131,11 +122,12 @@ class EditWheatBerryView(View):
             wb.notes = request.POST.get("notes", "").strip()
             wb.is_active = request.POST.get("is_active") in ("on", "true", "True")
             wb.save()
-            
+
         # We can just redirect back to the page since this will be submitted via standard form or htmx
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response
+
 
 class EditEquipmentView(View):
     def post(self, request, id):
@@ -147,7 +139,7 @@ class EditEquipmentView(View):
             eq.friction_heat_factor = float(request.POST.get("friction_heat_factor", 0.0) or 0.0)
             eq.notes = request.POST.get("notes", "").strip()
             eq.save()
-            
+
         response = HttpResponse(status=204)
-        response['HX-Redirect'] = reverse('inventory_page')
+        response["HX-Redirect"] = reverse("inventory_page")
         return response

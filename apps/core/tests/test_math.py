@@ -1,19 +1,18 @@
 import logging
-from django.test import TestCase, Client
-from django.urls import get_resolver, reverse
-from unittest.mock import patch
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
+
+from django.test import TestCase
+
 from apps.core.utils import math as bakers_math
-from apps.core.services.calculator.calculation import calculate_final_recipe
 
 logger = logging.getLogger("grainlab.tests")
+
 
 class BakersMathTests(TestCase):
     """
     Tests mathematical precision of the Baker's Math scaling engine
     and the fail-safe grain/maturity modifiers.
     """
-    
+
     def test_bakers_math_scaling_sums_to_target(self):
         """
         Verify that total calculated weight matches target mass exactly.
@@ -24,16 +23,16 @@ class BakersMathTests(TestCase):
             base_sugar=0.02,
             target_mass=1000.0,
             grain_type="all_purpose",
-            flour_maturity="matured"
+            flour_maturity="matured",
         )
         # Sum individual ingredients
         total_sum = (
-            recipe["added_flour"] +
-            recipe["added_water"] +
-            recipe["salt_weight"] +
-            recipe["yeast_weight"] +
-            (recipe["lipid_items"][0]["weight"] if recipe["lipid_items"] else 0) +
-            recipe["sugar_weight"]
+            recipe["added_flour"]
+            + recipe["added_water"]
+            + recipe["salt_weight"]
+            + recipe["yeast_weight"]
+            + (recipe["lipid_items"][0]["weight"] if recipe["lipid_items"] else 0)
+            + recipe["sugar_weight"]
         )
         self.assertAlmostEqual(total_sum, 1000.0, delta=2)
 
@@ -42,11 +41,7 @@ class BakersMathTests(TestCase):
         Ancient grains like Spelt must inject +0.05 hydration coefficient.
         """
         recipe = bakers_math.calculate_recipe(
-            base_hydration=0.60,
-            base_fat=0.0,
-            base_sugar=0.0,
-            target_mass=900.0,
-            grain_type="spelt"
+            base_hydration=0.60, base_fat=0.0, base_sugar=0.0, target_mass=900.0, grain_type="spelt"
         )
         self.assertEqual(recipe["thirst_modifier_applied"], 0.05)
         self.assertEqual(recipe["effective_hydration_pct"], 65.0)
@@ -56,11 +51,7 @@ class BakersMathTests(TestCase):
         Flour in 1-2 weeks dead zone must apply -0.02 hydration reduction.
         """
         recipe = bakers_math.calculate_recipe(
-            base_hydration=0.68,
-            base_fat=0.0,
-            base_sugar=0.0,
-            target_mass=900.0,
-            flour_maturity="dead_zone"
+            base_hydration=0.68, base_fat=0.0, base_sugar=0.0, target_mass=900.0, flour_maturity="dead_zone"
         )
         self.assertEqual(recipe["maturity_modifier_applied"], -0.02)
         self.assertEqual(recipe["effective_hydration_pct"], 66.0)
@@ -76,7 +67,7 @@ class BakersMathTests(TestCase):
             base_sugar=0.0,
             target_mass=1000.0,
             leaven_type="sourdough",
-            leaven_pct=0.20
+            leaven_pct=0.20,
         )
         # Starter is 20% of flour weight. Total ratio = 1 + 0.70 + 0.02 (salt) + 0.20 (starter) = 1.92.
         # Flour weight = 1000 / 1.92 = 520.83.
@@ -96,7 +87,7 @@ class BakersMathTests(TestCase):
             base_fat=0.08,
             base_sugar=0.08,
             target_mass=1000.0,
-            substitution={"original": "water", "substitute": "whole_milk"}
+            substitution={"original": "water", "substitute": "whole_milk"},
         )
         self.assertEqual(recipe["effective_fat_pct"], 8.0)
         self.assertEqual(recipe["effective_sugar_pct"], 8.0)
@@ -114,7 +105,7 @@ class BakersMathTests(TestCase):
             base_sugar=0.10,
             target_mass=1000.0,
             secondary_lipids=[{"name": "Salted Butter", "ratio": 1.0}],
-            preset_slug="sandwich_bread"
+            preset_slug="sandwich_bread",
         )
         self.assertAlmostEqual(recipe_salted["lipid_items"][0]["weight"], 109.0, places=1)
 
@@ -125,11 +116,7 @@ class BakersMathTests(TestCase):
             target_mass=1000.0,
             secondary_liquids=[{"name": "Buttermilk", "ratio": 1.0}],
             secondary_binders=[{"name": "Whole Eggs", "ratio": 1.0}],
-            preset_slug="sandwich_bread"
+            preset_slug="sandwich_bread",
         )
         self.assertTrue(recipe_buttermilk_egg["binder_items"][0]["weight"] > 0)
         self.assertTrue(recipe_buttermilk_egg["liquid_items"][0]["name"].startswith("Buttermilk"))
-
-
-
-

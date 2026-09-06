@@ -1,18 +1,13 @@
-import logging
-import math
-import uuid
 import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.utils import timezone
-from django.views.decorators.http import require_POST
+import logging
+
+from django.http import JsonResponse
 from django.views import View
 
-from apps.core.models import DoughCategory, FormFactor, BreadPreset, SystemSetting, WheatBerry, Equipment, BackgroundTask
-from apps.core.utils import math as bakers_math
 from apps.core import gemma
-from apps.core.background_tasks import run_async_task, ai_analyze_wheat_berry_task, ai_analyze_equipment_task, bulk_ai_analyze_task, redo_ai_analysis_task
+from apps.core.models import (
+    WheatBerry,
+)
 
 logger = logging.getLogger("grainlab.views")
 
@@ -51,36 +46,50 @@ class GenerateVariantsView(View):
             id_list = [iid.strip() for iid in inventory_ids_raw.split(",") if iid.strip()]
             grains = WheatBerry.objects.filter(id__in=id_list, is_active=True)
             for g in grains:
-                inventory.append({
-                    "id": str(g.id),
-                    "name": g.name,
-                    "hardness": g.hardness,
-                    "protein": float(g.protein_content),
-                    "absorption": float(g.moisture_absorption_coef),
-                })
+                inventory.append(
+                    {
+                        "id": str(g.id),
+                        "name": g.name,
+                        "hardness": g.hardness,
+                        "protein": float(g.protein_content),
+                        "absorption": float(g.moisture_absorption_coef),
+                    }
+                )
         else:
             # Fall back to all active grains
             grains = WheatBerry.objects.filter(is_active=True)
             for g in grains:
-                inventory.append({
-                    "id": str(g.id),
-                    "name": g.name,
-                    "hardness": g.hardness,
-                    "protein": float(g.protein_content),
-                    "absorption": float(g.moisture_absorption_coef),
-                })
+                inventory.append(
+                    {
+                        "id": str(g.id),
+                        "name": g.name,
+                        "hardness": g.hardness,
+                        "protein": float(g.protein_content),
+                        "absorption": float(g.moisture_absorption_coef),
+                    }
+                )
 
         if creativity_level_raw:
             try:
                 creativity_level = int(creativity_level_raw)
-                generator = gemma.stream_creativity_variants(engine_id, creativity_level, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
+                generator = gemma.stream_creativity_variants(
+                    engine_id,
+                    creativity_level,
+                    active_archetype_id,
+                    inventory,
+                    exclude_names=exclude_names,
+                    count=limit,
+                )
             except Exception as e:
                 logger.error(f"[Views] Failed generating creativity variants: {e}")
                 return JsonResponse({"error": "Failed generating variants"}, status=503)
         else:
-            generator = gemma.stream_recipe_variants(engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit)
+            generator = gemma.stream_recipe_variants(
+                engine_id, active_archetype_id, inventory, exclude_names=exclude_names, count=limit
+            )
 
         from django.http import StreamingHttpResponse
+
         def event_stream():
             for item in generator:
                 yield f"data: {json.dumps(item)}\n\n"
@@ -118,30 +127,37 @@ class GenerateCreativityRecipesView(View):
             id_list = [iid.strip() for iid in inventory_ids_raw.split(",") if iid.strip()]
             grains = WheatBerry.objects.filter(id__in=id_list, is_active=True)
             for g in grains:
-                inventory.append({
-                    "id": str(g.id),
-                    "name": g.name,
-                    "hardness": g.hardness,
-                    "protein": float(g.protein_content),
-                    "absorption": float(g.moisture_absorption_coef),
-                })
+                inventory.append(
+                    {
+                        "id": str(g.id),
+                        "name": g.name,
+                        "hardness": g.hardness,
+                        "protein": float(g.protein_content),
+                        "absorption": float(g.moisture_absorption_coef),
+                    }
+                )
         else:
             # Fall back to all active grains
             grains = WheatBerry.objects.filter(is_active=True)
             for g in grains:
-                inventory.append({
-                    "id": str(g.id),
-                    "name": g.name,
-                    "hardness": g.hardness,
-                    "protein": float(g.protein_content),
-                    "absorption": float(g.moisture_absorption_coef),
-                })
+                inventory.append(
+                    {
+                        "id": str(g.id),
+                        "name": g.name,
+                        "hardness": g.hardness,
+                        "protein": float(g.protein_content),
+                        "absorption": float(g.moisture_absorption_coef),
+                    }
+                )
 
         active_variation_id = request.GET.get("active_variation_id", "").strip()
 
         from django.http import StreamingHttpResponse
-        generator = gemma.stream_creativity_recipes(engine_id, active_archetype_id, inventory, level=level, active_variation_id=active_variation_id)
-        
+
+        generator = gemma.stream_creativity_recipes(
+            engine_id, active_archetype_id, inventory, level=level, active_variation_id=active_variation_id
+        )
+
         def event_stream():
             # In case of fallback, stream_creativity_recipes will yield the mock items
             for item in generator:
@@ -154,29 +170,27 @@ class GenerateCreativityRecipesView(View):
 class AiOptimizeSharesView(View):
     def get(self, request):
         from django.http import JsonResponse
+
         from apps.core import gemma
         from apps.core.models import WheatBerry
-        import json
-    
+
         preset_slug = request.GET.get("preset_slug", "").strip()
         preset_name = request.GET.get("preset_name", "").strip()
         selected_grains = request.GET.get("selected_grains", "").strip()
-    
+
         selected_ids = [s.strip() for s in selected_grains.split(",") if s.strip()] if selected_grains else []
         active_berries = []
         if selected_ids:
             active_berries = list(WheatBerry.objects.filter(id__in=selected_ids))
-    
+
         if not active_berries or not preset_slug:
             return JsonResponse({"shares": {}})
-        
+
         result = gemma.optimize_grain_blend(preset_slug, preset_name, active_berries)
         if result:
             shares, warning = result
             return JsonResponse({"shares": shares, "warning": warning})
         return JsonResponse({"shares": {}})
-
-
 
 
 class GenerateCreativeIdeasView(View):
@@ -186,16 +200,18 @@ class GenerateCreativeIdeasView(View):
         Accepts: GET ?prompt=<string>
         Returns: SSE stream of JSON { generated_ideas: [...] }
         """
-        prompt = request.GET.get('prompt', '').strip()
+        prompt = request.GET.get("prompt", "").strip()
         if not prompt:
             from django.http import JsonResponse
+
             return JsonResponse({"error": "prompt is required."}, status=400)
-            
+
         generator = gemma.stream_creative_ideas(prompt)
 
-        from django.http import StreamingHttpResponse
         import json
-        
+
+        from django.http import StreamingHttpResponse
+
         def event_stream():
             for item in generator:
                 yield f"data: {json.dumps(item)}\n\n"

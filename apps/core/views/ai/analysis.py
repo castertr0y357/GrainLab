@@ -1,14 +1,16 @@
 import uuid
-from django.urls import reverse
+
 from django.http import HttpRequest, HttpResponse
+from django.urls import reverse
 from django.views import View
 
 from apps.core.services.ai.analysis_service import (
-    queue_analyze_wheat_berry,
     queue_analyze_equipment,
+    queue_analyze_wheat_berry,
     queue_bulk_analyze,
-    queue_redo_analysis
+    queue_redo_analysis,
 )
+
 
 class AiAnalyzeWheatBerryView(View):
     def get(self, request: HttpRequest, id: uuid.UUID):
@@ -16,7 +18,7 @@ class AiAnalyzeWheatBerryView(View):
         Runs AI analysis for a specific wheat berry.
         """
         task_id = queue_analyze_wheat_berry(id)
-    
+
         # Return loading indicator to trigger polling
         return HttpResponse(
             f'<div hx-get="{reverse("task_status", args=[task_id])}" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
@@ -25,13 +27,14 @@ class AiAnalyzeWheatBerryView(View):
             f'</div>'
         )
 
+
 class AiAnalyzeEquipmentView(View):
     def get(self, request: HttpRequest, id: uuid.UUID):
         """
         Runs AI analysis for a specific equipment item.
         """
         task_id = queue_analyze_equipment(id)
-    
+
         return HttpResponse(
             f'<div hx-get="{reverse("task_status", args=[task_id])}" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
             f'  <span class="spinner" style="width: 12px; height: 12px;"></span>'
@@ -39,13 +42,14 @@ class AiAnalyzeEquipmentView(View):
             f'</div>'
         )
 
+
 class BulkAiAnalyzeView(View):
     def get(self, request: HttpRequest):
         """
         Analyzes all unanalyzed inventory items.
         """
         task_id = queue_bulk_analyze()
-    
+
         return HttpResponse(
             f'<div hx-get="{reverse("task_status", args=[task_id])}?bulk=true" hx-trigger="every 1s" hx-swap="outerHTML" '
             f'style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-card); padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">'
@@ -57,13 +61,14 @@ class BulkAiAnalyzeView(View):
             f'</div>'
         )
 
+
 class RedoAiAnalysisView(View):
     def get(self, request: HttpRequest, item_type: str, id: uuid.UUID):
         """
         Re-analyzes an item (overriding manual tweaks).
         """
         task_id = queue_redo_analysis(item_type, id)
-    
+
         return HttpResponse(
             f'<div hx-get="{reverse("task_status", args=[task_id])}" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
             f'  <span class="spinner" style="width: 12px; height: 12px;"></span>'

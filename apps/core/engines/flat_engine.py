@@ -1,5 +1,6 @@
 from apps.core.engines.base_engine import BaseEngine
 
+
 class FlatEngine(BaseEngine):
     name = "Flatbreads & Griddles Engine"
     slug = "flat"
@@ -13,26 +14,26 @@ class FlatEngine(BaseEngine):
             "label": "Thin & Crispy",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "highly_extensible",
-                "optimal_protein_window": "10.0% - 11.5%"
+                "optimal_protein_window": "10.0% - 11.5%",
             },
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected THIN & CRISPY crust. The dough must be highly extensible to roll or stretch "
                 "very thin without snapping back. Incorporate a small amount of oil to shorten the dough slightly for crispness. "
                 "Do not use overly strong bread flour, as it will fight being stretched thin."
-            )
+            ),
         },
         "thick_chewy": {
             "label": "Thick & Chewy (Deep Dish)",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "strong_elastic",
-                "optimal_protein_window": "12.0% - 14.0%"
+                "optimal_protein_window": "12.0% - 14.0%",
             },
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected THICK & CHEWY crust. Use high-protein hard wheats (e.g., Hard Red Spring, "
                 "Bread Flour) to build a robust gluten network capable of trapping large gas bubbles and supporting a "
                 "thick, bready crumb. High hydration is necessary for an open crumb."
-            )
-        }
+            ),
+        },
     }
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
@@ -70,13 +71,19 @@ class FlatEngine(BaseEngine):
             "bake_time_min": 3,
             "steam_required": False,
             "is_enriched_profile": False,
-        }
+        },
     }
 
     presets = [
-        "Flour Tortillas", "Hand-Slapped Naan", "Pocked Pocket Pita",
-        "Roti / Chapati", "Layered Paratha", "Flaky Scallion Pancakes",
-        "Lavash Crisp", "Matzo", "Artisan Seed Crackers"
+        "Flour Tortillas",
+        "Hand-Slapped Naan",
+        "Pocked Pocket Pita",
+        "Roti / Chapati",
+        "Layered Paratha",
+        "Flaky Scallion Pancakes",
+        "Lavash Crisp",
+        "Matzo",
+        "Artisan Seed Crackers",
     ]
 
     archetypes = {
@@ -87,20 +94,20 @@ class FlatEngine(BaseEngine):
             "description": "Puffy, vapor-pocket pockets driven by interior steam like Naan and Pita.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
-            "default_form_factor": "heavy-cast-iron-skillet",
-            "default_form_factor": "heavy-cast-iron-skillet",
-            "default_form_factor": "heavy-cast-iron-skillet",
-            "default_form_factor": "heavy-cast-iron-skillet",
+                "default_form_factor": "heavy-cast-iron-skillet",
+                "default_form_factor": "heavy-cast-iron-skillet",
+                "default_form_factor": "heavy-cast-iron-skillet",
+                "default_form_factor": "heavy-cast-iron-skillet",
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.0% - 13.0%"
+                "optimal_protein_window": "11.0% - 13.0%",
             },
             "culinary_nuance_directive": (
                 "Focus on high gluten extensibility paired with moderate elasticity. The protein network must comfortably "
                 "support yeast gas pockets, stretching smoothly under sudden, intense conduction heat to form large, hollow "
                 "steam chambers without tearing the thin dough membrane."
-            )
+            ),
         },
         "unleavened_stretched": {
             "default_form_factor": "heavy-cast-iron-skillet",
@@ -112,13 +119,13 @@ class FlatEngine(BaseEngine):
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "10.0% - 12.0%"
+                "optimal_protein_window": "10.0% - 12.0%",
             },
             "culinary_nuance_directive": (
                 "Focus on maximum plastic deformation and absolute zero elastic snapback. Grains must allow the dough to be "
                 "rolled down to millimeter thickness without tearing, ensuring the starches blister instantly on dry iron "
                 "without shrinking or hardening into tough sheets."
-            )
+            ),
         },
         "blistered_griddle": {
             "default_form_factor": "heavy-cast-iron-skillet",
@@ -130,13 +137,13 @@ class FlatEngine(BaseEngine):
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "10.5% - 12.5%"
+                "optimal_protein_window": "10.5% - 12.5%",
             },
             "culinary_nuance_directive": (
                 "Focus on quick conduction heat response and rapid starch setting. Flour must provide a soft, extensible web "
                 "that stretches cleanly to fit hot griddle surfaces, enabling immediate surface charring and leopard-spotting "
                 "while keeping the inner crumb soft and pliable."
-            )
+            ),
         },
         "crisp_flatbread": {
             "default_form_factor": "heavy-cast-iron-skillet",
@@ -148,21 +155,23 @@ class FlatEngine(BaseEngine):
                 "required_gluten_elasticity": "minimal_to_none",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "9.0% - 11.0%"
+                "optimal_protein_window": "9.0% - 11.0%",
             },
             "culinary_nuance_directive": (
                 "Focus on moisture management and structural integrity under high heat. Grains must support the dough being rolled extremely thin, allowing the baker to drive toward either snapping brittleness or chewy hydration depending on the variation."
-            )
+            ),
         },
     }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
+    def apply_sub_class_constraints(
+        self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = "yeast"
+    ) -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(1.00, hydration))
         f = max(0.0, min(0.30, fat))
         s = max(0.0, min(0.20, sugar))
-        if leaven_type == 'sourdough':
+        if leaven_type == "sourdough":
             leaven = max(0.0, min(0.60, leaven))
-        elif leaven_type == 'chemical':
+        elif leaven_type == "chemical":
             leaven = max(0.0, min(0.10, leaven))
         else:
             leaven = max(0.0, min(0.015, leaven))
@@ -175,7 +184,15 @@ class FlatEngine(BaseEngine):
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like herbs), use true baker's percentages (flour = 100%). For flatbreads, these typically range from 1.0 to 10.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
 
-    def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
         mix_min = 4
         # Gluten network relaxation rest window timer to prevent snap-back:
         relax_min = 20
@@ -191,63 +208,85 @@ class FlatEngine(BaseEngine):
                 "name": "Flatbread Mix",
                 "duration_sec": mix_min * 60,
                 "desc": "Combine flour, water, salt, and fat. Mix until a soft, uniform dough ball is achieved.",
-                "is_mix": True
+                "is_mix": True,
             }
         ]
 
         if "leavened" in preset_slug.lower() or "naan" in preset_slug.lower() or "pita" in preset_slug.lower():
-            steps.append({
-                "key": "bulk",
-                "name": "Bulk Ferment",
-                "duration_sec": estimated_bulk_minutes * 60,
-                "desc": "Ferment until doubled in size to develop yeast flavor and structure."
-            })
+            steps.append(
+                {
+                    "key": "bulk",
+                    "name": "Bulk Ferment",
+                    "duration_sec": estimated_bulk_minutes * 60,
+                    "desc": "Ferment until doubled in size to develop yeast flavor and structure.",
+                }
+            )
         else:
-            steps.append({
-                "key": "relax",
-                "name": "Gluten Relaxation Rest",
-                "duration_sec": relax_min * 60,
-                "desc": "Essential relaxation window! Let the dough rest covered. This relaxes the gluten network to prevent dough snap-back during rolling."
-            })
+            steps.append(
+                {
+                    "key": "relax",
+                    "name": "Gluten Relaxation Rest",
+                    "duration_sec": relax_min * 60,
+                    "desc": "Essential relaxation window! Let the dough rest covered. This relaxes the gluten network to prevent dough snap-back during rolling.",
+                }
+            )
 
-        steps.extend([
-            {
-                "key": "divide",
-                "name": "Portion & Pre-shape",
-                "duration_sec": 10 * 60,
-                "desc": "Divide the dough into equal portions and roll into smooth balls. Rest balls covered for 10 minutes to relax gluten once more."
-            },
-            {
-                "key": "roll",
-                "name": "Mechanical Rolling",
-                "duration_sec": roll_min * 60,
-                "desc": f"Use a rolling pin to flatten dough portions. Target thickness is {recipe_data.get('mechanical_thickness_mm', 1.5)} mm. Keep rolled doughs covered to prevent skinning."
-            }
-        ])
+        steps.extend(
+            [
+                {
+                    "key": "divide",
+                    "name": "Portion & Pre-shape",
+                    "duration_sec": 10 * 60,
+                    "desc": "Divide the dough into equal portions and roll into smooth balls. Rest balls covered for 10 minutes to relax gluten once more.",
+                },
+                {
+                    "key": "roll",
+                    "name": "Mechanical Rolling",
+                    "duration_sec": roll_min * 60,
+                    "desc": f"Use a rolling pin to flatten dough portions. Target thickness is {recipe_data.get('mechanical_thickness_mm', 1.5)} mm. Keep rolled doughs covered to prevent skinning.",
+                },
+            ]
+        )
 
-        if "crisp" in preset_slug.lower() or "lavash" in preset_slug.lower() or "cracker" in preset_slug.lower() or "matzo" in preset_slug.lower():
-            steps.append({
-                "key": "bake",
-                "name": "High-Heat Oven Dehydration",
-                "duration_sec": bake_time_min * 60,
-                "desc": "Bake in a hot oven on a baking stone. Bake until fully crisp, dehydrated, and lightly browned.",
-                "is_bake": True
-            })
+        if (
+            "crisp" in preset_slug.lower()
+            or "lavash" in preset_slug.lower()
+            or "cracker" in preset_slug.lower()
+            or "matzo" in preset_slug.lower()
+        ):
+            steps.append(
+                {
+                    "key": "bake",
+                    "name": "High-Heat Oven Dehydration",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake in a hot oven on a baking stone. Bake until fully crisp, dehydrated, and lightly browned.",
+                    "is_bake": True,
+                }
+            )
         else:
-            steps.append({
-                "key": "bake",
-                "name": "Flash Skillet Sear",
-                "duration_sec": flash_sec,
-                "desc": "Place dough onto a screaming hot, dry cast-iron skillet/griddle. Flash-sear. Look for ballooning bubbles and dark leopard char spots.",
-                "is_bake": True
-            })
+            steps.append(
+                {
+                    "key": "bake",
+                    "name": "Flash Skillet Sear",
+                    "duration_sec": flash_sec,
+                    "desc": "Place dough onto a screaming hot, dry cast-iron skillet/griddle. Flash-sear. Look for ballooning bubbles and dark leopard char spots.",
+                    "is_bake": True,
+                }
+            )
 
-        if "crisp" not in preset_slug.lower() and "lavash" not in preset_slug.lower() and "cracker" not in preset_slug.lower() and "matzo" not in preset_slug.lower():
-            steps.append({
-                "key": "cool",
-                "name": "Stack & Steam-Soften",
-                "duration_sec": 5 * 60,
-                "desc": "Stack cooked flatbreads wrapped in a clean kitchen towel. Residual steam will soften the structure, keeping them pliable."
-            })
+        if (
+            "crisp" not in preset_slug.lower()
+            and "lavash" not in preset_slug.lower()
+            and "cracker" not in preset_slug.lower()
+            and "matzo" not in preset_slug.lower()
+        ):
+            steps.append(
+                {
+                    "key": "cool",
+                    "name": "Stack & Steam-Soften",
+                    "duration_sec": 5 * 60,
+                    "desc": "Stack cooked flatbreads wrapped in a clean kitchen towel. Residual steam will soften the structure, keeping them pliable.",
+                }
+            )
 
         return steps

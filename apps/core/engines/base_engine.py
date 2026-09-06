@@ -1,6 +1,3 @@
-import math
-from apps.core.utils.math import calculate_yield_mass
-
 GRAIN_THIRST_MODIFIERS = {
     "all_purpose": 0.0,
     "whole_wheat": 0.03,
@@ -29,7 +26,9 @@ def _get_val(obj, key, default=None):
         return obj.get(key, default)
     return default
 
+
 from .ai_prompts import AIPromptBuilder
+
 
 class BaseEngine(AIPromptBuilder):
     name = "Base Engine"
@@ -40,11 +39,7 @@ class BaseEngine(AIPromptBuilder):
     flavor_affinity = "Standard flour profile"
     tannin_sensitive = False
     supported_tweaks = ["hydration", "leavening"]
-    tweak_labels = {
-        "enrichment": ["Lean", "Brioche"],
-        "hydration": ["Tight", "Open"],
-        "leavening": ["Yeast", "40%"]
-    }
+    tweak_labels = {"enrichment": ["Lean", "Brioche"], "hydration": ["Tight", "Open"], "leavening": ["Yeast", "40%"]}
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
@@ -55,17 +50,17 @@ class BaseEngine(AIPromptBuilder):
 
     def culinary_nuance_directive(self, active_archetype_id: str = None, active_variation_id: str = None) -> str:
         """
-        Dynamically construct a highly specific culinary nuance directive 
+        Dynamically construct a highly specific culinary nuance directive
         based on the engine's unique parametric attributes and optional active archetype.
         """
         tannin_text = (
             "Preferred: Tannin Sensitive (Sweet/Neutral). You may recommend whole grains with tannins if you provide notes on how to balance their bitterness/astringency."
-            if self.tannin_sensitive else
-            "This engine is tannin tolerant. It welcomes rustic, savory caramelization, lactic/acetic sourness, "
+            if self.tannin_sensitive
+            else "This engine is tannin tolerant. It welcomes rustic, savory caramelization, lactic/acetic sourness, "
             "and deep whole grain bran expressions."
         )
         actions = ", ".join(self.production_profile.get("permissible_action_types", []))
-        
+
         global_criteria = (
             f"Focus on the unique target chemistry of the {self.name}:\n"
             f"* Gluten & Structural Behavior: {self.gluten_behavior}\n"
@@ -74,7 +69,7 @@ class BaseEngine(AIPromptBuilder):
             f"* Production Parameters: Thermodynamic focus is {self.production_profile.get('thermodynamic_focus')}, "
             f"rest strategy is {self.production_profile.get('environmental_rest_strategy')}, and permissible actions include [{actions}]."
         )
-        
+
         if not active_archetype_id:
             return global_criteria
 
@@ -82,24 +77,24 @@ class BaseEngine(AIPromptBuilder):
         archetype = archetypes.get(active_archetype_id)
         if not archetype:
             return global_criteria
-            
+
         # Create a copy so we don't permanently modify the class definition
         mechanics = dict(archetype.get("target_archetype_mechanics", {}))
         arch_directive = archetype.get("culinary_nuance_directive", "")
         variation_directive = ""
-        
-        if active_variation_id and hasattr(self, 'variations'):
+
+        if active_variation_id and hasattr(self, "variations"):
             variation = self.variations.get(active_variation_id, {})
             overrides = variation.get("mechanics_overrides", {})
             mechanics.update(overrides)
             variation_directive = variation.get("culinary_nuance_directive_append", "")
-        
+
         gluten = mechanics.get("required_gluten_elasticity", "N/A")
         flow = mechanics.get("desired_horizontal_flow", "N/A")
         lipids = mechanics.get("moisture_lipid_ratio", "N/A")
         protein_window = mechanics.get("optimal_protein_window", "N/A")
         affinity = archetype.get("grain_affinity", "N/A")
-        
+
         stacked_text = (
             f"{global_criteria}\n\n"
             f"[TARGET ARCHETYPE: {archetype.get('label', active_archetype_id)} MOLECULAR PHYSICS OBJECTIVES]\n"
@@ -110,13 +105,13 @@ class BaseEngine(AIPromptBuilder):
             f"* Optimal Protein Window: {protein_window}\n"
             f"* Grain Affinity: {affinity}"
         )
-        
+
         if arch_directive:
             stacked_text += f"\n\n[SPECIFIC CULINARY NUANCE DIRECTIVE]\n{arch_directive}"
-            
+
         if variation_directive:
             stacked_text += f"\n\n[VARIATION DIRECTIVE]\n{variation_directive}"
-            
+
         return stacked_text
 
     permissible_form_factors = {
@@ -136,7 +131,15 @@ class BaseEngine(AIPromptBuilder):
         }
     }
 
-    def calculate_wheat_berry_shares(self, active_berries: list, texture_score: int, crumb_score: int, preset_slug: str = None, preset_name: str = None, flour_blend: dict = None) -> tuple[dict[str, float], float, str | None]:
+    def calculate_wheat_berry_shares(
+        self,
+        active_berries: list,
+        texture_score: int,
+        crumb_score: int,
+        preset_slug: str = None,
+        preset_name: str = None,
+        flour_blend: dict = None,
+    ) -> tuple[dict[str, float], float, str | None]:
         if not active_berries:
             return {"House Blend": 1.0}, 1.0, None
 
@@ -144,64 +147,69 @@ class BaseEngine(AIPromptBuilder):
         shares = {}
         if flour_blend:
             for b in active_berries:
-                name = _get_val(b, 'name')
+                name = _get_val(b, "name")
                 slug = name.lower().replace(" ", "_").replace("-", "_")
-                
+
                 pct = flour_blend.get(slug)
                 if pct is None:
-                    slug_clean = "".join(c for c in slug if c.isalnum() or c == '_')
+                    slug_clean = "".join(c for c in slug if c.isalnum() or c == "_")
                     pct = flour_blend.get(slug_clean)
-                
+
                 if pct is None:
                     for k, v in flour_blend.items():
                         if k in slug or slug in k:
                             pct = v
                             break
-                            
+
                 shares[name] = float(pct or 0.0)
-                
+
             total_share = sum(shares.values())
             if total_share > 0:
                 shares = {k: v / total_share for k, v in shares.items()}
             else:
-                shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
+                shares = {_get_val(b, "name"): 1.0 / total_berries for b in active_berries}
         else:
-            shares = {_get_val(b, 'name'): 1.0 / total_berries for b in active_berries}
-        
-        weighted_absorption = sum(_get_val(b, 'moisture_absorption_coef', 1.0) for b in active_berries) / total_berries
+            shares = {_get_val(b, "name"): 1.0 / total_berries for b in active_berries}
+
+        weighted_absorption = sum(_get_val(b, "moisture_absorption_coef", 1.0) for b in active_berries) / total_berries
         return shares, weighted_absorption, None
 
-
-
     def get_flavor_bases(self, creativity_level: int) -> list:
-        return [
-            "Flour, water, and salt",
-            "Toasted grains and seeds",
-            "Malted barley syrup or molasses"
-        ]
-
-
+        return ["Flour, water, and salt", "Toasted grains and seeds", "Malted barley syrup or molasses"]
 
     def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
         pitfalls = []
         if effective_hydration >= 0.78:
-            pitfalls.append({
-                "title": "High Hydration Handling",
-                "message": "With a hydration of over 78%, this dough is wet. Do not add raw flour to the workspace; instead, perform 'stretch-and-folds' with wet hands to build gluten structure."
-            })
+            pitfalls.append(
+                {
+                    "title": "High Hydration Handling",
+                    "message": "With a hydration of over 78%, this dough is wet. Do not add raw flour to the workspace; instead, perform 'stretch-and-folds' with wet hands to build gluten structure.",
+                }
+            )
         if grain_type in ["spelt", "kamut", "einkorn"]:
-            pitfalls.append({
-                "title": "Ancient Grain Fragility",
-                "message": f"{grain_type.title()} has weaker gluten networks. Avoid intensive machine mixing. Prefer short hand mixing followed by gentle folds to keep the structure from collapsing."
-            })
+            pitfalls.append(
+                {
+                    "title": "Ancient Grain Fragility",
+                    "message": f"{grain_type.title()} has weaker gluten networks. Avoid intensive machine mixing. Prefer short hand mixing followed by gentle folds to keep the structure from collapsing.",
+                }
+            )
         if not pitfalls:
-            pitfalls.append({
-                "title": "Standard Proofing Check",
-                "message": "Keep dough covered at a stable temp of 75-78°F. The poke test is your best guide: if a gentle indent springs back slowly, it is ready to bake."
-            })
+            pitfalls.append(
+                {
+                    "title": "Standard Proofing Check",
+                    "message": "Keep dough covered at a stable temp of 75-78°F. The poke test is your best guide: if a gentle indent springs back slowly, it is ready to bake.",
+                }
+            )
         return pitfalls
 
-    def get_sensory_benchmark(self, grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
+    def get_sensory_benchmark(
+        self,
+        grain_type: str,
+        flour_maturity: str,
+        effective_hydration: float,
+        category_slug: str = None,
+        preset_slug: str = None,
+    ) -> str:
         if grain_type is None:
             grain_type = "all_purpose"
         grain_name = grain_type.replace("_", " ").title()
@@ -209,10 +217,12 @@ class BaseEngine(AIPromptBuilder):
         if effective_hydration >= 0.75:
             desc += "The dough will be wet and sticky. Look for a glossy surface and a clean, dome-like rise. "
         elif effective_hydration >= 0.65:
-            desc += "Expect a supple, holding structure. The dough should feel alive, resilient, and elastic when touched. "
+            desc += (
+                "Expect a supple, holding structure. The dough should feel alive, resilient, and elastic when touched. "
+            )
         else:
             desc += "Dough is firm and tight. It will not double dramatically; monitor for a rounded dome and a smooth outer skin. "
-            
+
         if flour_maturity == "just_milled":
             desc += "As this flour was milled today, gluten activity is highly active but lacks extensibility. Expect rapid enzyme fermentation; handle gently to avoid tearing."
         elif flour_maturity == "dead_zone":
@@ -220,8 +230,6 @@ class BaseEngine(AIPromptBuilder):
         else:
             desc += "Flour is fully matured. Gluten bonds are stable and predictable. The rise will be steady with solid gas retention."
         return desc
-
-
 
     def calculate_recipe(
         self,
@@ -244,13 +252,18 @@ class BaseEngine(AIPromptBuilder):
         friction_override: float = None,
         preset_slug: str = None,
         preset_name: str = None,
-        **kwargs
+        **kwargs,
     ) -> dict:
         # 1. Apply Simple Hydration Modifiers
-        flour_blend = kwargs.get('flour_blend', {})
+        flour_blend = kwargs.get("flour_blend", {})
         if active_berries:
             berry_shares, weighted_absorption, structural_warning = self.calculate_wheat_berry_shares(
-                active_berries, texture_score, crumb_score, preset_slug=preset_slug, preset_name=preset_name, flour_blend=flour_blend
+                active_berries,
+                texture_score,
+                crumb_score,
+                preset_slug=preset_slug,
+                preset_name=preset_name,
+                flour_blend=flour_blend,
             )
             thirst_mod = weighted_absorption - 1.0
         else:
@@ -287,13 +300,25 @@ class BaseEngine(AIPromptBuilder):
         # Perform subclass-specific constraints (ceilings / floors)
         try:
             flavor_profile = kwargs.get("inferred_flavor_profile", "neutral")
-            effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
-                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type, flavor_profile=flavor_profile, sec_liquids=sec_liquids, sec_binders=sec_binders
+            effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = (
+                self.apply_sub_class_constraints(
+                    effective_hydration,
+                    effective_fat,
+                    effective_sugar,
+                    leaven_pct,
+                    salt_pct,
+                    leaven_type,
+                    flavor_profile=flavor_profile,
+                    sec_liquids=sec_liquids,
+                    sec_binders=sec_binders,
+                )
             )
         except TypeError as e:
             if "unexpected keyword argument" in str(e):
-                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = self.apply_sub_class_constraints(
-                    effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type
+                effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct = (
+                    self.apply_sub_class_constraints(
+                        effective_hydration, effective_fat, effective_sugar, leaven_pct, salt_pct, leaven_type
+                    )
                 )
             else:
                 raise
@@ -311,8 +336,17 @@ class BaseEngine(AIPromptBuilder):
                     inclusion_pct += pct
                 except (ValueError, TypeError):
                     pass
-        
-        total_ratios = 1.0 + effective_hydration + effective_fat + effective_sugar + salt_pct + leaven_pct + binder_pct + inclusion_pct
+
+        total_ratios = (
+            1.0
+            + effective_hydration
+            + effective_fat
+            + effective_sugar
+            + salt_pct
+            + leaven_pct
+            + binder_pct
+            + inclusion_pct
+        )
         flour_weight = target_mass / total_ratios
         water_weight = flour_weight * effective_hydration
         fat_weight = flour_weight * effective_fat
@@ -347,15 +381,33 @@ class BaseEngine(AIPromptBuilder):
             "banana": {"weight": 115, "singular": "medium banana", "plural": "medium bananas"},
             "butter": {"weight": 113, "singular": "stick", "plural": "sticks"},
         }
-        LIQUID_TERMS = ["water", "milk", "buttermilk", "cream", "juice", "oil", "extract", "vanilla", "vinegar", "coffee", "tea", "broth", "stock", "liquor", "bourbon", "rum", "vodka"]
+        LIQUID_TERMS = [
+            "water",
+            "milk",
+            "buttermilk",
+            "cream",
+            "juice",
+            "oil",
+            "extract",
+            "vanilla",
+            "vinegar",
+            "coffee",
+            "tea",
+            "broth",
+            "stock",
+            "liquor",
+            "bourbon",
+            "rum",
+            "vodka",
+        ]
 
         def annotate_unit_weight(name: str, weight: float) -> str:
             name_lower = name.lower()
             for key, data in STANDARD_UNIT_WEIGHTS.items():
                 if key in name_lower:
-                    if key == 'egg' and ('white' in name_lower or 'yolk' in name_lower):
+                    if key == "egg" and ("white" in name_lower or "yolk" in name_lower):
                         continue
-                    if key == 'butter' and 'buttermilk' in name_lower:
+                    if key == "butter" and "buttermilk" in name_lower:
                         continue
                     unit_weight = data["weight"]
                     units = weight / unit_weight
@@ -364,7 +416,7 @@ class BaseEngine(AIPromptBuilder):
                         unit_str = f"{int(rounded_units)}" if rounded_units.is_integer() else f"{rounded_units}"
                         plural = data["plural"] if rounded_units > 1 else data["singular"]
                         return f"{name} (~{unit_str} {plural})"
-            
+
             if any(term in name_lower for term in LIQUID_TERMS):
                 if weight >= 120:
                     fl_oz = round(weight / 30)
@@ -384,7 +436,7 @@ class BaseEngine(AIPromptBuilder):
                     annotated_default = annotate_unit_weight(default_name, int(round(total_weight)))
                     return [{"name": annotated_default, "weight": int(round(total_weight))}]
                 return []
-            
+
             # Legacy robust: if items is a dict instead of list of dicts, make it a list
             if isinstance(items, dict):
                 items = [items]
@@ -407,6 +459,7 @@ class BaseEngine(AIPromptBuilder):
                     annotated_name = annotate_unit_weight(clean_name, weight)
                     results.append({"name": annotated_name, "weight": weight})
             return results
+
         # Re-compute weights dynamically pulling defaults from child engine
         def get_default(cat, fallback):
             raw_val = self.secondary_ingredients.get(cat, {}).get("default", fallback)
@@ -420,7 +473,7 @@ class BaseEngine(AIPromptBuilder):
         binder_weight = flour_weight * binder_pct
         binder_items = allocate_weights(sec_binders, binder_weight, get_default("binders", "Whole Eggs"))
         sweetener_items = allocate_weights(sec_sweeteners, sugar_weight, get_default("sweeteners", "Granulated Sugar"))
-        
+
         leaven_default = "Sourdough Starter" if leaven_type == "sourdough" else get_default("leaveners", "Baking Soda")
         leavener_items = allocate_weights(sec_leaveners, leaven_weight, leaven_default)
 
@@ -439,19 +492,16 @@ class BaseEngine(AIPromptBuilder):
                     pct = float(inc.get("bakers_percentage", 0)) / 100.0
                 except (ValueError, TypeError):
                     pass
-                
+
                 if "salt" in name.lower() and pct <= 0.04:
                     continue
-                    
+
                 weight = int(round(flour_weight * pct)) if pct > 0 else 0
                 if weight > 0:
-                    processed_inclusions.append({
-                        "name": name,
-                        "weight": weight,
-                        "volume_description": vol,
-                        "percentage": round(pct * 100, 1)
-                    })
-                
+                    processed_inclusions.append(
+                        {"name": name, "weight": weight, "volume_description": vol, "percentage": round(pct * 100, 1)}
+                    )
+
         # Handle secondary additives similarly since they act as inclusions but have their percentages driven by phase 4
         processed_additives = []
         for inc in sec_additives:
@@ -463,18 +513,15 @@ class BaseEngine(AIPromptBuilder):
                     pct = float(inc.get("ratio", inc.get("bakers_percentage", 0))) / 100.0
                 except (ValueError, TypeError):
                     pass
-                
+
                 if "salt" in name.lower() and pct <= 0.04:
                     continue
-                    
+
                 weight = int(round(flour_weight * pct)) if pct > 0 else 0
                 if weight > 0:
-                    processed_additives.append({
-                        "name": name,
-                        "weight": weight,
-                        "volume_description": vol,
-                        "percentage": round(pct * 100, 1)
-                    })
+                    processed_additives.append(
+                        {"name": name, "weight": weight, "volume_description": vol, "percentage": round(pct * 100, 1)}
+                    )
 
         return {
             "target_mass": int(round(target_mass)),
@@ -507,60 +554,82 @@ class BaseEngine(AIPromptBuilder):
             "required_water_temp_f": round(required_water_temp_f, 1),
             "required_water_temp_c": round((required_water_temp_f - 32) * 5 / 9, 1),
             "substitution_notes": ["Simplified Baker's Math formulation."],
-            "wheat_berry_mix": {name: int(round(flour_weight * share)) for name, share in berry_shares.items() if share > 0.0} if active_berries else None,
+            "wheat_berry_mix": {
+                name: int(round(flour_weight * share)) for name, share in berry_shares.items() if share > 0.0
+            }
+            if active_berries
+            else None,
             "structural_warning": None,
             "fat_substitute_label": fat_substitute_label,
         }
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast', flavor_profile: str = 'neutral', **kwargs) -> tuple[float, float, float, float, float]:
+    def apply_sub_class_constraints(
+        self,
+        hydration: float,
+        fat: float,
+        sugar: float,
+        leaven: float,
+        salt: float,
+        leaven_type: str = "yeast",
+        flavor_profile: str = "neutral",
+        **kwargs,
+    ) -> tuple[float, float, float, float, float]:
         """Sub-classes override this to inject custom mathematical validations.
         Base limits to prevent completely broken AI formulas."""
         hyd = max(0.0, min(1.50, hydration))
         f = max(0.0, min(1.20, fat))
         s = max(0.0, min(2.00, sugar))
-        if leaven_type == 'sourdough':
+        if leaven_type == "sourdough":
             l = max(0.0, min(0.60, leaven))
-        elif leaven_type == 'chemical':
+        elif leaven_type == "chemical":
             l = max(0.0, min(0.10, leaven))
         else:
             l = max(0.0, min(0.015, leaven))
         st = max(0.0, min(0.10, salt))
         return hyd, f, s, l, st
 
-    def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
         return [
             {
                 "key": "mix",
                 "name": "Mix",
                 "duration_sec": 300,
                 "desc": "Combine ingredients into a cohesive shaggy mass.",
-                "is_mix": True
+                "is_mix": True,
             },
             {
                 "key": "knead",
                 "name": "Knead",
                 "duration_sec": 600,
                 "desc": "Work the dough to develop structural gluten alignment.",
-                "is_knead": True
+                "is_knead": True,
             },
             {
                 "key": "bulk",
                 "name": "Bulk Ferment",
                 "duration_sec": estimated_bulk_minutes * 60,
-                "desc": "Primary fermentation: allow yeast/sourdough to aerate the dough."
+                "desc": "Primary fermentation: allow yeast/sourdough to aerate the dough.",
             },
             {
                 "key": "proof",
                 "name": "Proof",
                 "duration_sec": estimated_proof_minutes * 60,
                 "desc": "Final proofing: shape and rise in baking pan/mat.",
-                "is_proof": True
+                "is_proof": True,
             },
             {
                 "key": "bake",
                 "name": "Bake",
                 "duration_sec": bake_time_min * 60,
                 "desc": "Oven bake: target internal temp and crisp crust development.",
-                "is_bake": True
-            }
+                "is_bake": True,
+            },
         ]

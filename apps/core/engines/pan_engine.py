@@ -1,5 +1,6 @@
 from apps.core.engines.base_engine import BaseEngine
 
+
 class PanEngine(BaseEngine):
     name = "Enriched & Soft Engine"
     slug = "pan"
@@ -19,21 +20,14 @@ class PanEngine(BaseEngine):
         "lipids": {
             "default": "unsalted_butter",
             "options": ["unsalted_butter", "salted_butter", "coconut_oil", "avocado_oil"],
-            "math_modifiers": {
-                "salted_butter": { "target_target": "salt", "subtract_percentage": 0.015 }
-            }
+            "math_modifiers": {"salted_butter": {"target_target": "salt", "subtract_percentage": 0.015}},
         },
         "liquids": {
             "default": "pure_water",
             "options": ["pure_water", "whole_milk", "heavy_cream", "buttermilk"],
-            "math_modifiers": {
-                "buttermilk": { "trigger_chemical_leavening_acid_flag": True }
-            }
+            "math_modifiers": {"buttermilk": {"trigger_chemical_leavening_acid_flag": True}},
         },
-        "binders": {
-            "default": "none",
-            "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]
-        }
+        "binders": {"default": "none", "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]},
     }
 
     permissible_form_factors = {
@@ -78,13 +72,19 @@ class PanEngine(BaseEngine):
             "bake_time_min": 20,
             "steam_required": False,
             "is_enriched_profile": True,
-        }
+        },
     }
 
     presets = [
-        "Everyday White Sandwich Loaf", "Rich Brioche", "Traditional Challah",
-        "Hokkaido Milk Bread", "Soft Burger Buns", "Dinner Rolls",
-        "Cinnamon Rolls", "Chocolate Babka", "Monkey Bread"
+        "Everyday White Sandwich Loaf",
+        "Rich Brioche",
+        "Traditional Challah",
+        "Hokkaido Milk Bread",
+        "Soft Burger Buns",
+        "Dinner Rolls",
+        "Cinnamon Rolls",
+        "Chocolate Babka",
+        "Monkey Bread",
     ]
 
     archetypes = {
@@ -95,19 +95,19 @@ class PanEngine(BaseEngine):
             "description": "Straight sidewall containment maximizing volume and thin slicing.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
-            "default_form_factor": "standard-9x5-pan",
-            "default_form_factor": "standard-9x5-pan",
-            "default_form_factor": "standard-9x5-pan",
-            "default_form_factor": "standard-9x5-pan",
+                "default_form_factor": "standard-9x5-pan",
+                "default_form_factor": "standard-9x5-pan",
+                "default_form_factor": "standard-9x5-pan",
+                "default_form_factor": "standard-9x5-pan",
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.0% - 13.0%"
+                "optimal_protein_window": "11.0% - 13.0%",
             },
             "culinary_nuance_directive": (
                 "Focus on maximizing vertical volume and achieving a uniform, tight cell structure. Grains must provide high protein "
                 "retention to support thin sidewall pans, ensuring a soft, elastic crumb that slices cleanly without crumbling."
-            )
+            ),
         },
         "freeform_braided": {
             "default_form_factor": "standard-9x5-pan",
@@ -119,13 +119,13 @@ class PanEngine(BaseEngine):
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.5% - 13.5%"
+                "optimal_protein_window": "11.5% - 13.5%",
             },
             "culinary_nuance_directive": (
                 "Focus on high structural retention and zero horizontal flow without pan walls. Grains must yield an elastic, highly "
                 "cohesive protein backbone capable of holding intricate braided definition under heavy lipid and sugar enrichment "
                 "weights without collapsing or slumping."
-            )
+            ),
         },
         "soft_dinner_roll": {
             "default_form_factor": "standard-9x5-pan",
@@ -137,13 +137,13 @@ class PanEngine(BaseEngine):
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.0% - 12.5%"
+                "optimal_protein_window": "11.0% - 12.5%",
             },
             "culinary_nuance_directive": (
                 "Focus on steam-trapped softness and excellent cluster lift. The protein web must remain extensible and resilient, "
                 "allowing small batch dough clusters to crowd together and climb vertically, trapping internal moisture for a classic "
                 "feather-light, pull-apart tear texture."
-            )
+            ),
         },
         "filled_sweet_roll": {
             "default_form_factor": "standard-9x5-pan",
@@ -155,20 +155,31 @@ class PanEngine(BaseEngine):
                 "required_gluten_elasticity": "high_retention",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.5% - 13.0%"
+                "optimal_protein_window": "11.5% - 13.0%",
             },
             "culinary_nuance_directive": (
                 "Focus on uniform dough-sheet stretch and high filling containment. The flour must provide an elastic, robust backbone "
                 "capable of being rolled thin, scroll-shaped, and baked without rupturing or allowing heavy sweet fillings to cause "
                 "structural collapse."
-            )
+            ),
         },
     }
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast', flavor_profile: str = 'neutral', **kwargs) -> tuple[float, float, float, float, float]:
+
+    def apply_sub_class_constraints(
+        self,
+        hydration: float,
+        fat: float,
+        sugar: float,
+        leaven: float,
+        salt: float,
+        leaven_type: str = "yeast",
+        flavor_profile: str = "neutral",
+        **kwargs,
+    ) -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(1.00, hydration))
         f = max(0.0, min(0.60, fat))
         s = max(0.0, min(0.50, sugar))
-        
+
         if flavor_profile == "savory":
             f = max(0.05, min(0.10, f))
             s = 0.0
@@ -177,10 +188,10 @@ class PanEngine(BaseEngine):
             for binder in list(sec_binders):
                 if isinstance(binder, dict) and "egg" in binder.get("name", "").lower():
                     sec_binders.remove(binder)
-                    
-        if leaven_type == 'sourdough':
+
+        if leaven_type == "sourdough":
             leaven = max(0.0, min(0.60, leaven))
-        elif leaven_type == 'chemical':
+        elif leaven_type == "chemical":
             leaven = max(0.0, min(0.10, leaven))
         else:
             leaven = max(0.0, min(0.015, leaven))
@@ -189,10 +200,13 @@ class PanEngine(BaseEngine):
 
     def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
         pitfalls = super().get_contextual_pitfalls(effective_hydration, grain_type, preset_slug)
-        pitfalls.insert(0, {
-            "title": "Fermentation Retardation",
-            "message": "Fats and sugars slow down yeast fermentation. Allow for a longer bulk proof or create a warm, moist proofing box to encourage active rising."
-        })
+        pitfalls.insert(
+            0,
+            {
+                "title": "Fermentation Retardation",
+                "message": "Fats and sugars slow down yeast fermentation. Allow for a longer bulk proof or create a warm, moist proofing box to encourage active rising.",
+            },
+        )
         return pitfalls
 
     def get_ai_culinary_directive(self) -> str:
@@ -201,10 +215,18 @@ class PanEngine(BaseEngine):
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like seeds), use true baker's percentages (flour = 100%). For sandwich breads, these typically range from 5.0 to 15.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For commercial yeast (active/instant), strictly limit to 0.5 to 1.5. For sourdough starter, limit to 10.0 to 25.0. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0% to prevent emulsification failure."
 
-    def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
         mix_min = 6
         knead_min = 12 if mixing_method == "stand_mixer" else 18
-        
+
         # Warm rise: enriched doughs rise slower, warm bulk rise is helpful
         bulk_min = estimated_bulk_minutes
         proof_min = estimated_proof_minutes
@@ -216,29 +238,37 @@ class PanEngine(BaseEngine):
                 "name": "Lipid Mix Phase",
                 "duration_sec": mix_min * 60,
                 "desc": "Combine flour, liquids, yeast, sugar, and egg yolks. Mix on low speed to establish the gluten base. Keep butter/fat separate for now to avoid premature coating of gluten proteins.",
-                "is_mix": True
+                "is_mix": True,
             },
             {
                 "key": "knead",
                 "name": "Intensive Dough Hook Knead",
                 "duration_sec": knead_min * 60,
                 "desc": "Slowly incorporate softened butter/fat in pieces while running the stand mixer. Knead intensively until the dough is silky, elastic, and clears the sides of the bowl.",
-                "is_knead": True
+                "is_knead": True,
             },
             {
                 "key": "bulk",
                 "name": "Enriched Bulk Ferment",
                 "duration_sec": bulk_min * 60,
-                "desc": "Enriched doughs ferment slower due to fat and sugar retardants. Keep in a warm, draft-free place."
-            }
+                "desc": "Enriched doughs ferment slower due to fat and sugar retardants. Keep in a warm, draft-free place.",
+            },
         ]
 
         if "braid" in preset_slug.lower() or "challah" in preset_slug.lower() or "babka" in preset_slug.lower():
             shape_name = "Strand Division & Braiding"
-            shape_desc = "Divide dough into equal strands. Roll out and braid tightly. Transfer to a parchment-lined sheet pan."
+            shape_desc = (
+                "Divide dough into equal strands. Roll out and braid tightly. Transfer to a parchment-lined sheet pan."
+            )
             proof_name = "Freeform Final Proof"
-            proof_desc = "Proof freeform on the baking sheet until nearly doubled in size. Brush with egg wash before baking."
-        elif "roll" in preset_slug.lower() and "cinnamon" not in preset_slug.lower() and "sweet" not in preset_slug.lower():
+            proof_desc = (
+                "Proof freeform on the baking sheet until nearly doubled in size. Brush with egg wash before baking."
+            )
+        elif (
+            "roll" in preset_slug.lower()
+            and "cinnamon" not in preset_slug.lower()
+            and "sweet" not in preset_slug.lower()
+        ):
             shape_name = "Roll Portioning"
             shape_desc = "Divide dough into small uniform portions (e.g., 50g-70g). Roll into tight balls and cluster together in a buttered pan."
             proof_name = "Clustered Final Proof"
@@ -254,29 +284,26 @@ class PanEngine(BaseEngine):
             proof_name = "Loaf Pan Final Proof"
             proof_desc = "Transfer dough pieces into the greased baking pan. Proof until the dough reaches 1 inch above the pan rim."
 
-        steps.extend([
-            {
-                "key": "divide_portion",
-                "name": shape_name,
-                "duration_sec": 10 * 60,
-                "desc": shape_desc
-            },
-            {
-                "key": "proof",
-                "name": proof_name,
-                "duration_sec": proof_min * 60,
-                "desc": proof_desc,
-                "is_proof": True
-            },
-            {
-                "key": "bake",
-                "name": "Soft Crumb Bake",
-                "duration_sec": bake_time_min * 60,
-                "desc": "Bake at moderate heat (350-375°F). Rich sugars caramelize rapidly; shield loaf/rolls with foil if top browns too early.",
-                "is_bake": True
-            }
-        ])
-        
+        steps.extend(
+            [
+                {"key": "divide_portion", "name": shape_name, "duration_sec": 10 * 60, "desc": shape_desc},
+                {
+                    "key": "proof",
+                    "name": proof_name,
+                    "duration_sec": proof_min * 60,
+                    "desc": proof_desc,
+                    "is_proof": True,
+                },
+                {
+                    "key": "bake",
+                    "name": "Soft Crumb Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake at moderate heat (350-375°F). Rich sugars caramelize rapidly; shield loaf/rolls with foil if top browns too early.",
+                    "is_bake": True,
+                },
+            ]
+        )
+
         preset_slug = kwargs.get("preset_slug", "")
         if "roll" in preset_slug.lower() or "bun" in preset_slug.lower():
             cooling_desc = "Allow the rolls/buns to cool in the pan for 5-10 minutes. They can be served warm, or transferred to a wire rack to cool completely."
@@ -284,12 +311,14 @@ class PanEngine(BaseEngine):
         else:
             cooling_desc = "Allow the bread to cool in the pan for 10 minutes to stabilize, then carefully turn out onto a wire rack to cool completely. Slicing warm bread will crush the crumb."
             cooling_duration = 60
-            
-        steps.append({
-            "key": "cool",
-            "name": "Pan & Wire Rack Cooling",
-            "duration_sec": cooling_duration * 60,
-            "desc": cooling_desc
-        })
-        
+
+        steps.append(
+            {
+                "key": "cool",
+                "name": "Pan & Wire Rack Cooling",
+                "duration_sec": cooling_duration * 60,
+                "desc": cooling_desc,
+            }
+        )
+
         return steps

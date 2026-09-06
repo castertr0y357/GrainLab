@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
         return self.update(deleted_at=timezone.now())
@@ -14,13 +15,16 @@ class SoftDeleteQuerySet(models.QuerySet):
     def dead(self):
         return self.filter(deleted_at__isnull=False)
 
+
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return SoftDeleteQuerySet(self.model, using=self._db).alive()
 
+
 class AllObjectsManager(models.Manager):
     def get_queryset(self):
         return SoftDeleteQuerySet(self.model, using=self._db)
+
 
 class SoftDeleteModel(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)

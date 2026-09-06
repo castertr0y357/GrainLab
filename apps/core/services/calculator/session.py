@@ -1,6 +1,5 @@
-import json
+SESSION_KEY = "grainlab_calculator_state"
 
-SESSION_KEY = 'grainlab_calculator_state'
 
 def get_calculator_state(request):
     """Retrieve the current calculator state from the session."""
@@ -9,10 +8,12 @@ def get_calculator_state(request):
         state = {}
     return state
 
+
 def save_calculator_state(request, state):
     """Save the updated state back to the session."""
     request.session[SESSION_KEY] = state
     request.session.modified = True
+
 
 def clear_calculator_state(request):
     """Clear the calculator state from the session."""
@@ -20,23 +21,26 @@ def clear_calculator_state(request):
         del request.session[SESSION_KEY]
         request.session.modified = True
 
+
 def update_calculator_state(request, updates):
     """Update specific keys in the calculator state."""
     state = get_calculator_state(request)
     state.update(updates)
     save_calculator_state(request, state)
 
+
 def get_active_grains(request):
     """Return the list of actively selected grains from phase 2."""
     state = get_calculator_state(request)
-    return state.get('active_grains', [])
+    return state.get("active_grains", [])
 
 
 def get_engines_ff_json() -> str:
+    import json
+
     from apps.core.engines.router import ENGINES
     from apps.core.gemma import CATEGORY_TO_ENGINE
-    import json
-    
+
     engines_ff_data = {}
     for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():
         engine = ENGINES[eng_name]
@@ -46,15 +50,16 @@ def get_engines_ff_json() -> str:
             "secondary_ingredients": getattr(engine, "secondary_ingredients", {}),
             "supported_tweaks": getattr(engine, "supported_tweaks", ["hydration", "leavening"]),
             "tweak_labels": getattr(engine, "tweak_labels", {}),
-            "variations": getattr(engine, "variations", {})
+            "variations": getattr(engine, "variations", {}),
         }
     return json.dumps(engines_ff_data)
 
 
 def get_engines_archetypes_json() -> str:
+    import json
+
     from apps.core.engines.router import ENGINES
     from apps.core.gemma import CATEGORY_TO_ENGINE
-    import json
 
     archetypes_data = {}
     for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():

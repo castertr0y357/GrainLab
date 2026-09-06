@@ -1,5 +1,6 @@
 from apps.core.engines.base_engine import BaseEngine
 
+
 class PastryEngine(BaseEngine):
     name = "Pastry & Lamination Engine"
     slug = "pastry"
@@ -16,26 +17,26 @@ class PastryEngine(BaseEngine):
             "label": "Flaky & Tender (Top Crust)",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "minimal_to_none",
-                "optimal_protein_window": "8.0% - 9.5%"
+                "optimal_protein_window": "8.0% - 9.5%",
             },
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected FLAKY & TENDER. This is ideal for top crusts or delicate tarts. "
                 "Favor low-protein soft wheats (e.g., Pastry Flour). Emphasize keeping fats cold and in large chunks "
                 "to create steam pockets, while minimizing water to prevent tough gluten formation."
-            )
+            ),
         },
         "sturdy_crisp": {
             "label": "Sturdy & Crisp (Bottom Crust)",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "moderate_extensible",
-                "optimal_protein_window": "10.0% - 11.5%"
+                "optimal_protein_window": "10.0% - 11.5%",
             },
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected STURDY & CRISP. This dough must support heavy, wet fillings (like fruit or custard) "
                 "without becoming soggy. Favor moderate protein wheats (e.g., All-Purpose) and instruct the user to "
                 "work the fat in more thoroughly (mealy texture) to waterproof the flour proteins."
-            )
-        }
+            ),
+        },
     }
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
@@ -47,21 +48,14 @@ class PastryEngine(BaseEngine):
         "lipids": {
             "default": "unsalted_butter",
             "options": ["unsalted_butter", "salted_butter", "coconut_oil", "avocado_oil"],
-            "math_modifiers": {
-                "salted_butter": { "target_target": "salt", "subtract_percentage": 0.015 }
-            }
+            "math_modifiers": {"salted_butter": {"target_target": "salt", "subtract_percentage": 0.015}},
         },
         "liquids": {
             "default": "pure_water",
             "options": ["pure_water", "whole_milk", "heavy_cream", "buttermilk"],
-            "math_modifiers": {
-                "buttermilk": { "trigger_chemical_leavening_acid_flag": True }
-            }
+            "math_modifiers": {"buttermilk": {"trigger_chemical_leavening_acid_flag": True}},
         },
-        "binders": {
-            "default": "none",
-            "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]
-        }
+        "binders": {"default": "none", "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]},
     }
 
     permissible_form_factors = {
@@ -92,13 +86,18 @@ class PastryEngine(BaseEngine):
             "bake_time_min": 25,
             "steam_required": False,
             "is_enriched_profile": True,
-        }
+        },
     }
 
     presets = [
-        "Classic Croissants", "Pain au Chocolat", "All-Butter Puff Pastry",
-        "Danish Pastry Dough", "Flaky Pie Crust (Pâte Brisée)",
-        "Sweet Tart Dough (Pâte Sucrée)", "Palmiers", "Vol-au-vents"
+        "Classic Croissants",
+        "Pain au Chocolat",
+        "All-Butter Puff Pastry",
+        "Danish Pastry Dough",
+        "Flaky Pie Crust (Pâte Brisée)",
+        "Sweet Tart Dough (Pâte Sucrée)",
+        "Palmiers",
+        "Vol-au-vents",
     ]
 
     archetypes = {
@@ -110,19 +109,19 @@ class PastryEngine(BaseEngine):
             "description": "Yeast-leavened laminated structures like Croissants and Danishes.",
             "grain_affinity": "medium_protein",
             "target_archetype_mechanics": {
-            "default_form_factor": "perforated-sheet-air-mat",
-            "default_salt_pct": 0.01,
-            "default_form_factor": "perforated-sheet-air-mat",
-            "default_salt_pct": 0.01,
-            "default_form_factor": "perforated-sheet-air-mat",
-            "default_salt_pct": 0.01,
-            "default_form_factor": "perforated-sheet-air-mat",
-            "default_salt_pct": 0.01,
+                "default_form_factor": "perforated-sheet-air-mat",
+                "default_salt_pct": 0.01,
+                "default_form_factor": "perforated-sheet-air-mat",
+                "default_salt_pct": 0.01,
+                "default_form_factor": "perforated-sheet-air-mat",
+                "default_salt_pct": 0.01,
+                "default_form_factor": "perforated-sheet-air-mat",
+                "default_salt_pct": 0.01,
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "11.0% - 13.0%"
-            }
+                "optimal_protein_window": "11.0% - 13.0%",
+            },
         },
         "inverted_puff": {
             "default_form_factor": "perforated-sheet-air-mat",
@@ -135,8 +134,8 @@ class PastryEngine(BaseEngine):
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "controlled_expansion",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "11.0% - 13.0%"
-            }
+                "optimal_protein_window": "11.0% - 13.0%",
+            },
         },
         "shortcrust_tart": {
             "default_form_factor": "perforated-sheet-air-mat",
@@ -149,8 +148,8 @@ class PastryEngine(BaseEngine):
                 "required_gluten_elasticity": "minimal_to_none",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.5%"
-            }
+                "optimal_protein_window": "8.5% - 10.5%",
+            },
         },
         "paper_thin_phyllo": {
             "default_form_factor": "perforated-sheet-air-mat",
@@ -163,30 +162,30 @@ class PastryEngine(BaseEngine):
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "zero_spread_stable",
                 "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "11.5% - 13.5%"
-            }
+                "optimal_protein_window": "11.5% - 13.5%",
+            },
         },
     }
 
-
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import SWEET_FALLBACKS
+
         insight = SWEET_FALLBACKS.get(item_id)
-        if not insight and item_id.startswith('grain_'):
+        if not insight and item_id.startswith("grain_"):
             for k, val in SWEET_FALLBACKS.items():
-                if k.startswith('grain_') and (k in item_id or item_id in k):
+                if k.startswith("grain_") and (k in item_id or item_id in k):
                     insight = val
                     break
         return insight or {
-            'labor_roi': 'Low Priority / Minor Textural Return',
-            'last_10_percent_analysis': 'An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected.'
+            "labor_roi": "Low Priority / Minor Textural Return",
+            "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected.",
         }
 
     def get_flavor_bases(self, creativity_level: int) -> list:
         if creativity_level <= 3:
-            return ['Vanilla Bean & Brown Butter', 'Double Chocolate', 'Lemon Zest & Buttermilk']
+            return ["Vanilla Bean & Brown Butter", "Double Chocolate", "Lemon Zest & Buttermilk"]
         else:
-            return ['Matcha & White Chocolate', 'Earl Grey & Lavender', 'Miso Caramel & Pecan']
+            return ["Matcha & White Chocolate", "Earl Grey & Lavender", "Miso Caramel & Pecan"]
 
     def get_ai_flavor_directive(self) -> str:
         return "Do not call them 'Spelt Cookie' or 'Rye Cake'. Use creative but clear culinary names."
@@ -194,31 +193,40 @@ class PastryEngine(BaseEngine):
     def get_ai_structural_directive(self) -> str:
         return "For example, tender confections generally do not need a 'proofing_environment' or 'shaping_surface'."
 
-    def get_sensory_benchmark(self, grain_type: str, flour_maturity: str, effective_hydration: float, category_slug: str = None, preset_slug: str = None) -> str:
-        grain_name = grain_type.replace('_', ' ').title()
-        desc = f'For fresh-milled {grain_name} confections: '
-        if category_slug == 'cookies-shortbread':
-            desc += 'Expect a thick, soft paste or firm chilled dough. The fat should be fully creamed with flour particles evenly coated to control spread. '
-        elif category_slug == 'cakes-batters':
-            desc += 'Expect a highly aerated, smooth fluid batter. It should hold micro-air bubbles from egg/fat whipping with zero large pockets. '
+    def get_sensory_benchmark(
+        self,
+        grain_type: str,
+        flour_maturity: str,
+        effective_hydration: float,
+        category_slug: str = None,
+        preset_slug: str = None,
+    ) -> str:
+        grain_name = grain_type.replace("_", " ").title()
+        desc = f"For fresh-milled {grain_name} confections: "
+        if category_slug == "cookies-shortbread":
+            desc += "Expect a thick, soft paste or firm chilled dough. The fat should be fully creamed with flour particles evenly coated to control spread. "
+        elif category_slug == "cakes-batters":
+            desc += "Expect a highly aerated, smooth fluid batter. It should hold micro-air bubbles from egg/fat whipping with zero large pockets. "
         else:
-            desc += 'The batter/dough should be delicate and soft. Mixing should be kept to an absolute minimum to ensure a tender crumb. '
-            
-        if flour_maturity == 'just_milled':
-            desc += 'As this flour was milled today, its enzymes will promote fast browning. Keep mixing short to avoid any accidental gluten development.'
-        elif flour_maturity == 'dead_zone':
-            desc += 'Caution: Flour is in the 1-2 week dead zone. The structural proteins are slightly unstable. Bake promptly after mixing to ensure the rise sets correctly.'
+            desc += "The batter/dough should be delicate and soft. Mixing should be kept to an absolute minimum to ensure a tender crumb. "
+
+        if flour_maturity == "just_milled":
+            desc += "As this flour was milled today, its enzymes will promote fast browning. Keep mixing short to avoid any accidental gluten development."
+        elif flour_maturity == "dead_zone":
+            desc += "Caution: Flour is in the 1-2 week dead zone. The structural proteins are slightly unstable. Bake promptly after mixing to ensure the rise sets correctly."
         else:
-            desc += 'Flour is fully matured. It will provide a highly stable, predictable structure and excellent tender mouthfeel.'
+            desc += "Flour is fully matured. It will provide a highly stable, predictable structure and excellent tender mouthfeel."
         return desc
 
-    def apply_sub_class_constraints(self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = 'yeast') -> tuple[float, float, float, float, float]:
+    def apply_sub_class_constraints(
+        self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = "yeast"
+    ) -> tuple[float, float, float, float, float]:
         hyd = max(0.0, min(0.60, hydration))
         f = max(0.0, min(1.20, fat))
         s = max(0.0, min(0.50, sugar))
-        if leaven_type == 'sourdough':
+        if leaven_type == "sourdough":
             leaven = max(0.0, min(0.60, leaven))
-        elif leaven_type == 'chemical':
+        elif leaven_type == "chemical":
             leaven = max(0.0, min(0.10, leaven))
         else:
             leaven = max(0.0, min(0.015, leaven))
@@ -231,9 +239,17 @@ class PastryEngine(BaseEngine):
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like fruit fillings or almond paste), use true baker's percentages (flour = 100%). For pastries, these typically range from 10.0 to 50.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0% to prevent emulsification failure."
 
-    def get_live_timeline_steps(self, recipe_data: dict, estimated_bulk_minutes: int, estimated_proof_minutes: int, bake_time_min: int, mixing_method: str = "stand_mixer", **kwargs) -> list[dict]:
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
         preset_slug = kwargs.get("preset_slug") or ""
-        
+
         if "puff" in preset_slug.lower() or "danish" in preset_slug.lower():
             fold_desc = "Roll dough to a rectangle. Fold both outer edges to meet in the middle, then fold in half like a book (4 layers generated)."
         elif "croissant" in preset_slug.lower() or "chocolat" in preset_slug.lower():
@@ -248,21 +264,21 @@ class PastryEngine(BaseEngine):
                     "name": "Shortcrust Base Mix",
                     "duration_sec": 10 * 60,
                     "desc": "Cut cold butter into flour until pea-sized, add cold liquid until it just holds together. Do not overwork or fold.",
-                    "is_mix": True
+                    "is_mix": True,
                 },
                 {
                     "key": "chill_lock_one",
                     "name": "Chill Lock",
                     "duration_sec": 30 * 60,
-                    "desc": "Mandatory chill step in fridge to solidify butter before rolling out."
+                    "desc": "Mandatory chill step in fridge to solidify butter before rolling out.",
                 },
                 {
                     "key": "bake",
                     "name": "Crust Bake",
                     "duration_sec": bake_time_min * 60,
                     "desc": "Blind bake or bake with filling until crust is deeply golden.",
-                    "is_bake": True
-                }
+                    "is_bake": True,
+                },
             ]
         elif "phyllo" in preset_slug.lower() or "strudel" in preset_slug.lower():
             steps = [
@@ -271,27 +287,27 @@ class PastryEngine(BaseEngine):
                     "name": "Phyllo Base Mix",
                     "duration_sec": 10 * 60,
                     "desc": "Mix flour, water, and a touch of oil/vinegar into a smooth, highly extensible dough.",
-                    "is_mix": True
+                    "is_mix": True,
                 },
                 {
                     "key": "chill_lock_one",
                     "name": "Relaxation Rest",
                     "duration_sec": 60 * 60,
-                    "desc": "Rest dough at room temperature for at least 1 hour to fully relax gluten for extreme stretching."
+                    "desc": "Rest dough at room temperature for at least 1 hour to fully relax gluten for extreme stretching.",
                 },
                 {
                     "key": "stretch",
                     "name": "Paper-Thin Stretch & Stack",
                     "duration_sec": 30 * 60,
-                    "desc": "Stretch dough paper-thin until translucent, fold or stack layers while brushing generously with melted fat/oil."
+                    "desc": "Stretch dough paper-thin until translucent, fold or stack layers while brushing generously with melted fat/oil.",
                 },
                 {
                     "key": "bake",
                     "name": "Crisp Laminate Bake",
                     "duration_sec": bake_time_min * 60,
                     "desc": "Bake until golden and shatteringly crisp.",
-                    "is_bake": True
-                }
+                    "is_bake": True,
+                },
             ]
         else:
             steps = [
@@ -300,70 +316,81 @@ class PastryEngine(BaseEngine):
                     "name": "Détrempe Base Mix",
                     "duration_sec": 6 * 60,
                     "desc": "Mix base dough (détrempe) until combined. Do not over-knead to prevent excess gluten toughness.",
-                    "is_mix": True
+                    "is_mix": True,
                 },
                 {
                     "key": "butter_encase",
                     "name": "Butter Block Encasement",
                     "duration_sec": 10 * 60,
-                    "desc": f"Roll the détrempe out. Place the cold butter block ({recipe_data.get('butter_block_weight', 0.0)}g) in the center. Fold the corners of the dough over to fully seal the butter block."
+                    "desc": f"Roll the détrempe out. Place the cold butter block ({recipe_data.get('butter_block_weight', 0.0)}g) in the center. Fold the corners of the dough over to fully seal the butter block.",
                 },
                 {
                     "key": "fold_one",
                     "name": "First Fold Set",
                     "duration_sec": 10 * 60,
-                    "desc": f"Perform the first fold set: {fold_desc} Work quickly so butter remains cold."
+                    "desc": f"Perform the first fold set: {fold_desc} Work quickly so butter remains cold.",
                 },
                 {
                     "key": "chill_lock_one",
                     "name": "Low-Temp Chill Lock 1",
                     "duration_sec": 30 * 60,
-                    "desc": "Mandatory low-temperature environmental chill-rest step. Chill in freezer/fridge to solidify butter and relax gluten sheets."
+                    "desc": "Mandatory low-temperature environmental chill-rest step. Chill in freezer/fridge to solidify butter and relax gluten sheets.",
                 },
                 {
                     "key": "fold_two",
                     "name": "Second Fold Set",
                     "duration_sec": 10 * 60,
-                    "desc": f"Roll dough out and perform the second fold set: {fold_desc}"
+                    "desc": f"Roll dough out and perform the second fold set: {fold_desc}",
                 },
                 {
                     "key": "chill_lock_two",
                     "name": "Low-Temp Chill Lock 2",
                     "duration_sec": 30 * 60,
-                    "desc": "Second mandatory chill lock. Keeps laminated butter solid so layers do not bleed together."
-                }
+                    "desc": "Second mandatory chill lock. Keeps laminated butter solid so layers do not bleed together.",
+                },
             ]
-            
-            if "croissant" in preset_slug.lower() or "danish" in preset_slug.lower() or "chocolat" in preset_slug.lower() or "viennoiserie" in preset_slug.lower():
-                steps.extend([
-                    {
-                        "key": "shape",
-                        "name": "Final Shaping",
-                        "duration_sec": 15 * 60,
-                        "desc": "Roll out the chilled dough and shape into final forms."
-                    },
-                    {
-                        "key": "proof",
-                        "name": "Final Proof",
-                        "duration_sec": estimated_proof_minutes * 60,
-                        "desc": "Proof at a warm room temperature (around 78°F, do not exceed 80°F or butter will melt). Must double in size and jiggle when shaken.",
-                        "is_proof": True
-                    }
-                ])
-                
-            steps.append({
-                "key": "bake",
-                "name": "Laminated Steam Rise Bake",
-                "duration_sec": bake_time_min * 60,
-                "desc": "Bake in hot oven. Water in butter boils instantly, creating steam which puffs the pastry layers apart while fat setting locks the crumb.",
-                "is_bake": True
-            })
-        
-        steps.append({
-            "key": "cool",
-            "name": "Wire Rack Cooling",
-            "duration_sec": 30 * 60,
-            "desc": "Transfer to a wire rack. Allow the pastries to cool completely to room temperature so the butter sets back up, restoring the crisp flaky texture."
-        })
-        
+
+            if (
+                "croissant" in preset_slug.lower()
+                or "danish" in preset_slug.lower()
+                or "chocolat" in preset_slug.lower()
+                or "viennoiserie" in preset_slug.lower()
+            ):
+                steps.extend(
+                    [
+                        {
+                            "key": "shape",
+                            "name": "Final Shaping",
+                            "duration_sec": 15 * 60,
+                            "desc": "Roll out the chilled dough and shape into final forms.",
+                        },
+                        {
+                            "key": "proof",
+                            "name": "Final Proof",
+                            "duration_sec": estimated_proof_minutes * 60,
+                            "desc": "Proof at a warm room temperature (around 78°F, do not exceed 80°F or butter will melt). Must double in size and jiggle when shaken.",
+                            "is_proof": True,
+                        },
+                    ]
+                )
+
+            steps.append(
+                {
+                    "key": "bake",
+                    "name": "Laminated Steam Rise Bake",
+                    "duration_sec": bake_time_min * 60,
+                    "desc": "Bake in hot oven. Water in butter boils instantly, creating steam which puffs the pastry layers apart while fat setting locks the crumb.",
+                    "is_bake": True,
+                }
+            )
+
+        steps.append(
+            {
+                "key": "cool",
+                "name": "Wire Rack Cooling",
+                "duration_sec": 30 * 60,
+                "desc": "Transfer to a wire rack. Allow the pastries to cool completely to room temperature so the butter sets back up, restoring the crisp flaky texture.",
+            }
+        )
+
         return steps

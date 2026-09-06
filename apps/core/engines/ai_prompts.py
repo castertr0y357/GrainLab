@@ -9,6 +9,7 @@ class AIPromptBuilder:
 
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import BREAD_FALLBACKS
+
         insight = BREAD_FALLBACKS.get(item_id)
         if not insight and item_id.startswith("grain_"):
             for k, val in BREAD_FALLBACKS.items():
@@ -17,7 +18,7 @@ class AIPromptBuilder:
                     break
         return insight or {
             "labor_roi": "Low Priority / Minor Textural Return",
-            "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected."
+            "last_10_percent_analysis": "An objective workspace configuration parameter. No significant performance anomalies or hidden labor opportunities detected.",
         }
 
     def get_ai_flavor_directive(self) -> str:

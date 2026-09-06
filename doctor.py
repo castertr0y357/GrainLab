@@ -3,16 +3,18 @@
 Pre-flight diagnostics command validating database migrations,
 environment setups, network loops, and local LLM endpoint reachability.
 """
+
 import os
-import sys
 import socket
 import subprocess
+import sys
 import urllib.parse
 import urllib.request
+
 import django
 
 # Setup Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'grainlab.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "grainlab.settings")
 try:
     django.setup()
 except Exception as e:
@@ -21,6 +23,7 @@ except Exception as e:
 
 from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
+
 from apps.core.models import SystemSetting
 
 
@@ -32,10 +35,10 @@ def check_env():
         print("[Warning] [Doctor] - Config - SECRET_KEY is set to default/unsafe placeholder.")
     else:
         print("[Success] [Doctor] - Config - SECRET_KEY is set and verified.")
-        
+
     db_url = os.getenv("DATABASE_URL")
     if db_url:
-        print(f"[Success] [Doctor] - Config - DATABASE_URL is set (PostgreSQL active).")
+        print("[Success] [Doctor] - Config - DATABASE_URL is set (PostgreSQL active).")
     else:
         print("[Warning] [Doctor] - Config - DATABASE_URL is missing. Using fallback SQLite database.")
 
@@ -43,7 +46,7 @@ def check_env():
 def check_database():
     """Check database reachability and migrations status."""
     print("\n[Database] Checking database reachability and migrations...")
-    db_conn = connections['default']
+    db_conn = connections["default"]
     try:
         db_conn.ensure_connection()
         print("[Success] [Doctor] - Database - Connection to database established successfully.")
@@ -72,7 +75,7 @@ def check_gemma_api():
     print("\n[AI] Checking local LLM Gemma connection status...")
     ai_enabled = SystemSetting.get_val("ai_enabled", "False") == "True"
     url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
-    
+
     if not ai_enabled:
         print("[Info] [Doctor] - AI - Local AI (Gemma) is currently disabled. Recipe fallbacks will execute.")
         return
@@ -80,11 +83,11 @@ def check_gemma_api():
     # Clean the completions URL
     completions_url = url.rstrip("/") + "/chat/completions"
     print(f"Connecting to AI endpoint: {completions_url}...")
-    
+
     parsed = urllib.parse.urlparse(url)
     host = parsed.hostname or "localhost"
     port = parsed.port or 11434
-    
+
     # Try raw socket connection first to check reachability
     try:
         socket.setdefaulttimeout(2)
@@ -101,7 +104,7 @@ def check_gemma_api():
             completions_url,
             data=b'{"model":"gemma:12b","messages":[{"role":"user","content":"Ping"}]}',
             headers={"Content-Type": "application/json"},
-            method="POST"
+            method="POST",
         )
         with urllib.request.urlopen(req, timeout=3) as response:
             if response.status == 200:
@@ -123,7 +126,9 @@ def check_dependency_audit():
             print("[Warning] [Doctor] - Security - pip-audit failed to execute. Install via 'pip install pip-audit'.")
             return True
     except FileNotFoundError:
-        print("[Warning] [Doctor] - Security - pip-audit is not installed. Install via 'pip install pip-audit' to audit dependencies.")
+        print(
+            "[Warning] [Doctor] - Security - pip-audit is not installed. Install via 'pip install pip-audit' to audit dependencies."
+        )
         return True
 
     # Run audit on requirements.txt
@@ -146,12 +151,12 @@ def main():
     print("=" * 60)
     print("GRAINLAB SYSTEM DIAGNOSTICS")
     print("=" * 60)
-    
+
     check_env()
     db_ok = check_database()
     check_gemma_api()
     audit_ok = check_dependency_audit()
-    
+
     print("\n" + "=" * 60)
     if db_ok and audit_ok:
         print("[Success] DIAGNOSTICS COMPLETED: Workspace is healthy and ready to compile!")
@@ -161,5 +166,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
