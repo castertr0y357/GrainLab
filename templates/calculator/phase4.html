@@ -159,10 +159,34 @@ x-data="phase4App({
 {% endblock %}
 
 {% block phase_right_panel %}
-    <!-- Active Selected Recipe -->
-    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
-        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name || enginesArchetypes[selected_master]?.[preset_slug]?.label || '{{ recipe.title|default:"Final Calibration Phase"|escapejs }}'"></div>
+<div style="display: flex; flex-direction: column; height: 100%;">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 1.5rem; min-height: 180px;">
+        <!-- Active Selected Recipe -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
+            <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name || enginesArchetypes[selected_master]?.[preset_slug]?.label || '{{ recipe.title|default:"Final Calibration Phase"|escapejs }}'"></div>
+        </div>
+        
+        <!-- Panel B: AIInsightCard for non-grain items when AI active -->
+        <div x-show="global_ai_enabled && hovered_element && !hovered_element.startsWith('grain_')" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            
+            <!-- Insight Loading State -->
+            <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span class="spinner" style="width: 10px; height: 10px;"></span>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
+                </div>
+            </div>
+            
+            <!-- Analysis Content -->
+            <div x-show="!sidebar_insight_loading && sidebar_analysis" x-transition.opacity.duration.200ms style="margin-top: 0.5rem;">
+                <div x-html="sidebar_analysis" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);"></div>
+            </div>
+        </div>
+            
+        <div x-show="!hovered_element" style="display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+             Select parameters and compile your recipe when ready.
+        </div>
     </div>
     
     <div style="margin-top: auto; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px;">
@@ -183,26 +207,7 @@ x-data="phase4App({
             BACK
         </a>
     </div>
-    <!-- Panel B: AIInsightCard for non-grain items when AI active -->
-    <div x-show="global_ai_enabled && hovered_element && !hovered_element.startsWith('grain_')" style="display: flex; flex-direction: column; gap: 1.25rem;">
-        
-        <!-- Insight Loading State -->
-        <div x-show="sidebar_insight_loading" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                <span class="spinner" style="width: 10px; height: 10px;"></span>
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">AI Analysis Engine Active</span>
-            </div>
-        </div>
-        
-        <!-- Analysis Content -->
-        <div x-show="!sidebar_insight_loading && sidebar_analysis" x-transition.opacity.duration.200ms style="margin-top: 0.5rem;">
-            <div x-html="sidebar_analysis" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);"></div>
-        </div>
-    </div>
-        
-        <div x-show="!hovered_element" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
-             Select parameters and compile your recipe when ready.
-        </div>
+</div>
 {% endblock %}
 
 {% block head_scripts %}

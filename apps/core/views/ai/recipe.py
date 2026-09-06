@@ -41,8 +41,10 @@ class AiRecipePercentagesView(View):
         if not form.is_valid():
             return JsonResponse({"error": form.errors}, status=400)
             
-        result, status_code = process_recipe_percentages(form.cleaned_data)
-        return JsonResponse(result, status=status_code)
+        result = process_recipe_percentages(form.cleaned_data)
+        if result is None:
+            return JsonResponse({"error": "Failed to generate percentages"}, status=500)
+        return JsonResponse(result, status=200)
 
 class AiGenerateSubstitutesView(View):
     def post(self, request):

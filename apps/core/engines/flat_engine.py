@@ -151,9 +151,7 @@ class FlatEngine(BaseEngine):
                 "optimal_protein_window": "9.0% - 11.0%"
             },
             "culinary_nuance_directive": (
-                "Focus on complete structural dehydration and maximum snapping brittleness. Grains must have minimal protein "
-                "stretch to encourage zero moisture retention, allowing paper-thin rolled sheets to dry out entirely into rigid, "
-                "shard-like crispbread tiles."
+                "Focus on moisture management and structural integrity under high heat. Grains must support the dough being rolled extremely thin, allowing the baker to drive toward either snapping brittleness or chewy hydration depending on the variation."
             )
         },
     }

@@ -8,6 +8,7 @@ class GrainAdvisoryForm(forms.Form):
     only_evaluations = forms.BooleanField(required=False, initial=False)
     only_elevate = forms.BooleanField(required=False, initial=False)
     active_archetype_id = forms.CharField(required=False)
+    active_variation_id = forms.CharField(required=False)
     lipid = forms.CharField(required=False)
     liquid = forms.CharField(required=False)
     binder = forms.CharField(required=False)

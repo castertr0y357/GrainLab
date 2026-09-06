@@ -688,7 +688,7 @@ def get_grain_registry_profile(grain_name: str) -> dict:
         "bran_tannin_profile": "none_neutral"
     }
 
-def get_archetype_mechanics(engine, active_archetype_id=None, preset_slug=None) -> tuple[str, dict]:
+def get_archetype_mechanics(engine, active_archetype_id=None, preset_slug=None, active_variation_id=None) -> tuple[str, dict]:
     archetypes = getattr(engine, "archetypes", {})
     archetype_data = None
     archetype_display = "Default Archetype"
@@ -723,14 +723,16 @@ def get_archetype_mechanics(engine, active_archetype_id=None, preset_slug=None) 
         })
         target_mechanics = dict(target_mechanics)
         
-        if preset_slug:
-            variations = getattr(engine, "variations", {})
-            if preset_slug in variations:
-                var_data = variations[preset_slug]
-                if "mechanics_overrides" in var_data:
-                    target_mechanics.update(var_data["mechanics_overrides"])
-                if "label" in var_data:
-                    archetype_display += f" [{var_data['label']}]"
+        variations = getattr(engine, "variations", {})
+        # Use active_variation_id if provided; fallback to checking if preset_slug matches a variation
+        var_key_to_use = active_variation_id if active_variation_id else preset_slug
+        
+        if var_key_to_use and var_key_to_use in variations:
+            var_data = variations[var_key_to_use]
+            if "mechanics_overrides" in var_data:
+                target_mechanics.update(var_data["mechanics_overrides"])
+            if "label" in var_data:
+                archetype_display += f" [{var_data['label']}]"
 
         return archetype_display, target_mechanics
     

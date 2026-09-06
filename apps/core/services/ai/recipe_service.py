@@ -22,12 +22,14 @@ def process_recipe_details(cleaned_data):
                     category_slug=cleaned_data.get('category_slug'),
                     mill_type=cleaned_data.get('mill_type'),
                     is_sifted=cleaned_data.get('is_sifted'),
-                    target=cleaned_data.get('target', 'all')
+                    target=cleaned_data.get('target', 'all'),
+                    active_variation_id=cleaned_data.get('active_variation_id')
                 )
                 for item in generator:
                     yield f"data: {json.dumps(item)}\n\n"
             except Exception as e:
-                logger.error(f"[AI] - Recipe Details Stream Error: {e}")
+                import traceback
+                logger.error(f"[AI] - Recipe Details Stream Error: {e}\n{traceback.format_exc()}")
                 yield f"data: {json.dumps({'error': 'Failed streaming recipe details'})}\n\n"
             yield "data: [DONE]\n\n"
         return event_stream
@@ -40,7 +42,8 @@ def process_recipe_details(cleaned_data):
         selected_grains=cleaned_data.get('selected_grains'),
         category_slug=cleaned_data.get('category_slug'),
         mill_type=cleaned_data.get('mill_type'),
-        is_sifted=cleaned_data.get('is_sifted')
+        is_sifted=cleaned_data.get('is_sifted'),
+        active_variation_id=cleaned_data.get('active_variation_id')
     )
 
     if result is None:
@@ -53,7 +56,8 @@ def process_recipe_details(cleaned_data):
             active_archetype_id=cleaned_data.get('active_archetype_id'),
             selected_grains=cleaned_data.get('selected_grains'),
             mill_type=cleaned_data.get('mill_type'),
-            is_sifted=cleaned_data.get('is_sifted')
+            is_sifted=cleaned_data.get('is_sifted'),
+            active_variation_id=cleaned_data.get('active_variation_id')
         )
     return result
 

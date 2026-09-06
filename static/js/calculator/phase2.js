@@ -10,6 +10,7 @@ document.addEventListener('alpine:init', () => {
         
         // Phase 2 specific state
         active_archetype_id: null,
+        active_variation_id: null,
         creativity_loading: false,
         creativity_streaming: false,
         phase2Error: null,
@@ -620,6 +621,7 @@ document.addEventListener('alpine:init', () => {
     purgeArchetypeState() {
         this.cancelAllInFlightRequests();
         this.flushStateToNull();
+        this.active_variation_id = null;
         this.generated_variants = [];
         this.alternative_variants = [];
         this.grainEvaluations = [];
@@ -648,6 +650,13 @@ document.addEventListener('alpine:init', () => {
         }
         this.active_archetype_id = archetype_id;
         
+        const variations = this.engines_ff[this.selected_master]?.variations;
+        if (variations && Object.keys(variations).length > 0) {
+            this.active_variation_id = Object.keys(variations)[0];
+        } else {
+            this.active_variation_id = null;
+        }
+        
         // Fetch 5 recipes per creativity level for this archetype!
         this.fetchCreativityRecipes(engine_id, archetype_id);
     },
@@ -670,7 +679,7 @@ document.addEventListener('alpine:init', () => {
         this.resetAdvisory();
         
         // Show the cards container immediately, so we can see them stream in
-        this.creativity_loading = false;
+        this.creativity_loading = true;
         this.creativity_streaming = true;
         
         if (this.creativityRecipesAbortController) {
@@ -681,7 +690,7 @@ document.addEventListener('alpine:init', () => {
         const signal = this.creativityRecipesAbortController.signal;
 
         const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const baseUrl = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}`;
+        const baseUrl = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}&active_variation_id=${encodeURIComponent(this.active_variation_id || '')}`;
         
         let recipesLevel1 = [];
         let recipesLevel2 = [];
@@ -733,9 +742,16 @@ document.addEventListener('alpine:init', () => {
                                             const parsedObj = this.repairAndParse(objStr);
                                             
                                             if (parsedObj) {
-                                                const norm = {};
+                                                const norm = {
+                                                    recipe_id: targetArray[i]?.recipe_id || `temp_${level}_${i}`,
+                                                    creativity_level: level
+                                                };
                                                 for (const key in parsedObj) {
-                                                    norm[key.toLowerCase()] = parsedObj[key];
+                                                    if (key.toLowerCase() === 'recipe_id' && parsedObj[key]) {
+                                                        norm.recipe_id = parsedObj[key];
+                                                    } else if (key.toLowerCase() !== 'recipe_id') {
+                                                        norm[key.toLowerCase()] = parsedObj[key];
+                                                    }
                                                 }
                                                 newRecipes.push(norm);
                                             } else {
@@ -1011,7 +1027,8 @@ document.addEventListener('alpine:init', () => {
             active_archetype_id: this.active_archetype_id,
             category_slug: this.selected_master,
             selected_grains: (this.activeBerries || []).map(b => b.id).join(','),
-            global_ai_enabled: this.global_ai_enabled
+            global_ai_enabled: this.global_ai_enabled,
+            active_variation_id: this.active_variation_id || ''
         });
         const urlDetails = `/ai-recipe-details/?${params.toString()}`;
         const urlAdvisoryGrains = `/ai-grain-advisory/?${params.toString()}&only_evaluations=true&stream=true&target=grains`;
@@ -1101,10 +1118,13 @@ document.addEventListener('alpine:init', () => {
         };
 
         const grainsAdvisoryPromise = createStreamPromise(urlAdvisoryGrains);
-        const millsAdvisoryPromise = createStreamPromise(urlAdvisoryMills).finally(() => { this.millsAdvisoryLoading = false; });
-        const siftersAdvisoryPromise = createStreamPromise(urlAdvisorySifters).finally(() => { this.siftersAdvisoryLoading = false; });
+        // AI calls for mills and sifters temporarily disabled
+        // const millsAdvisoryPromise = createStreamPromise(urlAdvisoryMills).finally(() => { this.millsAdvisoryLoading = false; });
+        // const siftersAdvisoryPromise = createStreamPromise(urlAdvisorySifters).finally(() => { this.siftersAdvisoryLoading = false; });
+        this.millsAdvisoryLoading = false;
+        this.siftersAdvisoryLoading = false;
         
-        Promise.all([detailsPromise, grainsAdvisoryPromise, millsAdvisoryPromise, siftersAdvisoryPromise])
+        Promise.all([detailsPromise, grainsAdvisoryPromise])
             .then(([detailsData]) => {
                 this.recipe_details_data = detailsData;
                 

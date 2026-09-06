@@ -7,6 +7,7 @@ class BaseRecipeForm(forms.Form):
     recipe_name = forms.CharField(required=False)
     engine_id = forms.CharField(required=False)
     active_archetype_id = forms.CharField(required=False)
+    active_variation_id = forms.CharField(required=False)
     stream = forms.BooleanField(required=False, initial=False)
     
     def clean_active_archetype_id(self):

@@ -116,9 +116,9 @@ class PastaEngine(BaseEngine):
                 "optimal_protein_window": "12.5% - 15.0%"
             },
             "culinary_nuance_directive": (
-                "Focus on extreme protein density and absolute plastic deformation. Grains must allow the stiff, low-hydration matrix "
-                "to be rolled down to sub-millimeter thickness through sequential mechanical passes without snapping back, locking "
-                "starches inside the web to ensure a firm 'al dente' bite when boiled."
+                "Focus on structural deformation and rolling mechanics. Grains must allow the matrix "
+                "to be sheeted down to sub-millimeter thickness through sequential mechanical passes without tearing, "
+                "accommodating either a firm 'al dente' bite or a silky-smooth texture depending on the variation."
             )
         },
         "stuffed_pocket": {

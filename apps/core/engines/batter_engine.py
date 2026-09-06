@@ -180,9 +180,9 @@ class BatterEngine(BaseEngine):
                 "optimal_protein_window": "8.5% - 10.5%"
             },
             "culinary_nuance_directive": (
-                "Focus on managing high-ratio sugar and lipid loads within a dense, uniform crumb matrix. Grains must maximize "
+                "Focus on managing high-ratio sugar and lipid loads. Grains must maximize "
                 "tender starch swelling without developing elastic protein networks, allowing the batter to hold massive "
-                "butter and sugar weights without collapsing or leaving greasy pockets."
+                "butter and sugar weights without collapsing, while supporting either a dense structure or an aerated, delicate crumb based on the variation."
             )
         },
         "griddle_batter": {

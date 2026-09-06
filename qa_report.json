@@ -1,0 +1,1740 @@
+[
+    {
+        "engine": "pan",
+        "archetype": "tin_loaf",
+        "profile": "savory",
+        "all_passed": false,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Instant Dry Yeast within limits."
+            },
+            {
+                "rule": "Savory Pan - No Eggs",
+                "passed": true,
+                "reason": "No eggs found."
+            },
+            {
+                "rule": "Savory Pan - Fat %",
+                "passed": false,
+                "reason": "Fat is 90.0%, outside 5-10% bound."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (19260s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (2510.0g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (2.03%) is within bounds for pan."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 365F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 53m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 1,
+            "yield_unit": "loaves",
+            "is_portionable": true,
+            "sidebar_science_profile": "This savory, enriched loaf relies on the structural integrity provided by a blend of hard and soft wheat to support the internal moisture and added fats, resulting in a tender yet robust crumb. The focus is on developing complex, savory flavor profiles using herbs and garlic, while the yeast activity drives the gas-proofing necessary for the 'tin loaf' format. The high lipid content requires precise mixing control to ensure optimal emulsion and prevent greasiness.",
+            "recommended_grain_ids": [
+                "Hard White Wheat",
+                "Soft White Wheat"
+            ],
+            "flour_blend": {
+                "Hard White Wheat": 60,
+                "Soft White Wheat": 40
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Butter provides a rich, buttery mouthfeel essential for an enriched loaf, while its moderate fat content (when properly scaled) contributes to the desired overall richness without exceeding the 10% limit.",
+                        "bakers_percentage": 90.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "Whole milk provides superior flavor and creaminess compared to water, enhancing the overall richness of the enriched loaf while maintaining the necessary hydration for yeast activation.",
+                        "bakers_percentage": 55.0
+                    }
+                ],
+                "binders": [],
+                "sweeteners": [],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Instant Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Instant dry yeast is reliable and activates quickly in the milk medium, providing the necessary biological lift to achieve a proper, expanded loaf structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Fine Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Salt is critical for flavor enhancement (salinity) and plays a technical role in controlling yeast activity, stabilizing the gluten network to support the enriched dough structure.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Garlic Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the primary savory, aromatic flavor component, suitable for a classic pan-baked bread profile.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Dried Italian Herbs Blend",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds a complex, herbaceous background note that complements the garlic and enhances the overall savory profile without overwhelming the subtle bread structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ]
+            },
+            "target_fat_pct": 90.0,
+            "target_sugar_pct": 10.0,
+            "target_hydration_pct": 55.0,
+            "target_binder_pct": 0.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "pan",
+        "archetype": "tin_loaf",
+        "profile": "sweet",
+        "all_passed": false,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": false,
+                "reason": "Leavener Instant Dry Yeast exceeds 1.5% max (1.8%)"
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (19260s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (179.9g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (1.96%) is within bounds for pan."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 365F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 53m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This enriched soft loaf relies on a combination of high lipid content (butter, eggs) and liquid medium (milk) to create a tender, highly shreddable crumb structure. The gluten network must be sufficiently robust to support the heavy emulsion without collapsing, requiring careful kneading and gas proofing. The sweet, milky flavor profile is optimized for yeast fermentation, making it highly sensitive to astringent or bitter notes.",
+            "recommended_grain_ids": [
+                "Hard White Wheat",
+                "Soft White Wheat"
+            ],
+            "flour_blend": {
+                "Soft White Wheat": 60,
+                "Hard White Wheat": 40
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides essential richness and acts as a tenderizer, coating the gluten strands and contributing to the desirable soft, shreddable texture of an enriched sweet loaf.",
+                        "bakers_percentage": 85.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "The fat content in whole milk enriches the dough and tenderizes the final product, while the lactose subtly sweetens the bread and complements the buttery notes.",
+                        "bakers_percentage": 40.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs are crucial for providing emulsification and structural integrity, helping the high lipid load (butter) to remain suspended and contributing necessary yellow richness to the crumb.",
+                        "bakers_percentage": 60.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the necessary sweetness for the 'Sweet' profile, aids in browning during the bake, and feeds the yeast population for optimal fermentation.",
+                        "bakers_percentage": 80.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Incorporates a subtle molasses depth and chewiness, enhancing the overall perceived sweetness and caramel notes.",
+                        "bakers_percentage": 60.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Instant Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides reliable and controlled biological lift, which is essential for creating the required large, open, and soft crumb structure characteristic of a sweet enriched loaf.",
+                        "bakers_percentage": 1.8
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "Vanilla provides a universally appreciated, warm, sweet aromatic baseline that enhances the perception of richness without introducing conflicting flavors.",
+                        "bakers_percentage": 5.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 140.0,
+            "target_hydration_pct": 75.0,
+            "target_binder_pct": 60.0,
+            "target_leaven_pct": 1.8,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "pan",
+        "archetype": "tin_loaf",
+        "profile": "flourless_savory",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (19260s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (3650.0g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (1.94%) is within bounds for pan."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 365F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 53m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 1,
+            "yield_unit": "loaf",
+            "is_portionable": true,
+            "sidebar_science_profile": "This savory, enriched pan loaf relies on the structural integrity provided by a robust gluten network to support the added lipid load (butter) and high hydration. The fermentation process (biological_yeast_activity) creates the necessary gas pressure for the 'tin loaf' form factor. Flavor development is purely savory, demanding a clean, aromatic profile that complements the yeasted, milky baseline.",
+            "recommended_grain_ids": [
+                "bread_wheat"
+            ],
+            "flour_blend": {
+                "bread_wheat": 100
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides rich mouthfeel and structural fat necessary for an enriched loaf, enhancing the 'shreddability' without overpowering the savory elements.",
+                        "bakers_percentage": 30.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "Milk provides a creamy, neutral liquid base that enhances the soft, enriched texture of the loaf and carries the subtle dairy notes into the final product.",
+                        "bakers_percentage": 70.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "NOTE: As this is a savory pan bread, eggs are omitted to adhere to the engine's savory profile rules, ensuring the binding force comes primarily from the gluten matrix.",
+                        "bakers_percentage": 160.0
+                    }
+                ],
+                "sweeteners": [],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary leavening agent, generating CO2 gas through biological yeast activity, which is crucial for achieving the maximum rise and soft crumb structure in the enclosed pan.",
+                        "bakers_percentage": 1.0
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Kosher Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for flavor enhancement and critically important for controlling the rate of yeast activity and strengthening the gluten protein structure.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Garlic Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the core aromatic, savory flavor profile expected in a 'Tin Loaf' application.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Dried Oregano",
+                        "temperature": "room_temp",
+                        "reasoning": "A classic complement to garlic and dairy, lending a Mediterranean, aromatic depth to the savory bread.",
+                        "bakers_percentage": 1.0
+                    }
+                ]
+            },
+            "target_fat_pct": 35.0,
+            "target_sugar_pct": 0.0,
+            "target_hydration_pct": 75.0,
+            "target_binder_pct": 160.0,
+            "target_leaven_pct": 1.0,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "pan",
+        "archetype": "tin_loaf",
+        "profile": "flourless_sweet",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Instant Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (19260s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (208.1g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (1.93%) is within bounds for pan."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 365F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 53m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This enriched loaf relies on a strong gluten network formed by adequate kneading and hydration to support high lipid and sugar content. The milky, sweet baseline minimizes interaction with tannins, ensuring superior crumb structure and a soft, shreddable mouthfeel. Optimized yeast activity and the careful integration of eggs and butter provide the structural lift required for a stable, tender crumb.",
+            "recommended_grain_ids": [
+                "soft_wheat_flour"
+            ],
+            "flour_blend": {
+                "soft_wheat_flour": 75,
+                "all_purpose_flour": 25
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "As the primary source of rich, mouth-coating fat, butter contributes to the required 'shreddable' texture and provides a neutral, buttery flavor that complements the sweet profile.",
+                        "bakers_percentage": 35.0
+                    },
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Grapeseed Oil",
+                        "temperature": "room_temp",
+                        "reasoning": "Used in combination with butter to improve the dough's overall elasticity and reduce the risk of the high lipid load causing structural stress or excessive greasiness.",
+                        "bakers_percentage": 35.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides a creamy, sweet, and neutral liquid base (casein/fat content) that enhances the tenderness and structural integrity of the enriched loaf, meeting the 'milky baseline' requirement.",
+                        "bakers_percentage": 50.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs are crucial structural binders, providing emulsification capacity and protein scaffolding necessary to hold the heavy lipid and sugar components within the loaf structure.",
+                        "bakers_percentage": 150.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary sweetener, which aids in browning (Maillard reaction) and, more importantly, tenderizes the gluten matrix by competing for water molecules, supporting the soft, shreddable texture.",
+                        "bakers_percentage": 125.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Instant Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "The biological catalyst required for gas-proofing. Its controlled activity in a warm, high-sugar environment ensures the necessary lift and open crumb structure for a soft loaf.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides a strong, sweet, and neutral aromatic lift that enhances the perception of richness without introducing conflicting flavors.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Fine Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "A critical flavor enhancer that balances the sweetness of the high sugar load and deepens the overall perception of 'baked' flavor.",
+                        "bakers_percentage": 2.0
+                    }
+                ]
+            },
+            "target_fat_pct": 70.0,
+            "target_sugar_pct": 125.0,
+            "target_hydration_pct": 155.0,
+            "target_binder_pct": 150.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "savory",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Powder within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (144.0g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.85%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "The thin & crispy profile relies on a high lipid-to-dry ingredient ratio, promoting maximum horizontal spread and a brittle snap. The low-protein soft wheat flour blend minimizes gluten development, preventing chewiness. Flavor development is driven by the interaction of savory fats (butter/oil) and crystalline additives (salt/herbs), resulting in a delicate, highly aromatic biscuit structure.",
+            "recommended_grain_ids": [
+                "soft_white_wheat"
+            ],
+            "flour_blend": {
+                "soft_white_wheat": 85,
+                "hard_white_wheat": 15
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream",
+                "fold"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides essential flavor richness and structural body, which is critical for the initial creaming phase and melt-out process.",
+                        "bakers_percentage": 40.0
+                    },
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Olive Oil",
+                        "temperature": "room_temp",
+                        "reasoning": "Increases the spread coefficient and contributes to a crisp, delicate texture, helping achieve the 'thin & crispy' objective without adding excess gluten-forming bulk.",
+                        "bakers_percentage": 20.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Buttermilk",
+                        "temperature": "room_temp",
+                        "reasoning": "The mild acidity reacts with baking soda/powder to enhance flavor and contributes necessary moisture for binding the savory elements without becoming overly wet.",
+                        "bakers_percentage": 30.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the necessary protein structure to hold the thin cookie together during baking, preventing it from dissolving completely.",
+                        "bakers_percentage": 20.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Light Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Although savory, a small amount of brown sugar facilitates desirable caramelization on the surface, enhancing the depth of the Maillard reaction (browning).",
+                        "bakers_percentage": 130.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides gentle lift and aeration, crucial for achieving a spreadable, but not flat, structure in the thin cookie.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Coarse Kosher Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary flavor enhancer; absolutely necessary to highlight the savory profile of the cookie.",
+                        "bakers_percentage": 2.5
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Dried Rosemary",
+                        "temperature": "room_temp",
+                        "reasoning": "A highly compatible, aromatic herb that pairs exceptionally well with savory, buttery baked goods.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Freshly Ground Black Pepper",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds a necessary counterpoint of pungent heat and depth to balance the richness of the butter and oils.",
+                        "bakers_percentage": 0.5
+                    }
+                ]
+            },
+            "target_fat_pct": 60.0,
+            "target_sugar_pct": 130.0,
+            "target_hydration_pct": 50.0,
+            "target_binder_pct": 20.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.5
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "savory",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Soda within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (156.7g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.83%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This cookie profile relies on the gentle structure of soft wheats and ancient grains to achieve a minimal-spread, soft, and chewy bite. The process focuses on creaming cold fats and sugars to build initial structural integrity before the heat sets the crust. The resulting texture is highly moist due to the low-protein flour blend, yielding a dense, tender crumb rather than a flaky crisp.",
+            "recommended_grain_ids": [
+                "302adef7-9477-4728-8bb7-dae99b05eab9",
+                "74bed4f7-4985-467a-a13c-91775fd9b33e"
+            ],
+            "flour_blend": {
+                "Soft White Wheat": 75,
+                "Spelt Wheat (Ancient)": 25
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream",
+                "fold"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Cold, high-fat butter is critical for 'soft and chewy' cookies, allowing the crystalline structure to inhibit excessive spread and maintain a tender, melt-in-your-mouth mouthfeel.",
+                        "bakers_percentage": 95.0
+                    }
+                ],
+                "liquids": [],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs are the primary binder in this savory, low-liquid recipe, providing necessary structural protein to hold the dough together and enrich the flavor profile.",
+                        "bakers_percentage": 55.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Light Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Brown sugar, particularly with molasses notes, is crucial for achieving the desired chewy texture and deep flavor, complementing the savory elements without overpowering the delicate grains.",
+                        "bakers_percentage": 120.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Soda",
+                        "temperature": "room_temp",
+                        "reasoning": "Baking soda is necessary for chemical lift in drop cookies, reacting with potential acidity in the sugars or binders to ensure adequate rise and prevent a dense, cake-like outcome.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Smoked Paprika",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds a warm, deeply savory, and slightly sweet background note that binds the flavor profile to the 'savory' directive without introducing high astringency.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Garlic Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "A potent, savory additive that anchors the cookie in the savory category, providing a complex aromatic dimension.",
+                        "bakers_percentage": 1.5
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Flaky Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "The finishing touch. Flaky salt enhances the perception of savory notes and provides necessary textural contrast to the soft, chewy crumb.",
+                        "bakers_percentage": 2.0
+                    }
+                ]
+            },
+            "target_fat_pct": 95.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 40.0,
+            "target_binder_pct": 55.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "sweet",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Powder within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (143.8g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.85%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "The thin and crispy nature of this cookie relies on high lipid-to-solid ratios, ensuring that melted fats and sugars achieve maximum horizontal spread before the structure sets. By prioritizing low-protein soft wheats, gluten formation is inhibited, resulting in a delicate, brittle snap rather than a chewy crumb. The final texture is governed by controlled fat emulsification and rapid moisture loss during baking, creating a melt-in-your-mouth experience.",
+            "recommended_grain_ids": [
+                "302adef7-9477-4728-8bb7-dae99b05eab9"
+            ],
+            "flour_blend": {
+                "soft_white_wheat": 75,
+                "hard_white_wheat": 25
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream",
+                "fold"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the necessary high-quality, spreadable fat base. Using softened butter allows for optimal creaming with the sugars, maximizing the initial volume and subsequent spread coefficient.",
+                        "bakers_percentage": 80.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "A small amount of milk is necessary to slightly hydrate the soft wheat flour and prevent the dough from becoming too dry or crumbly, ensuring a cohesive, spreadable batter.",
+                        "bakers_percentage": 6.5
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs provide essential protein binding and structure. Room temperature eggs incorporate more smoothly, contributing to the smooth, uniform spread of the cookie dough.",
+                        "bakers_percentage": 45.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated White Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for 'Thin & Crispy' cookies. High concentrations of white sugar promote rapid caramelization and a brittle, glassy structure, maximizing the desired spread and snap.",
+                        "bakers_percentage": 110.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "A mild chemical lift is required for the cookie archetype. It provides lift without interfering with the crisp, spread-focused structure, ensuring the center sets properly.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "Enhances the inherent sweet nature of the cookie and rounds out the flavor profile, which is critical when the primary structural focus is on high fat and sugar.",
+                        "bakers_percentage": 2.0
+                    }
+                ]
+            },
+            "target_fat_pct": 80.0,
+            "target_sugar_pct": 110.0,
+            "target_hydration_pct": 38.0,
+            "target_binder_pct": 45.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "sweet",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Soda within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (126.5g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.70%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This cookie formulation maximizes structural integrity by utilizing cold, creamed fats and sugars, which minimize initial gluten development and control excessive spread. The blend of soft and ancient wheats provides desirable, mellow depth without aggressive tannins, while the high concentration of brown sugar promotes a chewy, moist center through molasses interaction. The final product relies on controlled lipid emulsification and fat solidification to maintain a thick, bite-sized drop cookie structure.",
+            "recommended_grain_ids": [
+                "302adef7-9477-4728-8bb7-dae99b05eab9",
+                "74bed4f7-4985-467a-a13c-91775fd9b33e"
+            ],
+            "flour_blend": {
+                "Soft White Wheat": 60,
+                "Spelt Wheat (Ancient)": 40
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream",
+                "fold"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary lipid source. Creaming cold, room-temperature butter incorporates small air pockets, which is critical for achieving the desired lift and preventing excessive spread while allowing the final fat solidification to yield a chewy, dense texture.",
+                        "bakers_percentage": 85.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "A small amount of milk helps to hydrate the dry ingredients and aids in the overall emulsion stability, ensuring the dough remains workable and smooth during the folding process.",
+                        "bakers_percentage": 10.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs provide necessary protein structure and emulsifying capabilities, binding the high concentration of sugars and fats together to achieve a cohesive, chewy crumb structure.",
+                        "bakers_percentage": 12.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Light Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for the 'Soft & Chewy' profile. Its natural molasses content adds deep, caramel notes, and its higher moisture content promotes a gooey, underbaked center.",
+                        "bakers_percentage": 35.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated White Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides necessary crystalline structure and sweetness, contributing to the classic cookie snap while balancing the deep notes of the brown sugar.",
+                        "bakers_percentage": 35.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Soda",
+                        "temperature": "room_temp",
+                        "reasoning": "Reacts with the mild acidity of the brown sugar and the fats, providing the chemical lift needed for a drop cookie without the harshness of baking powder in a sweet, caramelized matrix.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "A classic flavor enhancer that stabilizes the overall sweet profile and rounds out the depth of the wheat and brown sugar.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Chocolate Chips",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary inclusion, providing pockets of intense flavor and textural contrast against the soft, chewy cookie matrix.",
+                        "bakers_percentage": 20.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Fine Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for flavor balance. The salt cuts through the intense sweetness of the brown sugar and chocolate, making the overall flavor profile more complex and pronounced.",
+                        "bakers_percentage": 3.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 45.0,
+            "target_binder_pct": 12.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 3.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "flourless_savory",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Powder within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (101.0g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.73%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This cookie relies on fat-protein emulsification and the chemical lift from leaveners, rather than gluten structure, to achieve its spread. The high lipid content ensures rapid melting and horizontal spread before the structure sets. The savory profile is stabilized by the protein content of the eggs and cheese, yielding a crisp, delicate architecture.",
+            "recommended_grain_ids": [
+                "pastry_flour"
+            ],
+            "flour_blend": {
+                "pastry_flour": 10
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream",
+                "fold"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary structural fat source. At room temperature, it provides maximum body for proper creaming and subsequent fat solidification during baking.",
+                        "bakers_percentage": 85.0
+                    }
+                ],
+                "liquids": [],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for structure in a flourless, savory cookie. The egg proteins coagulate, replacing the structural function normally provided by gluten.",
+                        "bakers_percentage": 20.0
+                    }
+                ],
+                "sweeteners": [],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides necessary chemical lift and controls the spread coefficient, ensuring the thin, crispy texture required by the archetype.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Sharp Cheddar Cheese",
+                        "temperature": "room_temp",
+                        "reasoning": "Serves as a savory flavor enhancer and acts as a partial solid binder, contributing depth and a slight crust to the cookie.",
+                        "bakers_percentage": 35.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Fresh Rosemary",
+                        "temperature": "room_temp",
+                        "reasoning": "A classic, highly aromatic savory pairing that complements the sharpness of the cheese and the buttery base.",
+                        "bakers_percentage": 1.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 10.0,
+            "target_hydration_pct": 20.0,
+            "target_binder_pct": 55.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "flourless_savory",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Soda within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (158.3g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.85%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This savory, flourless cookie relies on the emulsification of high-fat lipids and the structural integrity provided by egg binders, rather than gluten development, to achieve its characteristic soft and chewy texture. The low-protein, high-fat matrix minimizes spread while allowing the rich, toasted notes from savory additives (like Parmesan and herbs) to dominate the palate. Careful creaming of cold fats is crucial to prevent excessive melting and maintain the desired chewy density.",
+            "recommended_grain_ids": [
+                "hard_white_wheat"
+            ],
+            "flour_blend": {
+                "hard_white_wheat": 10
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "A high-quality, neutral-flavored butter is essential for achieving the required mouthfeel and emulsion stability without overpowering the savory profile. Using softened butter ensures proper creaming for maximum air incorporation.",
+                        "bakers_percentage": 65.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "A small amount of cool liquid helps bind the dry savory components and prevents the cookie dough from becoming overly crumbly while maintaining its 'chewy' structure.",
+                        "bakers_percentage": 25.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs are the primary structural component in this flourless cookie, providing necessary protein and lecithin to emulsify the fats and hold the savory inclusions together in a soft, chewy matrix."
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "While the cookie is savory, the addition of a small amount of brown sugar contributes necessary caramelization and chewiness, balancing the saltiness of the Parmesan and herbs.",
+                        "bakers_percentage": 120.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Soda",
+                        "temperature": "room_temp",
+                        "reasoning": "Baking soda provides a gentle lift that helps the cookie maintain its thickness and chewy bite, preventing it from collapsing into a dense, flat cracker.",
+                        "bakers_percentage": 2.0
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Parmesan Cheese (finely grated)",
+                        "temperature": "room_temp",
+                        "reasoning": "This provides the rich, savory, umami anchor for the entire profile, dominating the flavor and acting as a key structural inclusion.",
+                        "bakers_percentage": 40.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Nuts (finely chopped, e.g., walnuts)",
+                        "temperature": "room_temp",
+                        "reasoning": "The nuts provide essential structural bulk and a delightful textural crunch, which is critical in a 'flourless' format.",
+                        "bakers_percentage": 25.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Dried Oregano",
+                        "temperature": "room_temp",
+                        "reasoning": "Oregano is the primary aromatic spice, complementing the cheese and providing a Mediterranean savory warmth.",
+                        "bakers_percentage": 3.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 70.0,
+            "target_binder_pct": 150.0,
+            "target_leaven_pct": 2.0,
+            "target_salt_pct": 2.2
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "flourless_sweet",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Powder within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (123.8g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.65%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This profile relies on lipid_emulsification and high sugar concentration to achieve maximum spread (thin & crispy). By minimizing structural protein (flourless), the final texture is determined by the rapid melting of fats and sugars, creating a brittle, laminated structure rather than a chewy crumb. The goal is to bake the cookie before the gluten matrix can form, ensuring a delicate snap.",
+            "recommended_grain_ids": [
+                "pastry_flour"
+            ],
+            "flour_blend": {
+                "pastry_flour": 10
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "cream"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides necessary solid fat structure for creaming, maximizing spread and flavor development, while maintaining a neutral profile suitable for confections.",
+                        "bakers_percentage": 35.0
+                    },
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Vegetable Oil (Canola or Grape)",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds liquid fat proportion to the blend, ensuring the cookie melts smoothly and spreads horizontally, achieving the desired thin, crispy profile.",
+                        "bakers_percentage": 30.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Heavy Cream",
+                        "temperature": "cold",
+                        "reasoning": "A small amount of liquid cream, if necessary, helps emulsify the high sugar/fat ratio, preventing the dough from seizing and ensuring better flow and spread.",
+                        "bakers_percentage": 15.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "As this is a flourless cookie, eggs are the primary structural binder, providing necessary protein mass to hold the cookie shape until the sugars and fats solidify.",
+                        "bakers_percentage": 10.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated White Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary sweetener; its high concentration is critical for forming the brittle, crispy structure and maximizing the melting point of the cookie.",
+                        "bakers_percentage": 60.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Light Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds subtle molasses notes and hygroscopicity, which aids in maintaining a balance of chewiness within the otherwise crisp structure.",
+                        "bakers_percentage": 40.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides necessary chemical lift to create the optimal spread and ensure the cookie bakes through to a thin, crisp state without excessive rising.",
+                        "bakers_percentage": 2.0
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "Enhances the overall sweet profile and provides a desirable foundational aroma that complements baked confections.",
+                        "bakers_percentage": 5.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 0.0,
+            "target_binder_pct": 10.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "flourless_sweet",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Soda within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5880s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (137.3g) is realistic."
+            },
+            {
+                "rule": "Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.85%) is within bounds for cookie."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 335F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 15m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "The structure of this cookie relies on a highly saturated lipid-sugar matrix rather than a gluten network, resulting in a low-spread, intensely chewy texture. The process emphasizes maximum fat-sugar creaming to generate a stable emulsion, while the binding action of eggs and molasses provides crucial structural integrity. The absence of high-pentosan flours allows the fats and sugars to spread horizontally and solidify into a dense, crackle-edged chew.",
+            "recommended_grain_ids": [
+                "soft_white_wheat"
+            ],
+            "flour_blend": {
+                "soft_white_wheat": 5
+            },
+            "fat_starting_temp": "cool_temp",
+            "required_actions": [
+                "cream",
+                "fold"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "cold_temp",
+                        "reasoning": "Using cold, high-quality butter is essential for 'fat solidifying' and achieving the desired initial lift and minimal spread. The high butter content ensures a dense, chewy body.",
+                        "bakers_percentage": 85.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides aromatic depth and helps to stabilize the liquid emulsion without introducing excessive moisture that could compromise the chewy texture.",
+                        "bakers_percentage": 5.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Since the recipe is flourless, the eggs are the primary structural binder, providing necessary protein and emulsifying the fats and sugars to hold the cookie's shape.",
+                        "bakers_percentage": 15.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Dark Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "The high concentration of molasses in dark brown sugar is critical for achieving the specified 'Soft & Chewy' profile, contributing deep, caramelized notes and resistance to crystallization.",
+                        "bakers_percentage": 120.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Soda",
+                        "temperature": "room_temp",
+                        "reasoning": "A chemical leavener is necessary to provide controlled lift and prevent the cookie from becoming too dense, ensuring a slight spread coefficient to maintain a tender structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Ground Cinnamon",
+                        "temperature": "room_temp",
+                        "reasoning": "A classic pairing for sweet, caramelized cookies. Limiting the spice concentration ensures flavor depth without overpowering the rich molasses profile.",
+                        "bakers_percentage": 3.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 40.0,
+            "target_binder_pct": 15.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    }
+]

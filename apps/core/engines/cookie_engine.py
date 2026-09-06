@@ -37,7 +37,7 @@ class CookieEngine(BaseEngine):
             },
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected SOFT & CHEWY. Prevent excessive spread by using creamed cold fats "
-                "and higher proportions of brown sugar/molasses. Favor higher-protein hard wheats (e.g., Hard Red Wheat, "
+                "and higher proportions of brown sugar/molasses. Favor higher-protein hard wheats (e.g., Hard White Wheat, "
                 "Bread Flour) to build enough gluten structure to maintain thickness and deliver a chewy bite. "
                 "Reduce bake time to keep the center doughy."
             )
@@ -130,13 +130,12 @@ class CookieEngine(BaseEngine):
                 "optimal_protein_window": "8.5% - 10.5%"
             },
             "culinary_nuance_directive": (
-                "Focus heavily on achieving minimal gluten elasticity and maximum horizontal spread. "
-                "CRITICAL PHYSICS: High pentosan concentrations (found in grains like Rye) are highly RECOMMENDED. "
-                "Because pentosans aggressively absorb and hoard water, they starve wheat proteins of the hydration "
-                "required to form gluten webs, naturally ensuring a perfectly tender, gooey center. "
+                "For drop cookies, the balance of gluten development and moisture retention determines the final texture. "
+                "CRITICAL PHYSICS: High pentosan concentrations (found in grains like Rye) can aggressively absorb water, "
+                "starving wheat proteins of hydration. This can be used to inhibit gluten for tender textures, or to trap moisture for a gooey chew. "
                 "FLAVOR COMPATIBILITY: Strictly sensitive to high-astringent red wheat tannins, which create bitter notes. "
-                "However, neutral or low-malty ancient profiles (like Rye or Spelt) are excellent choices that introduce "
-                "desirable culinary depth without clashing with confections."
+                "Tannin-free Hard White Wheats, Soft White Wheats, or low-malty ancient profiles (like Spelt or Kamut) are excellent choices "
+                "that introduce desirable culinary depth without clashing with confections."
             )
         },
         "bar_cookie": {

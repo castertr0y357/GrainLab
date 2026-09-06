@@ -306,26 +306,28 @@ x-init="loadCompiledData(); fetchAIInsights();"
         </div>
 
     <!-- BAKING PROFILE -->
-    <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
-            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div x-show="bakeTemp" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
-                <div x-show="!bakeTemp && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
-                <div x-show="aiLoading && !bakeTemp" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Oven Temp</div>
-            </div>
-            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div x-show="bakeTimeMin" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTimeMin + 'm'"></div>
-                <div x-show="!bakeTimeMin && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
-                <div x-show="aiLoading && !bakeTimeMin" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Bake Time</div>
+    <div x-show="!countertopMode" x-transition style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem;">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Baking Profile</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Temp</div>
+                <div x-show="bakeTemp" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
+                <div x-show="!bakeTemp && !aiLoading" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
+                <div x-show="aiLoading && !bakeTemp" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
             </div>
             <div>
-                <div x-show="bakeSteam" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeSteam"></div>
-                <div x-show="!bakeSteam && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{% if steam_required %}Yes{% else %}No{% endif %}</div>
-                <div x-show="aiLoading && !bakeSteam" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Steam</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Time</div>
+                <div x-show="bakeTimeMin" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);" x-text="bakeTimeMin + 'm'"></div>
+                <div x-show="!bakeTimeMin && !aiLoading" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ bake_time_min }}m</div>
+                <div x-show="aiLoading && !bakeTimeMin" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
+            </div>
+            <div style="grid-column: 1 / -1; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Steam Required</div>
+                <div style="font-weight: 600; color: var(--text-primary);">
+                    <span x-show="bakeSteam" x-text="bakeSteam"></span>
+                    <span x-show="!bakeSteam && !aiLoading">{% if steam_required %}Yes{% else %}No{% endif %}</span>
+                    <span x-show="aiLoading && !bakeSteam" class="spinner" style="display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle;"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -479,7 +481,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
     </div>
     
     <!-- AI ENHANCEMENTS (Moved from left panel) -->
-    <template x-if="global_ai_enabled">
+    <template x-if="global_ai_enabled && !countertopMode">
         <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                 <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em;">

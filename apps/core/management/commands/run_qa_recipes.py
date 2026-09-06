@@ -8,9 +8,13 @@ import shutil
 import time
 import shutil
 from apps.core.gemma.core_client import CATEGORY_TO_ENGINE
-from apps.core.gemma.phase3_client import generate_recipe_details, generate_recipe_percentages
-from apps.core.gemma.phase4_client import generate_process_details
+from apps.core.services.ai.recipe_service import (
+    process_recipe_details, process_recipe_percentages, process_details as process_process_details,
+    process_recipe_tweaks, apply_tweak
+)
+from apps.core.services.calculator.session import update_calculator_state, get_calculator_state
 from apps.core.services.calculator.calculation import calculate_final_recipe
+from django.http import HttpRequest
 from apps.core.engines.router import ENGINES
 
 logger = logging.getLogger('grainlab.gemma')
@@ -173,6 +177,17 @@ def evaluate_recipe(recipe, profile_type, engine_id, timeline, final_recipe=None
 
     return checks
 
+class MockSession(dict):
+    modified = False
+    
+    def save(self):
+        pass
+
+class MockRequest(HttpRequest):
+    def __init__(self):
+        super().__init__()
+        self.session = MockSession()
+
 class Command(BaseCommand):
     help = 'Runs automated QA test on the Gemma recipe generation engines.'
 
@@ -279,14 +294,34 @@ class Command(BaseCommand):
                             run_name = f"{test_display_name} (Run {int(time.time())})"
                             effective_recipe_slug = var_id if var_id else f"qa-test-{engine_id}"
                             
-                            recipe_data = generate_recipe_details(
-                                engine_id=engine_id,
-                                active_archetype_id=archetype_id,
-                                recipe_slug=effective_recipe_slug,
-                                recipe_name=run_name,
-                                selected_grains=json.dumps(current_grains) if isinstance(current_grains, list) else current_grains,
-                                category_slug=category_slug
-                            )
+                            # Mock Request to track state
+                            mock_request = MockRequest()
+                            
+                            recipe_data = process_recipe_details({
+                                'engine_id': engine_id,
+                                'active_archetype_id': archetype_id,
+                                'recipe_slug': effective_recipe_slug,
+                                'recipe_name': run_name,
+                                'selected_grains': json.dumps(current_grains) if isinstance(current_grains, list) else current_grains,
+                                'category_slug': category_slug,
+                                'mill_type': '',
+                                'is_sifted': False,
+                                'active_variation_id': var_id,
+                                'stream': False
+                            })
+                            
+                            # Mimic the UI state saving after generating Phase 3 recipe details
+                            update_calculator_state(mock_request, {
+                                "selected_master": category_slug,
+                                "preset_slug": archetype_id,
+                                "global_ai_enabled": True,
+                                "recipe_name": run_name,
+                                "active_berries": current_grains if isinstance(current_grains, list) else json.loads(current_grains),
+                                "secondary_ingredients": recipe_data.get('secondary_ingredients', {}),
+                                "dynamic_directions": recipe_data.get('dynamic_directions', {}),
+                                "inferred_flavor_profile": recipe_data.get("inferred_flavor_profile", "neutral"),
+                                "flavor_inclusions": recipe_data.get("flavor_inclusions", [])
+                            })
 
                             flat_secondary = []
                             for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
@@ -301,14 +336,14 @@ class Command(BaseCommand):
                             flat_secondary = [name for name in flat_secondary if name]
                             
                             if flat_secondary:
-                                percentages_data = generate_recipe_percentages(
-                                    engine_id=engine_id,
-                                    active_archetype_id=archetype_id,
-                                    recipe_slug=effective_recipe_slug,
-                                    recipe_name=run_name,
-                                    secondary_ingredients=flat_secondary,
-                                    inferred_flavor_profile=recipe_data.get("inferred_flavor_profile", "neutral")
-                                )
+                                percentages_data = process_recipe_percentages({
+                                    'engine_id': engine_id,
+                                    'active_archetype_id': archetype_id,
+                                    'recipe_slug': effective_recipe_slug,
+                                    'recipe_name': run_name,
+                                    'secondary_ingredients': flat_secondary,
+                                    'inferred_flavor_profile': recipe_data.get("inferred_flavor_profile", "neutral")
+                                })
                             if percentages_data and "percentages" in percentages_data:
                                 for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
                                     if isinstance(items, list):
@@ -335,18 +370,13 @@ class Command(BaseCommand):
                                 ff_dict = getattr(engine_instance, "permissible_form_factors", {})
                                 ff_slug = next(iter(ff_dict.keys())) if ff_dict else None
                             try:
-                                # Mock the state from Phase 1/2/3 to pass to Phase 4
-                                mock_state = {
-                                    "selected_master": category_slug,
-                                    "preset_slug": archetype_id,
-
-                                    "global_ai_enabled": True,
-                                    "recipe_name": run_name,
-                                    "active_berries": current_grains if isinstance(current_grains, list) else json.loads(current_grains),
-                                    "secondary_ingredients": json.dumps(recipe_data.get('secondary_ingredients', {})),
-                                    "dynamic_directions": json.dumps(recipe_data.get('dynamic_directions', {})),
-                                    "inferred_flavor_profile": recipe_data.get("inferred_flavor_profile", "neutral")
-                                }
+                                # Read state directly from the mocked request session to mirror UI
+                                mock_state = mock_request.session.get('grainlab_calculator_state', {})
+                                
+                                # Serialize complex fields for calculation engine exactly as JS payload sends them
+                                for field in ['secondary_ingredients', 'dynamic_directions', 'applied_tweak_percentages']:
+                                    if field in mock_state and isinstance(mock_state[field], dict):
+                                        mock_state[field] = json.dumps(mock_state[field])
                                 
                                 # Phase 4
                                 final_recipe = calculate_final_recipe(mock_state, run_ai=True)
@@ -369,14 +399,15 @@ class Command(BaseCommand):
                                 bake_temp = 0
                                 bake_time = 0
 
-                            # Call generate_process_details for the "how are we making it" metadata
+                            # Call process_details for the "how are we making it" metadata
                             try:
-                                process_details = generate_process_details(
-                                    engine_id=engine_id,
-                                    active_archetype_id=archetype_id,
-                                    recipe_slug=f"qa-test-{engine_id}",
-                                    recipe_name=test['name']
-                                )
+                                process_details = process_process_details({
+                                    'engine_id': engine_id,
+                                    'active_archetype_id': archetype_id,
+                                    'recipe_slug': f"qa-test-{engine_id}",
+                                    'recipe_name': test['name'],
+                                    'stream': False
+                                }, mock_request)
                             except Exception as e:
                                 self.stderr.write(f"  [WARNING] Failed to generate process details: {e}")
                                 process_details = {}
@@ -488,21 +519,20 @@ class Command(BaseCommand):
                                     if not check['passed']:
                                         self.stderr.write(f"    - {check['reason']}")
                                         
-                            from apps.core.gemma.phase4_client import generate_recipe_tweaks
-                            
                             # TWEAK LOOP TESTING
                             applied_tweaks_history = []
                             current_ingredients = flat_secondary
                             
                             for tweak_round in range(2):
                                 self.stdout.write(f"    -> Running Tweak Round {tweak_round+1}...")
-                                tweak_data = generate_recipe_tweaks(
-                                    engine_id=engine_id,
-                                    active_archetype_id=archetype_id,
-                                    recipe_name=run_name,
-                                    current_ingredients=current_ingredients,
-                                    applied_tweaks_history=applied_tweaks_history
-                                )
+                                tweak_data = process_recipe_tweaks({
+                                    'engine_id': engine_id,
+                                    'active_archetype_id': archetype_id,
+                                    'recipe_name': run_name,
+                                    'current_ingredients': current_ingredients,
+                                    'applied_tweaks_history': applied_tweaks_history,
+                                    'stream': False
+                                })
                                 if not tweak_data:
                                     self.stdout.write("      -> AI returned None for tweaks.")
                                     break

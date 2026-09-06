@@ -610,11 +610,14 @@ def stream_recipe_variants(engine_id: str, active_archetype_id: str, inventory: 
     for item in stream_gemma_api(system_prompt, user_prompt):
         yield item
 
-def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list, level: str = ""):
+def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventory: list, level: str = "", active_variation_id: str = None):
     """
     Streaming generator for creativity recipes.
     """
     import json
+    from apps.core.engines.router import ENGINES
+    engine = ENGINES.get(engine_id)
+    nuance_directive = engine.culinary_nuance_directive(active_archetype_id=active_archetype_id, active_variation_id=active_variation_id) if engine else ""
     
     if level == "2":
         level_instruction = "- Creativity Level 2: Advanced Modern Profiles. (Wildly creative, unconventional, artisanal, or avant-garde flavor combinations).\n"
@@ -632,6 +635,7 @@ def stream_creativity_recipes(engine_id: str, active_archetype_id: str, inventor
         f"CRITICAL: All generated recipe profiles must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         "You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"{level_instruction}"
+        f"{nuance_directive}"
         "\n"
         "CRITICAL: The recipe profiles MUST be 100% unique. Do NOT generate duplicate recipes.\n"
         "CRITICAL: Do NOT append words like 'Classic', 'Modern', 'Variant', or 'Level' to the variant names. The names should be simple and natural.\n"
@@ -766,12 +770,15 @@ def sanitize_ai_recipe_json(engine_id: str, result: dict) -> dict:
 
     return result
 
-def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False) -> dict | None:
+def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False, active_variation_id: str = None) -> dict | None:
     """
     Asks the LLM to generate the detailed science profile and ways to elevate (last_10_percent_magic)
     for a specific selected recipe.
     """
     import json
+    from apps.core.engines.router import ENGINES
+    engine = ENGINES.get(engine_id)
+    nuance_directive = engine.culinary_nuance_directive(active_archetype_id=active_archetype_id, active_variation_id=active_variation_id) if engine else ""
     
     # Retrieve thinking mode settings
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
@@ -780,6 +787,7 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
         "the human-readable recipe name, and a list of active selected grains, generate the menu description, technical science profile, recommended grain selections, and required secondary ingredients.\n"
+        f"{nuance_directive}\n"
         "CRITICAL RULE FOR SECONDARY INGREDIENTS:\n"
         "You MUST provide your absolute best recommendations for each required category (e.g., 'lipids', 'liquids', 'binders', 'leaveners').\n"
         "You MAY provide multiple ingredients for a single category if a blend yields a superior result (e.g., blending butter and oil for lipids, or using both brown and white sugar for sweeteners).\n"
@@ -860,21 +868,27 @@ def generate_recipe_details(engine_id: str, active_archetype_id: str, recipe_slu
     if True:
         return None
 
-def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False, target: str = "all"):
+def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, selected_grains: str, category_slug: str, mill_type: str = "", is_sifted: bool = False, target: str = "all", active_variation_id: str = None):
     """
-    Streaming version of generate_recipe_details.
-    Yields JSON string chunks as Server-Sent Events from the LLM.
+    Streaming version of generate_recipe_details that yields partial JSON string chunks.
+    It splits the prompt to only target the required section if `target` is not "all".
     """
     import json
+    from apps.core.engines.router import ENGINES
     from apps.core.engines import router
     from apps.core.gemma.core_client import SystemSetting
     
+    engine = ENGINES.get(engine_id)
+    nuance_directive = engine.culinary_nuance_directive(active_archetype_id=active_archetype_id, active_variation_id=active_variation_id) if engine else ""
+    
+    # Retrieve thinking mode settings
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
     ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a specific selected recipe slug, "
         "the human-readable recipe name, and a list of active selected grains, generate the requested JSON payload.\n"
+        f"{nuance_directive}\n"
     )
 
     if target == "base":
@@ -912,6 +926,7 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
             "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
             "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
             "  - If a recipe does not require a liquid medium (e.g., cookies or shortbread where all moisture comes from eggs and butter), set 'liquids' to null.\n"
+            "  - DO NOT include any flour, grains, or the 'selected_grains' in your secondary ingredients or additives. Flour is handled natively by a separate core system.\n"
             "Each response must match this JSON schema exactly:\n"
             "{\n"
             "  \"secondary_ingredients\": [\n"
@@ -967,6 +982,7 @@ def stream_recipe_details(engine_id: str, active_archetype_id: str, recipe_slug:
             "  - Eggs (whole eggs, egg whites, yolks) and aquafaba are NEVER liquids. They are protein-based binders. Always place them under 'binders'.\n"
             "  - Fats (butter, oil, lard, shortening) are NEVER liquids. Always place them under 'lipids'.\n"
             "  - If a recipe does not require a liquid medium (e.g., cookies or shortbread where all moisture comes from eggs and butter), set 'liquids' to null.\n"
+            "  - DO NOT include any flour, grains, or the 'selected_grains' in your secondary ingredients or additives. Flour is handled natively by a separate core system.\n"
             "Do not include markdown blocks, just raw JSON."
         )
     
@@ -1105,7 +1121,7 @@ def get_local_recipe_details(recipe_slug: str, engine_id: str, active_archetype_
         pref_slugs = ["hard_red_spring_wheat"]
         
     return {
-        "inferred_flavor_profile": result.get("inferred_flavor_profile", "neutral"),
+        "inferred_flavor_profile": "neutral",
         "default_yield_amount": 1,
         "yield_unit": "loaf",
         "is_portionable": False,

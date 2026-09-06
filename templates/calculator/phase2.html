@@ -92,27 +92,35 @@ x-data="phase2App({
 
         <!-- CREATIVITY LEVELS RECIPE ENGINE (Only shown when archetype is selected) -->
         <div x-show="active_archetype_id" x-transition>
-            <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <span>🧪</span> Select Recipe Target (Creativity Tiers)
-            </div>
+            <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span>🧪</span> Select Recipe Target (Creativity Tiers)
+                </div>
 
-            <div x-show="creativity_loading" style="display: flex; flex-direction: column; align-items: stretch; background: #1a1a1f; border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem;">
-                    <span class="spinner" style="width: 24px; height: 24px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-                    <strong style="font-size: 0.9rem; color: var(--text-primary);">AI Culinary Formulation Engine Active</strong>
-                </div>
-                <!-- Progressive Steps checklist -->
-                <div style="display: flex; flex-direction: column; gap: 0.6rem; max-width: 400px; margin: 0 auto; width: 100%;">
-                    <template x-for="(step, idx) in recipe_generation_steps" :key="idx">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.8rem; transition: all 0.3s ease;"
-                             :style="step.active ? 'color: var(--accent); font-weight: bold; transform: scale(1.02);' : step.completed ? 'color: var(--success); opacity: 0.85;' : 'color: var(--text-muted); opacity: 0.5;'">
-                            <span x-show="step.completed" style="color: var(--success); font-weight: bold;">✓</span>
-                            <span x-show="step.active" class="spinner" style="width: 10px; height: 10px; border-width: 2px; border-color: var(--accent) transparent var(--accent) transparent; display: inline-block;"></span>
-                            <span x-show="!step.completed && !step.active" style="display: inline-block; width: 10px; text-align: center;">○</span>
-                            <span x-text="step.text"></span>
+                <!-- Variation Toggle (Slider Switch) -->
+                <template x-if="engines_ff[selected_master]?.variations && Object.keys(engines_ff[selected_master].variations).length === 2">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; font-weight: 600;">
+                        <!-- Left Label -->
+                        <span style="cursor: pointer; transition: color 0.2s;" 
+                              :style="{ color: active_variation_id === Object.keys(engines_ff[selected_master].variations)[0] ? '#fff' : 'var(--text-muted)' }"
+                              @click="active_variation_id = Object.keys(engines_ff[selected_master].variations)[0]"
+                              x-text="Object.values(engines_ff[selected_master].variations)[0].label"></span>
+                        
+                        <!-- Toggle Switch -->
+                        <div @click="active_variation_id = active_variation_id === Object.keys(engines_ff[selected_master].variations)[0] ? Object.keys(engines_ff[selected_master].variations)[1] : Object.keys(engines_ff[selected_master].variations)[0]"
+                             style="width: 48px; height: 26px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); border-radius: 13px; position: relative; cursor: pointer; display: flex; align-items: center; padding: 3px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
+                             <div style="width: 18px; height: 18px; background-color: var(--accent); border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.5); transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); display: block;"
+                                  :style="{ transform: active_variation_id === Object.keys(engines_ff[selected_master].variations)[1] ? 'translateX(22px)' : 'translateX(0)' }">
+                             </div>
                         </div>
-                    </template>
-                </div>
+
+                        <!-- Right Label -->
+                        <span style="cursor: pointer; transition: color 0.2s;" 
+                              :style="{ color: active_variation_id === Object.keys(engines_ff[selected_master].variations)[1] ? '#fff' : 'var(--text-muted)' }"
+                              @click="active_variation_id = Object.keys(engines_ff[selected_master].variations)[1]"
+                              x-text="Object.values(engines_ff[selected_master].variations)[1].label"></span>
+                    </div>
+                </template>
             </div>
 
             <!-- Recipe Selection Sections (Shows skeletons while loading) -->
@@ -146,7 +154,7 @@ x-data="phase2App({
                     <!-- Loading Skeletons -->
                     <template x-if="creativity_streaming">
                         <div style="display: contents;">
-                            <template x-for="i in Math.max(0, 5 - getRecipesForLevel(1).length)">
+                            <template x-for="(_, i) in Array.from({length: Math.max(0, 5 - getRecipesForLevel(1).length)})">
                                 <div class="card"
                                      :style="'width: 100%; height: 72px; padding: 1rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; display: flex; align-items: center; justify-content: center; animation-delay: ' + (i * 0.2) + 's;'">
                                     <span class="spinner" style="width: 20px; height: 20px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
@@ -178,7 +186,7 @@ x-data="phase2App({
                             <!-- Loading Skeletons -->
                             <template x-if="variant_loading">
                                 <div style="display: contents;">
-                                    <template x-for="i in Math.max(0, 5 - alternative_variants.length)">
+                                    <template x-for="(_, i) in Array.from({length: Math.max(0, 5 - alternative_variants.length)})">
                                         <div class="card"
                                              :style="'width: 100%; height: 72px; padding: 1rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; display: flex; align-items: center; justify-content: center; animation-delay: ' + (i * 0.2) + 's;'">
                                             <span class="spinner" style="width: 20px; height: 20px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
@@ -225,7 +233,7 @@ x-data="phase2App({
                     <!-- Loading Skeletons -->
                     <template x-if="creativity_streaming">
                         <div style="display: contents;">
-                            <template x-for="i in Math.max(0, 5 - getRecipesForLevel(2).length)">
+                            <template x-for="(_, i) in Array.from({length: Math.max(0, 5 - getRecipesForLevel(2).length)})">
                                 <div class="card"
                                      :style="'width: 100%; height: 72px; padding: 1rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; display: flex; align-items: center; justify-content: center; animation-delay: ' + (i * 0.2) + 's;'">
                                     <span class="spinner" style="width: 20px; height: 20px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
@@ -258,7 +266,7 @@ x-data="phase2App({
                             <!-- Loading Skeletons -->
                             <template x-if="variant_loading">
                                 <div style="display: contents;">
-                                    <template x-for="i in Math.max(0, 5 - alternative_variants.length)">
+                                    <template x-for="(_, i) in Array.from({length: Math.max(0, 5 - alternative_variants.length)})">
                                         <div class="card"
                                              :style="'width: 100%; height: 72px; padding: 1rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; display: flex; align-items: center; justify-content: center; animation-delay: ' + (i * 0.2) + 's;'">
                                             <span class="spinner" style="width: 20px; height: 20px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
@@ -348,7 +356,7 @@ x-data="phase2App({
                     <!-- Loading Skeletons -->
                     <template x-if="advisoryLoading">
                         <div style="display: contents;">
-                            <template x-for="i in Math.max(0, 3 - activeBerries.filter(b => b.classification === 'recommended' || b.classification === 'sub-optimal').length)">
+                            <template x-for="(_, i) in Array.from({length: Math.max(0, 3 - activeBerries.filter(b => b.classification === 'recommended' || b.classification === 'sub-optimal').length)})">
                                 <div class="card" style="padding: 0.75rem 1rem; border-width: 2px; border-color: rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 0.5rem; animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;" :style="'animation-delay: ' + (i * 0.2) + 's;'">
                                     <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
                                         <span style="font-size: 1.25rem; opacity: 0.3;">🌾</span>
@@ -415,8 +423,8 @@ x-data="phase2App({
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start;">
                 
-                <!-- Component 4: Milling Profile Parameters (always visible — hardlocked to fresh-milled whole grain) -->
-                <div tabindex="0"
+                <!-- Component 4: Milling Profile Parameters (Hidden for now, can be re-enabled via advanced mode) -->
+                <div tabindex="0" x-show="false"
                      style="background-color: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 0;">
                     <div style="font-weight: 600; font-size: 1rem; color: var(--accent); margin-bottom: 0.75rem;">
                         Milling Profile Parameters
@@ -563,79 +571,81 @@ x-data="phase2App({
 {% endblock %}
 
 {% block phase_right_panel %}
-    <div x-show="current_phase === 2" x-transition style="display: flex; flex-direction: column; gap: 1.5rem; min-height: 250px;">
+    <div x-show="current_phase === 2" x-transition style="display: flex; flex-direction: column; gap: 1.5rem;">
         
-        <!-- Active Selected Recipe -->
-        <div x-show="recipe_selected" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
-            <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
-        </div>
-
-        <!-- Archetype Hover Info -->
-        <div x-show="hovered_element && hovered_element.startsWith('archetype_')" 
-             style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <div>
-                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span>🧬</span> Archetype Details
-                </div>
-                <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);" 
-                     x-text="(hovered_element && enginesArchetypes[selected_master] && enginesArchetypes[selected_master][hovered_element.replace('archetype_', '')]) ? enginesArchetypes[selected_master][hovered_element.replace('archetype_', '')].description : ''">
-                </div>
+        <!-- Top Text Content Wrapper (Maintains a minimum height so it doesn't jump too wildly) -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; min-height: 180px;">
+            <!-- Active Selected Recipe -->
+            <div x-show="recipe_selected" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
             </div>
-        </div>
 
-        <!-- Dynamic Grain / Mill / Sifter Hover Info -->
-        <div x-show="hovered_element && (hovered_element.startsWith('grain_') || hovered_element.startsWith('mill_') || hovered_element.startsWith('sifter_'))"
-             style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <template x-if="getHoverInfo()">
+            <!-- Archetype Hover Info -->
+            <div x-show="hovered_element && hovered_element.startsWith('archetype_')" 
+                 style="display: flex; flex-direction: column; gap: 1.25rem;">
                 <div>
                     <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <span x-text="getHoverInfo().icon"></span> <span x-text="getHoverInfo().title"></span>
+                        <span>🧬</span> Archetype Details
                     </div>
-                    <div style="margin-bottom: 0.75rem;">
-                        <span style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);"
-                              :style="getHoverInfo().status === 'recommended' ? 'color: #ffd700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.1);' : 
-                                      (getHoverInfo().status === 'sub-optimal' ? 'color: var(--warning); border-color: rgba(255,193,7,0.3); background: rgba(255,193,7,0.1);' : 
-                                      (getHoverInfo().status === 'not-recommended' ? 'color: var(--danger); border-color: rgba(220,53,69,0.3); background: rgba(220,53,69,0.1);' : 'color: var(--accent); border-color: rgba(255,136,0,0.3); background: rgba(255,136,0,0.1);'))"
-                              x-text="getHoverInfo().status === 'recommended' ? 'Recommended' : (getHoverInfo().status === 'sub-optimal' ? 'Sub-Optimal' : (getHoverInfo().status === 'not-recommended' ? 'Not Recommended' : 'Optimal'))">
-                        </span>
+                    <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);" 
+                         x-text="(hovered_element && enginesArchetypes[selected_master] && enginesArchetypes[selected_master][hovered_element.replace('archetype_', '')]) ? enginesArchetypes[selected_master][hovered_element.replace('archetype_', '')].description : ''">
                     </div>
-                    <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);" x-text="getHoverInfo().reason"></div>
                 </div>
-            </template>
-        </div>
+            </div>
 
-        <!-- Idle State: No Recipe Selected -->
-        <div x-show="!selected_recipe_id && !hovered_element" 
-             style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 250px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
-            <div>
-                <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🍰</span>
-                Select a recipe profile to view technical science details...
+            <!-- Dynamic Grain / Mill / Sifter Hover Info -->
+            <div x-show="hovered_element && (hovered_element.startsWith('grain_') || hovered_element.startsWith('mill_') || hovered_element.startsWith('sifter_'))"
+                 style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <template x-if="getHoverInfo()">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span x-text="getHoverInfo().icon"></span> <span x-text="getHoverInfo().title"></span>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <span style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);"
+                                  :style="getHoverInfo().status === 'recommended' ? 'color: #ffd700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.1);' : 
+                                          (getHoverInfo().status === 'sub-optimal' ? 'color: var(--warning); border-color: rgba(255,193,7,0.3); background: rgba(255,193,7,0.1);' : 
+                                          (getHoverInfo().status === 'not-recommended' ? 'color: var(--danger); border-color: rgba(220,53,69,0.3); background: rgba(220,53,69,0.1);' : 'color: var(--accent); border-color: rgba(255,136,0,0.3); background: rgba(255,136,0,0.1);'))"
+                                  x-text="getHoverInfo().status === 'recommended' ? 'Recommended' : (getHoverInfo().status === 'sub-optimal' ? 'Sub-Optimal' : (getHoverInfo().status === 'not-recommended' ? 'Not Recommended' : 'Optimal'))">
+                            </span>
+                        </div>
+                        <div style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);" x-text="getHoverInfo().reason"></div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Idle State: No Recipe Selected -->
+            <div x-show="!selected_recipe_id && !hovered_element" 
+                 style="display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.95rem; padding-top: 1rem;">
+                <div>
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🍰</span>
+                    Select a recipe profile to view technical science details...
+                </div>
+            </div>
+
+            <!-- Selected Recipe Details (Not yet proceeded) -->
+            <div x-show="selected_recipe_id && !recipe_selected && !hovered_element" style="display: flex; flex-direction: column; justify-content: center; gap: 1.25rem;">
+                <!-- Menu Description -->
+                <div>
+                    <div style="font-size: 1rem; line-height: 1.6; color: var(--text-primary); text-align: center;" x-text="sidebar_menu_description"></div>
+                </div>
+            </div>
+
+            <!-- Selected Recipe Details (Proceeded to Grain Bin, No Hover) -->
+            <div x-show="recipe_selected && !hovered_element" 
+                 style="display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
+                <div>
+                    <span style="font-size: 1.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🌾</span>
+                    Hover over an ingredient below to see AI recommendations and technical reasoning.
+                </div>
             </div>
         </div>
 
-
-
-        <!-- Selected Recipe Details (Not yet proceeded) -->
-        <div x-show="selected_recipe_id && !recipe_selected && !hovered_element" style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <!-- Menu Description -->
-            <div>
-                <div style="font-size: 1rem; line-height: 1.6; color: var(--text-primary);" x-text="sidebar_menu_description"></div>
-            </div>
-        </div>
-
-        <!-- Selected Recipe Details (Proceeded to Grain Bin, No Hover) -->
-        <div x-show="recipe_selected && !hovered_element" 
-             style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 150px; color: var(--text-muted); font-style: italic; font-size: 0.95rem;">
-            <div>
-                <span style="font-size: 1.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.5;">🌾</span>
-                Hover over an ingredient below to see AI recommendations and technical reasoning.
-            </div>
-        </div>
-
-        <div style="margin-top: auto;">
+        <!-- Button Container -->
+        <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
             <!-- Action Button: Stage 1 (Select Recipe) -->
-            <div x-show="!recipe_selected" style="margin-bottom: 0.5rem;">
+            <div x-show="!recipe_selected">
                 <button type="button" 
                         class="btn"
                         :disabled="creativity_streaming || !selected_recipe_id"
@@ -650,7 +660,7 @@ x-data="phase2App({
             </div>
 
             <!-- Action Button: Stage 2 (Confirm Grains) -->
-            <div x-show="recipe_selected" style="margin-bottom: 0.5rem;">
+            <div x-show="recipe_selected">
                 <button type="button" 
                         class="btn"
                         :disabled="advisoryLoading"
@@ -662,6 +672,13 @@ x-data="phase2App({
                     <span x-show="advisoryLoading">ANALYZING GRAINS...</span>
                 </button>
             </div>
+            
+            <a href="{% url 'calculator_phase1' %}" class="btn" 
+               style="display: block; width: 100%; text-align: center; line-height: 50px; height: 50px; border: 1px solid var(--border); border-radius: 999px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); transition: all 0.2s; text-decoration: none;"
+               onmouseover="this.style.color='var(--text-primary)'; this.style.borderColor='var(--text-primary)';"
+               onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border)';">
+                BACK
+            </a>
         </div>
     </div>
 {% endblock %}

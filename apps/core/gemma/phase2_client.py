@@ -265,6 +265,7 @@ def stream_grain_evaluations(
     category_slug: str = None,
     preset_name: str = None,
     active_archetype_id: str = None,
+    active_variation_id: str = None,
     target: str = "all"
 ):
     """
@@ -285,7 +286,7 @@ def stream_grain_evaluations(
     if not active_berries:
         return
 
-    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug, active_variation_id)
     sifting_req = preset.get_sifting_requirement_display() if preset else "Optional (Variable)"
     mills = Equipment.objects.filter(equipment_type='mill').order_by('name')
     mills_text = "\n".join([f"- {m.id} ({m.name})" for m in mills])
@@ -300,9 +301,11 @@ def stream_grain_evaluations(
         )
     inventory_text = "".join(inventory_list)
 
+    variation_line = f"* Requested Target Variation: {active_variation_id}\n" if active_variation_id else ""
     data_context = (
         f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
         f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
+        f"{variation_line}"
         f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
         f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
         f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
@@ -312,15 +315,21 @@ def stream_grain_evaluations(
         f"\n[RAW MATERIAL INVENTORY]\n{inventory_text}\n"
         f"\n[AVAILABLE MILL MACHINERY]\n{mills_text}\n"
     )
+    
+    import logging
+    logger = logging.getLogger("grainlab.services.ai")
+    logger.info(f"AI Grain Evaluation Request Data Context:\n{data_context}")
+
 
     task_instructions = ""
     response_schema = ""
 
     if target == "grains":
         task_instructions = (
-            f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
-            "Commercial All-Purpose flour is not an option. If a grain is not a perfect match on its own but would be an excellent component in a blended flour to hit the target metrics, classify it as RECOMMENDED. "
-            "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification."
+            f"GrainLab celebrates the unique, vibrant properties of freshly milled whole grains! When evaluating the inventory, look for grains that shine as powerful structural components. "
+            "Classify a grain as RECOMMENDED if its native chemistry directly supports the target mechanics and its flavor profile complements the target flavor profile, OR if it contributes essential characteristics to a custom whole-grain flour blend without overpowering the desired flavor. "
+            "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification highlighting its potential and flavor fit. "
+            f"You MUST evaluate ALL {len(active_berries)} provided raw material grains against the target mechanics. DO NOT skip or group any grains together."
         )
         response_schema = (
             "{\n"
@@ -375,9 +384,10 @@ def stream_grain_evaluations(
     else:
         # Fallback to the original monolithic logic
         task_instructions = (
-            f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together. "
-            "Commercial All-Purpose flour is not an option. If a grain is not a perfect match on its own but would be an excellent component in a blended flour to hit the target metrics, classify it as RECOMMENDED. "
-            "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification.\n"
+            f"GrainLab celebrates the unique, vibrant properties of freshly milled whole grains! When evaluating the inventory, look for grains that shine as powerful structural components. "
+            "Classify a grain as RECOMMENDED if its native chemistry directly supports the target mechanics and its flavor profile complements the target flavor profile, OR if it contributes essential characteristics to a custom whole-grain flour blend without overpowering the desired flavor. "
+            "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification highlighting its potential and flavor fit. "
+            f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together.\n"
             f"The physical structure of this archetype defines bran separation/sifting as: '{sifting_req}'. You MUST factor this hard constraint into your evaluation of the 'sifted' vs 'unsifted' options. Also evaluate BOTH bran separation options (sifted high-extraction vs whole grain unsifted). Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each.\n"
             "Also evaluate EACH mill type from the 'mills' list provided. Assign a tier (RECOMMENDED or NOT-RECOMMENDED) and write a 1-sentence reason for each. CRITICAL: Provide exactly ONE evaluation per mill and ONE evaluation per sifter option."
         )
@@ -413,7 +423,7 @@ def stream_grain_evaluations(
             "}"
         )
 
-    system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id, include_global_rules=False)
+    system_prompt = assemble_system_prompt(engine, data_context, task_instructions, response_schema, active_archetype_id=active_archetype_id, include_global_rules=False, active_variation_id=active_variation_id)
     user_prompt = "{}"
     
     import logging

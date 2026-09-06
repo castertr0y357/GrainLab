@@ -45,7 +45,8 @@ def get_engines_ff_json() -> str:
             "production_profile": getattr(engine, "production_profile", {}),
             "secondary_ingredients": getattr(engine, "secondary_ingredients", {}),
             "supported_tweaks": getattr(engine, "supported_tweaks", ["hydration", "leavening"]),
-            "tweak_labels": getattr(engine, "tweak_labels", {})
+            "tweak_labels": getattr(engine, "tweak_labels", {}),
+            "variations": getattr(engine, "variations", {})
         }
     return json.dumps(engines_ff_data)
 

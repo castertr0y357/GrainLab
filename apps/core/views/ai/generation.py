@@ -137,8 +137,10 @@ class GenerateCreativityRecipesView(View):
                     "absorption": float(g.moisture_absorption_coef),
                 })
 
+        active_variation_id = request.GET.get("active_variation_id", "").strip()
+
         from django.http import StreamingHttpResponse
-        generator = gemma.stream_creativity_recipes(engine_id, active_archetype_id, inventory, level=level)
+        generator = gemma.stream_creativity_recipes(engine_id, active_archetype_id, inventory, level=level, active_variation_id=active_variation_id)
         
         def event_stream():
             # In case of fallback, stream_creativity_recipes will yield the mock items

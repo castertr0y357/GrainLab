@@ -26,6 +26,7 @@ def process_grain_advisory(cleaned_data):
                     preset_slug, category_slug, 
                     preset_name=cleaned_data.get("preset_name"),
                     active_archetype_id=cleaned_data.get("active_archetype_id"),
+                    active_variation_id=cleaned_data.get("active_variation_id"),
                     target=cleaned_data.get("target")
                 )
                 for item in generator:
