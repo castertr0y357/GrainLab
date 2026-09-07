@@ -62,7 +62,6 @@ def process_recipe_details(cleaned_data):
             selected_grains=cleaned_data.get("selected_grains"),
             mill_type=cleaned_data.get("mill_type"),
             is_sifted=cleaned_data.get("is_sifted"),
-            active_variation_id=cleaned_data.get("active_variation_id"),
         )
     return result
 

@@ -24,6 +24,8 @@
         <button type="button" @click="activeTab = 'ux'" :style="activeTab === 'ux' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Localization & UX</button>
         <button type="button" @click="activeTab = 'env'" :style="activeTab === 'env' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Environment</button>
         <button type="button" @click="activeTab = 'workflow'" :style="activeTab === 'workflow' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Workflow</button>
+        <button type="button" @click="activeTab = 'backups'" :style="activeTab === 'backups' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Data & Backups</button>
+        <button type="button" @click="activeTab = 'trash'" :style="activeTab === 'trash' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Recycle Bin</button>
     </div>
 
     <form hx-post="{% url 'save_settings' %}" 
@@ -226,6 +228,53 @@
             </div>
         </div>
 
+        <!-- TAB: Data & Backups -->
+        <div x-show="activeTab === 'backups'" x-transition style="display: none;">
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label for="backup_schedule">Automated Backup Schedule</label>
+                <select name="backup_schedule" id="backup_schedule" class="form-select">
+                    <option value="disabled" {% if backup_schedule == "disabled" %}selected{% endif %}>Disabled</option>
+                    <option value="daily" {% if backup_schedule == "daily" %}selected{% endif %}>Daily</option>
+                    <option value="weekly" {% if backup_schedule == "weekly" %}selected{% endif %}>Weekly</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;">
+                <label for="backup_retention">Backup Retention (Max Files to Keep)</label>
+                <input type="number" name="backup_retention" id="backup_retention" class="num-input" style="width: 100%;" value="{{ backup_retention }}" min="0">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Set to 0 to keep backups forever (not recommended).</span>
+            </div>
+
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--accent);">Available Backups</h3>
+                <button type="button" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.4rem 1rem; border-radius: var(--radius-sm); cursor: pointer;" hx-post="{% url 'backup_create' %}">Trigger Manual Backup</button>
+            </div>
+
+            <div id="backups-list-container" hx-get="{% url 'backups_list' %}" hx-trigger="load, refreshBackups from:body">
+                <!-- Loaded via HTMX -->
+                <div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 1rem auto;"></div>
+            </div>
+
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                <h3 style="margin-top: 0; font-size: 1.1rem;">Upload External Backup</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Upload a <code>.sql.gz</code> file to restore from another instance.</p>
+                <!-- Separate form for file upload since main form is HTMX JSON/form-data with loader -->
+            </div>
+        </div>
+
+        <!-- TAB: Recycle Bin -->
+        <div x-show="activeTab === 'trash'" x-transition style="display: none;">
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--accent);">Recently Deleted Items</h3>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Items will be permanently deleted after {{ soft_delete_retention_days }} days.</p>
+            </div>
+
+            <div id="trash-list-container" hx-get="{% url 'trash_list' %}" hx-trigger="load, refreshTrash from:body">
+                <!-- Loaded via HTMX -->
+                <div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 1rem auto;"></div>
+            </div>
+        </div>
+
         <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
             <button type="submit" class="nav-btn primary" style="border: none; cursor: pointer; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 0.5rem;" :disabled="submitting">
                 <span class="spinner" x-show="submitting" style="width: 16px; height: 16px; border-width: 2px;"></span>
@@ -239,6 +288,15 @@
 
     <div id="settings-feedback" style="margin-top: 1.5rem;">
         <!-- Status alerts populate here -->
+    </div>
+
+    <!-- Upload form outside the main settings form -->
+    <div x-show="activeTab === 'backups'" style="display: none; margin-top: 1rem;">
+        <form method="post" action="{% url 'backup_upload' %}" enctype="multipart/form-data" style="display: flex; gap: 1rem; align-items: center;">
+            {% csrf_token %}
+            <input type="file" name="backup_file" accept=".sql.gz" required style="flex-grow: 1;">
+            <button type="submit" class="nav-btn secondary" style="padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">Upload</button>
+        </form>
     </div>
 </div>
 {% endblock %}

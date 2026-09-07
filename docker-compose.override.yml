@@ -9,3 +9,7 @@ services:
   celery:
     volumes:
       - .:/app
+
+  celery-beat:
+    volumes:
+      - .:/app

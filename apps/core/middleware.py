@@ -46,7 +46,7 @@ class CorrelationIDFilter(logging.Filter):
 
 from django.conf import settings
 from django.shortcuts import redirect
-from django.urls import resolve
+from django.urls import Resolver404, resolve
 
 
 class LoginRequiredMiddleware:
@@ -75,7 +75,7 @@ class LoginRequiredMiddleware:
                 # Allow access to admin login, django login, and allowed views
                 if match.app_name == "admin" or match.url_name == "login" or match.url_name in self.allowed_url_names:
                     return self.get_response(request)
-            except Exception:
+            except Resolver404:
                 pass
 
             # Allow whitenoise or other static requests that might bypass resolver but hit here
@@ -88,7 +88,37 @@ class LoginRequiredMiddleware:
             if request.path_info == login_url:
                 return self.get_response(request)
 
+            if request.headers.get("HX-Request") == "true":
+                response = HttpResponse(status=401)
+                response["HX-Redirect"] = f"{login_url}?next={request.path}"
+                return response
+
             # Redirect to login
             return redirect(f"{login_url}?next={request.path}")
+
+        return self.get_response(request)
+
+
+from django.core.cache import cache
+from django.template.loader import render_to_string
+
+
+class MaintenanceModeMiddleware:
+    """
+    Middleware that returns a 503 Service Unavailable if the maintenance mode flag
+    is set in the cache (e.g., during a database restore).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        if cache.get("MAINTENANCE_MODE"):
+            # Allow polling endpoint to bypass so UI can unlock dynamically
+            if request.path_info == "/settings/backups/status/":
+                return self.get_response(request)
+
+            content = render_to_string("maintenance.html", request=request)
+            return HttpResponse(content, status=503)
 
         return self.get_response(request)

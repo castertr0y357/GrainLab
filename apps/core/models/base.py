@@ -20,10 +20,22 @@ class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return SoftDeleteQuerySet(self.model, using=self._db).alive()
 
+    def alive(self):
+        return self.get_queryset().alive()
+
+    def dead(self):
+        return self.get_queryset().dead()
+
 
 class AllObjectsManager(models.Manager):
     def get_queryset(self):
         return SoftDeleteQuerySet(self.model, using=self._db)
+
+    def alive(self):
+        return self.get_queryset().alive()
+
+    def dead(self):
+        return self.get_queryset().dead()
 
 
 class SoftDeleteModel(models.Model):

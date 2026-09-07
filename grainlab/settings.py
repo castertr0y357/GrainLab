@@ -44,6 +44,7 @@ MIDDLEWARE = [
     "apps.core.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.middleware.MaintenanceModeMiddleware",
 ]
 
 ROOT_URLCONF = "grainlab.urls"

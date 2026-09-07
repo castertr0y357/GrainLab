@@ -1,0 +1,32 @@
+{% if backups %}
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+    <thead>
+        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+            <th style="padding: 0.5rem;">Filename</th>
+            <th style="padding: 0.5rem;">Size (MB)</th>
+            <th style="padding: 0.5rem;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for backup in backups %}
+        <tr style="border-bottom: 1px solid var(--border-light);">
+            <td style="padding: 0.5rem; font-family: monospace;">{{ backup.name }}</td>
+            <td style="padding: 0.5rem;">{{ backup.size_mb }}</td>
+            <td style="padding: 0.5rem; display: flex; gap: 0.5rem;">
+                <form method="post" hx-post="{% url 'backup_restore' backup.name %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button class="nav-btn" style="border: 1px solid #e67e22; color: #e67e22; background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer;" type="submit" onclick="return confirm('WARNING: Restoring a backup will WIPE the current database and replace it. Are you absolutely sure?')">Restore</button>
+                </form>
+                <a href="{% url 'backup_download' backup.name %}" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none;">Download</a>
+                <form method="post" hx-post="{% url 'backup_delete' backup.name %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button class="nav-btn" style="border: 1px solid #e74c3c; color: #e74c3c; background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer;" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: var(--text-muted); font-style: italic;">No backups found.</p>
+{% endif %}

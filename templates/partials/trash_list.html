@@ -1,0 +1,33 @@
+{% if trash_items %}
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+    <thead>
+        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+            <th style="padding: 0.5rem;">Type</th>
+            <th style="padding: 0.5rem;">Name</th>
+            <th style="padding: 0.5rem;">Deleted Date</th>
+            <th style="padding: 0.5rem;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in trash_items %}
+        <tr style="border-bottom: 1px solid var(--border-light);">
+            <td style="padding: 0.5rem; text-transform: capitalize;">{{ item.type }}</td>
+            <td style="padding: 0.5rem;">{{ item.name }}</td>
+            <td style="padding: 0.5rem;">{{ item.deleted_at|date:"Y-m-d H:i" }}</td>
+            <td style="padding: 0.5rem; display: flex; gap: 0.5rem;">
+                <form method="post" hx-post="{% url 'trash_restore' item.type item.id %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer;" type="submit">Restore</button>
+                </form>
+                <form method="post" hx-post="{% url 'trash_hard_delete' item.type item.id %}" hx-confirm="Are you sure you want to permanently delete this item? This cannot be undone." style="margin: 0;">
+                    {% csrf_token %}
+                    <button class="nav-btn" style="border: 1px solid #e74c3c; color: #e74c3c; background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer;" type="submit">Delete Permanently</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: var(--text-muted); font-style: italic;">The recycle bin is empty.</p>
+{% endif %}

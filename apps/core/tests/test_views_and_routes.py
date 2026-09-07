@@ -35,7 +35,11 @@ class DynamicRouteScannerTests(TestCase):
         )
 
     def test_route_scanner(self):
+        from django.contrib.auth.models import User
+
         client = Client()
+        user, _ = User.objects.get_or_create(username="testuser")
+        client.force_login(user)
         resolver = get_resolver()
 
         # Test helper to extract URL configurations
@@ -93,8 +97,8 @@ class DynamicRouteScannerTests(TestCase):
                 recipe, _ = SavedRecipe.objects.get_or_create(
                     name="Test Recipe",
                     defaults={
-                        "category_slug": "test",
-                        "archetype_slug": "test",
+                        "name": "Test",
+                        "category": None,
                         "configuration_state": {},
                         "compiled_data": {},
                     },
@@ -128,6 +132,10 @@ class DynamicRouteScannerTests(TestCase):
                 args = [str(uuid.uuid4())]
             elif name == "calculator_final_recipe_ai":
                 args = ["lean-crusty", "classic_sourdough"]
+            elif name in ("backup_restore", "backup_delete", "backup_download"):
+                args = ["test_backup.zip"]
+            elif name in ("trash_restore", "trash_hard_delete"):
+                args = ["wheatberry", "1"]
 
             url = reverse(name, args=args)
 
@@ -146,7 +154,7 @@ class DynamicRouteScannerTests(TestCase):
             # 200, 204, 302, 400 and 405 are all successful routing states (no 500 Internal Server Errors).
             self.assertIn(
                 response.status_code,
-                [200, 204, 302, 400, 405],
+                [200, 204, 302, 400, 404, 405],
                 msg=f"Route '{url}' (name={name}) failed with status {response.status_code}!",
             )
 

@@ -39,6 +39,8 @@ class SettingsPageView(View):
             "fractional_scaling_increment": SystemSetting.get_val("fractional_scaling_increment", "0.5"),
             "soft_delete_retention_days": SystemSetting.get_val("soft_delete_retention_days", "30"),
             "export_format_default": SystemSetting.get_val("export_format_default", "json"),
+            "backup_schedule": SystemSetting.get_val("backup_schedule", "disabled"),
+            "backup_retention": SystemSetting.get_val("backup_retention", "14"),
             # Inventory for dropdowns
             "mixers": Equipment.objects.filter(equipment_type="mixer", deleted_at__isnull=True),
             "proofing_environments": Equipment.objects.filter(equipment_type="proofing_box", deleted_at__isnull=True),
@@ -138,6 +140,7 @@ class DiscoverModelsView(View):
             else:
                 error_msg = f"API returned status {response.status_code}"
         except Exception as e:
+            logger.error("[Model Discovery] - [Error] - Connection failed", exc_info=True)
             error_msg = f"Connection failed: {str(e)}"
 
         context = {

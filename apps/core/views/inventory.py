@@ -1,11 +1,13 @@
 import logging
 import uuid
 
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import View
 
+from apps.core.forms.inventory import EquipmentForm, WheatBerryForm
 from apps.core.models import (
     Equipment,
     WheatBerry,
@@ -19,8 +21,8 @@ class InventoryPageView(View):
         """
         Renders inventory page listing wheat berries and equipment.
         """
-        wheat_berries = WheatBerry.objects.all().order_by("name")
-        equipment = Equipment.objects.all().order_by("name")
+        wheat_berries = WheatBerry.objects.filter(Q(user=request.user) | Q(user__isnull=True)).order_by("name")
+        equipment = Equipment.objects.filter(Q(user=request.user) | Q(user__isnull=True)).order_by("name")
         context = {
             "wheat_berries": wheat_berries,
             "equipment": equipment,
@@ -33,26 +35,15 @@ class AddWheatBerryView(View):
         """
         Creates a new wheat berry record in the inventory.
         """
-        name = request.POST.get("name", "").strip()
-        protein = float(request.POST.get("protein_content", 12.0) or 12.0)
-        hardness = request.POST.get("hardness", "hard")
-        absorption = float(request.POST.get("moisture_absorption_coef", 1.0) or 1.0)
-        notes = request.POST.get("notes", "").strip()
-        is_active = request.POST.get("is_active") in ("on", "true", "True")
-
-        if name:
-            WheatBerry.objects.create(
-                name=name,
-                protein_content=protein,
-                hardness=hardness,
-                moisture_absorption_coef=absorption,
-                notes=notes,
-                is_active=is_active,
-            )
-
-        response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse("inventory_page")
-        return response
+        form = WheatBerryForm(request.POST)
+        if form.is_valid():
+            wb = form.save(commit=False)
+            wb.user = request.user
+            wb.save()
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse("inventory_page")
+            return response
+        return HttpResponse(f"<div class='error-box' style='color:red;'>{form.errors.as_text()}</div>", status=400)
 
 
 class ToggleWheatBerryActiveView(View):
@@ -61,6 +52,8 @@ class ToggleWheatBerryActiveView(View):
         Toggles the active state of a wheat berry.
         """
         wb = get_object_or_404(WheatBerry, id=id)
+        if wb.user and wb.user != request.user:
+            return HttpResponse("Unauthorized", status=403)
         wb.is_active = not wb.is_active
         wb.save()
         response = HttpResponse(status=204)
@@ -74,6 +67,8 @@ class DeleteWheatBerryView(View):
         Deletes a wheat berry from inventory.
         """
         wb = get_object_or_404(WheatBerry, id=id)
+        if wb.user and wb.user != request.user:
+            return HttpResponse("Unauthorized", status=403)
         wb.delete()
         response = HttpResponse(status=204)
         response["HX-Redirect"] = reverse("inventory_page")
@@ -85,17 +80,15 @@ class AddEquipmentView(View):
         """
         Creates a new equipment record in the inventory.
         """
-        name = request.POST.get("name", "").strip()
-        eq_type = request.POST.get("equipment_type", "other")
-        friction = float(request.POST.get("friction_heat_factor", 0.0) or 0.0)
-        notes = request.POST.get("notes", "").strip()
-
-        if name:
-            Equipment.objects.create(name=name, equipment_type=eq_type, friction_heat_factor=friction, notes=notes)
-
-        response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse("inventory_page")
-        return response
+        form = EquipmentForm(request.POST)
+        if form.is_valid():
+            eq = form.save(commit=False)
+            eq.user = request.user
+            eq.save()
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse("inventory_page")
+            return response
+        return HttpResponse(f"<div class='error-box' style='color:red;'>{form.errors.as_text()}</div>", status=400)
 
 
 class DeleteEquipmentView(View):
@@ -104,6 +97,8 @@ class DeleteEquipmentView(View):
         Deletes equipment from inventory.
         """
         eq = get_object_or_404(Equipment, id=id)
+        if eq.user and eq.user != request.user:
+            return HttpResponse("Unauthorized", status=403)
         eq.delete()
         response = HttpResponse(status=204)
         response["HX-Redirect"] = reverse("inventory_page")
@@ -113,33 +108,28 @@ class DeleteEquipmentView(View):
 class EditWheatBerryView(View):
     def post(self, request, id):
         wb = get_object_or_404(WheatBerry, id=id)
-        name = request.POST.get("name", "").strip()
-        if name:
-            wb.name = name
-            wb.protein_content = float(request.POST.get("protein_content", 12.0) or 12.0)
-            wb.hardness = request.POST.get("hardness", "hard")
-            wb.moisture_absorption_coef = float(request.POST.get("moisture_absorption_coef", 1.0) or 1.0)
-            wb.notes = request.POST.get("notes", "").strip()
-            wb.is_active = request.POST.get("is_active") in ("on", "true", "True")
-            wb.save()
+        if wb.user and wb.user != request.user:
+            return HttpResponse("Unauthorized", status=403)
 
-        # We can just redirect back to the page since this will be submitted via standard form or htmx
-        response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse("inventory_page")
-        return response
+        form = WheatBerryForm(request.POST, instance=wb)
+        if form.is_valid():
+            form.save()
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse("inventory_page")
+            return response
+        return HttpResponse(f"<div class='error-box' style='color:red;'>{form.errors.as_text()}</div>", status=400)
 
 
 class EditEquipmentView(View):
     def post(self, request, id):
         eq = get_object_or_404(Equipment, id=id)
-        name = request.POST.get("name", "").strip()
-        if name:
-            eq.name = name
-            eq.equipment_type = request.POST.get("equipment_type", "other")
-            eq.friction_heat_factor = float(request.POST.get("friction_heat_factor", 0.0) or 0.0)
-            eq.notes = request.POST.get("notes", "").strip()
-            eq.save()
+        if eq.user and eq.user != request.user:
+            return HttpResponse("Unauthorized", status=403)
 
-        response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse("inventory_page")
-        return response
+        form = EquipmentForm(request.POST, instance=eq)
+        if form.is_valid():
+            form.save()
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse("inventory_page")
+            return response
+        return HttpResponse(f"<div class='error-box' style='color:red;'>{form.errors.as_text()}</div>", status=400)

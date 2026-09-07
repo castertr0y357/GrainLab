@@ -8,6 +8,7 @@ class DoughCategory(models.Model):
 
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True, db_index=True)
+    icon = models.CharField(max_length=10, default="🍞", help_text="Emoji icon for this category")
     base_hydration = models.FloatField(help_text="Water ratio relative to flour (1.0 = 100%)")
     base_fat = models.FloatField(default=0.0, help_text="Fat ratio relative to flour")
     base_sugar = models.FloatField(default=0.0, help_text="Sugar ratio relative to flour")
@@ -26,6 +27,14 @@ class DoughCategory(models.Model):
 
     def __str__(self):
         return self.name
+
+    def delete(self, *args, force_delete=False, **kwargs):
+        if not force_delete:
+            raise PermissionError(
+                "DoughCategory is a locked core model. To intentionally delete it, "
+                "you must explicitly pass `force_delete=True`."
+            )
+        return super().delete(*args, **kwargs)
 
 
 class FormFactor(models.Model):
@@ -56,6 +65,14 @@ class FormFactor(models.Model):
 
     def __str__(self):
         return self.name
+
+    def delete(self, *args, force_delete=False, **kwargs):
+        if not force_delete:
+            raise PermissionError(
+                "FormFactor is a locked core model. To intentionally delete it, "
+                "you must explicitly pass `force_delete=True`."
+            )
+        return super().delete(*args, **kwargs)
 
 
 class BreadPreset(models.Model):
@@ -106,3 +123,11 @@ class BreadPreset(models.Model):
 
     def __str__(self):
         return self.name
+
+    def delete(self, *args, force_delete=False, **kwargs):
+        if not force_delete:
+            raise PermissionError(
+                "BreadPreset is a locked core model. To intentionally delete it, "
+                "you must explicitly pass `force_delete=True`."
+            )
+        return super().delete(*args, **kwargs)

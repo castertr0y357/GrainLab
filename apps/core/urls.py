@@ -30,6 +30,24 @@ urlpatterns = [
     path("settings/", views.SettingsPageView.as_view(), name="settings_page"),
     path("settings/save/", views.SaveSettingsView.as_view(), name="save_settings"),
     path("settings/discover-models/", views.DiscoverModelsView.as_view(), name="discover_models"),
+    # Backup Management Routes
+    path("settings/backups/status/", views.BackupsStatusView.as_view(), name="backups_status"),
+    path("settings/backups/list/", views.BackupsListPartial.as_view(), name="backups_list"),
+    path("settings/backups/create/", views.BackupCreateView.as_view(), name="backup_create"),
+    path("settings/backups/restore/<str:filename>/", views.BackupRestoreView.as_view(), name="backup_restore"),
+    path("settings/backups/download/<str:filename>/", views.BackupDownloadView.as_view(), name="backup_download"),
+    path("settings/backups/delete/<str:filename>/", views.BackupDeleteView.as_view(), name="backup_delete"),
+    path("settings/backups/upload/", views.BackupUploadView.as_view(), name="backup_upload"),
+    # Recycle Bin Routes
+    path("settings/trash/list/", views.TrashListView.as_view(), name="trash_list"),
+    path(
+        "settings/trash/restore/<str:item_type>/<str:item_id>/", views.TrashRestoreView.as_view(), name="trash_restore"
+    ),
+    path(
+        "settings/trash/hard-delete/<str:item_type>/<str:item_id>/",
+        views.TrashHardDeleteView.as_view(),
+        name="trash_hard_delete",
+    ),
     path("sourdough-calibrate/", views.SourdoughCalibrateView.as_view(), name="sourdough_calibrate"),
     # Inventory routes
     path("inventory/", views.InventoryPageView.as_view(), name="inventory_page"),
