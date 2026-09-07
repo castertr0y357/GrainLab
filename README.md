@@ -1,6 +1,13 @@
 # GrainLab: Food Science Compiler for Home Bakers
 
-GrainLab is a fail-safe, outcome-driven food-science compiler and Baker's Math recipe scaling engine optimized for home bakers using fresh-milled whole grains.
+GrainLab is an AI-powered, fail-safe food-science compiler and Baker's Math recipe scaling engine optimized for home bakers using fresh-milled whole grains.
+
+## ✨ Features
+
+- **AI-Powered Recipe Generation:** Powered by a local Gemma AI integration to dynamically generate precise timelines, sensory cues, and step-by-step instructions.
+- **Hierarchical Yield Scaling:** Sophisticated yield management engine with archetype-specific terminology (e.g., Bagels, Pretzels, Cookies, Loaves, Pastries).
+- **Detailed Preparatory Instructions:** Intelligent processing pipeline to inject precise physical preparatory requirements (size, shape, temperature constraints) for ingredients.
+- **Baker's Math Engine:** Fully scales recipes cleanly based on target dough/batter weight limits and exact hydration calculations.
 
 ## 🚀 Quick Start
 
@@ -68,4 +75,3 @@ To restore a PostgreSQL database backup:
    ```bash
    pg_restore -h localhost -p 5432 -U grainlab_user -d grainlab backups/backup-20260622-235427.sql
    ```
-
