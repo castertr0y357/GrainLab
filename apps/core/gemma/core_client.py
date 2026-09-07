@@ -1,6 +1,8 @@
 import hashlib
 import json
 import logging
+import os
+import time
 
 import requests
 from django.conf import settings
@@ -10,6 +12,26 @@ from apps.core.models import SystemSetting
 from apps.core.utils.math import get_local_contextual_pitfalls, get_local_sensory_benchmark
 
 logger = logging.getLogger("grainlab.gemma")
+
+
+def check_ai_rate_limit() -> bool:
+    limit = int(os.getenv("AI_RATE_LIMIT", "0"))
+    if limit <= 0:
+        return True
+
+    key = "global_ai_rate_limit"
+    history = cache.get(key, [])
+    now = time.time()
+    # Sliding window for 60 seconds
+    history = [t for t in history if now - t < 60]
+
+    if len(history) >= limit:
+        logger.warning(f"[AI] Rate limit exceeded ({limit}/min)")
+        return False
+
+    history.append(now)
+    cache.set(key, history, timeout=60)
+    return True
 
 
 def _get_val(obj, key, default=None):
@@ -190,6 +212,9 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     Caches results persistently using Django file cache framework.
     Returns None if any step fails.
     """
+    if not check_ai_rate_limit():
+        return None
+
     # Normalize user_prompt to ensure consistent caching key
     normalized_user_prompt = user_prompt
     try:
@@ -306,6 +331,11 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
     Submits a structured prompt to local Gemma with stream=True and yields JSON objects
     incrementally as they are generated from within a top-level JSON array.
     """
+    if not check_ai_rate_limit():
+        if yield_raw:
+            yield '{"error": "AI Rate Limit Exceeded"}'
+        return
+
     url, model = _get_api_config()
     headers = {"Content-Type": "application/json"}
 

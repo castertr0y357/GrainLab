@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 4rem auto; text-align: center;">
+    <h2 style="color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+        🌾 GrainLab Login
+    </h2>
+    
+    {% if form.errors %}
+        <div style="background-color: #ffcccc; color: #990000; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Your username and password didn't match. Please try again.
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        
+        <div class="input-group" style="margin-bottom: 1rem; text-align: left;">
+            <label for="id_username">Username</label>
+            <input type="text" name="username" id="id_username" class="num-input" style="width: 100%;" required autofocus>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 1.5rem; text-align: left;">
+            <label for="id_password">Password</label>
+            <input type="password" name="password" id="id_password" class="num-input" style="width: 100%;" required>
+        </div>
+        
+        <button type="submit" class="nav-btn primary" style="width: 100%; padding: 0.75rem; border: none; cursor: pointer; font-size: 1.1rem; border-radius: var(--radius-sm);">
+            Log In
+        </button>
+    </form>
+</div>
+{% endblock %}

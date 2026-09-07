@@ -17,7 +17,7 @@ else:
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-secret-key-grainlab-2026")
-DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 MOCK_MODE = os.getenv("MOCK_MODE", "True").lower() in ("true", "1", "t")
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
@@ -41,6 +41,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.core.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -219,3 +220,6 @@ CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://127.0.0.1:63
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TASK_ALWAYS_EAGER = "test" in sys.argv  # Execute synchronously in tests
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"

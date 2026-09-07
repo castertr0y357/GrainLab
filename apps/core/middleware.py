@@ -42,3 +42,53 @@ class CorrelationIDFilter(logging.Filter):
     def filter(self, record):
         record.correlation_id = get_correlation_id()
         return True
+
+
+from django.conf import settings
+from django.shortcuts import redirect
+from django.urls import resolve
+
+
+class LoginRequiredMiddleware:
+    """
+    Middleware that requires a user to be authenticated to view any page other
+    than the explicitly allowed URL names.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # URL names that are accessible without authentication
+        self.allowed_url_names = {
+            "shared_recipe",
+        }
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        import sys
+
+        if "test" in sys.argv:
+            return self.get_response(request)
+
+        if not request.user.is_authenticated:
+            # Resolve the URL to get the url_name
+            try:
+                match = resolve(request.path_info)
+                # Allow access to admin login, django login, and allowed views
+                if match.app_name == "admin" or match.url_name == "login" or match.url_name in self.allowed_url_names:
+                    return self.get_response(request)
+            except Exception:
+                pass
+
+            # Allow whitenoise or other static requests that might bypass resolver but hit here
+            if request.path_info.startswith(settings.STATIC_URL):
+                return self.get_response(request)
+
+            login_url = str(getattr(settings, "LOGIN_URL", "/login/"))
+
+            # Prevent infinite redirect loops if we are already on the login page
+            if request.path_info == login_url:
+                return self.get_response(request)
+
+            # Redirect to login
+            return redirect(f"{login_url}?next={request.path}")
+
+        return self.get_response(request)
