@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class PastryEngine(BaseEngine):
     name = "Pastry & Lamination Engine"
     slug = "pastry"
+    default_yield_unit = "pastries"
     default_binder_pct = 0.10
     default_leaven_pct = 0.0
     target_protein_min = 11.0

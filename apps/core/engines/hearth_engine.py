@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class HearthEngine(BaseEngine):
     name = "Lean & Crusty Engine"
     slug = "hearth"
+    default_yield_unit = "loaves"
     target_protein_min = 12.0
     target_protein_max = 14.5
     gluten_behavior = "High Elasticity, maximum gas retention, capability to withstand long fermentation arcs."

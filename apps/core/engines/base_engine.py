@@ -33,6 +33,7 @@ from .ai_prompts import AIPromptBuilder
 class BaseEngine(AIPromptBuilder):
     name = "Base Engine"
     slug = "base"
+    default_yield_unit = "pieces"
     target_protein_min = 11.0
     target_protein_max = 13.0
     gluten_behavior = "Standard gluten development"

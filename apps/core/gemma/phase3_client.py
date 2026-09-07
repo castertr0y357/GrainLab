@@ -800,6 +800,15 @@ def generate_recipe_details(
         else ""
     )
 
+    # Resolve yield unit (Archetype > Engine > Fallback)
+    target_yield_unit = "pieces"
+    if engine:
+        target_yield_unit = getattr(engine, "default_yield_unit", "pieces")
+        if active_archetype_id and hasattr(engine, "archetypes"):
+            arch = engine.archetypes.get(active_archetype_id)
+            if arch and "yield_unit" in arch:
+                target_yield_unit = arch["yield_unit"]
+
     # Retrieve thinking mode settings
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
     ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
@@ -821,7 +830,7 @@ def generate_recipe_details(
         "Each response must match this JSON schema exactly:\n"
         "{\n"
         '  "default_yield_amount": 24,\n'
-        '  "yield_unit": "cookies",\n'
+        f'  "yield_unit": "{target_yield_unit}",\n'
         '  "is_portionable": true,\n'
         '  "sidebar_science_profile": "A concise 2-3 sentence technical overview of this recipe\'s expected structural mechanics, flavor development, and hydration physics.",\n'
         '  "recommended_grain_ids": ["grain_name_slug"],\n'

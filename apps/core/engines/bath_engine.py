@@ -63,6 +63,7 @@ class BathEngine(BaseEngine):
         "twisted_pretzel": {
             "default_form_factor": "perforated-baking-sheet",
             "label": "Twisted Pretzel",
+            "yield_unit": "pretzels",
             "icon": "🥨",
             "description": "Traditional knot shapes, maximize surface area for Maillard browning.",
             "grain_affinity": "high_protein",
@@ -86,6 +87,7 @@ class BathEngine(BaseEngine):
         "boiled_bagel": {
             "default_form_factor": "perforated-baking-sheet",
             "label": "Boiled Bagel",
+            "yield_unit": "bagels",
             "icon": "🥯",
             "description": "Ring geometry, dense core structure, high tensile strength.",
             "grain_affinity": "high_protein",
@@ -105,6 +107,7 @@ class BathEngine(BaseEngine):
         "laugen_bun": {
             "default_form_factor": "perforated-baking-sheet",
             "label": "Laugen Bun / Roll",
+            "yield_unit": "buns",
             "icon": "🫓",
             "description": "Spherical soft-crumb interior protected by a thick glossy skin.",
             "grain_affinity": "high_protein",
@@ -123,6 +126,7 @@ class BathEngine(BaseEngine):
         "pretzel_stick": {
             "default_form_factor": "perforated-baking-sheet",
             "label": "Pretzel Stick / Cracker",
+            "yield_unit": "sticks",
             "icon": "🥖",
             "description": "Ultra-low hydration, brittle, snapping structure.",
             "grain_affinity": "high_protein",

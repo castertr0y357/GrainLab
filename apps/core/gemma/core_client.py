@@ -280,48 +280,50 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
     if ai_thinking_enabled:
         payload["reasoning_effort"] = ai_thinking_effort
 
-    try:
-        # Enforce a 600-second timeout to allow the model sufficient time to load and generate responses
-        response = requests.post(url, headers=headers, json=payload, timeout=600.0)
-        logger.info(f"[AI] - HTTP Response Code: {response.status_code}")
-        if response.status_code == 200:
-            data = response.json()
-            content_str = data["choices"][0]["message"]["content"].strip()
-            logger.info(f"[AI] - Raw Content Received: {content_str}")
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Enforce a 600-second timeout to allow the model sufficient time to load and generate responses
+            response = requests.post(url, headers=headers, json=payload, timeout=600.0)
+            logger.info(f"[AI] - HTTP Response Code: {response.status_code}")
+            if response.status_code == 200:
+                data = response.json()
+                content_str = data["choices"][0]["message"]["content"].strip()
+                logger.info(f"[AI] - Raw Content Received: {content_str}")
 
-            # Clean possible markdown wrap ```json ... ```
-            if content_str.startswith("```"):
-                lines = content_str.splitlines()
-                if lines[0].startswith("```json") or lines[0].startswith("```"):
-                    content_str = "\n".join(lines[1:-1])
+                # Clean possible markdown wrap ```json ... ```
+                if content_str.startswith("```"):
+                    lines = content_str.splitlines()
+                    if lines[0].startswith("```json") or lines[0].startswith("```"):
+                        content_str = "\n".join(lines[1:-1])
 
-            # Resilient JSON Processing Gate: heal the JSON string
-            healed_content_str = heal_json_string(content_str)
-            try:
-                parsed_json = json.loads(healed_content_str)
-            except Exception as parse_err:
+                # Resilient JSON Processing Gate: heal the JSON string
+                healed_content_str = heal_json_string(content_str)
+                try:
+                    parsed_json = json.loads(healed_content_str)
+                except Exception as parse_err:
+                    logger.error(
+                        f"[AI] - Parsing Failed - Error: {parse_err}. Raw: {content_str}. Healed: {healed_content_str}"
+                    )
+                    parsed_json = json.loads(content_str)
+                logger.info(f"[AI] - Parsed JSON: {parsed_json}")
+
+                # Validate keys if requested
+                if expected_keys:
+                    if not all(k in parsed_json for k in expected_keys):
+                        logger.warning(f"[AI] - Parsing - Response missing expected keys {expected_keys}")
+                        continue  # Try again on missing keys
+
+                cache.set(cache_key, parsed_json, timeout=None)
+                return parsed_json
+            else:
                 logger.error(
-                    f"[AI] - Parsing Failed - Error: {parse_err}. Raw: {content_str}. Healed: {healed_content_str}"
+                    f"[AI] - HTTP Error - Endpoint returned status {response.status_code}\nRESPONSE BODY:\n{response.text}"
                 )
-                parsed_json = json.loads(content_str)
-            logger.info(f"[AI] - Parsed JSON: {parsed_json}")
-
-            # Validate keys if requested
-            if expected_keys:
-                if not all(k in parsed_json for k in expected_keys):
-                    logger.warning(f"[AI] - Parsing - Response missing expected keys {expected_keys}")
-                    return None
-
-            cache.set(cache_key, parsed_json, timeout=None)
-            return parsed_json
-        else:
-            logger.error(
-                f"[AI] - HTTP Error - Endpoint returned status {response.status_code}\nRESPONSE BODY:\n{response.text}"
-            )
-    except requests.Timeout:
-        logger.warning("[AI] - Timeout - Gemma server timed out.")
-    except Exception as e:
-        logger.error(f"[AI] - Error - Failed calling local Gemma: {str(e)}")
+        except requests.Timeout:
+            logger.warning(f"[AI] - Timeout - Gemma server timed out (Attempt {attempt + 1}/{max_retries}).")
+        except Exception as e:
+            logger.error(f"[AI] - Error - Failed calling local Gemma: {str(e)} (Attempt {attempt + 1}/{max_retries})")
 
     return None
 
@@ -1234,6 +1236,7 @@ def stream_final_insights(
         "   - CRITICAL: You MUST strictly follow the chronological phases provided in `engine_timeline_steps`. You MUST use the exact `name` and map the exact `duration_sec` to `time_estimate_sec` for each phase, UNLESS the phase description provides a flexible time range (e.g. 1 to 24 hours). If a range is provided, you MUST pick a specific optimal duration (e.g. 24 hours) and convert THAT specific time into seconds for your `time_estimate_sec`. Weave the `process_recommendations` details into the appropriate timeline step (e.g., mention the 'Baking Vessel' during the Bake step, use 'Mixing Method' during the Mix/Knead steps). Do NOT create standalone steps named after equipment.\n"
         "   - CRITICAL: You MUST ensure EVERY single ingredient listed in `calculated_recipe_data` (including binders, salt, sweeteners, and inclusions) is explicitly added during the appropriate phase. Do not leave any ingredients out of the directions.\n"
         "   - CRITICAL INSTRUCTION DEPTH: Do not just output empty steps. You must provide a rich, detailed 'instruction' string for EACH phase explaining EXACTLY 'how we are making it', incorporating temperature goals, sensory cues (e.g., 'until it pulls away from the bowl'), and precise techniques. If you mention time durations in the text, you MUST explicitly output duration in minutes or hours (e.g., '5 minutes'). Do NOT use 'seconds' unless the step takes less than 1 minute. Do NOT include the seconds in parenthesis next to the minutes. Ensure the text duration exactly matches your `time_estimate_sec`.\n"
+        "   - CRITICAL PREP DETAILS: For ANY ingredient that requires physical preparation prior to mixing (e.g., cutting fats into specific shapes/sizes, tempering liquids, chopping inclusions, sifting dry ingredients, or blooming yeast), you MUST explicitly describe the required size, shape, temperature, or preparation method BEFORE it is added. Do not assume the user knows how to prep the ingredient (e.g., do not just say 'add the butter', specify how to prepare it first).\n"
     )
 
     # Organize recipe_data into a clean, categorized list of ingredients WITHOUT weights

@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class CookieEngine(BaseEngine):
     name = "Cookies & Shortbread Engine"
     slug = "cookie"
+    default_yield_unit = "cookies"
     default_binder_pct = 0.35
     default_salt_pct = 0.008
     target_protein_min = 8.5

@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class PanEngine(BaseEngine):
     name = "Enriched & Soft Engine"
     slug = "pan"
+    default_yield_unit = "loaves"
     target_protein_min = 11.5
     target_protein_max = 13.0
     gluten_behavior = "High Shreddability. Must possess enough structural lift to support heavy lipid loads (butter, sugar, milk, egg yolks) without collapsing."
