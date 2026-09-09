@@ -62,7 +62,7 @@ class ToggleWheatBerryActiveView(View):
 
 
 class DeleteWheatBerryView(View):
-    def get(self, request: HttpRequest, id: uuid.UUID):
+    def post(self, request: HttpRequest, id: uuid.UUID):
         """
         Deletes a wheat berry from inventory.
         """
@@ -92,7 +92,7 @@ class AddEquipmentView(View):
 
 
 class DeleteEquipmentView(View):
-    def get(self, request: HttpRequest, id: uuid.UUID):
+    def post(self, request: HttpRequest, id: uuid.UUID):
         """
         Deletes equipment from inventory.
         """
