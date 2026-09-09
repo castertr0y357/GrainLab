@@ -31,9 +31,8 @@
     <form hx-post="{% url 'save_settings' %}" 
           hx-target="#settings-feedback" 
           hx-indicator="#settings-indicator"
-          hx-disabled-elt="button[type='submit']"
           @submit="submitting = true"
-          @htmx:after-request="submitting = false">
+          @htmx:after-request.camel="submitting = false">
         {% csrf_token %}
         
         <!-- TAB: AI -->
