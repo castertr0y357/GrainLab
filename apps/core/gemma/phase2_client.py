@@ -173,7 +173,7 @@ def analyze_wheat_berry_ai(name: str) -> dict | None:
         "'protein_content' (float, default 12.0), "
         "'hardness' (string: 'hard', 'soft', 'durum', or 'ancient'), "
         "'moisture_absorption_coef' (float, default 1.0; standard AP is 1.0, whole wheat is 1.03, spelt is 1.05, durum is 1.08, einkorn is 1.04), "
-        "and 'notes' (string, summary description of properties)."
+        "and 'notes' (string, summary description of properties, STRICTLY limited to 2-3 concise sentences)."
     )
     user_prompt = json.dumps({"name": name})
 
@@ -247,7 +247,7 @@ def analyze_equipment_ai(name: str, equipment_type: str) -> dict | None:
         "You are a food science assistant. Analyze the equipment name and type provided and estimate its specifications. "
         "Return a JSON object with keys: "
         "'friction_heat_factor' (float, friction temperature rise in Fahrenheit. For mixers/kneaders, standard stand mixers add 10.0, Ankarsrum/spiral mixers add 6.0, manual hand kneading is 2.0, bread machines add 15.0. For other non-mixer equipment type, return 0.0), "
-        "'notes' (string, summary description of capabilities and recommendations), "
+        "'notes' (string, summary description of capabilities and recommendations, STRICTLY limited to 2-3 concise sentences), "
         "and 'details' (JSON object containing other details like 'capacity_grams' (integer, estimated capacity) or 'recommended_speed' (string))."
     )
     user_prompt = json.dumps({"name": name, "type": equipment_type})
