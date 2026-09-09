@@ -13,7 +13,7 @@ from apps.core.services.ai.analysis_service import (
 
 
 class AiAnalyzeWheatBerryView(View):
-    def get(self, request: HttpRequest, id: uuid.UUID):
+    def post(self, request: HttpRequest, id: uuid.UUID):
         """
         Runs AI analysis for a specific wheat berry.
         """
@@ -29,7 +29,7 @@ class AiAnalyzeWheatBerryView(View):
 
 
 class AiAnalyzeEquipmentView(View):
-    def get(self, request: HttpRequest, id: uuid.UUID):
+    def post(self, request: HttpRequest, id: uuid.UUID):
         """
         Runs AI analysis for a specific equipment item.
         """
@@ -44,7 +44,7 @@ class AiAnalyzeEquipmentView(View):
 
 
 class BulkAiAnalyzeView(View):
-    def get(self, request: HttpRequest):
+    def post(self, request: HttpRequest):
         """
         Analyzes all unanalyzed inventory items.
         """
@@ -63,7 +63,7 @@ class BulkAiAnalyzeView(View):
 
 
 class RedoAiAnalysisView(View):
-    def get(self, request: HttpRequest, item_type: str, id: uuid.UUID):
+    def post(self, request: HttpRequest, item_type: str, id: uuid.UUID):
         """
         Re-analyzes an item (overriding manual tweaks).
         """
