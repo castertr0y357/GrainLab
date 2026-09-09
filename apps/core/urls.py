@@ -52,7 +52,7 @@ urlpatterns = [
     # Inventory routes
     path("inventory/", views.InventoryPageView.as_view(), name="inventory_page"),
     path("inventory/wheat-berry/add/", views.AddWheatBerryView.as_view(), name="add_wheat_berry"),
-    path("inventory/wheat-berry/edit/<uuid:id>/", views.EditWheatBerryView.as_view(), name="edit_wheat_berry"),
+    path("inventory/wheat-berry/edit/", views.EditWheatBerryView.as_view(), name="edit_wheat_berry"),
     path(
         "inventory/wheat-berry/toggle/<uuid:id>/",
         views.ToggleWheatBerryActiveView.as_view(),
@@ -65,7 +65,7 @@ urlpatterns = [
         name="ai_analyze_wheat_berry",
     ),
     path("inventory/equipment/add/", views.AddEquipmentView.as_view(), name="add_equipment"),
-    path("inventory/equipment/edit/<uuid:id>/", views.EditEquipmentView.as_view(), name="edit_equipment"),
+    path("inventory/equipment/edit/", views.EditEquipmentView.as_view(), name="edit_equipment"),
     path("inventory/equipment/delete/<uuid:id>/", views.DeleteEquipmentView.as_view(), name="delete_equipment"),
     path("inventory/equipment/analyze/<uuid:id>/", views.AiAnalyzeEquipmentView.as_view(), name="ai_analyze_equipment"),
     path("inventory/bulk-analyze/", views.BulkAiAnalyzeView.as_view(), name="bulk_ai_analyze"),

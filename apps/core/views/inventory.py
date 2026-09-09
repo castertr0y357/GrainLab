@@ -106,8 +106,9 @@ class DeleteEquipmentView(View):
 
 
 class EditWheatBerryView(View):
-    def post(self, request, id):
-        wb = get_object_or_404(WheatBerry, id=id)
+    def post(self, request):
+        wb_id = request.POST.get("id")
+        wb = get_object_or_404(WheatBerry, id=wb_id)
         if wb.user and wb.user != request.user:
             return HttpResponse("Unauthorized", status=403)
 
@@ -121,8 +122,9 @@ class EditWheatBerryView(View):
 
 
 class EditEquipmentView(View):
-    def post(self, request, id):
-        eq = get_object_or_404(Equipment, id=id)
+    def post(self, request):
+        eq_id = request.POST.get("id")
+        eq = get_object_or_404(Equipment, id=eq_id)
         if eq.user and eq.user != request.user:
             return HttpResponse("Unauthorized", status=403)
 

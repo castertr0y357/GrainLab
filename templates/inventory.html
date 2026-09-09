@@ -330,11 +330,13 @@
                 <button @click="showEditBerryModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
             </div>
             
-            <form :action="'/inventory/wheat-berry/edit/' + editBerryData.id + '/'" method="POST"
+            <form hx-post="{% url 'edit_wheat_berry' %}"
                   style="display: flex; flex-direction: column; gap: 1rem;"
                   x-data="{ submitting: false }"
-                  @submit="submitting = true">
+                  @submit="submitting = true"
+                  @htmx:after-request.camel="submitting = false">
                 {% csrf_token %}
+                <input type="hidden" name="id" :value="editBerryData.id">
                 <div class="input-group">
                     <label>Berry Name</label>
                     <input type="text" name="name" class="num-input" x-model="editBerryData.name" required>
@@ -440,11 +442,13 @@
                 <button @click="showEditEquipmentModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
             </div>
             
-            <form :action="'/inventory/equipment/edit/' + editEqData.id + '/'" method="POST"
+            <form hx-post="{% url 'edit_equipment' %}"
                   style="display: flex; flex-direction: column; gap: 1rem;"
                   x-data="{ submitting: false }"
-                  @submit="submitting = true">
+                  @submit="submitting = true"
+                  @htmx:after-request.camel="submitting = false">
                 {% csrf_token %}
+                <input type="hidden" name="id" :value="editEqData.id">
                 <div class="input-group">
                     <label>Equipment Name</label>
                     <input type="text" name="name" class="num-input" x-model="editEqData.name" required>
