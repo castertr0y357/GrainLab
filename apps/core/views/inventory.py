@@ -86,7 +86,7 @@ class AddEquipmentView(View):
             eq.user = request.user
             eq.save()
             response = HttpResponse(status=204)
-            response["HX-Redirect"] = reverse("inventory_page")
+            response["HX-Redirect"] = reverse("inventory_page") + "?tab=equipment"
             return response
         return HttpResponse(f"<div class='error-box' style='color:red;'>{form.errors.as_text()}</div>", status=400)
 
@@ -101,7 +101,7 @@ class DeleteEquipmentView(View):
             return HttpResponse("Unauthorized", status=403)
         eq.delete()
         response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse("inventory_page")
+        response["HX-Redirect"] = reverse("inventory_page") + "?tab=equipment"
         return response
 
 
@@ -132,6 +132,6 @@ class EditEquipmentView(View):
         if form.is_valid():
             form.save()
             response = HttpResponse(status=204)
-            response["HX-Redirect"] = reverse("inventory_page")
+            response["HX-Redirect"] = reverse("inventory_page") + "?tab=equipment"
             return response
         return HttpResponse(f"<div class='error-box' style='color:red;'>{form.errors.as_text()}</div>", status=400)

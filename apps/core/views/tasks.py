@@ -40,7 +40,11 @@ class TaskStatusView(View):
 
         elif task.status == "SUCCESS":
             response = HttpResponse(status=200)
-            response["HX-Redirect"] = reverse("inventory_page")
+            redirect_url = reverse("inventory_page")
+            tab = request.GET.get("tab")
+            if tab:
+                redirect_url += f"?tab={tab}"
+            response["HX-Redirect"] = redirect_url
             return response
 
         else:  # FAILED

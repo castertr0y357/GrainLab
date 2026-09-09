@@ -36,7 +36,7 @@ class AiAnalyzeEquipmentView(View):
         task_id = queue_analyze_equipment(id)
 
         return HttpResponse(
-            f'<div hx-get="{reverse("task_status", args=[task_id])}" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
+            f'<div hx-get="{reverse("task_status", args=[task_id])}?tab=equipment" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
             f'  <span class="spinner" style="width: 12px; height: 12px;"></span>'
             f'  <span style="font-size: 0.8rem; color: var(--text-muted);">AI Running...</span>'
             f'</div>'
@@ -68,9 +68,11 @@ class RedoAiAnalysisView(View):
         Re-analyzes an item (overriding manual tweaks).
         """
         task_id = queue_redo_analysis(item_type, id)
+        
+        tab_param = "?tab=equipment" if item_type == "equipment" else ""
 
         return HttpResponse(
-            f'<div hx-get="{reverse("task_status", args=[task_id])}" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
+            f'<div hx-get="{reverse("task_status", args=[task_id])}{tab_param}" hx-trigger="every 1s" hx-swap="outerHTML" style="display: flex; align-items: center; gap: 0.25rem;">'
             f'  <span class="spinner" style="width: 12px; height: 12px;"></span>'
             f'  <span style="font-size: 0.8rem; color: var(--text-muted);">AI Running...</span>'
             f'</div>'

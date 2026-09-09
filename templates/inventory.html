@@ -15,7 +15,7 @@
     }
 </style>
 <div x-data="{ 
-    activeTab: 'wheat-berries',
+    activeTab: new URLSearchParams(window.location.search).get('tab') || 'wheat-berries',
     
     // Wheat Berry Modals
     showAddBerryModal: false,
