@@ -173,7 +173,7 @@ def analyze_wheat_berry_ai(name: str) -> dict | None:
         "'protein_content' (float, default 12.0), "
         "'hardness' (string: 'hard', 'soft', 'durum', or 'ancient'), "
         "'moisture_absorption_coef' (float, default 1.0; standard AP is 1.0, whole wheat is 1.03, spelt is 1.05, durum is 1.08, einkorn is 1.04), "
-        "and 'notes' (string, summary description of properties, STRICTLY limited to 2-3 concise sentences)."
+        "and 'notes' (string, summary description of properties, STRICTLY limited to 2-3 concise sentences. Focus exclusively on flavor profile, culinary suitability, and texture. Do NOT mention protein percentage or moisture absorption in the notes, as these are already displayed elsewhere)."
     )
     user_prompt = json.dumps({"name": name})
 
