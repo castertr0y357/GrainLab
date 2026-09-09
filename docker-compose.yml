@@ -20,6 +20,8 @@ services:
 
   web:
     build: .
+    ports:
+      - "${LOCAL_PORT:-8000}:8000"
     environment:
       - DATABASE_URL=postgres://${DB_USER:-grainlab_user}:${DB_PASSWORD}@db:${DB_PORT:-5432}/${DB_NAME:-grainlab}
       - SECRET_KEY=${SECRET_KEY}
