@@ -182,6 +182,196 @@
 - [x] Implement dynamic recipe scaler with portionable support (0.5x increments for cookies, muffins, rolls; 1.0x increments for loaves, cakes) and AI-generated default yield amounts.
 - [x] Fix Alpine.js syntax errors (`Unexpected token '*'`, `Invalid or unexpected token`) in `final_recipe.html` by using `|default:"0"` template filters and safe fallback expressions.
 - [x] Fix `AttributeError: 'NoneType' object has no attribute 'get'` and 500 server errors on AI recipe generation endpoints by implementing defensive null-value handling for `secondary_ingredients`, `geometry_evaluation`, and `calibration` dictionaries in `calculation.py` and `phase2_client.py`.
+# Project Status: GrainLab
+
+## 📋 Summary of Completed Tasks
+- [x] Integrate AI-inferred flavor profile classification (Sweet vs Savory vs Neutral) to securely enforce math constraints inside `BaseEngine` calculate flow
+- [x] Implement robust multi-engine QA test suite (`run_qa_recipes`) evaluating AI structural math via phase 3 pipeline
+- [x] Initialize Git repository
+- [x] Sync project rules files (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.windsurfrules`)
+- [x] Create detailed `implementation_plan.md` for building the entire web application
+- [x] Bootstrap Django & PostgreSQL container stack (Docker Compose, settings, env, bootstrapping)
+- [x] Build Baker's Math engine, classifiers, dynamic sliders, and Fail-Safe modifiers
+- [x] Integrate local Gemma AI client & Zero-Freeform-Text endpoints
+- [x] Build HTMX + Alpine.js interactive UI ("Countertop Mode")
+- [x] Add unit, integration, and dynamic route scanning tests
+- [x] Move local AI parameters exclusively to database settings (remove from env settings)
+- [x] Parameterize local port bindings and DB options inside `.env` configurations
+- [x] Implement coordinate-based Euclidean Classifier Engine and dynamic feedback panel
+- [x] Migrate form inputs to simplified Texture and Crumb sliders
+- [x] Fix JSX template syntax errors in Alpine.js forms
+- [x] Add automated unit tests verifying the classifier coordinates and ratio mappings
+- [x] Fix CSRF trusted origins for custom LOCAL_PORT, define SECURE_PROXY_SSL_HEADER, and make checkbox parsing robust to resolve settings save issue
+- [x] Correct HTMX script Subresource Integrity (SRI) digest in base.html to prevent browser blocking
+- [x] Implement Wheat Berry inventory and dynamic blend mix generator matching Texture and Crumb sliders
+- [x] Implement Equipment inventory management and custom mixer friction heat water temperature calibration
+- [x] Add Gemma AI analysis support for wheat berry specs (protein, hardness, absorption) and equipment details (friction factor, notes)
+- [x] Implement batch/bulk AI analysis and redo AI analysis endpoints
+- [x] Add interactive frontend tab layout for managing supply gear and berries
+- [x] Convert bread calculator UI into a 4-phase step-by-step progressive flowchart interface guided by Alpine.js and HTMX
+- [x] Offload Euclidean distance calculation to database via Django ORM annotate and remove unused context queries
+- [x] Migrate background task processing to Celery/Redis and upgrade application caching to Redis backend
+- [x] Configure WhiteNoise middleware and compressed static file storage for efficient production static asset serving
+- [x] Implement Grain Bin Optimizer and structural safety blender for high-rise presets with automatic 70% structural grain enforcement and warnings
+- [x] Implement context-aware validation sliders for Phase 4 (Hydration & Crumb/Texture) with dynamic constraints and shifting limits
+- [x] Implement bottom Navigation Control bar with Step Back and touch-friendly Hard Reset buttons
+- [x] Refactor sidebar recipe output with flat, borderless styling, transparent pill badges, and state-aware progressive rendering mapping (Phases 1-4)
+- [x] Unify sidebar container styles using standard card classes and hide Phase 1 classification predictive data
+- [x] Move Bagel preset to Category 3 (Alkaline Bath) and expand subtypes list
+- [x] Relocate global search bar to Phase 1 and advance search selection directly to Phase 3
+- [x] Isolate sidebar state panel visibility to Phase 3+ and replace with placeholder string when current_phase < 3
+- [x] Map default historically ideal wheat berries in Grain Optimizer grid
+- [x] Integrate Gemma AI client grain blend optimizer with safety rebalancing fallback
+- [x] Relocate Temperature Calibration to Phase 3 and integrate Kneading Method / Proofing Environment parameters
+- [x] Implement mass-based and Form Factor dynamic baking temperature/time profile scaling
+- [x] Relocate sourdough starter diagnostics card to Phase 4
+- [x] Implement full-width Initialize Bake button and countertop active sequential timeline countdown dashboard
+- [x] Write and run automated tests verifying all refactored progressive workflow features and logic
+- [x] Implement persistent global Standard vs Advanced toggles for Phase 3 and Phase 4
+- [x] Convert Mixing Equipment, Kneading Method, Proofing Environment, Milling Profile, and Chemical Substitutions to tactile option pill button layouts
+- [x] Add dynamic target recipe header at the top of the right-hand sidebar
+- [x] Enforce progressive ledger visibility: hide Compiled Formula rows during Phase 1-3
+- [x] Expand Compiled Formula layout to display precise sub-item breakdowns under parent headers
+- [x] Overhaul Phase 4 fine-tuning sliders to flank tracking rails with polar extremes and remove description text blocks
+- [x] Re-engineer Countertop Live Timeline view state into an interactive, manual kitchen control deck with Audio beep loop, Count-Up overtime, large pill buttons, dynamic readout shifts, mixer speeds/hooks instruction blocks, and proof preheat alerts
+- [x] Write and run unit tests verifying the AJAX countertop metadata attribute outputs and timeline calculations
+- [x] Refactor Phase 4 Editor Modes (tactile buttons with neon glow active state)
+- [x] Implement Form Factor Cards (remove dropdown, replace with option pills, group/show recommended in Standard Mode, show all in Advanced Mode)
+- [x] Implement unit-based yield scaling engine and form factor card refactoring
+- [x] Complete security and code quality audit configurations (.env bootstrapping, pre-flight DB checks, auto-seeding, correlation middleware, and logger filters)
+- [x] Implement database backups command and schedule guidelines in README
+- [x] Migrate inventory IDs to UUIDs and implement database-level soft deletes on WheatBerry and Equipment models
+- [x] Offload local AI Gemma analyses to background thread pool tasks with UUID task polling, progress bars, and HTMX indicators
+- [x] Integrate Alpine.js and HTMX double-submit button protections across settings and inventory forms
+- [x] Write and verify comprehensive security, soft-delete, and correlation ID unit tests
+- [x] Refactor GrainLab math engine and timelines into 11 Isolated Domain-Specific Sub-Engines under `grainlab/engines/`
+- [x] Add comprehensive unit tests verifying the 11 sub-engine calculations, ceilings, and step generators
+- [x] Fix Alpine.js `x-data` syntax error in `templates/calculator.html` by converting inline comments to block comments and double quotes to single quotes
+- [x] Implement dynamic 11-category grid in Phase 1 matching the 11 math engines and align subcategory presets dynamically using category slugs
+- [x] Remove confusing standard/advanced editor modes, displaying all active stocks and permissible form factors cleanly
+- [x] Style form factor selection buttons to match the substitution pills exactly, with dynamic status tags and active warning/accent glows
+- [x] Support intuitive fractional batch scaling (steps of 0.5, minimum scale of 0.5) using the direct multiplier formula
+- [x] Limit grain advisory visibility in Phase 2 strictly to Fresh-Milled Whole Grain mode, hiding it for refined flour
+- [x] Disable auto-advancing when clicking Store Refined Flour, displaying the Proceed to Recipe Configuration button instead
+- [x] Implement Fully Parametric, Heuristic-Driven Production Context Engines across all 11 sub-engines and dynamic workspace input decks
+- [x] Implement Global AI Toggle and Split-Pane Contextual Sidebar Inspector with Gemma E4B models and local dictionary fallbacks
+- [x] Implement Culinary Sovereignty override clause and dynamic Parametric/Factual profiles in the local AI inference pipeline
+- [x] Split AI and Algorithmic system operations, hide Factual Science Profile when AI is enabled, and add Ways to Elevate recipe suggestions
+- [x] Fix Alpine.js cross-scope reactivity for grain card highlighting/sorting and resolve htmx:targetError by swapping outerHTML to innerHTML for calculator-form-container
+- [x] Implement offline mock mode schema-compliant payloads for call_gemma_api when MOCK_MODE is enabled to ensure robust local development testing
+- [x] Optimize Gemma LLM pipeline by querying all grains at once and caching responses in memory using MD5 hashed query key
+- [x] Fix child component state loss after HTMX swaps by initializing localGrainEvals directly from parent grainEvaluations
+- [x] Fix grain card sorting/borders by directly referencing parent reactive grainEvaluations array from the child component
+- [x] Hide Labor ROI Matrix block for grains since labor matrix is reserved for methods and secondary ingredients
+- [x] Separate Ways to Elevate from individual grains, returning a single global recommendation per recipe preset/category and caching it on load
+- [x] Optimize hover sidebar inspector to look up grain details locally from the cached advisory list without invoking network LLM calls on mouseover
+- [x] Implement 2-Tier Polymorphic Recipe Generation Row: Tier 1 Archetype Deck (x-for loop over enginesArchetypes) + Tier 2 DynamicVariantRow (LLM-generated clickable variant sub-cards)
+- [x] Hard-lock system to fresh-milled whole grain mode: removed Store Refined Flour vs Fresh-Milled toggle, made grain_mode permanently 'milled', Milling Profile Parameters card always visible with accent border
+- [x] Wire Tier 2 variant cards to sidebar inspector: @mouseenter/@focusin populate StaticInspectorCard and AIInsightCard; @click applies golden highlight ring to recommended grain bins via recommended_grain_ids
+- [x] Implement universal polymorphic naming convention: active_archetype_id, generated_variants, recommended_grain_ids, hovered_variant across all Alpine.js state and backend views
+- [x] Add /generate-variants/ JSON endpoint with polymorphic data contract (variant_id, variant_name, recommended_grain_ids, sidebar_science_profile, sidebar_ai_insight)
+- [x] Add GenerateVariantsTests test class (5 tests) verifying 400 on missing params, 200 on valid params, and full data contract schema compliance
+- [x] Fix route scanner test to pass required query params for generate_variants endpoint
+- [x] `urls.py` and `views.py` expanded with AI endpoints for Tier 2 and advisory.
+- [x] Implemented `ai_optimize_shares` in `views.py` to support LLM-driven flour ratio calculation.
+- [x] Implemented `ai_batch_insights` in `views.py` to front-load component evaluations for the sidebar.
+- [x] `calculator.html` uses Alpine.js for interactive state, including asynchronous data fetching, dynamic tier rendering, and one-shot batch insights loading.
+- [x] Phase 3 loader overlay added for flour ratio processing time.
+- [x] Fix AI Grain Advisory fetching in Phase 2 by removing shadowed functions in `calculator_form.html` that prevented `fetchGrainEvaluations` from triggering and correctly utilizing `escapejs` / `JSON.parse` for `enginesArchetypes` injection.
+- [x] Fix Alpine.js `x-data` double quote comment truncation bug that broke HTML attribute parsing and caused widespread ReferenceErrors
+- [x] Fix grain card sorting/borders by prefixing `this.` to parent property references in child helper functions (`sortedBerriesFor`, `getGrainStyle`)
+- [x] Fix grain hover evaluation matching and duplicate AJAX calls by removing redundant/invalid `fetchAdvisory(recipe_name)` call from `selectRecipe`
+- [x] Implement system prompt directives and `reasoning_effort` payload forwarding in `call_gemma_api` to ensure local LLM honors the user's AI thinking mode preferences
+- [x] Drop Creativity Level 3 (Experimental Profiles) from templates, schemas, mocks, and prompts to streamline LLM response latency
+- [x] Implement on-demand lazy loading details endpoint `/ai-recipe-details/` to fetch recipe-specific science profile and ways to elevate only when a recipe is actively selected
+- [x] Implement dynamic progressive loading checklist UI for recipe generation and recipe details compilation
+- [x] Add automated unit tests validating the 10-recipe list schema, lazy loading endpoint parameters, and dynamic route scanner check
+- [x] Fix double quote premature termination of x-data attribute inside calculator_form.html to resolve browser-side Alpine.js ReferenceErrors
+- [x] Fix double quote premature termination of x-data attribute inside calculator.html and escape single quote in baker's label to resolve browser-side Alpine.js ReferenceErrors
+- [x] Implement flavor-focused recipe profiles and grain accentuation in system prompts and mock fallbacks
+- [x] Streamline alternative variants row to flow seamlessly underneath the main card deck using standard solid card styling and no separate section title
+- [x] Implement dynamic 8-card non-repeating recipe variant generation and parameter exclusion filtering
+- [x] Implement Phase 2 Sidebar inspector details preview and explicit SELECT RECIPE button confirmations
+- [x] Remove mouse-over/mouseenter events on recipe cards to lock sidebar state to active selection
+- [x] Clean up active target/preset brackets and prefix titles from the sidebar headers
+- [x] Harden LLM prompts and view converters to resolve grain UUIDs to human-readable names and ban IDs in responses
+- [x] Enforce double temperature scale formats (Celsius & Fahrenheit) in prompts and fallback mocks
+- [x] Fix archetype card hover mouse-leaves to restore the selected recipe's active science profile details
+- [x] Implement menu-style flavor description above the Technical Science Profile in Phase 2 sidebar
+- [x] Integrate human-readable recipe target names into LLM prompts and create flavor-specific local mock fallback descriptions
+- [x] Restore progressive Grain Optimizer and secondary ingredients configuration decks to Phase 2, popping them up immediately upon card selection
+- [x] Delegate required secondary ingredients and permissible option/substitution selectors entirely to the LLM (or fallback mock matcher)
+- [x] Defer recommended grain identification until the specific recipe details API load
+- [x] Restructure sidebar layout to append contextual info below static cards on hover/focus instead of clearing
+- [x] Resolve duplicate sortedBerriesFor and getGrainStyle definitions in partial forms x-data to fix card borders and sorting
+- [x] Embed progressive loading checklists inside the Grain Bin Optimizer box during fetch phases
+- [x] Unify persistent recipe headers at the top of the sidebar and hide standard panels on hover to prevent stacking
+- [x] Fix not recommended grain borders by triggering fetchAdvisory upon recipe selection confirmation
+- [x] Bind grain evaluations specifically to the active recipe name rather than category fallbacks
+- [x] Correct isIdealGrain category defaults to avoid false-positive recommended borders for cookies
+- [x] Dispatch recipe-details-updated event to synchronize secondary ingredients selection deck between outer and inner Alpine scopes safely without throwing TypeErrors
+- [x] Synchronize advisoryLoading phase with a dedicated advisory_steps paced checklist animation to prevent static/pre-completed lists from showing while the request is loading
+- [x] Fix cookie variant sub-engine routing bug in router.py by refining the chocolat keyword match to pain-au-chocolat
+- [x] Resolve Alpine.js TypeErrors by adding safe null-checks to hovered_element.startsWith and optional chaining to engines_ff
+- [x] Integrate `target_archetype_mechanics` containing physical/mechanical targets to all archetypes inside the 11 engine modules.
+- [x] Refactor `apps/core/gemma_client.py` to construct dynamic prompt compiler and strict JSON output schema gate `evaluation_result`.
+- [x] Scrub legacy hardcoded overrides, helper functions, and narrative descriptions from `gemma_client.py`, `seed_db.py`, and client templates.
+- [x] Run and verify all 49 Django tests successfully.
+- [x] Execute absolute file depletions of legacy code paths in `gemma_client.py`.
+- [x] Strip all textual descriptions from `apps/core/grain_registry.json` leaving raw chemical specifications.
+- [x] Implement explicit state purge on archetype change in Alpine.js to prevent context leakage.
+- [x] Force explicit real-time dynamic binding of archetype mechanics read directly from sub-engine files.
+- [x] Implement unique composite cache keys (engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}) in evaluate_single_grain.
+- [x] Force strict input context sanity check for AI Elevators in get_grain_advisory_ai (passing only selected/native grains and specialty ingredients).
+- [x] Implement frontend pointer hover debouncing (300ms) for `/ai-sidebar-insight/` requests in `calculator.html`.
+- [x] Combine evaluations and elevate tips into a single `/ai-grain-advisory/` request.
+- [x] Add persistent File-Based cache engine in `settings.py`.
+- [x] Replace memory cache dicts with Django persistent `cache` in `gemma_client.py`.
+- [x] Implement user prompt key/list normalization in `call_gemma_api`.
+- [x] Add comprehensive unit test `test_calculate_final_recipe_none_secondary_ingredients` in `tests.py` verifying None safety in math calculations.
+- [x] Add a static "Directions" block to the final recipe page to display step-by-step instructions outside of Countertop mode.
+- [x] Clean up Phase 4 sidebar by removing deprecated Substitution and Sensory Benchmark cards, and dynamically hide bread-specific Thermal Profile metrics (DDT/Probe Temp) for non-yeasted bakes.
+- [x] Fix liquid mediums (e.g. lemon juice) not appearing in final cookie recipes by updating `cookie_engine.py` to allow a small hydration factor (5%) if an explicit non-water liquid is requested.
+- [x] Fix AI Tweak Exclusions: Update backend session state to prepend 'Applied: ' to tweak titles, and update `applyTweak` on the frontend to automatically discard remaining tweaks into history and fetch a fresh batch of tweaks so the UI doesn't remain blank.
+- [x] Fix 500 TypeError on recipe save by ensuring Django model objects (`FormFactor` and `Category`) in the calculator state are serialized to dictionaries before saving to the database JSONField.
+- [x] Refactor Countertop Live Timeline UI: Display all steps sequentially in a vertical list, add native countdown timers with pause/resume and next/previous controls, and move water temperature calibration into the sidebar thermal profile during mixing.
+- [x] Add Baking Profile block to the shared recipe page sidebar to display Bake Temp, Bake Time, and Steam requirements.
+- [x] Fix duplicate recipe name in main window and correct database naming behavior to persist the custom user/AI `recipe_name` from Phase 2 instead of regenerating a messy raw slug concatenation.
+- [x] Refactored monolithic tests.py into an apps/core/tests/ package.
+- [x] Refactored seed_db.py data into JSON fixtures.
+- [x] Removed dead LLM batch generation functions and their associated tests.
+- [x] Installed and configured Ruff and pre-commit for formatting and linting, fixing over 860 style issues project-wide.
+- [x] Integrate Equipment Inventory into Phase 4 AI so process recommendations favor and explain using tools the user actually owns.
+
+## 🏗️ Architectural Changes & Decisions
+- SPA-feel using HTMX and Alpine.js with Gunicorn/Django serving html fragments.
+- High-contrast, mobile-friendly Vanilla CSS for kitchen environment safety.
+- Strict compliance with Separation of Infrastructure and Application Settings guidelines.
+- Offloaded synchronous HTTP third-party/local AI API queries to background threads with UUID-based status polling.
+- Migrated primary keys to non-predictable UUIDs for IDOR security compliance.
+- Switched deletion queries to soft deletes via custom SoftDeleteQuerySet and AllObjectsManager to prevent accidental data loss.
+- Injected Correlation IDs in logging formats and response headers (`X-Correlation-ID`) for request-response trace correlation.
+- Split monolithic math timeline module into 11 isolated domain-specific sub-engines with custom boundaries, structural grain ceilings, and dynamic step cards inheriting from `BaseEngine`.
+- Separated AI operations from local algorithmic rules: when AI is enabled, the backend bypasses all programmatic heuristics, hides the factual science profiles, and displays LLM-sourced recommendations and Ways to Elevate suggestions.
+- **Pure Polymorphic Relational Evaluation Matrix**: Replaced all hardcoded culinary grain exception logic and override loops with an objective dynamic prompt compiler combining `intrinsic_chemical_profile` (from `grain_registry.json`) and `target_archetype_mechanics` (defined inside the 11 sub-engines) analyzed via LLM or programmatic physical-chemical comparator.
+- **Unique Composite Caching & Input Filtering**: Implemented composite caching keys in `evaluate_single_grain` to isolate grain evaluations per engine/archetype/variant, and restricted input payloads for AI Elevators to actively selected/native recipe ingredients.
+- **High-Performance LLM Optimization**: Debounced front-end hover fetches to prevent request spam, combined split evaluations/elevate requests, batched inactive grain evaluations into a single API query, normalized prompt user payloads, and configured a persistent `FileBasedCache` backend to preserve cache entries across development server restarts.
+- **Modular System Prompt Assembly**: Re-architected system prompt construction into a fixed order kernel-and-module structure: Persona & Objective, Global Ruleset, Data Context Payload, Dynamic Engine Nuance Injection, and Specific Task Instruction Logic (placed closest to user inputs to maximize attention weighting).
+
+
+
+
+- Resolved UI Phase 3 and Phase 4 restructure.
+- Fixed sidebar CSS wrapping issue.
+- **Phase 3/4 UI Reactivity:** Fixed visual flickering in Phase 4 by directly mutating recommendation properties in Alpine.js state instead of object replacement.
+- **Phase 4 State Persistence:** Ensured `secondary_ingredients` generated in Phase 3 are persisted to the calculator state in Phase 4 so the LLM output properly matches UI components.
+- Refactored remaining phase templates (Phase 4 and beyond) to inherit from `phase_base.html` to maintain consistent sidebar/border layout.
+- Conducted thorough verification tests to ensure all complex functionality remains fully functional after template inheritance migration.
+- **Recipe Selection Pipeline**: Formula selections in Phase 2 correctly serialize state (name and secondary ingredients) into Django sessions via `Phase2View.post`, passing it effectively to `Phase3View`.
+- **Prompt Architecture**: The AI prompt in `phase2_client.py` has been explicitly tuned to force the LLM to provide mechanical/chemical justifications for `SUB-OPTIMAL` and `NOT RECOMMENDED` mill and sifter items (preventing parroting).
+- [x] Implement dynamic recipe scaler with portionable support (0.5x increments for cookies, muffins, rolls; 1.0x increments for loaves, cakes) and AI-generated default yield amounts.
+- [x] Fix Alpine.js syntax errors (`Unexpected token '*'`, `Invalid or unexpected token`) in `final_recipe.html` by using `|default:"0"` template filters and safe fallback expressions.
+- [x] Fix `AttributeError: 'NoneType' object has no attribute 'get'` and 500 server errors on AI recipe generation endpoints by implementing defensive null-value handling for `secondary_ingredients`, `geometry_evaluation`, and `calibration` dictionaries in `calculation.py` and `phase2_client.py`.
 - [x] Add comprehensive unit test `test_calculate_final_recipe_none_secondary_ingredients` in `tests.py` verifying None safety in math calculations.
 - [x] Add a static "Directions" block to the final recipe page to display step-by-step instructions outside of Countertop mode.
 - [x] Clean up Phase 4 sidebar by removing deprecated Substitution and Sensory Benchmark cards, and dynamically hide bread-specific Thermal Profile metrics (DDT/Probe Temp) for non-yeasted bakes.

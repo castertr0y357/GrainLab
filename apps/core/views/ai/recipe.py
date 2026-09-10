@@ -85,6 +85,19 @@ class AiGenerateSubstitutesView(View):
         return JsonResponse(result, status=200)
 
 
+def get_user_inventory(request):
+    if request.user.is_authenticated:
+        return [
+            {
+                "name": eq.name,
+                "type": eq.get_equipment_type_display(),
+                "notes": eq.notes,
+            }
+            for eq in request.user.equipment_set.all()
+        ]
+    return []
+
+
 class AiProcessAlternativesView(View):
     def post(self, request):
         try:
@@ -98,6 +111,7 @@ class AiProcessAlternativesView(View):
         if not form.is_valid():
             return JsonResponse({"error": form.errors}, status=400)
 
+        form.cleaned_data["user_inventory"] = get_user_inventory(request)
         result = process_alternatives(form.cleaned_data)
 
         if form.cleaned_data.get("stream"):
@@ -115,6 +129,7 @@ class AiProcessDetailsView(View):
         if not form.is_valid():
             return JsonResponse({"error": form.errors}, status=400)
 
+        form.cleaned_data["user_inventory"] = get_user_inventory(request)
         result = process_details(form.cleaned_data, request)
 
         if form.cleaned_data.get("stream"):

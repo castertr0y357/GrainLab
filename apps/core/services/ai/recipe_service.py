@@ -127,6 +127,7 @@ def process_alternatives(cleaned_data):
                     target_category=cleaned_data.get("target_category"),
                     original_recommendation=cleaned_data.get("original_recommendation"),
                     exclude_names=cleaned_data.get("exclude_names"),
+                    user_inventory=cleaned_data.get("user_inventory", []),
                 )
                 for chunk in generator:
                     yield f"data: {json.dumps(chunk)}\n\n"
@@ -145,6 +146,7 @@ def process_alternatives(cleaned_data):
         target_category=cleaned_data.get("target_category"),
         original_recommendation=cleaned_data.get("original_recommendation"),
         exclude_names=cleaned_data.get("exclude_names"),
+        user_inventory=cleaned_data.get("user_inventory", []),
     )
 
 
@@ -166,6 +168,7 @@ def process_details(cleaned_data, request):
                     recipe_name=cleaned_data.get("recipe_name"),
                     flavor_inclusions=combined_inclusions,
                     target=cleaned_data.get("target", "all"),
+                    user_inventory=cleaned_data.get("user_inventory", []),
                 )
                 for item in generator:
                     yield f"data: {json.dumps(item)}\n\n"
@@ -182,6 +185,7 @@ def process_details(cleaned_data, request):
         recipe_slug=cleaned_data.get("recipe_slug"),
         recipe_name=cleaned_data.get("recipe_name"),
         flavor_inclusions=combined_inclusions,
+        user_inventory=cleaned_data.get("user_inventory", []),
     )
 
 

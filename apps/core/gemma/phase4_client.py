@@ -218,7 +218,12 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
 
 
 def generate_process_details(
-    engine_id: str, active_archetype_id: str, recipe_slug: str, recipe_name: str, flavor_inclusions: list = None
+    engine_id: str,
+    active_archetype_id: str,
+    recipe_slug: str,
+    recipe_name: str,
+    flavor_inclusions: list = None,
+    user_inventory: list = None,
 ) -> dict | None:
     logger.info(f"[Gemma Client] - Info - Calling generate_process_details for: {recipe_slug}")
 
@@ -229,6 +234,8 @@ def generate_process_details(
             "Provide the top recommended option for the relevant categories among: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
             "CRITICAL: You MUST omit any category that is completely irrelevant or contradictory for the specific recipe type. For example, cookies generally do not need a 'proofing_environment' or 'baking_vessel'. If a category is unnecessary, simply do not include it in the JSON.\n"
             "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
+            "CRITICAL: If a tool from the user's provided inventory is appropriate for the recipe, you MUST recommend its use.\n"
+            "Whenever you select an inventory tool, explicitly mention it by name and weave its specific notes into your explanation.\n"
             "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
             "Also, if `supported_tweaks` is provided in the prompt, you MUST provide `slider_recommendations` for each tweak. For each tweak, provide a `recommended_value` (integer between 0 and 100, where 0 represents the extreme left pole and 100 represents the extreme right pole), and a detailed `explanation` formatted as HTML. The HTML explanation MUST contain three paragraphs: the first explaining what the left pole (0) achieves, the second explaining what the right pole (100) achieves, and the third explaining the reasoning for your specific recommended value.\n"
             "Your response MUST be pure JSON matching this schema exactly (omitting irrelevant keys in process_recommendations):\n"
@@ -262,6 +269,7 @@ def generate_process_details(
                 "supported_tweaks": supported_tweaks,
                 "tweak_labels": tweak_labels,
                 "flavor_inclusions": flavor_inclusions or [],
+                "user_inventory": user_inventory,
             }
         )
 
@@ -281,6 +289,7 @@ def stream_process_details(
     recipe_name: str,
     flavor_inclusions: list = None,
     target: str = "all",
+    user_inventory: list = None,
 ):
     """
     Streaming version of generate_process_details.
@@ -307,6 +316,8 @@ def stream_process_details(
             "Provide the top recommended option for all 5 categories: mixing_method, dough_handling, proofing_environment, baking_vessel, and shaping_style.\n"
             "Adapt the interpretation of each category to the specific recipe type. For example, for cookies or quick breads, 'proofing_environment' might refer to resting or chilling the dough, 'baking_vessel' refers to the baking sheet or pan, and 'shaping_style' refers to scooping, rolling, or depositing.\n"
             "For the 'mixing_method' category, you MUST explicitly specify if it should be done by hand or with a stand mixer. If using a mixer, explicitly state the attachment (e.g., standard paddle, dough hook, whisk).\n"
+            "CRITICAL: If a tool from the user's provided inventory is appropriate for the recipe, you MUST recommend its use.\n"
+            "Whenever you select an inventory tool, explicitly mention it by name and weave its specific notes into your explanation.\n"
             "For each recommendation, provide a brief (1-2 sentence) explanation of WHY it is optimal for this recipe.\n"
             "Your response MUST be a pure JSON array matching this schema exactly:\n"
             "[\n"
@@ -359,6 +370,7 @@ def stream_process_details(
         "recipe_name": recipe_name,
         "flavor_inclusions": flavor_inclusions,
         "supported_tweaks": supported_tweaks,
+        "user_inventory": user_inventory,
     }
     user_prompt = json.dumps(user_prompt_data)
 
@@ -378,6 +390,7 @@ def stream_process_alternatives(
     target_category: str,
     original_recommendation: dict,
     exclude_names: list = None,
+    user_inventory: list = None,
 ):
     """
     Streaming version of generate_process_alternatives.
@@ -394,6 +407,8 @@ def stream_process_alternatives(
         "You are an expert baking science assistant. Your task is to provide alternative recommendations "
         "for a specific process parameter category.\n"
         "Provide exactly 3 alternative options for the specified category that are distinct from the original recommendation.\n"
+        "CRITICAL: If a tool from the user's provided inventory is appropriate for the recipe, you MUST recommend its use as an alternative.\n"
+        "Whenever you select an inventory tool, explicitly mention it by name and weave its specific notes into your explanation.\n"
         "For each alternative, explain its unique impact on the final product.\n"
         "Your response MUST be a pure JSON array matching this schema exactly:\n"
         "[\n"
@@ -416,6 +431,7 @@ def stream_process_alternatives(
             "target_category": target_category,
             "original_recommendation": original_recommendation,
             "excluded_names": exclude_names,
+            "user_inventory": user_inventory,
         }
     )
 
@@ -433,6 +449,7 @@ def generate_process_alternatives(
     target_category: str,
     original_recommendation: dict,
     exclude_names: list = None,
+    user_inventory: list = None,
 ) -> dict | None:
     logger.info(
         f"[Gemma Client] - Info - Calling generate_process_alternatives for: {recipe_slug}, category: {target_category}"
