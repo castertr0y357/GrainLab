@@ -75,3 +75,8 @@ To restore a PostgreSQL database backup:
    ```bash
    pg_restore -h localhost -p 5432 -U grainlab_user -d grainlab backups/backup-20260622-235427.sql
    ```
+
+## 📄 License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
+See the [LICENSE](LICENSE) file for full details. This means you are free to share and modify the code, provided that any modified versions (including those provided as a service over a network) are also made open-source under the same terms.
