@@ -10,10 +10,15 @@ logger = logging.getLogger("grainlab.startup")
 
 
 def auto_seed_db(sender, **kwargs):
+    import os
     import sys
 
     if "test" in sys.argv:
         return
+        
+    if os.environ.get("AUTO_SEED_DB", "False").lower() not in ("true", "1", "t"):
+        return
+
     from django.core.management import call_command
 
     from apps.core.models import DoughCategory

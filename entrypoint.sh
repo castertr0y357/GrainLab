@@ -28,8 +28,12 @@ echo "Applying migrations..."
 python manage.py migrate --noinput
 
 # Seed database and bootstrap superuser
-echo "Seeding database and superuser..."
-python manage.py seed_db
+if [ "$AUTO_SEED_DB" = "True" ] || [ "$AUTO_SEED_DB" = "true" ] || [ "$AUTO_SEED_DB" = "1" ]; then
+  echo "Seeding database and superuser..."
+  python manage.py seed_db
+else
+  echo "Skipping database seeding (AUTO_SEED_DB is not enabled)."
+fi
 
 # Execute the container's main command
 echo "Executing CMD: $@"

@@ -92,7 +92,8 @@
                 <p style="margin-bottom: 0; color: var(--text-main); line-height: 1.6;">Head to the
                     <strong>Compiler</strong> to build your recipe. Initialize the category you want to make in phase 1,
                     then choose an archetype to have the AI generate recipe ideas for you in phase 2. Once you select a
-                    recipe, the AI will then recommend the types of grains you have that fit that recipe.</p>
+                    recipe, the AI will then recommend the types of grains you have that fit that recipe.
+                </p>
             </div>
 
             <div
@@ -122,6 +123,13 @@
                 <li style="margin-bottom: 0.5rem;"><strong>Recommended Model:</strong> <code>Gemma4:E4B</code> - All of
                     the development was done for Gemma4:E4B, and the prompts were tailored to allow small models to
                     reliably generate quality responses.</li>
+                <li style="margin-bottom: 0.5rem;">
+                    <strong>Additional LLM Recommendations:</strong> It's recommended to have a smaller context window ,
+                    16K, and
+                    have multiple slots available. The prompts are designed to be specific and fire simultaneously to
+                    prioritize quality over speed. Having only one slot in your configuration will cause the prompts
+                    to be evaluated in order, which will take more time.
+                </li>
                 <li style="margin-bottom: 0.5rem;"><strong>Hardware Requirements:</strong> Requirements vary based on
                     the type of model you choose to run. A dedicated GPU with 12GB of VRAM is recommended. Testing was
                     done using an RTX 3080Ti with 12GB of VRAM.</li>
