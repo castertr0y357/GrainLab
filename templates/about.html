@@ -133,9 +133,10 @@
                 <li style="margin-bottom: 0.5rem;"><strong>Hardware Requirements:</strong> Requirements vary based on
                     the type of model you choose to run. A dedicated GPU with 12GB of VRAM is recommended. Testing was
                     done using an RTX 3080Ti with 12GB of VRAM.</li>
-                <li><strong>Configuration:</strong> This app was designed for local LLMs over Ollama/llama.cpp, and is
-                    intended to be used without an API key. Cloud models will have varying levels of success. You can
-                    verify your connection and select your model in the <a href="{% url 'settings_page' %}"
+                <li><strong>Configuration:</strong> This app was designed for local LLMs using Ollama/llama.cpp, and is
+                    intended to be used without an API key. Theoretically, any endpoint with an OpenAPI standard API
+                    should work, but cloud models have not been tested. Your mileage may vary. You can verify your
+                    connection and select your model in the <a href="{% url 'settings_page' %}"
                         style="color: var(--accent); text-decoration: none;">Settings page</a>.</li>
             </ul>
         </div>
