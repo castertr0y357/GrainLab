@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 2rem auto;">
+    
+    <div style="text-align: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌾</div>
+        <h1 style="color: var(--accent); margin-bottom: 0.5rem;">GrainLab</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 0;">Food Science Compiler for Home Bakers</p>
+        
+        <!-- System Status Check via Alpine -->
+        <div x-data="{ 
+            status: 'checking', 
+            latestVersion: '', 
+            releaseUrl: '',
+            error: false,
+            init() {
+                fetch('https://api.github.com/repos/castertr0y357/GrainLab/releases/latest')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.latestVersion = data.tag_name;
+                        this.releaseUrl = data.html_url;
+                        this.status = 'loaded';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching release:', error);
+                        this.status = 'error';
+                        this.error = true;
+                    });
+            }
+        }" style="display: inline-block; background: var(--bg-card); padding: 0.5rem 1.5rem; border-radius: var(--radius-full); border: 1px solid var(--border); font-size: 0.9rem; margin-top: 1rem;">
+            
+            <template x-if="status === 'checking'">
+                <span style="color: var(--text-muted);">Checking for updates...</span>
+            </template>
+            
+            <template x-if="status === 'loaded'">
+                <span>
+                    <span style="color: var(--success); margin-right: 0.5rem;">●</span> 
+                    Latest Release: <a :href="releaseUrl" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: none;" x-text="latestVersion"></a>
+                </span>
+            </template>
+
+            <template x-if="status === 'error'">
+                <span style="color: var(--text-muted);">Unable to fetch latest version</span>
+            </template>
+        </div>
+    </div>
+
+    <!-- Workflow Overview -->
+    <div style="margin-bottom: 3rem;">
+        <h2 style="color: var(--text-main); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🔄</span> Workflow Overview
+        </h2>
+        
+        <div style="display: grid; gap: 1rem;">
+            <div style="background: var(--bg-hover); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent);">
+                <h3 style="margin-top: 0; color: var(--accent);">1. Manage Inventory</h3>
+                <p style="margin-bottom: 0; color: var(--text-main); line-height: 1.6;">Start by adding your fresh-milled grains and kitchen equipment to your <strong>Inventory</strong>. GrainLab uses AI to analyze your wheat berries and suggest optimal hydration, gluten potential, and culinary uses. It also logs your equipment so the recipe engine knows what tools you have available.</p>
+            </div>
+            
+            <div style="background: var(--bg-hover); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent);">
+                <h3 style="margin-top: 0; color: var(--accent);">2. Compile Recipe</h3>
+                <p style="margin-bottom: 0; color: var(--text-main); line-height: 1.6;">Head to the <strong>Compiler</strong> to build your recipe. Select your grain composition, set hydration and salt targets, and let the Baker's Math engine scale your formula precisely to your desired dough weight. You can even generate fun, creative ideas automatically!</p>
+            </div>
+            
+            <div style="background: var(--bg-hover); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent);">
+                <h3 style="margin-top: 0; color: var(--accent);">3. AI Processing & Baking</h3>
+                <p style="margin-bottom: 0; color: var(--text-main); line-height: 1.6;">In Phase 4, the AI evaluates your specific grain mix and your available equipment to generate a tailored step-by-step process. It will tell you exactly when to use your stand mixer, how to shape your dough, and what sensory cues to look out for.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended AI Settings -->
+    <div>
+        <h2 style="color: var(--text-main); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🧠</span> Recommended AI Settings
+        </h2>
+        <div style="background: var(--bg-main); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+            <p style="color: var(--text-main); line-height: 1.6; margin-top: 0;">
+                GrainLab is designed to run locally using the Ollama API, keeping your data private and avoiding API costs. 
+            </p>
+            <ul style="color: var(--text-main); line-height: 1.6; margin-bottom: 0; padding-left: 1.5rem;">
+                <li style="margin-bottom: 0.5rem;"><strong>Recommended Model:</strong> <code>gemma2:9b</code> - We heavily optimize prompts for Google's Gemma 2. It offers the best balance of speed and baking-science reasoning.</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Hardware Requirements:</strong> A dedicated GPU (like an Nvidia RTX series) is recommended for fast generation, but an M-series Mac or a CPU with 16GB of RAM will work fine.</li>
+                <li><strong>Configuration:</strong> Make sure Ollama is running and accessible (usually at <code>http://localhost:11434</code>). You can verify your connection and select your model in the <a href="{% url 'settings_page' %}" style="color: var(--accent); text-decoration: none;">Settings page</a>.</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
