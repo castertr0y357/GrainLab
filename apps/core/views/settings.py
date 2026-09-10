@@ -22,6 +22,7 @@ class SettingsPageView(View):
         context = {
             "ai_enabled": SystemSetting.get_val("ai_enabled", "False") == "True",
             "ai_api_url": SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1"),
+            "ai_api_key": SystemSetting.get_val("ai_api_key", ""),
             "ai_model_name": SystemSetting.get_val("ai_model_name", "gemma:12b"),
             "ai_thinking_enabled": SystemSetting.get_val("ai_thinking_enabled", "True") == "True",
             "ai_thinking_effort": SystemSetting.get_val("ai_thinking_effort", "medium"),
@@ -55,12 +56,14 @@ class SaveSettingsView(View):
         """
         ai_enabled = request.POST.get("ai_enabled") in ("on", "true", "True")
         ai_api_url = request.POST.get("ai_api_url", "").strip()
+        ai_api_key = request.POST.get("ai_api_key", "").strip()
         ai_model_name = request.POST.get("ai_model_name", "").strip()
         ai_thinking_enabled = request.POST.get("ai_thinking_enabled") in ("on", "true", "True")
         ai_thinking_effort = request.POST.get("ai_thinking_effort", "medium")
 
         SystemSetting.set_val("ai_enabled", ai_enabled)
         SystemSetting.set_val("ai_api_url", ai_api_url)
+        SystemSetting.set_val("ai_api_key", ai_api_key)
         SystemSetting.set_val("ai_model_name", ai_model_name)
         SystemSetting.set_val("ai_thinking_enabled", ai_thinking_enabled)
         SystemSetting.set_val("ai_thinking_effort", ai_thinking_effort)
@@ -116,6 +119,10 @@ class DiscoverModelsView(View):
         if not api_url:
             api_url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
 
+        api_key = request.GET.get("ai_api_key", "").strip()
+        if not api_key:
+            api_key = SystemSetting.get_val("ai_api_key", "")
+
         current_model = SystemSetting.get_val("ai_model_name", "gemma:12b")
 
         # Try to form the models URL
@@ -127,9 +134,13 @@ class DiscoverModelsView(View):
 
         models = []
         error_msg = None
+        headers = {}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
         try:
             # Short timeout to avoid hanging the UI
-            response = requests.get(models_url, timeout=3)
+            response = requests.get(models_url, headers=headers, timeout=3)
             if response.status_code == 200:
                 data = response.json()
                 if "data" in data:

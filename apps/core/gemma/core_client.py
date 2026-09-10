@@ -42,14 +42,15 @@ def _get_val(obj, key, default=None):
     return default
 
 
-def _get_api_config() -> tuple[str, str]:
+def _get_api_config() -> tuple[str, str, str]:
     """Retrieves API details from SystemSettings."""
     url = SystemSetting.get_val("ai_api_url", "http://host.docker.internal:11434/v1")
     model = SystemSetting.get_val("ai_model_name", "gemma:12b")
+    api_key = SystemSetting.get_val("ai_api_key", "")
     # Clean completions URL if it doesn't end with chat/completions
     if not url.endswith("/chat/completions"):
         url = url.rstrip("/") + "/chat/completions"
-    return url, model
+    return url, model, api_key
 
 
 def assemble_system_prompt(
@@ -250,8 +251,10 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
             cache.set(cache_key, res, timeout=None)
         return res
 
-    url, model = _get_api_config()
+    url, model, api_key = _get_api_config()
     headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
 
     # Retrieve thinking mode settings
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
@@ -338,8 +341,10 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
             yield '{"error": "AI Rate Limit Exceeded"}'
         return
 
-    url, model = _get_api_config()
+    url, model, api_key = _get_api_config()
     headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
 
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
     ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")

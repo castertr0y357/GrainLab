@@ -61,13 +61,21 @@
                     </span>
                 </div>
 
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label for="ai_api_key">Optional API Key</label>
+                    <input type="password" name="ai_api_key" id="ai_api_key" class="num-input" style="width:100%;" value="{{ ai_api_key }}">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">
+                        Leave blank for local Ollama. Required for cloud providers like OpenAI or Groq.
+                    </span>
+                </div>
+
                 <div class="input-group" style="margin-bottom: 1rem;" id="model-input-container">
                     <label for="ai_model_name">Model Identifier</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
                         <input type="text" name="ai_model_name" id="ai_model_name" class="num-input" style="flex-grow: 1;" value="{{ ai_model_name }}">
                         <button type="button" class="nav-btn secondary" 
                                 hx-get="{% url 'discover_models' %}" 
-                                hx-include="#ai_api_url"
+                                hx-include="#ai_api_url, #ai_api_key"
                                 hx-target="#model-input-container" 
                                 hx-swap="innerHTML"
                                 style="padding: 0 1rem; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;">

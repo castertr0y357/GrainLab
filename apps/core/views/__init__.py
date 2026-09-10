@@ -1,4 +1,5 @@
 # Import all views here if needed for backward compatibility
+from .about import *
 from .ai import *
 from .backups import *
 from .calculator import *
