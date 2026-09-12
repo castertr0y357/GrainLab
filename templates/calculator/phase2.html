@@ -13,7 +13,10 @@ x-data="phase2App({
     berries: JSON.parse('{{ berries_json|escapejs }}' || '[]'),
     custom_archetype: '{{ custom_archetype|escapejs }}',
     custom_name: '{{ custom_name|escapejs }}',
-    custom_desc: '{{ custom_desc|escapejs }}'
+    custom_desc: '{{ custom_desc|escapejs }}',
+    preset_slug: '{{ state.preset_slug|default:""|escapejs }}',
+    active_variation_id: '{{ state.active_variation_id|default:""|escapejs }}',
+    recipe_name: '{{ state.recipe_name|default:""|escapejs }}'
 })"
 {% endblock %}
 
@@ -576,9 +579,23 @@ x-data="phase2App({
         <!-- Top Text Content Wrapper (Maintains a minimum height so it doesn't jump too wildly) -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem; min-height: 180px;">
             <!-- Active Selected Recipe -->
-            <div x-show="recipe_selected" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
-                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Archetype</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="enginesArchetypes[selected_master]?.[preset_slug]?.label || 'Unknown'"></div>
+                
+                <template x-if="active_variation_id">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Variation</div>
+                        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="engines_ff[selected_master]?.variations?.[active_variation_id]?.label || 'Unknown'"></div>
+                    </div>
+                </template>
+                
+                <template x-if="recipe_name">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Formula Name</div>
+                        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+                    </div>
+                </template>
             </div>
 
             <!-- Archetype Hover Info -->

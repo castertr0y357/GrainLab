@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class ChouxEngine(BaseEngine):
     name = "Choux Paste Engine"
     slug = "choux"
+    default_yield_unit = "pastries"
     default_binder_pct = 1.60
     default_salt_pct = 0.01
     target_protein_min = 12.0
@@ -87,6 +88,7 @@ class ChouxEngine(BaseEngine):
             "default_form_factor": "extrusion-piping-sheet",
             "default_salt_pct": 0.005,
             "label": "Extrusion Fried Paste",
+            "yield_unit": "churros",
             "icon": "🌀",
             "description": "Star-die extrusion profiles built for rapid oil expansion like Churros.",
             "grain_affinity": "low_protein",
@@ -106,6 +108,7 @@ class ChouxEngine(BaseEngine):
             "default_form_factor": "extrusion-piping-sheet",
             "default_salt_pct": 0.005,
             "label": "Savory Emulsion",
+            "yield_unit": "puffs",
             "icon": "🧀",
             "description": "High-lipid, cheese-bound panade drops like Gougères.",
             "grain_affinity": "low_protein",

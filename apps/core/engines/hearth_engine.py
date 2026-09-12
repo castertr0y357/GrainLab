@@ -101,6 +101,7 @@ class HearthEngine(BaseEngine):
         "high_hydration_slab": {
             "default_form_factor": "cast-iron-dutch-oven",
             "label": "High-Hydration Slab",
+            "yield_unit": "slabs",
             "icon": "🍞",
             "description": "Wet, un-kneaded cellular matrices poured out into pans like Focaccia or Ciabatta.",
             "grain_affinity": "high_protein",
@@ -119,6 +120,7 @@ class HearthEngine(BaseEngine):
         "tapered_baguette": {
             "default_form_factor": "cast-iron-dutch-oven",
             "label": "Tapered Baguette",
+            "yield_unit": "baguettes",
             "icon": "🥖",
             "description": "Elongated, thin cylinder format optimizing the crust-to-crumb ratio.",
             "grain_affinity": "high_protein",
@@ -137,6 +139,7 @@ class HearthEngine(BaseEngine):
         "flash_pizza": {
             "default_form_factor": "cast-iron-dutch-oven",
             "label": "Flash Pizza Crust",
+            "yield_unit": "pizzas",
             "icon": "🍕",
             "description": "Ultra-thin center with a blistered gas-filled rim set under extreme thermal environments.",
             "grain_affinity": "high_protein",

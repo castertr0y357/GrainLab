@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class FryEngine(BaseEngine):
     name = "Fried Doughs Engine"
     slug = "fry"
+    default_yield_unit = "donuts"
     target_protein_min = 11.5
     target_protein_max = 13.0
     gluten_behavior = "Rapid Gas Expansion & Fat Resistance. Surface must expand immediately and seal against rapid convection liquid heat to lock out excess frying oil absorption."
@@ -107,6 +108,7 @@ class FryEngine(BaseEngine):
             "default_form_factor": "high-volume-oil-vat",
             "default_salt_pct": 0.01,
             "label": "Batter Fritter / Beignet",
+            "yield_unit": "beignets",
             "icon": "☁️",
             "description": "Irregular high-hydration moisture puffs expanding violently in oil.",
             "grain_affinity": "low_protein",
@@ -126,6 +128,7 @@ class FryEngine(BaseEngine):
             "default_form_factor": "high-volume-oil-vat",
             "default_salt_pct": 0.01,
             "label": "Fried Laminated",
+            "yield_unit": "pastries",
             "icon": "🫓",
             "description": "Alternating layers flashing open instantly in convection fat.",
             "grain_affinity": "medium_protein",

@@ -46,7 +46,7 @@ class CookieEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
-        "permissible_action_types": ["cream", "fold"],
+        "permissible_action_types": ["cream", "fold", "mix"],
         "environmental_rest_strategy": "fat_solidification",
     }
     secondary_ingredients = {
@@ -60,7 +60,7 @@ class CookieEngine(BaseEngine):
             "options": ["pure_water", "whole_milk", "heavy_cream", "buttermilk"],
             "math_modifiers": {"buttermilk": {"trigger_chemical_leavening_acid_flag": True}},
         },
-        "binders": {"default": "none", "options": ["none", "whole_eggs", "egg_whites", "aquafaba_vegan"]},
+        "binders": {"default": "none", "options": ["none", "whole_eggs", "large_eggs", "egg_whites", "aquafaba_vegan"]},
     }
 
     permissible_form_factors = {
@@ -140,6 +140,7 @@ class CookieEngine(BaseEngine):
             "default_form_factor": "heavy-aluminum-sheet",
             "default_salt_pct": 0.0075,
             "label": "Bar / Slab",
+            "yield_unit": "bars",
             "icon": "🍫",
             "description": "Continuous uniform block baking, minimizing perimeter crisping.",
             "grain_affinity": "low_protein",
@@ -267,10 +268,25 @@ class CookieEngine(BaseEngine):
                 break
 
         cookie_hyd = 0.05 if has_liquid else 0.0
-        # Wider guardrails to allow AI flavor chemistry to dictate final cookie richness.
-        # Max 1.20 for fat (e.g. shortbreads), max 2.00 for sugar (e.g. extremely chewy brittle cookies)
-        cookie_fat = max(0.20, min(1.20, fat))
-        cookie_sugar = max(0.40, min(2.00, sugar))
+
+        flavor_inclusions = kwargs.get("flavor_inclusions", [])
+        total_inclusion_pct = 0.0
+        for inc in flavor_inclusions:
+            if isinstance(inc, dict) and "bakers_percentage" in inc:
+                try:
+                    total_inclusion_pct += float(inc["bakers_percentage"])
+                except (ValueError, TypeError):
+                    pass
+
+        # Dynamic guardrails based on the presence of structural inclusions.
+        if total_inclusion_pct < 15.0:
+            # Bare doughs (snickerdoodles, sugar cookies): restrict liquefiers to prevent excessive spread
+            cookie_fat = max(0.20, min(0.70, fat))
+            cookie_sugar = max(0.40, min(0.95, sugar))
+        else:
+            # Loaded doughs: allow wider guardrails to bind the extra matter
+            cookie_fat = max(0.20, min(1.20, fat))
+            cookie_sugar = max(0.40, min(2.00, sugar))
         if leaven_type == "sourdough":
             leaven = max(0.0, min(0.60, leaven))
         elif leaven_type == "chemical":
@@ -281,10 +297,24 @@ class CookieEngine(BaseEngine):
         return cookie_hyd, cookie_fat, cookie_sugar, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "Cookies require a careful balance of chemical leavening and zero yeast. Focus on proper sugar/fat creaming to control the final spread coefficient. This is a cookie archetype. You MUST include a chemical leavener (baking soda/powder). It requires heavy lipids. For sweet cookies, use heavy sugars. For savory shortbreads/crackers, omit sugar and use savory fats (cheese, butter). Liquids are rarely needed unless specified."
+        return (
+            "Cookies require a careful balance of chemical leavening and zero yeast. This is a cookie archetype, "
+            "so you MUST include a chemical leavener (baking soda/powder). SPREAD DYNAMICS MATRIX: Fat and Sugar act as liquefiers "
+            "(causing spread), while Flour and Inclusions act as stabilizers (restricting spread). For 'Loaded Doughs' "
+            "(with heavy structural inclusions like chocolate chips or oats), you may push Fat to 70-100% and Sugar to 100-130% "
+            "to bind the extra matter. For 'Bare Doughs' (like snickerdoodles or plain sugar cookies), you MUST strictly limit "
+            "Fat (45-65%) and Sugar (50-85%) to prevent the cookie from melting into a puddle. For savory shortbreads, omit sugar "
+            "and use savory fats. Liquids are rarely needed unless specified."
+        )
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). For cookies, these MUST be scaled heavily, typically ranging from 50.0 to 150.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0%."
+        return (
+            "When generating ratios for inclusions or additives (like chocolate chips or nuts), use true baker's percentages (flour = 100%). "
+            "For loaded cookies (e.g. chocolate chip), bulk inclusions scale heavily (50.0 to 150.0). "
+            "For bare cookies, inclusions may be zero or limited to light sprinkles. "
+            "CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. "
+            "CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0%."
+        )
 
     def get_live_timeline_steps(
         self,

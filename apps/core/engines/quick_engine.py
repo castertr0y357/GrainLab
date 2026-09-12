@@ -8,6 +8,7 @@ class QuickEngine(BaseEngine):
     default_leaven_pct = 0.025
     target_protein_min = 8.5
     target_protein_max = 10.5
+    default_yield_unit = "portions"
     gluten_behavior = "Zero Gluten Development. Mechanical kneading is banned; structure relies entirely on chemical leavening reactions to yield a tender, crumbly interior."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Requires clean, buttery fats to come forward without whole-grain astringency."
     tannin_sensitive = True
@@ -115,6 +116,7 @@ class QuickEngine(BaseEngine):
             "default_form_factor": "standard-8x4-loaf-pan",
             "default_salt_pct": 0.0075,
             "label": "Chemical Loaf",
+            "yield_unit": "loaves",
             "icon": "🍞",
             "description": "Thick pourable batters baked slowly in high-walled pans like Banana or Soda Bread.",
             "grain_affinity": "low_protein",
@@ -135,6 +137,7 @@ class QuickEngine(BaseEngine):
             "default_form_factor": "individual-wedge-sheet",
             "default_salt_pct": 0.0075,
             "label": "Layered Wedge Scone",
+            "yield_unit": "scones",
             "icon": "🍰",
             "description": "Laminated dry-shred flakes cut into solid clean triangles.",
             "grain_affinity": "low_protein",
@@ -155,6 +158,7 @@ class QuickEngine(BaseEngine):
             "default_form_factor": "individual-wedge-sheet",
             "default_salt_pct": 0.0075,
             "label": "Dropped / Cut Biscuit",
+            "yield_unit": "biscuits",
             "icon": "🧁",
             "description": "High vertical expansion rounds utilizing shortening pockets for flaky separation.",
             "grain_affinity": "low_protein",
@@ -175,6 +179,7 @@ class QuickEngine(BaseEngine):
             "default_form_factor": "muffin-cupcake-tin",
             "default_salt_pct": 0.0075,
             "label": "Textured Muffin",
+            "yield_unit": "muffins",
             "icon": "🧁",
             "description": "Individual cup-bounded portions prioritizing a domed, porous crown.",
             "grain_affinity": "low_protein",

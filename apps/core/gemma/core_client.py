@@ -1223,11 +1223,17 @@ def stream_final_insights(
         '      "liquid_water_temp": <int|null>\n'
         "    },\n"
         "    { \n"
+        '      "type": "prep_step",\n'
+        '      "ingredient": "<ingredient name>",\n'
+        '      "instruction": "<detailed prep instruction>"\n'
+        "    },\n"
+        "    { \n"
         '      "type": "phase",\n'
         '      "step_number": 1,\n'
         '      "name": "<step name>",\n'
         '      "instruction": "<detailed instruction>",\n'
-        '      "time_estimate_sec": 300\n'
+        '      "time_estimate_sec": 300,\n'
+        '      "ingredients_used": ["<exact ingredient name>"]\n'
         "    }\n"
         "  ]\n"
         "}\n\n"
@@ -1241,7 +1247,7 @@ def stream_final_insights(
         "   - CRITICAL: You MUST strictly follow the chronological phases provided in `engine_timeline_steps`. You MUST use the exact `name` and map the exact `duration_sec` to `time_estimate_sec` for each phase, UNLESS the phase description provides a flexible time range (e.g. 1 to 24 hours). If a range is provided, you MUST pick a specific optimal duration (e.g. 24 hours) and convert THAT specific time into seconds for your `time_estimate_sec`. Weave the `process_recommendations` details into the appropriate timeline step (e.g., mention the 'Baking Vessel' during the Bake step, use 'Mixing Method' during the Mix/Knead steps). Do NOT create standalone steps named after equipment.\n"
         "   - CRITICAL: You MUST ensure EVERY single ingredient listed in `calculated_recipe_data` (including binders, salt, sweeteners, and inclusions) is explicitly added during the appropriate phase. Do not leave any ingredients out of the directions.\n"
         "   - CRITICAL INSTRUCTION DEPTH: Do not just output empty steps. You must provide a rich, detailed 'instruction' string for EACH phase explaining EXACTLY 'how we are making it', incorporating temperature goals, sensory cues (e.g., 'until it pulls away from the bowl'), and precise techniques. If you mention time durations in the text, you MUST explicitly output duration in minutes or hours (e.g., '5 minutes'). Do NOT use 'seconds' unless the step takes less than 1 minute. Do NOT include the seconds in parenthesis next to the minutes. Ensure the text duration exactly matches your `time_estimate_sec`.\n"
-        "   - CRITICAL PREP DETAILS: For ANY ingredient that requires physical preparation prior to mixing (e.g., cutting fats into specific shapes/sizes, tempering liquids, chopping inclusions, sifting dry ingredients, or blooming yeast), you MUST explicitly describe the required size, shape, temperature, or preparation method BEFORE it is added. Do not assume the user knows how to prep the ingredient (e.g., do not just say 'add the butter', specify how to prepare it first).\n"
+        "   - CRITICAL PREP DETAILS: For ANY ingredient that requires physical preparation prior to mixing (e.g., cutting fats into specific shapes/sizes, tempering liquids, chopping inclusions, sifting dry ingredients, or blooming yeast), you MUST create an object with `type`: 'prep_step', `ingredient`: '<ingredient name>', and `instruction`: '<how to prep>' BEFORE the mixing phases. Do NOT include these preparation instructions in the timeline `phase` steps. The timeline `phase` steps should assume the ingredients are already prepped according to the `prep_step` objects.\n"
     )
 
     # Organize recipe_data into a clean, categorized list of ingredients WITHOUT weights

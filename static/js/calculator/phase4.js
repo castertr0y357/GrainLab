@@ -6,6 +6,7 @@ document.addEventListener('alpine:init', () => {
         selected_master: initialData.selected_master || null,
         global_ai_enabled: initialData.global_ai_enabled || true,
         preset_slug: initialData.preset_slug || null,
+        active_variation_id: initialData.active_variation_id || null,
         flavor_inclusions: initialData.flavor_inclusions || [],
         secondary_ingredients: initialData.secondary_ingredients || {},
         enginesArchetypes: initialData.enginesArchetypes || {},
@@ -43,6 +44,7 @@ document.addEventListener('alpine:init', () => {
         processAlternativesLoading: false,
         hovered_element: null,
         steps: [],
+        prepSteps: [],
         currentStepIndex: 0,
         stepTimeRemaining: 0,
         isAlarm: false,
@@ -128,6 +130,35 @@ document.addEventListener('alpine:init', () => {
                 return this.hardware_registry.filter(t => t.category === 'zero_friction');
             }
             return this.hardware_registry;
+        },
+        
+        get resolvedYieldUnit() {
+            const amount = this.default_yield_amount * this.scaleMultiplier;
+            const isPlural = (amount > 1 || amount === 0);
+            
+            let unit = this.enginesArchetypes[this.selected_master]?.[this.preset_slug]?.yield_unit;
+            
+            if (!unit) {
+                unit = this.engines_ff?.[this.selected_master]?.default_yield_unit;
+            }
+            
+            if (!unit) {
+                unit = this.yield_unit || 'portions';
+            }
+            
+            if (isPlural && !unit.endsWith('s')) {
+                if (unit === 'loaf') return 'loaves';
+                if (unit === 'pastry') return 'pastries';
+                return unit + 's';
+            }
+            
+            if (!isPlural && unit.endsWith('s')) {
+                if (unit === 'loaves') return 'loaf';
+                if (unit === 'pastries') return 'pastry';
+                return unit.slice(0, -1);
+            }
+            
+            return unit;
         },
         
         repairAndParse(str) {
@@ -236,6 +267,16 @@ document.addEventListener('alpine:init', () => {
                     }
                     return inc;
                 });
+            }
+
+            // Try to load ingredient weights from a script tag in the page
+            const weightsEl = document.getElementById('ingredient-weights-data');
+            if (weightsEl) {
+                try {
+                    this.ingredientWeights = JSON.parse(weightsEl.textContent || '{}');
+                } catch (e) {
+                    console.error("Failed to parse ingredient weights", e);
+                }
             }
 
             if (this.global_ai_enabled) {
@@ -852,6 +893,23 @@ document.addEventListener('alpine:init', () => {
                 if (waterTempMatch) this.waterTemp = parseInt(waterTempMatch[1]);
             }
 
+            const prepMatches = [...this.rawStreamText.matchAll(/"type"\s*:\s*"prep_step"(.*?)(?=\{\s*"type"|\]|$)/gs)];
+            let newPrepSteps = [];
+            for (let i = 0; i < prepMatches.length; i++) {
+                const text = prepMatches[i][0];
+                const ingMatch = text.match(/"ingredient"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                const ingredient = ingMatch ? ingMatch[1].replace(/\\n/g, '\\n').replace(/\\"/g, '"') : '';
+                
+                const instMatch = text.match(/"instruction"\s*:\s*"((?:[^"\\]|\\.)*)/);
+                const instruction = instMatch ? instMatch[1].replace(/\\n/g, '\\n').replace(/\\"/g, '"') : '';
+                
+                newPrepSteps.push({
+                    ingredient: ingredient,
+                    instruction: instruction
+                });
+            }
+            this.prepSteps = newPrepSteps;
+
             const phaseMatches = [...this.rawStreamText.matchAll(/"type"\s*:\s*"phase"(.*?)(?=\{\s*"type"|\]|$)/gs)];
             let newSteps = [];
             for (let i = 0; i < phaseMatches.length; i++) {
@@ -940,7 +998,17 @@ document.addEventListener('alpine:init', () => {
                     });
             }
         },
-        
+        ingredientWeights: {},
+        checkedIngredients: {},
+
+        toggleIngredient(name) {
+            if (this.checkedIngredients[name]) {
+                this.checkedIngredients[name] = false;
+            } else {
+                this.checkedIngredients[name] = true;
+            }
+        },
+
         startCountertopMode() {
             this.countertopMode = true;
             this.currentStepIndex = 0;

@@ -10,6 +10,9 @@ x-data="phase4App({
     enginesArchetypes: JSON.parse('{{ engines_archetypes_json|escapejs }}' || '{}'),
     engines_ff: JSON.parse('{{ engines_ff_json|escapejs }}' || '{}'),
     
+    preset_slug: '{{ formula.archetype_id|default:""|escapejs }}',
+    active_variation_id: '{{ formula.variation_id|default:""|escapejs }}',
+    recipe_name: '{{ formula.name|escapejs }}',
     mixing_method: '{{ state.mixing_method|default:"hand_knead"|escapejs }}',
     active_action: '{{ state.active_action|default:"stretch_fold"|escapejs }}',
     processRecommendations: JSON.parse('{{ process_recommendations_json|default:"{}"|escapejs }}' || '{}'),
@@ -21,18 +24,21 @@ x-data="phase4App({
 x-init="init(); if(recipeCompiled) loadCompiledData();"
 {% endblock %}
 {% block phase_left_panel %}
+<script id="ingredient-weights-data" type="application/json">{{ ingredient_weights_json|safe }}</script>
 
 <!-- COMPILED FORMULA -->
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">
+        <div x-data="{ ingName: 'Flour Base' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
             <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
             <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: <span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="!global_ai_enabled || recipeIngredients.length === 0">
             <!-- Flour Base Weight Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div x-data="{ ingName: '{{ berry|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Flour Base</span>
+                
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_flour }}g</span></span>
             </div>
             
@@ -40,183 +46,237 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             <div style="display: contents;">
                 {% if recipe.wheat_berry_mix %}
                     {% for berry, weight in recipe.wheat_berry_mix.items %}
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                             <span style="color: var(--text-muted);">↳ {{ berry }}</span>
-                            <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ weight }}g</span></span>
+                            
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ weight }}g</span></span>
                         </div>
                     {% endfor %}
                 {% else %}
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div x-data="{ ingName: '{% if recipe.yeast_label %}{{ recipe.yeast_label|escapejs }}{% else %}Commercial Yeast{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.grain_type == "whole_wheat" %}Whole Wheat Flour{% elif recipe.grain_type == "spelt" %}Spelt Flour{% elif recipe.grain_type == "kamut" %}Kamut Flour{% elif recipe.grain_type == "einkorn" %}Einkorn Flour{% else %}Refined Flour (AP/Bread){% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_flour }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_flour|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_flour }}g</span></span>
                     </div>
                 {% endif %}
             </div>
             
             <!-- Added Liquid Row — only shown when there is actual added liquid (hidden for cookies/shortbread) -->
             {% if recipe.liquid_items %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ ingName: '{% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label|escapejs }}{% else %}Unsalted Butter{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
                 </div>
                 {% for item in recipe.liquid_items %}
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div x-data="{ ingName: '{% if recipe.sugar_label %}{{ recipe.sugar_label|escapejs }}{% else %}Granulated Sugar{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
                     </div>
                 </div>
                 {% endfor %}
             {% elif recipe.added_water and recipe.added_water > 0 %}
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
+                
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
             </div>
             <div style="display: contents;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                <div x-data="{ ingName: '{% if recipe.binder_label %}{{ recipe.binder_label|escapejs }}{% else %}Whole Eggs{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label %}{{ recipe.liquid_label }}{% else %}Pure Water{% endif %}</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
                 </div>
             </div>
             {% endif %}
             
             <!-- Leaven Row -->
             {% if recipe.leavener_items %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ ingName: 'Salt' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
                 </div>
                 {% for item in recipe.leavener_items %}
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
                     </div>
                 </div>
                 {% endfor %}
             {% elif leaven_type == "sourdough" %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener (Sourdough Starter)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.yeast_label %}{{ recipe.yeast_label }}{% else %}Sourdough Starter{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
                     </div>
                 </div>
             {% else %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.yeast_label %}{{ recipe.yeast_label }}{% else %}Commercial Yeast{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
                     </div>
                 </div>
             {% endif %}
             
             <!-- Enrichments: Fat / Lipid -->
             {% if recipe.lipid_items %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Fat / Lipid</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
                 </div>
                 {% for item in recipe.lipid_items %}
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
                     </div>
                 </div>
                 {% endfor %}
             {% elif recipe.effective_fat_pct > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Fat / Lipid</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label }}{% else %}Unsalted Butter{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
                     </div>
                 </div>
             {% endif %}
             
             <!-- Enrichments: Sugar -->
             {% if recipe.sweetener_items %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Sweetener</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
                 </div>
                 {% for item in recipe.sweetener_items %}
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
                     </div>
                 </div>
                 {% endfor %}
             {% elif recipe.effective_sugar_pct > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Sweetener</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.sugar_label %}{{ recipe.sugar_label }}{% else %}Granulated Sugar{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
                     </div>
                 </div>
             {% endif %}
             
             <!-- Binders: Eggs / Aquafaba -->
             {% if recipe.binder_items %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Binder</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.binder_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.binder_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.binder_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.binder_weight }}g</span></span>
                 </div>
                 {% for item in recipe.binder_items %}
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ item.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ item.weight }}g</span></span>
                     </div>
                 </div>
                 {% endfor %}
             {% elif recipe.binder_weight > 0 %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Binder</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.binder_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.binder_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.binder_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.binder_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.binder_label %}{{ recipe.binder_label }}{% else %}Whole Eggs{% endif %}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.binder_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.binder_weight }}g</span></span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.binder_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.binder_weight }}g</span></span>
                     </div>
                 </div>
             {% endif %}
             
             <!-- Salt Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Salt</span>
+                
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
             </div>
             <div style="display: contents;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
-                    <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
                 </div>
             </div>
             
             <!-- Additives Row -->
             {% if recipe.additive_items %}
                 {% for additive in recipe.additive_items %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">{{ additive.name }} ({{ additive.percentage }}%)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ additive.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ additive.weight }}g</span></span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ additive.weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ additive.weight }}g</span></span>
                 </div>
                 {% endfor %}
             {% endif %}
@@ -224,14 +284,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             <!-- Flavor Inclusions Row -->
             {% if recipe.flavor_inclusions %}
                 {% for inclusion in recipe.flavor_inclusions %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">{{ inclusion.name }} ({{ inclusion.percentage }}%)</span>
-                    <span style="color: var(--text-primary); font-weight: 700;">{{ inclusion.weight }}g</span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ inclusion.weight }}g</span>
                 </div>
                 <div style="display: contents;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ inclusion.volume_description }}</span>
-                        <span style="color: var(--text-secondary); font-weight: 500;">{{ inclusion.weight }}g</span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;">{{ inclusion.weight }}g</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -243,9 +307,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             <template x-for="(ingredients, categoryName) in groupedIngredients" :key="categoryName">
                 <div>
                     <!-- Category Total Row -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.25rem;">
+                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;padding-top: 0.25rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-primary); font-weight: 600;" x-text="categoryName"></span>
-                        <span style="color: var(--text-primary); font-weight: 700;">
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;">
                             <span x-text="(ingredients.reduce((sum, ing) => sum + ing.weight_grams, 0) * scaleMultiplier).toFixed(1) + 'g'"></span>
                         </span>
                     </div>
@@ -253,9 +319,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                     <!-- Individual Ingredients -->
                     <div style="display: contents;">
                         <template x-for="ing in ingredients" :key="ing.name">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 1.5rem; font-size: 0.9rem;">
+                            <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                                 <span style="color: var(--text-muted);">↳ <span x-text="ing.name"></span> <span x-show="ing.bakers_percentage > 0" x-text="'(' + ing.bakers_percentage + '%)'"></span></span>
-                                <span style="color: var(--text-secondary); font-weight: 500;">
+                                
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;">
                                     <span x-text="(ing.weight_grams * scaleMultiplier).toFixed(1) + 'g'"></span>
                                 </span>
                             </div>
@@ -266,7 +334,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
         </div>
             
         <!-- Total Scaled Weight Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;">
+            <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
                 <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;"><span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
             </div>
@@ -298,6 +366,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
     </div>
     
 
+    <!-- INGREDIENT PREP -->
+    <div x-show="!countertopMode && prepSteps && prepSteps.length > 0" x-transition style="background-color: #1a1a1f; padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border-left: 4px solid var(--warning);">
+        <h3 style="color: var(--warning); margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;">Ingredient Prep</h3>
+        <ul style="margin: 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; color: var(--text-primary);">
+            <template x-for="(prep, idx) in prepSteps" :key="'prep_' + idx">
+                <li style="line-height: 1.4; padding-left: 0.25rem;">
+                    <span style="font-weight: 700; color: var(--text-primary);" x-text="prep.ingredient + ':'"></span>
+                    <span style="color: var(--text-secondary);" x-text="prep.instruction"></span>
+                </li>
+            </template>
+        </ul>
+    </div>
     
     <!-- DIRECTIONS -->
     <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
@@ -339,7 +419,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
         <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
             <template x-for="(step, idx) in steps" :key="step.key">
                 <div :style="idx === currentStepIndex ? 'background-color: rgba(255,136,0,0.05); border-left: 4px solid var(--accent); padding: 1.25rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;' : (idx < currentStepIndex ? 'opacity: 0.5; padding: 0.75rem; border-left: 4px solid var(--success);' : 'opacity: 0.7; padding: 0.75rem; border-left: 4px solid transparent;')">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <div style="display: flex; gap: 0.75rem; align-items: center;">
                             <span x-show="idx < currentStepIndex">✅</span>
                             <span x-show="idx === currentStepIndex">⏱️</span>
@@ -375,8 +455,22 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
 {% block phase_right_panel %}
     <!-- Active Selected Recipe -->
     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
-        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">{{ formula.name|escapejs }}</div>
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Archetype</div>
+        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="enginesArchetypes[selected_master]?.[preset_slug]?.label || 'Unknown'"></div>
+        
+        <template x-if="active_variation_id">
+            <div>
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Variation</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="engines_ff[selected_master]?.variations?.[active_variation_id]?.label || 'Unknown'"></div>
+            </div>
+        </template>
+        
+        <template x-if="recipe_name">
+            <div>
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Formula Name</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+            </div>
+        </template>
     </div>
     
     <!-- Baking Profile -->

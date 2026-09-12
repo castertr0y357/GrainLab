@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class BathEngine(BaseEngine):
     name = "Alkaline Bath Engine"
     slug = "bath"
+    default_yield_unit = "pieces"
     target_protein_min = 12.0
     target_protein_max = 14.0
     gluten_behavior = (

@@ -23,6 +23,25 @@ document.addEventListener('alpine:init', () => {
         selected_recipe_id: null,
         recipe_selected: false,
         advisoryLoading: false,
+        
+        get preset_slug() {
+            return this.active_archetype_id;
+        },
+        
+        // Variables needed by recipe_output.html to prevent ReferenceErrors
+        scaleMultiplier: 1.0,
+        countertopMode: false,
+        waterTemp: 0,
+        donenessTemp: 0,
+        checkedIngredients: {},
+        toggleIngredient(name) {
+            if (this.checkedIngredients[name]) {
+                this.checkedIngredients[name] = false;
+            } else {
+                this.checkedIngredients[name] = true;
+            }
+        },
+        
         millsAdvisoryLoading: false,
         siftersAdvisoryLoading: false,
         advisory_steps: [],

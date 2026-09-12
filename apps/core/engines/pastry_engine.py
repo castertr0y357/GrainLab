@@ -137,11 +137,16 @@ class PastryEngine(BaseEngine):
                 "moisture_lipid_ratio": "low_moisture_high_fat",
                 "optimal_protein_window": "11.0% - 13.0%",
             },
+            "culinary_nuance_directive": (
+                "CRITICAL INVERTED METHODOLOGY: Unlike standard puff pastry, this dough requires enveloping the flour detrempe *inside* the large butter block (beurrage), rather than putting the butter inside the dough. "
+                "Furthermore, under NO circumstances should any chemical leaveners (baking powder, baking soda) or yeast be used; rely entirely on physical lamination and steam for lift."
+            ),
         },
         "shortcrust_tart": {
             "default_form_factor": "perforated-sheet-air-mat",
             "default_salt_pct": 0.01,
             "label": "Shortcrust Tart Casing",
+            "yield_unit": "tarts",
             "icon": "🥧",
             "description": "High-fat friable crumb shells designed to remain completely impermeable to wet fillings.",
             "grain_affinity": "low_protein",

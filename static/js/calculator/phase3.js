@@ -20,9 +20,25 @@ document.addEventListener('alpine:init', () => {
         selectedRecipeSecondaryIngredients: initialData.selectedRecipeSecondaryIngredients || null,
         recipe_name: initialData.recipe_name || '',
         preset_slug: initialData.preset_slug || '',
+        active_variation_id: initialData.active_variation_id || null,
         activeBerries: initialData.active_berries || [],
         flavor_inclusions: initialData.flavor_inclusions || [],
         flour_blend: initialData.flour_blend || {},
+        
+        // Variables needed by recipe_output.html to prevent ReferenceErrors
+        scaleMultiplier: 1.0,
+        countertopMode: false,
+        waterTemp: 0,
+        donenessTemp: 0,
+        checkedIngredients: {},
+        toggleIngredient(name) {
+            if (this.checkedIngredients[name]) {
+                this.checkedIngredients[name] = false;
+            } else {
+                this.checkedIngredients[name] = true;
+            }
+        },
+        
         flour_blend_reasoning: initialData.flour_blend_reasoning || '',
         default_yield_amount: initialData.default_yield_amount || 1,
         yield_unit: initialData.yield_unit || 'loaf',

@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class BatterEngine(BaseEngine):
     name = "Cakes & Batters Engine"
     slug = "batter"
+    default_yield_unit = "cakes"
     default_binder_pct = 0.45
     default_leaven_pct = 0.03
     target_protein_min = 7.5
@@ -187,6 +188,7 @@ class BatterEngine(BaseEngine):
             "default_form_factor": "straight-sided-round-tin",
             "default_salt_pct": 0.005,
             "label": "Fluid Griddle Batter",
+            "yield_unit": "pancakes",
             "icon": "🥞",
             "description": "High-moisture pourable structures like Pancakes, Waffles, and Crepes.",
             "grain_affinity": "low_protein",

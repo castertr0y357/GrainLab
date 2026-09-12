@@ -24,6 +24,7 @@ x-data="phase3App({
     selectedRecipeSecondaryIngredients: JSON.parse('{{ secondary_ingredients_json|default:"{}"|escapejs }}'),
     recipe_name: '{{ state.recipe_name|default:""|escapejs }}',
     preset_slug: '{{ state.preset_slug|default:""|escapejs }}',
+    active_variation_id: '{{ state.active_variation_id|default:""|escapejs }}',
     active_berries: JSON.parse('{{ active_berries_json|default:"[]"|escapejs }}'),
     flavor_inclusions: JSON.parse('{{ flavor_inclusions_json|default:"[]"|escapejs }}'),
     calculatingPercentages: false
@@ -220,9 +221,23 @@ x-init="initializePhase3()"
 
 {% block phase_right_panel %}
     <!-- Active Selected Recipe -->
-    <div x-show="recipe_name" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Formula</div>
-        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Selected Archetype</div>
+        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="enginesArchetypes[selected_master]?.[preset_slug]?.label || 'Unknown'"></div>
+        
+        <template x-if="active_variation_id">
+            <div>
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Variation</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="engines_ff[selected_master]?.variations?.[active_variation_id]?.label || 'Unknown'"></div>
+            </div>
+        </template>
+        
+        <template x-if="recipe_name">
+            <div>
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Formula Name</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);" x-text="recipe_name"></div>
+            </div>
+        </template>
     </div>
     
     <div x-show="!phase3Loading" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px;">

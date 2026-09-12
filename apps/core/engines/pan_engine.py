@@ -131,6 +131,7 @@ class PanEngine(BaseEngine):
         "soft_dinner_roll": {
             "default_form_factor": "standard-9x5-pan",
             "label": "Soft Dinner Roll",
+            "yield_unit": "rolls",
             "icon": "🫓",
             "description": "Small batch pull-apart clusters prioritizing maximum steam-trapped softness.",
             "grain_affinity": "medium_protein",
@@ -149,6 +150,7 @@ class PanEngine(BaseEngine):
         "filled_sweet_roll": {
             "default_form_factor": "standard-9x5-pan",
             "label": "Filled Sweet Roll",
+            "yield_unit": "rolls",
             "icon": "🌀",
             "description": "Laminated or sheeted scroll structures built to contain heavy interior fillings.",
             "grain_affinity": "medium_protein",

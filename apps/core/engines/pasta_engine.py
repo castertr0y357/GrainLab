@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class PastaEngine(BaseEngine):
     name = "Fresh Pasta & Noodles Engine"
     slug = "pasta"
+    default_yield_unit = "portions"
     default_binder_pct = 0.50
     default_leaven_pct = 0.0
     target_protein_min = 12.5

@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class FlatEngine(BaseEngine):
     name = "Flatbreads & Griddles Engine"
     slug = "flat"
+    default_yield_unit = "flatbreads"
     target_protein_min = 10.5
     target_protein_max = 12.0
     gluten_behavior = "High Extensibility, Low Elasticity. Dough must roll to millimeter thickness without tearing or snapping back violently."
@@ -112,6 +113,7 @@ class FlatEngine(BaseEngine):
         "unleavened_stretched": {
             "default_form_factor": "heavy-cast-iron-skillet",
             "label": "Unleavened Stretched",
+            "yield_unit": "wraps",
             "icon": "🫓",
             "description": "Paper-thin configurations demanding zero elastic snapback like Tortillas and Roti.",
             "grain_affinity": "medium_protein",

@@ -312,6 +312,7 @@ class BaseEngine(AIPromptBuilder):
                     flavor_profile=flavor_profile,
                     sec_liquids=sec_liquids,
                     sec_binders=sec_binders,
+                    flavor_inclusions=kwargs.get("flavor_inclusions", []),
                 )
             )
         except TypeError as e:

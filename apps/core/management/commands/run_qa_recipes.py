@@ -22,7 +22,9 @@ from apps.core.services.calculator.session import update_calculator_state
 logger = logging.getLogger("grainlab.gemma")
 
 
-def evaluate_recipe(recipe, profile_type, engine_id, timeline, final_recipe=None, process_details=None):
+def evaluate_recipe(
+    recipe, profile_type, engine_id, timeline, final_recipe=None, process_details=None, archetype_id=None
+):
     checks = []
 
     if not recipe:
@@ -230,38 +232,139 @@ def evaluate_recipe(recipe, profile_type, engine_id, timeline, final_recipe=None
                 }
             )
 
-    # Check 10: Archetype Salt Limit Verification
-    if final_recipe and "recipe" in final_recipe:
-        recipe_math = final_recipe["recipe"]
-        flour_w = recipe_math.get("flour_weight", 0)
-        salt_w = recipe_math.get("salt_weight", 0)
-        actual_salt_pct = (salt_w / flour_w) if flour_w > 0 else 0
+    # Check 10: Dynamic Engine Attribute Enforcements
+    engine_class = ENGINES.get(engine_id)
+    if engine_class:
+        expected_leaven = getattr(engine_class, "default_leaven_pct", None)
+        expected_binder = getattr(engine_class, "default_binder_pct", None)
+        expected_salt = getattr(engine_class, "default_salt_pct", None)
 
-        if engine_id in ["quick", "cookie", "batter", "choux", "pasta"]:
-            if actual_salt_pct > 0.0101:
+        prod_profile = getattr(engine_class, "production_profile", {})
+        permissible_actions = prod_profile.get("permissible_action_types", [])
+
+        secondary_options = {}
+        secondary_conf = getattr(engine_class, "secondary_ingredients", {})
+        for cat_key, conf in secondary_conf.items():
+            if isinstance(conf, dict) and "options" in conf:
+                secondary_options[cat_key] = [opt.lower() for opt in conf["options"]]
+
+        # Override with archetype specifics if present
+        if archetype_id and hasattr(engine_class, "archetypes"):
+            arch = engine_class.archetypes.get(archetype_id, {})
+            expected_leaven = arch.get("default_leaven_pct", expected_leaven)
+            expected_binder = arch.get("default_binder_pct", expected_binder)
+            expected_salt = arch.get("default_salt_pct", expected_salt)
+
+        # 10A: Strict Leavening Check
+        if expected_leaven == 0.0:
+            has_chemical = False
+            for l in ingredients.get("leaveners", []):
+                nl = l.get("name", "").lower()
+                if any(x in nl for x in ["powder", "soda", "chemical", "yeast"]):
+                    has_chemical = True
+                    checks.append(
+                        {
+                            "rule": "Strict Leavening Bounds",
+                            "passed": False,
+                            "reason": f"Engine mandates 0.0 leavening, but found {l.get('name')}",
+                        }
+                    )
+            if not has_chemical:
+                checks.append(
+                    {"rule": "Strict Leavening Bounds", "passed": True, "reason": "No leaveners present as required."}
+                )
+
+        # 10B: Strict Binder Check
+        if expected_binder == 0.0:
+            has_binder = False
+            for b in ingredients.get("binders", []):
                 checks.append(
                     {
-                        "rule": "Salt Limit",
+                        "rule": "Strict Binder Bounds",
                         "passed": False,
-                        "reason": f"Salt is too high ({actual_salt_pct*100:.2f}%) for {engine_id} engine.",
+                        "reason": f"Engine mandates 0.0 binders, but found {b.get('name')}",
+                    }
+                )
+                has_binder = True
+            if not has_binder:
+                checks.append(
+                    {"rule": "Strict Binder Bounds", "passed": True, "reason": "No binders present as required."}
+                )
+
+        # 10C: Permissible Actions Check
+        if permissible_actions:
+            forbidden_found = []
+            mech_keywords = ["knead", "mix", "fold", "whip", "laminate", "extrude", "beat", "cream"]
+            for step in timeline:
+                key = step.get("key", "").lower()
+                if key not in permissible_actions and any(m in key for m in mech_keywords):
+                    forbidden_found.append(key)
+            if forbidden_found:
+                checks.append(
+                    {
+                        "rule": "Permissible Action Validations",
+                        "passed": False,
+                        "reason": f"Found forbidden mechanical actions: {', '.join(forbidden_found)}",
                     }
                 )
             else:
                 checks.append(
                     {
-                        "rule": "Salt Limit",
+                        "rule": "Permissible Action Validations",
                         "passed": True,
-                        "reason": f"Salt ({actual_salt_pct*100:.2f}%) is within bounds for {engine_id}.",
+                        "reason": "Timeline respects permissible action types.",
                     }
                 )
-        else:
+
+        # 10D: Secondary Ingredient Whitelist Check
+        whitelist_violations = []
+        for cat_key, allowed_opts in secondary_options.items():
+            if cat_key in ingredients:
+                for item in ingredients[cat_key]:
+                    item_name = item.get("name", "").lower().replace(" ", "_")
+                    if not any(opt in item_name or item_name in opt for opt in allowed_opts):
+                        whitelist_violations.append(f"{item.get('name')} in {cat_key}")
+        if whitelist_violations:
             checks.append(
                 {
-                    "rule": "Salt Limit",
-                    "passed": True,
-                    "reason": f"Salt ({actual_salt_pct*100:.2f}%) is within bounds for {engine_id}.",
+                    "rule": "Secondary Ingredient Whitelist",
+                    "passed": False,
+                    "reason": f"Hallucinated unsupported ingredients: {', '.join(whitelist_violations)}",
                 }
             )
+        elif secondary_options:
+            checks.append(
+                {
+                    "rule": "Secondary Ingredient Whitelist",
+                    "passed": True,
+                    "reason": "All generated ingredients match engine whitelists.",
+                }
+            )
+
+        # 10E: Dynamic Salt Limit Verification
+        if expected_salt is not None and final_recipe and "recipe" in final_recipe:
+            recipe_math = final_recipe["recipe"]
+            flour_w = recipe_math.get("flour_weight", 0)
+            salt_w = recipe_math.get("salt_weight", 0)
+            actual_salt_pct = (salt_w / flour_w) if flour_w > 0 else 0
+
+            # Allow up to +0.2% variance
+            if actual_salt_pct > (expected_salt + 0.002):
+                checks.append(
+                    {
+                        "rule": "Dynamic Salt Limit",
+                        "passed": False,
+                        "reason": f"Salt is {actual_salt_pct*100:.2f}%, exceeding {expected_salt*100:.2f}% expected bound.",
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "rule": "Dynamic Salt Limit",
+                        "passed": True,
+                        "reason": f"Salt ({actual_salt_pct*100:.2f}%) is within expected {expected_salt*100:.2f}% bounds.",
+                    }
+                )
 
     if not checks:
         checks.append(
@@ -587,6 +690,7 @@ class Command(BaseCommand):
                                 timeline,
                                 final_recipe=final_recipe,
                                 process_details=process_details,
+                                archetype_id=archetype_id,
                             )
 
                             # Add Phase 4 evaluation checks
