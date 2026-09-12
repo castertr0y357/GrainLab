@@ -75,87 +75,27 @@ class HearthEngine(BaseEngine):
         "Pane di Altamura",
     ]
 
-    archetypes = {
-        "hearth_boule": {
-            "default_form_factor": "cast-iron-dutch-oven",
-            "label": "Hearth Boule / Batard",
-            "icon": "🫓",
-            "description": "Freeform oval or round configurations baked on radiant stone floors.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "cast-iron-dutch-oven",
-                "default_form_factor": "cast-iron-dutch-oven",
-                "default_form_factor": "cast-iron-dutch-oven",
-                "default_form_factor": "cast-iron-dutch-oven",
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "high_hydration_lean",
-                "optimal_protein_window": "11.5% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on long-chain protein cross-linking, extreme gas retention, and structural tensile elasticity. Grains must "
-                "yield maximum elasticity to hold high water weights and shape boundaries without pan walls, maximizing explosive "
-                "oven spring under initial steam injection."
-            ),
-        },
-        "high_hydration_slab": {
-            "default_form_factor": "cast-iron-dutch-oven",
-            "label": "High-Hydration Slab",
-            "yield_unit": "slabs",
-            "icon": "🍞",
-            "description": "Wet, un-kneaded cellular matrices poured out into pans like Focaccia or Ciabatta.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "moderate_extensible",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "high_hydration_lean",
-                "optimal_protein_window": "12.5% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high water-absorption kinetics and open cellular networks. Grains must allow wet, un-kneaded slack "
-                "doughs to hold massive moisture values, using gentle gas production to lift large irregular cell walls "
-                "without slumping across continuous sheet pans."
-            ),
-        },
-        "tapered_baguette": {
-            "default_form_factor": "cast-iron-dutch-oven",
-            "label": "Tapered Baguette",
-            "yield_unit": "baguettes",
-            "icon": "🥖",
-            "description": "Elongated, thin cylinder format optimizing the crust-to-crumb ratio.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "high_hydration_lean",
-                "optimal_protein_window": "11.5% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on intense gluten alignment and high crust-to-crumb ratio mapping. The protein network must allow the dough "
-                "to be shaped into long, uniform cylinders that maintain surface tension during proofing, scoring cleanly to "
-                "yield sharp ears and blistered textures."
-            ),
-        },
-        "flash_pizza": {
-            "default_form_factor": "cast-iron-dutch-oven",
-            "label": "Flash Pizza Crust",
-            "yield_unit": "pizzas",
-            "icon": "🍕",
-            "description": "Ultra-thin center with a blistered gas-filled rim set under extreme thermal environments.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "high_hydration_lean",
-                "optimal_protein_window": "12.5% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on extreme tensile strength and high structural extensibility. Grains must allow the dough to be stretched "
-                "paper-thin in the center without tearing, holding a robust, gas-filled rim that blisters instantly into dark charred "
-                "spots under intense thermal conduction."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in HearthEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "cast-iron-dutch-oven"),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "loaves"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "high_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def get_ai_culinary_directive(self) -> str:
         return "This is a lean hearth bread (e.g. sourdough, artisan loaf). For traditional lean loaves, omit lipids, sweeteners, and eggs. For specific hybrid savory or sweet artisan loaves, use minimal fats/sweeteners. Always include a yeast/sourdough leavener and a liquid medium."
@@ -191,7 +131,6 @@ class HearthEngine(BaseEngine):
         if steam_bake_min >= bake_time_min:
             steam_bake_min = max(5, int(bake_time_min * 0.6))
         dry_bake_min = bake_time_min - steam_bake_min
-        preset_slug = kwargs.get("preset_slug") or ""
 
         steps = [
             {
@@ -233,65 +172,6 @@ class HearthEngine(BaseEngine):
                 "desc": "Divide dough into required portions. Gently round them up and let rest on the bench. Relaxes dough before final tensioning.",
             },
         ]
-
-        if "pizza" in preset_slug.lower() or "calzone" in preset_slug.lower():
-            steps.extend(
-                [
-                    {
-                        "key": "final_shape",
-                        "name": "Pizza Stretching",
-                        "duration_sec": 10 * 60,
-                        "desc": "Gently stretch the dough ball outward from the center, preserving the gas in the outer rim (cornicione).",
-                    },
-                    {
-                        "key": "proof",
-                        "name": "Brief Rest",
-                        "duration_sec": 15 * 60,
-                        "desc": "Allow the stretched dough to relax briefly before topping.",
-                        "is_proof": True,
-                    },
-                    {
-                        "key": "bake",
-                        "name": "Flash Stone Bake",
-                        "duration_sec": bake_time_min * 60,
-                        "desc": "Bake on an extremely hot stone/steel. The intense conduction heat causes immediate oven spring and crust blistering.",
-                        "is_bake": True,
-                    },
-                ]
-            )
-            return steps
-        elif "slab" in preset_slug.lower() or "focaccia" in preset_slug.lower() or "ciabatta" in preset_slug.lower():
-            steps.extend(
-                [
-                    {
-                        "key": "final_shape",
-                        "name": "Pan Transfer & Dimpling",
-                        "duration_sec": 10 * 60,
-                        "desc": "Gently stretch and transfer the slack dough to a heavily oiled pan. Dimple deeply with oiled fingers.",
-                    },
-                    {
-                        "key": "proof",
-                        "name": "Pan Proof",
-                        "duration_sec": estimated_proof_minutes * 60,
-                        "desc": "Proof in the pan until very bubbly and jiggly.",
-                        "is_proof": True,
-                    },
-                    {
-                        "key": "bake",
-                        "name": "High-Heat Oil Bake",
-                        "duration_sec": bake_time_min * 60,
-                        "desc": "Bake in the hot oven. The oiled pan acts to shallow-fry the bottom crust while the top sets crisp.",
-                        "is_bake": True,
-                    },
-                    {
-                        "key": "cool",
-                        "name": "Wire Rack Cooling",
-                        "duration_sec": 30 * 60,
-                        "desc": "Remove from pan to prevent a soggy bottom. Cool on a wire rack.",
-                    },
-                ]
-            )
-            return steps
 
         # Default Hearth Loaf Pipeline
         steps.extend(
@@ -335,4 +215,251 @@ class HearthEngine(BaseEngine):
             }
         )
 
+        return steps
+
+
+class HearthBouleArchetype(HearthEngine):
+    archetype_slug = "hearth_boule"
+    label = "Hearth Boule / Batard"
+    icon = "🫓"
+    description = "Freeform oval or round configurations baked on radiant stone floors."
+    default_form_factor = "cast-iron-dutch-oven"
+    grain_affinity = "high_protein"
+    preset_matchers = ["boule", "batard", "sourdough", "campagne", "altamura"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "high_hydration_lean",
+        "optimal_protein_window": "11.5% - 14.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on long-chain protein cross-linking, extreme gas retention, and structural tensile elasticity. Grains must "
+        "yield maximum elasticity to hold high water weights and shape boundaries without pan walls, maximizing explosive "
+        "oven spring under initial steam injection."
+    )
+
+
+class HighHydrationSlabArchetype(HearthEngine):
+    archetype_slug = "high_hydration_slab"
+    label = "High-Hydration Slab"
+    yield_unit = "slabs"
+    icon = "🍞"
+    description = "Wet, un-kneaded cellular matrices poured out into pans like Focaccia or Ciabatta."
+    default_form_factor = "cast-iron-dutch-oven"
+    grain_affinity = "high_protein"
+    preset_matchers = ["slab", "focaccia", "ciabatta"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "moderate_extensible",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "high_hydration_lean",
+        "optimal_protein_window": "12.5% - 14.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high water-absorption kinetics and open cellular networks. Grains must allow wet, un-kneaded slack "
+        "doughs to hold massive moisture values, using gentle gas production to lift large irregular cell walls "
+        "without slumping across continuous sheet pans."
+    )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        autolyse_min = 30
+        mix_min = 5
+        knead_min = 10 if mixing_method == "stand_mixer" else 15
+        sf_min = 45
+        bulk_min = max(30, estimated_bulk_minutes - sf_min)
+
+        steps = [
+            {
+                "key": "autolyse",
+                "name": "Autolyse Rest",
+                "duration_sec": autolyse_min * 60,
+                "desc": "Mix only flour and water. Let rest to kickstart enzymatic activity and build gluten extensibility without yeast interference.",
+            },
+            {
+                "key": "mix",
+                "name": "Mix Leaven & Salt",
+                "duration_sec": mix_min * 60,
+                "desc": "Incorporate leaven/yeast and salt. Mix until fully combined and uniform.",
+                "is_mix": True,
+            },
+            {
+                "key": "knead",
+                "name": "Intensive Mechanical Knead",
+                "duration_sec": knead_min * 60,
+                "desc": f"Knead using '{mixing_method.replace('_', ' ').title()}' to build a strong initial gluten mesh capable of holding high hydration.",
+                "is_knead": True,
+            },
+            {
+                "key": "stretch_fold",
+                "name": "Stretch & Folds",
+                "duration_sec": sf_min * 60,
+                "desc": "Perform 3 sets of stretch and folds spaced 15 minutes apart. This aligns the gluten network gently while introducing oxygen.",
+            },
+            {
+                "key": "bulk",
+                "name": "Bulk Ferment",
+                "duration_sec": bulk_min * 60,
+                "desc": "Allow dough to ferment until volume increases by 50-75% with visible bubbles throughout the matrix.",
+            },
+            {
+                "key": "preshape",
+                "name": "Pre-Shape & Bench Rest",
+                "duration_sec": 20 * 60,
+                "desc": "Divide dough into required portions. Gently round them up and let rest on the bench. Relaxes dough before final tensioning.",
+            },
+            {
+                "key": "final_shape",
+                "name": "Pan Transfer & Dimpling",
+                "duration_sec": 10 * 60,
+                "desc": "Gently stretch and transfer the slack dough to a heavily oiled pan. Dimple deeply with oiled fingers.",
+            },
+            {
+                "key": "proof",
+                "name": "Pan Proof",
+                "duration_sec": estimated_proof_minutes * 60,
+                "desc": "Proof in the pan until very bubbly and jiggly.",
+                "is_proof": True,
+            },
+            {
+                "key": "bake",
+                "name": "High-Heat Oil Bake",
+                "duration_sec": bake_time_min * 60,
+                "desc": "Bake in the hot oven. The oiled pan acts to shallow-fry the bottom crust while the top sets crisp.",
+                "is_bake": True,
+            },
+            {
+                "key": "cool",
+                "name": "Wire Rack Cooling",
+                "duration_sec": 30 * 60,
+                "desc": "Remove from pan to prevent a soggy bottom. Cool on a wire rack.",
+            },
+        ]
+        return steps
+
+
+class TaperedBaguetteArchetype(HearthEngine):
+    archetype_slug = "tapered_baguette"
+    label = "Tapered Baguette"
+    yield_unit = "baguettes"
+    icon = "🥖"
+    description = "Elongated, thin cylinder format optimizing the crust-to-crumb ratio."
+    default_form_factor = "cast-iron-dutch-oven"
+    grain_affinity = "high_protein"
+    preset_matchers = ["baguette", "french"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "high_hydration_lean",
+        "optimal_protein_window": "11.5% - 14.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on intense gluten alignment and high crust-to-crumb ratio mapping. The protein network must allow the dough "
+        "to be shaped into long, uniform cylinders that maintain surface tension during proofing, scoring cleanly to "
+        "yield sharp ears and blistered textures."
+    )
+
+
+class FlashPizzaArchetype(HearthEngine):
+    archetype_slug = "flash_pizza"
+    label = "Flash Pizza Crust"
+    yield_unit = "pizzas"
+    icon = "🍕"
+    description = "Ultra-thin center with a blistered gas-filled rim set under extreme thermal environments."
+    default_form_factor = "cast-iron-dutch-oven"
+    grain_affinity = "high_protein"
+    preset_matchers = ["pizza", "calzone"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "extreme_tensile",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "high_hydration_lean",
+        "optimal_protein_window": "12.5% - 14.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on extreme tensile strength and high structural extensibility. Grains must allow the dough to be stretched "
+        "paper-thin in the center without tearing, holding a robust, gas-filled rim that blisters instantly into dark charred "
+        "spots under intense thermal conduction."
+    )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        autolyse_min = 30
+        mix_min = 5
+        knead_min = 10 if mixing_method == "stand_mixer" else 15
+        sf_min = 45
+        bulk_min = max(30, estimated_bulk_minutes - sf_min)
+
+        steps = [
+            {
+                "key": "autolyse",
+                "name": "Autolyse Rest",
+                "duration_sec": autolyse_min * 60,
+                "desc": "Mix only flour and water. Let rest to kickstart enzymatic activity and build gluten extensibility without yeast interference.",
+            },
+            {
+                "key": "mix",
+                "name": "Mix Leaven & Salt",
+                "duration_sec": mix_min * 60,
+                "desc": "Incorporate leaven/yeast and salt. Mix until fully combined and uniform.",
+                "is_mix": True,
+            },
+            {
+                "key": "knead",
+                "name": "Intensive Mechanical Knead",
+                "duration_sec": knead_min * 60,
+                "desc": f"Knead using '{mixing_method.replace('_', ' ').title()}' to build a strong initial gluten mesh capable of holding high hydration.",
+                "is_knead": True,
+            },
+            {
+                "key": "stretch_fold",
+                "name": "Stretch & Folds",
+                "duration_sec": sf_min * 60,
+                "desc": "Perform 3 sets of stretch and folds spaced 15 minutes apart. This aligns the gluten network gently while introducing oxygen.",
+            },
+            {
+                "key": "bulk",
+                "name": "Bulk Ferment",
+                "duration_sec": bulk_min * 60,
+                "desc": "Allow dough to ferment until volume increases by 50-75% with visible bubbles throughout the matrix.",
+            },
+            {
+                "key": "preshape",
+                "name": "Pre-Shape & Bench Rest",
+                "duration_sec": 20 * 60,
+                "desc": "Divide dough into required portions. Gently round them up and let rest on the bench. Relaxes dough before final tensioning.",
+            },
+            {
+                "key": "final_shape",
+                "name": "Pizza Stretching",
+                "duration_sec": 10 * 60,
+                "desc": "Gently stretch the dough ball outward from the center, preserving the gas in the outer rim (cornicione).",
+            },
+            {
+                "key": "proof",
+                "name": "Brief Rest",
+                "duration_sec": 15 * 60,
+                "desc": "Allow the stretched dough to relax briefly before topping.",
+                "is_proof": True,
+            },
+            {
+                "key": "bake",
+                "name": "Flash Stone Bake",
+                "duration_sec": bake_time_min * 60,
+                "desc": "Bake on an extremely hot stone/steel. The intense conduction heat causes immediate oven spring and crust blistering.",
+                "is_bake": True,
+            },
+        ]
         return steps

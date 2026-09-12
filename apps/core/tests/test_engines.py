@@ -115,8 +115,14 @@ class SubEnginesTests(TestCase):
     """
 
     def test_bath_engine_hydration_ceiling(self):
-        """Pretzel/bath engine must enforce 65% base hydration boundary ceiling."""
+        """
+        Pretzel/bath engine must enforce 65% base hydration boundary ceiling.
+        """
+        from apps.core.engines import router
+
+        engine = router.get_engine_for_preset("pretzel")
         recipe = bakers_math.calculate_recipe(
+            engine_id="bath",
             base_hydration=0.70,  # requested too high
             base_fat=0.04,
             base_sugar=0.02,

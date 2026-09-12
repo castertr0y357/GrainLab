@@ -88,85 +88,27 @@ class PanEngine(BaseEngine):
         "Monkey Bread",
     ]
 
-    archetypes = {
-        "sandwich_pan": {
-            "default_form_factor": "standard-9x5-pan",
-            "label": "Sandwich Pan Loaf",
-            "icon": "🍞",
-            "description": "Straight sidewall containment maximizing volume and thin slicing.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "standard-9x5-pan",
-                "default_form_factor": "standard-9x5-pan",
-                "default_form_factor": "standard-9x5-pan",
-                "default_form_factor": "standard-9x5-pan",
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.0% - 13.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on maximizing vertical volume and achieving a uniform, tight cell structure. Grains must provide high protein "
-                "retention to support thin sidewall pans, ensuring a soft, elastic crumb that slices cleanly without crumbling."
-            ),
-        },
-        "freeform_braided": {
-            "default_form_factor": "standard-9x5-pan",
-            "label": "Freeform Braided Loaf",
-            "icon": "🥯",
-            "description": "High-tensile strands capable of holding shape without pan walls like Challah or Brioche.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.5% - 13.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high structural retention and zero horizontal flow without pan walls. Grains must yield an elastic, highly "
-                "cohesive protein backbone capable of holding intricate braided definition under heavy lipid and sugar enrichment "
-                "weights without collapsing or slumping."
-            ),
-        },
-        "soft_dinner_roll": {
-            "default_form_factor": "standard-9x5-pan",
-            "label": "Soft Dinner Roll",
-            "yield_unit": "rolls",
-            "icon": "🫓",
-            "description": "Small batch pull-apart clusters prioritizing maximum steam-trapped softness.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.0% - 12.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on steam-trapped softness and excellent cluster lift. The protein web must remain extensible and resilient, "
-                "allowing small batch dough clusters to crowd together and climb vertically, trapping internal moisture for a classic "
-                "feather-light, pull-apart tear texture."
-            ),
-        },
-        "filled_sweet_roll": {
-            "default_form_factor": "standard-9x5-pan",
-            "label": "Filled Sweet Roll",
-            "yield_unit": "rolls",
-            "icon": "🌀",
-            "description": "Laminated or sheeted scroll structures built to contain heavy interior fillings.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.5% - 13.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on uniform dough-sheet stretch and high filling containment. The flour must provide an elastic, robust backbone "
-                "capable of being rolled thin, scroll-shaped, and baked without rupturing or allowing heavy sweet fillings to cause "
-                "structural collapse."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in PanEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "standard-9x5-pan"),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "loaves"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "medium_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def apply_sub_class_constraints(
         self,
@@ -229,11 +171,8 @@ class PanEngine(BaseEngine):
     ) -> list[dict]:
         mix_min = 6
         knead_min = 12 if mixing_method == "stand_mixer" else 18
-
-        # Warm rise: enriched doughs rise slower, warm bulk rise is helpful
         bulk_min = estimated_bulk_minutes
         proof_min = estimated_proof_minutes
-        preset_slug = kwargs.get("preset_slug") or ""
 
         steps = [
             {
@@ -258,34 +197,24 @@ class PanEngine(BaseEngine):
             },
         ]
 
-        if "braid" in preset_slug.lower() or "challah" in preset_slug.lower() or "babka" in preset_slug.lower():
-            shape_name = "Strand Division & Braiding"
-            shape_desc = (
-                "Divide dough into equal strands. Roll out and braid tightly. Transfer to a parchment-lined sheet pan."
-            )
-            proof_name = "Freeform Final Proof"
-            proof_desc = (
-                "Proof freeform on the baking sheet until nearly doubled in size. Brush with egg wash before baking."
-            )
-        elif (
-            "roll" in preset_slug.lower()
-            and "cinnamon" not in preset_slug.lower()
-            and "sweet" not in preset_slug.lower()
-        ):
-            shape_name = "Roll Portioning"
-            shape_desc = "Divide dough into small uniform portions (e.g., 50g-70g). Roll into tight balls and cluster together in a buttered pan."
-            proof_name = "Clustered Final Proof"
-            proof_desc = "Proof in the pan until the rolls expand, touch each other, and reach the pan rim."
-        elif "cinnamon" in preset_slug.lower() or "sweet_roll" in preset_slug.lower():
-            shape_name = "Lamination & Filling"
-            shape_desc = "Roll dough into a large rectangle. Spread filling evenly, roll into a tight cylinder, and slice into rounds. Place in a prepared pan."
-            proof_name = "Filled Pan Proof"
-            proof_desc = "Proof the sliced rounds in the pan until puffy and pressing against one another."
-        else:
-            shape_name = "Loaf Sizing & Portioning"
-            shape_desc = "Divide the dough into uniform portions for multi-loaf scaling. Shape into tight rounds or logs for baking."
-            proof_name = "Loaf Pan Final Proof"
-            proof_desc = "Transfer dough pieces into the greased baking pan. Proof until the dough reaches 1 inch above the pan rim."
+        shape_name = getattr(self, "shape_name", "Loaf Sizing & Portioning")
+        shape_desc = getattr(
+            self,
+            "shape_desc",
+            "Divide the dough into uniform portions for multi-loaf scaling. Shape into tight rounds or logs for baking.",
+        )
+        proof_name = getattr(self, "proof_name", "Loaf Pan Final Proof")
+        proof_desc = getattr(
+            self,
+            "proof_desc",
+            "Transfer dough pieces into the greased baking pan. Proof until the dough reaches 1 inch above the pan rim.",
+        )
+        cooling_desc = getattr(
+            self,
+            "cooling_desc",
+            "Allow the bread to cool in the pan for 10 minutes to stabilize, then carefully turn out onto a wire rack to cool completely. Slicing warm bread will crush the crumb.",
+        )
+        cooling_duration = getattr(self, "cooling_duration", 60)
 
         steps.extend(
             [
@@ -307,14 +236,6 @@ class PanEngine(BaseEngine):
             ]
         )
 
-        preset_slug = kwargs.get("preset_slug", "")
-        if "roll" in preset_slug.lower() or "bun" in preset_slug.lower():
-            cooling_desc = "Allow the rolls/buns to cool in the pan for 5-10 minutes. They can be served warm, or transferred to a wire rack to cool completely."
-            cooling_duration = 15
-        else:
-            cooling_desc = "Allow the bread to cool in the pan for 10 minutes to stabilize, then carefully turn out onto a wire rack to cool completely. Slicing warm bread will crush the crumb."
-            cooling_duration = 60
-
         steps.append(
             {
                 "key": "cool",
@@ -325,3 +246,116 @@ class PanEngine(BaseEngine):
         )
 
         return steps
+
+
+class SandwichPanArchetype(PanEngine):
+    archetype_slug = "sandwich_pan"
+    label = "Sandwich Pan Loaf"
+    icon = "🍞"
+    description = "Straight sidewall containment maximizing volume and thin slicing."
+    default_form_factor = "standard-9x5-pan"
+    grain_affinity = "medium_protein"
+    preset_matchers = ["sandwich", "loaf", "pullman", "milk_bread"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "11.0% - 13.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on maximizing vertical volume and achieving a uniform, tight cell structure. Grains must provide high protein "
+        "retention to support thin sidewall pans, ensuring a soft, elastic crumb that slices cleanly without crumbling."
+    )
+    shape_name = "Loaf Sizing & Portioning"
+    shape_desc = (
+        "Divide the dough into uniform portions for multi-loaf scaling. Shape into tight rounds or logs for baking."
+    )
+    proof_name = "Loaf Pan Final Proof"
+    proof_desc = (
+        "Transfer dough pieces into the greased baking pan. Proof until the dough reaches 1 inch above the pan rim."
+    )
+    cooling_desc = "Allow the bread to cool in the pan for 10 minutes to stabilize, then carefully turn out onto a wire rack to cool completely. Slicing warm bread will crush the crumb."
+    cooling_duration = 60
+
+
+class FreeformBraidedArchetype(PanEngine):
+    archetype_slug = "freeform_braided"
+    label = "Freeform Braided Loaf"
+    icon = "🥯"
+    description = "High-tensile strands capable of holding shape without pan walls like Challah or Brioche."
+    default_form_factor = "standard-9x5-pan"
+    grain_affinity = "medium_protein"
+    preset_matchers = ["braid", "challah", "brioche"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "11.5% - 13.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high structural retention and zero horizontal flow without pan walls. Grains must yield an elastic, highly "
+        "cohesive protein backbone capable of holding intricate braided definition under heavy lipid and sugar enrichment "
+        "weights without collapsing or slumping."
+    )
+    shape_name = "Strand Division & Braiding"
+    shape_desc = "Divide dough into equal strands. Roll out and braid tightly. Transfer to a parchment-lined sheet pan."
+    proof_name = "Freeform Final Proof"
+    proof_desc = "Proof freeform on the baking sheet until nearly doubled in size. Brush with egg wash before baking."
+    cooling_desc = "Allow the bread to cool in the pan for 10 minutes to stabilize, then carefully turn out onto a wire rack to cool completely. Slicing warm bread will crush the crumb."
+    cooling_duration = 60
+
+
+class SoftDinnerRollArchetype(PanEngine):
+    archetype_slug = "soft_dinner_roll"
+    label = "Soft Dinner Roll"
+    yield_unit = "rolls"
+    icon = "🫓"
+    description = "Small batch pull-apart clusters prioritizing maximum steam-trapped softness."
+    default_form_factor = "individual-portion-sheet"
+    grain_affinity = "medium_protein"
+    preset_matchers = ["roll", "bun"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "11.0% - 12.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on steam-trapped softness and excellent cluster lift. The protein web must remain extensible and resilient, "
+        "allowing small batch dough clusters to crowd together and climb vertically, trapping internal moisture for a classic "
+        "feather-light, pull-apart tear texture."
+    )
+    shape_name = "Roll Portioning"
+    shape_desc = "Divide dough into small uniform portions (e.g., 50g-70g). Roll into tight balls and cluster together in a buttered pan."
+    proof_name = "Clustered Final Proof"
+    proof_desc = "Proof in the pan until the rolls expand, touch each other, and reach the pan rim."
+    cooling_desc = "Allow the rolls/buns to cool in the pan for 5-10 minutes. They can be served warm, or transferred to a wire rack to cool completely."
+    cooling_duration = 15
+
+
+class FilledSweetRollArchetype(PanEngine):
+    archetype_slug = "filled_sweet_roll"
+    label = "Filled Sweet Roll"
+    yield_unit = "rolls"
+    icon = "🌀"
+    description = "Laminated or sheeted scroll structures built to contain heavy interior fillings."
+    default_form_factor = "individual-portion-sheet"
+    grain_affinity = "medium_protein"
+    preset_matchers = ["cinnamon", "sweet_roll", "babka", "monkey_bread"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "11.5% - 13.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on uniform dough-sheet stretch and high filling containment. The flour must provide an elastic, robust backbone "
+        "capable of being rolled thin, scroll-shaped, and baked without rupturing or allowing heavy sweet fillings to cause "
+        "structural collapse."
+    )
+    shape_name = "Lamination & Filling"
+    shape_desc = "Roll dough into a large rectangle. Spread filling evenly, roll into a tight cylinder, and slice into rounds. Place in a prepared pan."
+    proof_name = "Filled Pan Proof"
+    proof_desc = "Proof the sliced rounds in the pan until puffy and pressing against one another."
+    cooling_desc = "Allow the rolls/buns to cool in the pan for 5-10 minutes. They can be served warm, or transferred to a wire rack to cool completely."
+    cooling_duration = 15

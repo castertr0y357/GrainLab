@@ -120,11 +120,8 @@ class DynamicRouteScannerTests(TestCase):
             elif name == "calculator_phase3" or name == "calculator_phase4" or name == "calculator_final_recipe":
                 args = ["lean-crusty", "classic_sourdough"]
             elif name in (
-                "edit_wheat_berry",
                 "delete_wheat_berry",
-                "edit_commercial_flour",
                 "delete_commercial_flour",
-                "edit_equipment",
                 "delete_equipment",
             ):
                 import uuid

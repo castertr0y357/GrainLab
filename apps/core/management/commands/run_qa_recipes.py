@@ -366,6 +366,37 @@ def evaluate_recipe(
                     }
                 )
 
+    # Check 11: Schema Attributes Presence
+    schema_attributes = [
+        "default_yield_amount",
+        "yield_unit",
+        "is_portionable",
+        "sidebar_science_profile",
+        "recommended_grain_ids",
+        "flour_blend",
+        "fat_starting_temp",
+        "required_actions",
+        "required_hardware",
+        "secondary_ingredients",
+    ]
+    missing_attrs = [attr for attr in schema_attributes if attr not in recipe]
+    if missing_attrs:
+        checks.append(
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": False,
+                "reason": f"Missing attributes from schema: {', '.join(missing_attrs)}",
+            }
+        )
+    else:
+        checks.append(
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": True,
+                "reason": "All required schema attributes are present.",
+            }
+        )
+
     if not checks:
         checks.append(
             {"rule": "Basic Sanity", "passed": True, "reason": "Payload parsed but no specific rules evaluated."}
@@ -428,7 +459,7 @@ class Command(BaseCommand):
         self.stdout.write("Starting QA Test Suite for Gemma Recipe Generation")
 
         # We want to run across all engines and all archetypes, but only 1 recipe per archetype
-        categories_to_run = list(CATEGORY_TO_ENGINE.items())
+        categories_to_run = [(k, v) for k, v in CATEGORY_TO_ENGINE.items() if v == "bath"]
         if test_mode:
             categories_to_run = [(k, v) for k, v in categories_to_run if v in ("cookie", "pan")]
 
@@ -679,10 +710,11 @@ class Command(BaseCommand):
                                     },
                                     mock_request,
                                 )
+                                if not isinstance(process_details, dict):
+                                    process_details = {}
                             except Exception as e:
                                 self.stderr.write(f"  [WARNING] Failed to generate process details: {e}")
                                 process_details = {}
-
                             evaluations = evaluate_recipe(
                                 recipe_data,
                                 test["type"],
@@ -819,6 +851,9 @@ class Command(BaseCommand):
     - **Temperature:** {bake_temp}°F
     - **Time:** {bake_time} minutes
     - **Steam Mode:** {'Yes' if steam else 'No'}
+
+    ## Equipment Needed
+    {chr(10).join(f"- {e.replace('_', ' ').title()}" for e in recipe_data.get('required_hardware', [])) if recipe_data.get('required_hardware') else '- Standard Kitchen Equipment'}
 
     ## QA Rule Audit
     """

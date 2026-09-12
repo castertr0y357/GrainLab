@@ -1,1610 +1,1215 @@
 [
     {
-        "engine": "hearth",
-        "archetype": "hearth_boule",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "hearth_boule",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "hearth_boule",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "hearth_boule",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "high_hydration_slab",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "high_hydration_slab",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "high_hydration_slab",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "high_hydration_slab",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "tapered_baguette",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "tapered_baguette",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "tapered_baguette",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "tapered_baguette",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "flash_pizza",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "flash_pizza",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "hearth",
-        "archetype": "flash_pizza",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "hearth",
-        "archetype": "flash_pizza",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "sandwich_pan",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "sandwich_pan",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "sandwich_pan",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "sandwich_pan",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "freeform_braided",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "freeform_braided",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "freeform_braided",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "freeform_braided",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "soft_dinner_roll",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "soft_dinner_roll",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "soft_dinner_roll",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "soft_dinner_roll",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "filled_sweet_roll",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "filled_sweet_roll",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pan",
-        "archetype": "filled_sweet_roll",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pan",
-        "archetype": "filled_sweet_roll",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
         "engine": "bath",
         "archetype": "boiled_bagel",
         "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (13980s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (242.5g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 425F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 18m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "bagels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This recipe is engineered for extreme tensile gluten development necessary to maintain shape during aggressive boiling and baking. The high hydration and protein content ensure the matrix can withstand pre-bake boiling without collapse, forming a tight, stable structure. The savory focus, coupled with the alkaline bath, drives deep Maillard reactions and enhances the crust's rustic, tannic character, complementing the malt sweetness.",
+            "recommended_grain_ids": [
+                "Hard White Wheat",
+                "Hard Red Wheat"
+            ],
+            "flour_blend": {
+                "Hard White Wheat": 60,
+                "Hard Red Wheat": 40
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead",
+                "mix"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides necessary fat content to enrich the crumb and aid in crust development, essential for handling the high-hydration dough.",
+                        "bakers_percentage": 15.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Filtered Water",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary hydration source, necessary for activating the gluten network and maintaining the high-hydration profile required for optimal bagel structure.",
+                        "bakers_percentage": 60.0
+                    }
+                ],
+                "binders": [],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Malt Syrup",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for enhancing the Maillard reaction during the boiling and baking process, contributing a deep, caramelized, and savory depth to the crust.",
+                        "bakers_percentage": 15.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Standard biological leavener to provide the necessary gas proofing and lift, forming the base structure for the bagel.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Fine Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for flavor balance and controlling the gluten network development, strengthening the final tensile structure.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Baking Soda (Sodium Bicarbonate)",
+                        "temperature": "room_temp",
+                        "reasoning": "The core chemical component of the alkaline bath. It raises the surface pH, stabilizing the crust, enhancing browning, and giving the signature savory, 'bath-treated' flavor profile.",
+                        "bakers_percentage": 0.5
+                    }
+                ]
+            },
+            "target_fat_pct": 15.0,
+            "target_sugar_pct": 15.0,
+            "target_hydration_pct": 60.0,
+            "target_binder_pct": 0.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
     },
     {
         "engine": "bath",
         "archetype": "boiled_bagel",
         "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (13980s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (268.1g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 425F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 18m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "bagels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This recipe is engineered for extreme tensile gluten development, forming a highly stable matrix capable of withstanding the mechanical stress and chemical alteration of a pre-bake boiling step. The high hydration and protein content support the 'zero_spread_stable' objective. The final structure relies on deep cross-linking and the synergistic pairing of malt sweetness, caramelized sugars, and the alkaline surface chemistry, resulting in a rustic, highly resilient final product.",
+            "recommended_grain_ids": [
+                "Hard White Wheat",
+                "Hard Red Wheat"
+            ],
+            "flour_blend": {
+                "Hard White Wheat": 50,
+                "Hard Red Wheat": 50
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead",
+                "mix"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds necessary richness and tenderness, improving handling and mouthfeel without compromising the structural integrity required for the boil.",
+                        "bakers_percentage": 35.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "Milk provides a creamy, structured liquid medium that enhances gluten development and contributes to the sweetness and tenderness of the final bagel.",
+                        "bakers_percentage": 40.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for boosting protein content and providing emulsification, which is critical for creating a dough that can withstand the temperature and chemical shock of the boiling process.",
+                        "bakers_percentage": 25.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the necessary level of simple carbohydrates for optimal Maillard browning and the 'sweet' profile of the bagel.",
+                        "bakers_percentage": 12.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary biological leavener, providing the necessary gas-proofing and metabolic activity to achieve the desired internal volume and crumb structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Cinnamon",
+                        "temperature": "room_temp",
+                        "reasoning": "Enhances the sweet, warm, and rustic flavor profile, complementing the maltiness and caramelized sugars of the bagel.",
+                        "bakers_percentage": 1.0
+                    }
+                ]
+            },
+            "target_fat_pct": 35.0,
+            "target_sugar_pct": 12.0,
+            "target_hydration_pct": 65.0,
+            "target_binder_pct": 25.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
     },
     {
         "engine": "bath",
         "archetype": "boiled_bagel",
         "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (13980s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (269.6g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 425F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 18m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "bagels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This recipe is engineered for extreme tensile gluten development, forming a rigid, zero-spread structure capable of withstanding high-heat liquid denaturation during the boiling phase. The flourless, savory nature is designed to maximize deep Maillard browning and complement the alkaline surface chemistry of the bath. Its high hydration and whole-grain profile ensure robust tannin tolerance, resulting in a complex, rustic flavor that holds up against intense caramelization.",
+            "recommended_grain_ids": [
+                "hard_red_wheat",
+                "white_bread_flour"
+            ],
+            "flour_blend": {
+                "hard_red_wheat": 85,
+                "white_bread_flour": 15
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "mix",
+                "knead"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds necessary richness and mouthfeel, helping to tenderize the otherwise intensely structured, dense bagel crumb.",
+                        "bakers_percentage": 12.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Filtered Water",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the primary hydration source required for activating gluten proteins and achieving the necessary high-hydration dough matrix.",
+                        "bakers_percentage": 70.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Egg Yolk",
+                        "temperature": "room_temp",
+                        "reasoning": "The yolk provides critical emulsifying properties and additional protein structure, which enhances the tensile strength of the dough without the excess moisture of a whole egg.",
+                        "bakers_percentage": 18.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Malt Syrup",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for achieving the signature deep, toasted golden color and providing complex, malty notes that complement the savory, roasted character of the bagel.",
+                        "bakers_percentage": 12.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Necessary for biological activity, allowing the dough to develop sufficient gas pressure (gas_proofing) to achieve a stable, rounded, zero-spread final form.",
+                        "bakers_percentage": 1.2
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Coarse Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Enhances the rustic, savory profile and is vital for controlling osmotic pressure, which is critical for the structural integrity of the high-protein dough.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Everything Bagel Seasoning Blend",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the final textural and aromatic burst, complementing the caramelized, savory notes developed during the boiling and baking process.",
+                        "bakers_percentage": 1.5
+                    }
+                ]
+            },
+            "target_fat_pct": 12.0,
+            "target_sugar_pct": 12.0,
+            "target_hydration_pct": 70.0,
+            "target_binder_pct": 18.0,
+            "target_leaven_pct": 1.2,
+            "target_salt_pct": 2.5
+        }
     },
     {
         "engine": "bath",
         "archetype": "boiled_bagel",
         "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
+        "all_passed": false,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": false,
+                "reason": "Leavener Active Dry Yeast exceeds 1.5% max (2.0%)"
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (13980s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (301.9g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 425F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 18m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "bagels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This bagel structure requires extreme tensile gluten development, which is ideally built through thorough kneading of a high-hydration, high-protein dough. The subsequent boiling step (alkaline bath) achieves a crucial rapid gelatinization of the starch exterior, providing the sought-after protective crust before baking. The resulting crumb will be dense, chewy, and highly stable against the initial boiling/steaming process.",
+            "recommended_grain_ids": [
+                "high_protein_bread_flour",
+                "whole_wheat_flour"
+            ],
+            "flour_blend": {
+                "high_protein_bread_flour": 75,
+                "whole_wheat_flour": 25
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead",
+                "mix"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Applied as a wash before baking to enhance Maillard browning and provide a flaky, rich aroma that complements the deep caramelization achieved in the alkaline bath.",
+                        "bakers_percentage": 10.0
+                    },
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Neutral Oil (e.g., Grapeseed)",
+                        "temperature": "room_temp",
+                        "reasoning": "Used in the dough mix to increase overall hydration and elasticity without introducing excessive flavor or compromising the chewy, dense structure.",
+                        "bakers_percentage": 15.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Buttermilk",
+                        "temperature": "room_temp",
+                        "reasoning": "The lactic acid content tenderizes the high-protein gluten matrix and provides a mild, complementary sour tang that works exceptionally well with the savory/rustic profile of the alkaline bath.",
+                        "bakers_percentage": 20.0
+                    },
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Warm Water",
+                        "temperature": "warm_temp",
+                        "reasoning": "The base liquid medium necessary for hydration, optimized to activate the yeast without shocking the enzymes.",
+                        "bakers_percentage": 48.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Used for the final egg wash, providing superior golden color and a stable, slightly glossy surface finish essential for visual appeal.",
+                        "bakers_percentage": 25.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides molasses notes and deep, rich caramelization when exposed to high heat and the alkaline environment, contributing significantly to the desired maltiness.",
+                        "bakers_percentage": 10.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Ensures a crisp, crystalline exterior structure and aids in achieving optimal Maillard browning.",
+                        "bakers_percentage": 10.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary biological lift source. While bagels are dense, yeast activity is necessary to achieve the characteristic internal 'pop' and structure.",
+                        "bakers_percentage": 2.0
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Cinnamon",
+                        "temperature": "room_temp",
+                        "reasoning": "Directly aligns with the 'Sweet' nuance of the recipe name, offering warm aromatic spice that complements the smoky, rustic development.",
+                        "bakers_percentage": 1.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Aluminum Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "This is a critical baking science additive used to stabilize the crumb structure and enhance the golden, crusty appearance, mimicking a professional bagel shop finish.",
+                        "bakers_percentage": 0.5
+                    }
+                ]
+            },
+            "target_fat_pct": 25.0,
+            "target_sugar_pct": 20.0,
+            "target_hydration_pct": 68.0,
+            "target_binder_pct": 25.0,
+            "target_leaven_pct": 2.0,
+            "target_salt_pct": 2.0
+        }
     },
     {
         "engine": "bath",
-        "archetype": "laugen_bun",
+        "archetype": "twisted_pretzel",
         "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (14280s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (340.6g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 420F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 23m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "pretzels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This dough is engineered for maximum gluten extensibility and structural resilience, allowing it to withstand the physical stress of twisting and the chemical stress of boiling in an alkaline bath. The blend promotes deep Maillard browning and savory, caramelized notes, creating a highly resilient, chewy matrix ideal for rustic, tannin-tolerant savory applications.",
+            "recommended_grain_ids": [
+                "Hard White Wheat",
+                "Kamut (Ancient)"
+            ],
+            "flour_blend": {
+                "Hard White Wheat": 75,
+                "Kamut (Ancient)": 25
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead",
+                "mix"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Adding room-temperature butter enhances the pliability and chewiness of the final pretzel structure, providing necessary elasticity for twisting without sacrificing the hard wheat's structural integrity.",
+                        "bakers_percentage": 18.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Water",
+                        "temperature": "room_temp",
+                        "reasoning": "Water provides the necessary hydration medium to fully activate the starches and allows for the optimal gluten development required for a high-extensibility dough structure.",
+                        "bakers_percentage": 70.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs are crucial for protein binding, significantly strengthening the gluten network and providing the necessary resilience to maintain shape during boiling and handling.",
+                        "bakers_percentage": 50.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Dark Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Brown sugar contributes a deep, molasses-rich flavor profile, enhancing the savory caramelization (Maillard reaction) and improving the crust's color and chew.",
+                        "bakers_percentage": 30.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Yeast gas production is critical for achieving the desired volume and airy 'puff' within the pretzel matrix, providing lift before the final bake.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Kosher Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for flavor balance and controlling the rate of yeast activity, ensuring a robust, savory character that complements the alkaline bath.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Sodium Bicarbonate (Baking Soda)",
+                        "temperature": "room_temp",
+                        "reasoning": "This is the fundamental chemical component for the alkaline bath, initiating the lye reaction that creates the signature dark crust and unique flavor profile.",
+                        "bakers_percentage": 1.0
+                    }
+                ]
+            },
+            "target_fat_pct": 18.0,
+            "target_sugar_pct": 30.0,
+            "target_hydration_pct": 70.0,
+            "target_binder_pct": 50.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
     },
     {
         "engine": "bath",
-        "archetype": "laugen_bun",
+        "archetype": "twisted_pretzel",
         "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (14280s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (545.0g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 420F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 23m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "pretzels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This dough requires a highly extensible gluten matrix to achieve the characteristic twist and withstand the physical stress of handling. The alkaline bath treatment initiates a Maillard reaction and creates a hard, savory crust that compliments the inherent sweetness and malt notes. The structure must be robust enough to maintain its form during the boiling process, forming a tight, stable crumb.",
+            "recommended_grain_ids": [
+                "Hard White Wheat",
+                "Kamut (Ancient)"
+            ],
+            "flour_blend": {
+                "Hard White Wheat": 60,
+                "Kamut (Ancient)": 40
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead",
+                "mix"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Incorporating softened butter provides necessary fat lubrication to the gluten network, improving extensibility and contributing rich mouthfeel while stabilizing the dough structure.",
+                        "bakers_percentage": 85.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Water",
+                        "temperature": "room_temp",
+                        "reasoning": "Water is the primary solvent necessary to hydrate the starches and proteins in the flour blend, activating gluten formation and achieving the required medium hydration level.",
+                        "bakers_percentage": 60.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Whole Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs act as exceptional emulsifiers and protein binders, strengthening the overall dough structure significantly and contributing to a more stable, cohesive final product.",
+                        "bakers_percentage": 7.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides crystalline sweetness and acts as a crucial humectant, contributing to the deep caramelization and browning necessary for the pretzel's signature crust.",
+                        "bakers_percentage": 80.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "The molasses content in brown sugar adds depth and a rich, caramel-like notes (maltiness), which pairs perfectly with the savory alkaline bath chemistry.",
+                        "bakers_percentage": 100.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the necessary biological lift (CO2 gas production) to achieve a proper rise, allowing the dough to expand and develop the desired internal aeration before baking.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Coarse Kosher Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for flavor enhancement and structural control. It strengthens the gluten network and provides necessary counterpoint to the intense sweetness and savory bath.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Lye Base (Sodium Bicarbonate/Cocoa Ash)",
+                        "temperature": "room_temp",
+                        "reasoning": "This is the chemical agent for the alkaline bath, which fundamentally changes the crust chemistry, enhancing browning, firming the surface, and creating the distinct, savory pretzel profile.",
+                        "bakers_percentage": 0.5
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 180.0,
+            "target_hydration_pct": 60.0,
+            "target_binder_pct": 7.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
     },
     {
         "engine": "bath",
-        "archetype": "laugen_bun",
+        "archetype": "twisted_pretzel",
         "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (14280s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (448.8g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 420F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 23m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "pretzels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This dough requires maximum gluten development (high_extensible) achieved through thorough kneading to withstand the mechanical stress of twisting and boiling. The final structural integrity relies on the tight gluten matrix resisting dissolution in the alkaline bath. Flavor development is driven by the Maillard reaction and the complementary bitterness of the alkaline surface, which beautifully pairs with malt and savory notes.",
+            "recommended_grain_ids": [
+                "bread_flour",
+                "hard_wheat_flour"
+            ],
+            "flour_blend": {
+                "bread_flour": 70,
+                "hard_wheat_flour": 30
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "knead",
+                "mix"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds necessary richness and pliability to the dough, preventing excessive rigidity while maintaining the structural integrity needed for twisting.",
+                        "bakers_percentage": 75.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Cold Water",
+                        "temperature": "cold",
+                        "reasoning": "Provides hydration for the gluten network. Using cold water helps manage yeast activity during the initial proofing, leading to a more controlled rise.",
+                        "bakers_percentage": 15.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Eggs provide essential structure and elasticity, helping the final dough retain its shape and chewiness after the intense stretching and boiling process.",
+                        "bakers_percentage": 70.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "The molasses content contributes deep, caramel notes and aids in the browning reaction during the alkaline bath, enhancing the savory flavor profile.",
+                        "bakers_percentage": 80.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for building the overall volume and chewiness of the pretzel. The controlled rise is critical for the final structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Coarse Kosher Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for seasoning and enhancing the savory depth. Salt helps control the yeast activity and strengthens the gluten structure.",
+                        "bakers_percentage": 2.5
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Malt Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "Aids in the development of a deep, roasted malt flavor, which is highly complementary to the high Maillard browning achieved in the alkaline bath.",
+                        "bakers_percentage": 15.0
+                    }
+                ]
+            },
+            "target_fat_pct": 75.0,
+            "target_sugar_pct": 80.0,
+            "target_hydration_pct": 65.0,
+            "target_binder_pct": 70.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.5
+        }
     },
     {
         "engine": "bath",
-        "archetype": "laugen_bun",
+        "archetype": "twisted_pretzel",
         "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "bath",
-        "archetype": "pretzel_stick",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "bath",
-        "archetype": "pretzel_stick",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "bath",
-        "archetype": "pretzel_stick",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "bath",
-        "archetype": "pretzel_stick",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "leavened_flatbread",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "unleavened_stretched",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "blistered_griddle",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "flat",
-        "archetype": "crisp_flatbread",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "chemical_loaf",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "layered_scone",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "dropped_biscuit",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "quick",
-        "archetype": "textured_muffin",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "sponge_cake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "creamed_cake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "pound_cake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "batter",
-        "archetype": "griddle_batter",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "layered_viennoiserie",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "inverted_puff",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "shortcrust_tart",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pastry",
-        "archetype": "paper_thin_phyllo",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "choux",
-        "archetype": "piped_shell",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "choux",
-        "archetype": "piped_shell",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "choux",
-        "archetype": "piped_shell",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "choux",
-        "archetype": "piped_shell",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "choux",
-        "archetype": "extrusion_fried",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "choux",
-        "archetype": "extrusion_fried",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "choux",
-        "archetype": "extrusion_fried",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "choux",
-        "archetype": "extrusion_fried",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "choux",
-        "archetype": "savory_emulsion",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "choux",
-        "archetype": "savory_emulsion",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "choux",
-        "archetype": "savory_emulsion",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "choux",
-        "archetype": "savory_emulsion",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "drop_cookie",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "bar_cookie",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "slice_bake",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "cookie",
-        "archetype": "rolled_cutout",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "yeast_raised_donut",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "yeast_raised_donut",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "yeast_raised_donut",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "yeast_raised_donut",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "cake_donut",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "cake_donut",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "cake_donut",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "cake_donut",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "fritter_beignet",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "fritter_beignet",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "fritter_beignet",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "fritter_beignet",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "fried_laminate",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "fried_laminate",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "fry",
-        "archetype": "fried_laminate",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "fry",
-        "archetype": "fried_laminate",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "sheeted_ribbon",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "stuffed_pocket",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "extruded_shape",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "savory",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "sweet",
-        "error": "Error 10061 connecting to 127.0.0.1:6379. No connection could be made because the target machine actively refused it."
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "flourless_savory",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
-    },
-    {
-        "engine": "pasta",
-        "archetype": "alkaline_noodles",
-        "profile": "flourless_sweet",
-        "error": "'NoneType' object has no attribute 'get'"
+        "all_passed": false,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Active Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (14280s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": false,
+                "reason": "High lipid (65.0%) paired with excessive hydration (120.0%) creates structural failure (soup)."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (840.0g) is realistic."
+            },
+            {
+                "rule": "Permissible Action Validations",
+                "passed": true,
+                "reason": "Timeline respects permissible action types."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Bake temp 420F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 23m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "pretzels",
+            "is_portionable": true,
+            "sidebar_science_profile": "This pretzel utilizes a high-extensibility dough matrix designed to withstand the intense chemical and thermal stresses of the alkaline bath. The deep Maillard browning resulting from the sodium carbonate/baking soda reaction, combined with the inherent malt sweetness, creates a complex, savory-caramelized profile. The structure relies on a strong gluten network and appropriate hydration to maintain shape integrity during boiling and subsequent cooling.",
+            "recommended_grain_ids": [
+                "hard_wheat_bread_flour",
+                "rye_flour"
+            ],
+            "flour_blend": {
+                "hard_wheat_bread_flour": 85,
+                "rye_flour": 15
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [
+                "mix",
+                "knead"
+            ],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds necessary richness and tenderness to the final product, improving mouthfeel without compromising the structural integrity needed for the high-extensibility dough.",
+                        "bakers_percentage": 65.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Warm Water",
+                        "temperature": "35\u00b0C",
+                        "reasoning": "Provides optimal hydration for activating the gluten network in the hard wheat flour, aiding in the necessary dough extensibility for twisting.",
+                        "bakers_percentage": 120.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room_temp",
+                        "reasoning": "Due to the 'Flourless Sweet' designation, eggs provide crucial protein structure and emulsification, helping the matrix withstand the alkaline bath and maintaining shape before baking.",
+                        "bakers_percentage": 180.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides deep molasses notes and a slower caramelization rate, enhancing the rustic, savory complexity desired by the alkaline bath process.",
+                        "bakers_percentage": 200.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Active Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Responsible for the primary biological lift and gas-proofing required for the pretzel's characteristic chew and open structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Coarse Kosher Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "A foundational seasoning that balances the intense sweetness and enhances the savory depth required for the pretzel profile.",
+                        "bakers_percentage": 2.5
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Lye Solution (or Baking Soda)",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for the 'Alkaline Bath' preparation. The sodium carbonate/bicarbonate reaction is what defines the characteristic deep brown crust and enhances the Maillard browning response.",
+                        "bakers_percentage": 3.0
+                    }
+                ]
+            },
+            "target_fat_pct": 65.0,
+            "target_sugar_pct": 200.0,
+            "target_hydration_pct": 85.0,
+            "target_binder_pct": 180.0,
+            "target_leaven_pct": 4.5,
+            "target_salt_pct": 2.5
+        }
     }
 ]

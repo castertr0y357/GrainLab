@@ -118,93 +118,32 @@ class BatterEngine(BaseEngine):
         "Belgian Waffles",
     ]
 
-    archetypes = {
-        "sponge_cake": {
-            "default_form_factor": "straight-sided-round-tin",
-            "default_salt_pct": 0.005,
-            "label": "Foam / Sponge Cake",
-            "icon": "🍰",
-            "description": "Fat-free or low-fat aeration systems like Genoise or Chiffon.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "straight-sided-round-tin",
-                "default_salt_pct": 0.005,
-                "default_form_factor": "straight-sided-round-tin",
-                "default_salt_pct": 0.005,
-                "default_form_factor": "straight-sided-round-tin",
-                "default_salt_pct": 0.005,
-                "default_form_factor": "straight-sided-round-tin",
-                "default_salt_pct": 0.005,
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "8.0% - 9.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus entirely on egg-protein foam stabilization and complete gluten suppression. Grains must have minimal "
-                "protein content to prevent structural toughness, allowing delicate egg-cell walls to expand unhindered "
-                "while relying purely on gentle liquid starch gelatinization to set a feather-light, aerated crumb."
-            ),
-        },
-        "creamed_cake": {
-            "default_form_factor": "straight-sided-round-tin",
-            "default_salt_pct": 0.005,
-            "label": "Creamed Layer Cake",
-            "icon": "🎂",
-            "description": "Emulsified lipid-sugar crystal structures for standard layers.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "8.0% - 10.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on lipid-sugar crystal aeration and uniform emulsion stability. Low-protein grains are mandatory to "
-                "prevent unwanted gluten strands during liquid integration. Flour starches must absorb moisture smoothly "
-                "to encapsulate fat phases uniformly, preventing batter separation and ensuring a velvety, tender layered structure."
-            ),
-        },
-        "pound_cake": {
-            "default_form_factor": "straight-sided-round-tin",
-            "default_salt_pct": 0.005,
-            "label": "High-Ratio Pound Cake",
-            "icon": "🍫",
-            "description": "Dense, uniform crumb carrying massive sugar and fat weights.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on managing high-ratio sugar and lipid loads. Grains must maximize "
-                "tender starch swelling without developing elastic protein networks, allowing the batter to hold massive "
-                "butter and sugar weights without collapsing, while supporting either a dense structure or an aerated, delicate crumb based on the variation."
-            ),
-        },
-        "griddle_batter": {
-            "default_form_factor": "straight-sided-round-tin",
-            "default_salt_pct": 0.005,
-            "label": "Fluid Griddle Batter",
-            "yield_unit": "pancakes",
-            "icon": "🥞",
-            "description": "High-moisture pourable structures like Pancakes, Waffles, and Crepes.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "high_spread",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on pourable hydration mechanics and rapid surface heat transfer. Grains must allow instant liquid "
-                "dispersion and minimal viscosity development. Texture relies on swift starch gelatinization upon hot "
-                "iron contact, forming crisp outer grids while keeping the interior soft and aerated."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if BatterEngine._archetypes_cache is None:
+            cache = {}
+            for subclass in BatterEngine.__subclasses__():
+                inst = subclass()
+                cache[inst.id] = {
+                    "default_form_factor": inst.default_form_factor,
+                    "default_salt_pct": inst.default_salt_pct,
+                    "label": inst.label,
+                    "icon": inst.icon,
+                    "description": inst.description,
+                    "grain_affinity": inst.grain_affinity,
+                    "target_archetype_mechanics": getattr(inst, "target_archetype_mechanics", {}),
+                    "culinary_nuance_directive": inst.get_ai_culinary_directive(),
+                    "preset_matchers": getattr(inst, "preset_matchers", []),
+                }
+                if hasattr(inst, "yield_unit"):
+                    cache[inst.id]["yield_unit"] = inst.yield_unit
+            BatterEngine._archetypes_cache = cache
+        return BatterEngine._archetypes_cache
+
+    def __init__(self):
+        super().__init__()
 
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import SWEET_FALLBACKS
@@ -278,6 +217,31 @@ class BatterEngine(BaseEngine):
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like berries or chips), use true baker's percentages (flour = 100%). For liquid batters, these typically range from 20.0 to 80.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For chemical leaveners (baking powder, baking soda), strictly limit to 1.0 to 5.0 to avoid chemical taste. If total lipid fat exceeds 30.0%, total liquid MUST NOT exceed 85.0%."
 
+
+class SpongeCakeArchetype(BatterEngine):
+    id = "sponge_cake"
+    default_form_factor = "straight-sided-round-tin"
+    default_salt_pct = 0.005
+    label = "Foam / Sponge Cake"
+    icon = "🍰"
+    preset_matchers = ["cake", "cupcake", "madeleine", "sponge", "chiffon", "angel"]
+    description = "Fat-free or low-fat aeration systems like Genoise or Chiffon."
+    grain_affinity = "low_protein"
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "8.0% - 9.5%",
+    }
+
+    def get_ai_culinary_directive(self) -> str:
+        return (
+            super().get_ai_culinary_directive()
+            + " Focus entirely on egg-protein foam stabilization and complete gluten suppression. Grains must have minimal "
+            "protein content to prevent structural toughness, allowing delicate egg-cell walls to expand unhindered "
+            "while relying purely on gentle liquid starch gelatinization to set a feather-light, aerated crumb."
+        )
+
     def get_live_timeline_steps(
         self,
         recipe_data: dict,
@@ -287,129 +251,228 @@ class BatterEngine(BaseEngine):
         mixing_method: str = "stand_mixer",
         **kwargs,
     ) -> list[dict]:
-        preset_slug = kwargs.get("preset_slug") or ""
-
-        # Branch for griddle batters (Pancakes, Waffles, Crepes)
-        if (
-            "griddle" in preset_slug.lower()
-            or "pancake" in preset_slug.lower()
-            or "waffle" in preset_slug.lower()
-            or "crepe" in preset_slug.lower()
-        ):
-            return [
-                {
-                    "key": "dry_whisk",
-                    "name": "Dry Sift & Whisk",
-                    "duration_sec": 3 * 60,
-                    "desc": "Whisk together the flour, sugar, leavening agents, and salt in a large bowl. Creating a uniform dry mix prevents clumps later.",
-                },
-                {
-                    "key": "wet_mix",
-                    "name": "Wet Ingredient Emulsification",
-                    "duration_sec": 4 * 60,
-                    "desc": "In a separate bowl, whisk together the eggs, milk/buttermilk, and melted fat (butter or oil) until smooth.",
-                },
-                {
-                    "key": "fold",
-                    "name": "Wet-into-Dry Fold",
-                    "duration_sec": 3 * 60,
-                    "desc": "Pour the wet ingredients into the dry ingredients. Gently fold with a spatula just until combined. Lumps are acceptable and desired; over-mixing develops gluten and makes the batter tough.",
-                    "is_mix": True,
-                },
-                {
-                    "key": "bake",
-                    "name": "Griddle / Iron Cooking",
-                    "duration_sec": bake_time_min * 60,
-                    "desc": "Cook portions of the batter on a preheated, greased griddle or waffle iron until golden brown and cooked through. For pancakes, flip when bubbles form and pop on the surface.",
-                    "is_bake": True,
-                },
-            ]
-
-        # Standard Cake/Batter Branch
-        if "chiffon" in preset_slug.lower() or "angel" in preset_slug.lower():
-            steps = [
-                {
-                    "key": "mix",
-                    "name": "Egg Foam Emulsification",
-                    "duration_sec": 6 * 60,
-                    "desc": "Whip egg whites/yolks with sugar to soft peaks. Creates the micro-bubbles needed for rise without chemical leavening.",
-                    "is_mix": True,
-                },
-                {
-                    "key": "fold",
-                    "name": "Dry Sift & Fold",
-                    "duration_sec": 4 * 60,
-                    "desc": "Gently fold in sifted flour and dry ingredients to avoid deflating the egg foam.",
-                },
-                {
-                    "key": "bake",
-                    "name": "Cake Stencil Bake",
-                    "duration_sec": bake_time_min * 60,
-                    "desc": "Bake in prepared pans. Air bubbles expand and starches gelatinize to form a tender crumb structure.",
-                    "is_bake": True,
-                },
-            ]
-        elif "cupcake" in preset_slug.lower() or "paste" in preset_slug.lower():
-            steps = [
-                {
-                    "key": "mix",
-                    "name": "Dry & Fat Mix (Reverse Creaming)",
-                    "duration_sec": 6 * 60,
-                    "desc": "Mix flour, sugar, leavening, and softened butter together until it resembles wet sand. Prevents excess gluten structure.",
-                    "is_mix": True,
-                },
-                {
-                    "key": "liquid_stream",
-                    "name": "Liquid Addition",
-                    "duration_sec": 3 * 60,
-                    "desc": "Stream in eggs and liquids in two batches, mixing well after each to build structure and aerate.",
-                },
-                {
-                    "key": "bake",
-                    "name": "Cake Stencil Bake",
-                    "duration_sec": bake_time_min * 60,
-                    "desc": "Bake in prepared pans. Starches gelatinize to form a tender crumb structure.",
-                    "is_bake": True,
-                },
-            ]
-        else:
-            steps = [
-                {
-                    "key": "mix",
-                    "name": "Fat Emulsification Phase",
-                    "duration_sec": 6 * 60,
-                    "desc": "Cream softened butter and sugar at medium-high speed for 5-6 minutes until pale and fluffy. Traps air bubbles inside the fat crystals.",
-                    "is_mix": True,
-                },
-                {
-                    "key": "egg_stream",
-                    "name": "Egg Emulsion",
-                    "duration_sec": 3 * 60,
-                    "desc": "Add eggs one at a time, mixing well after each addition to maintain a stable emulsion.",
-                },
-                {
-                    "key": "fold",
-                    "name": "Alternate Dry & Wet Fold",
-                    "duration_sec": 4 * 60,
-                    "desc": "Fold in sifted flour and remaining wet ingredients (like milk) alternately in batches, beginning and ending with dry. Avoid over-mixing.",
-                    "is_mix": True,
-                },
-                {
-                    "key": "bake",
-                    "name": "Cake Stencil Bake",
-                    "duration_sec": bake_time_min * 60,
-                    "desc": "Bake in prepared pans. Air bubbles expand and starches gelatinize to form a tender crumb structure.",
-                    "is_bake": True,
-                },
-            ]
-
-        steps.append(
+        return [
+            {
+                "key": "mix",
+                "name": "Egg Foam Emulsification",
+                "duration_sec": 6 * 60,
+                "desc": "Whip egg whites/yolks with sugar to soft peaks. Creates the micro-bubbles needed for rise without chemical leavening.",
+                "is_mix": True,
+            },
+            {
+                "key": "fold",
+                "name": "Dry Sift & Fold",
+                "duration_sec": 4 * 60,
+                "desc": "Gently fold in sifted flour and dry ingredients to avoid deflating the egg foam.",
+            },
+            {
+                "key": "bake",
+                "name": "Cake Stencil Bake",
+                "duration_sec": bake_time_min * 60,
+                "desc": "Bake in prepared pans. Air bubbles expand and starches gelatinize to form a tender crumb structure.",
+                "is_bake": True,
+            },
             {
                 "key": "cool",
                 "name": "Pan & Wire Rack Cooling",
                 "duration_sec": 30 * 60,
                 "desc": "Allow the cake to cool in its pan for 10-15 minutes before carefully inverting onto a wire rack to cool completely. Frosting a warm cake will cause it to melt.",
-            }
+            },
+        ]
+
+
+class CreamedCakeArchetype(BatterEngine):
+    id = "creamed_cake"
+    default_form_factor = "straight-sided-round-tin"
+    default_salt_pct = 0.005
+    label = "Creamed Layer Cake"
+    icon = "🎂"
+    preset_matchers = ["layer-cake", "creamed", "yellow-layer-cake", "butter-cake"]
+    description = "Emulsified lipid-sugar crystal structures for standard layers."
+    grain_affinity = "low_protein"
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "8.0% - 10.0%",
+    }
+
+    def get_ai_culinary_directive(self) -> str:
+        return (
+            super().get_ai_culinary_directive()
+            + " Focus on lipid-sugar crystal aeration and uniform emulsion stability. Low-protein grains are mandatory to "
+            "prevent unwanted gluten strands during liquid integration. Flour starches must absorb moisture smoothly "
+            "to encapsulate fat phases uniformly, preventing batter separation and ensuring a velvety, tender layered structure."
         )
 
-        return steps
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
+        return [
+            {
+                "key": "mix",
+                "name": "Dry & Fat Mix (Reverse Creaming)",
+                "duration_sec": 6 * 60,
+                "desc": "Mix flour, sugar, leavening, and softened butter together until it resembles wet sand. Prevents excess gluten structure.",
+                "is_mix": True,
+            },
+            {
+                "key": "liquid_stream",
+                "name": "Liquid Addition",
+                "duration_sec": 3 * 60,
+                "desc": "Stream in eggs and liquids in two batches, mixing well after each to build structure and aerate.",
+            },
+            {
+                "key": "bake",
+                "name": "Cake Stencil Bake",
+                "duration_sec": bake_time_min * 60,
+                "desc": "Bake in prepared pans. Starches gelatinize to form a tender crumb structure.",
+                "is_bake": True,
+            },
+            {
+                "key": "cool",
+                "name": "Pan & Wire Rack Cooling",
+                "duration_sec": 30 * 60,
+                "desc": "Allow the cake to cool in its pan for 10-15 minutes before carefully inverting onto a wire rack to cool completely. Frosting a warm cake will cause it to melt.",
+            },
+        ]
+
+
+class PoundCakeArchetype(BatterEngine):
+    id = "pound_cake"
+    default_form_factor = "straight-sided-round-tin"
+    default_salt_pct = 0.005
+    label = "High-Ratio Pound Cake"
+    icon = "🍫"
+    preset_matchers = ["pound", "fudg", "brownie"]
+    description = "Dense, uniform crumb carrying massive sugar and fat weights."
+    grain_affinity = "low_protein"
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+
+    def get_ai_culinary_directive(self) -> str:
+        return (
+            super().get_ai_culinary_directive()
+            + " Focus on managing high-ratio sugar and lipid loads. Grains must maximize "
+            "tender starch swelling without developing elastic protein networks, allowing the batter to hold massive "
+            "butter and sugar weights without collapsing, while supporting either a dense structure or an aerated, delicate crumb based on the variation."
+        )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
+        return [
+            {
+                "key": "mix",
+                "name": "Fat Emulsification Phase",
+                "duration_sec": 6 * 60,
+                "desc": "Cream softened butter and sugar at medium-high speed for 5-6 minutes until pale and fluffy. Traps air bubbles inside the fat crystals.",
+                "is_mix": True,
+            },
+            {
+                "key": "egg_stream",
+                "name": "Egg Emulsion",
+                "duration_sec": 3 * 60,
+                "desc": "Add eggs one at a time, mixing well after each addition to maintain a stable emulsion.",
+            },
+            {
+                "key": "fold",
+                "name": "Alternate Dry & Wet Fold",
+                "duration_sec": 4 * 60,
+                "desc": "Fold in sifted flour and remaining wet ingredients (like milk) alternately in batches, beginning and ending with dry. Avoid over-mixing.",
+                "is_mix": True,
+            },
+            {
+                "key": "bake",
+                "name": "Cake Stencil Bake",
+                "duration_sec": bake_time_min * 60,
+                "desc": "Bake in prepared pans. Air bubbles expand and starches gelatinize to form a tender crumb structure.",
+                "is_bake": True,
+            },
+            {
+                "key": "cool",
+                "name": "Pan & Wire Rack Cooling",
+                "duration_sec": 30 * 60,
+                "desc": "Allow the cake to cool in its pan for 10-15 minutes before carefully inverting onto a wire rack to cool completely. Frosting a warm cake will cause it to melt.",
+            },
+        ]
+
+
+class GriddleBatterArchetype(BatterEngine):
+    id = "griddle_batter"
+    default_form_factor = "straight-sided-round-tin"
+    default_salt_pct = 0.005
+    label = "Fluid Griddle Batter"
+    yield_unit = "pancakes"
+    icon = "🥞"
+    preset_matchers = ["griddle", "pancake", "waffle", "crepe"]
+    description = "High-moisture pourable structures like Pancakes, Waffles, and Crepes."
+    grain_affinity = "low_protein"
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "high_spread",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+
+    def get_ai_culinary_directive(self) -> str:
+        return (
+            super().get_ai_culinary_directive()
+            + " Focus on pourable hydration mechanics and rapid surface heat transfer. Grains must allow instant liquid "
+            "dispersion and minimal viscosity development. Texture relies on swift starch gelatinization upon hot "
+            "iron contact, forming crisp outer grids while keeping the interior soft and aerated."
+        )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data: dict,
+        estimated_bulk_minutes: int,
+        estimated_proof_minutes: int,
+        bake_time_min: int,
+        mixing_method: str = "stand_mixer",
+        **kwargs,
+    ) -> list[dict]:
+        return [
+            {
+                "key": "dry_whisk",
+                "name": "Dry Sift & Whisk",
+                "duration_sec": 3 * 60,
+                "desc": "Whisk together the flour, sugar, leavening agents, and salt in a large bowl. Creating a uniform dry mix prevents clumps later.",
+            },
+            {
+                "key": "wet_mix",
+                "name": "Wet Ingredient Emulsification",
+                "duration_sec": 4 * 60,
+                "desc": "In a separate bowl, whisk together the eggs, milk/buttermilk, and melted fat (butter or oil) until smooth.",
+            },
+            {
+                "key": "fold",
+                "name": "Wet-into-Dry Fold",
+                "duration_sec": 3 * 60,
+                "desc": "Pour the wet ingredients into the dry ingredients. Gently fold with a spatula just until combined. Lumps are acceptable and desired; over-mixing develops gluten and makes the batter tough.",
+                "is_mix": True,
+            },
+            {
+                "key": "bake",
+                "name": "Griddle / Iron Cooking",
+                "duration_sec": bake_time_min * 60,
+                "desc": "Cook portions of the batter on a preheated, greased griddle or waffle iron until golden brown and cooked through. For pancakes, flip when bubbles form and pop on the surface.",
+                "is_bake": True,
+            },
+        ]

@@ -57,94 +57,28 @@ class FryEngine(BaseEngine):
         "Crullers (Fried Execution)",
     ]
 
-    archetypes = {
-        "yeast_raised_donut": {
-            "default_form_factor": "high-volume-oil-vat",
-            "default_salt_pct": 0.01,
-            "label": "Yeast-Raised Donut",
-            "icon": "🍩",
-            "description": "Highly aerated, light, floating dough rings.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "high-volume-oil-vat",
-                "default_salt_pct": 0.01,
-                "default_form_factor": "high-volume-oil-vat",
-                "default_salt_pct": 0.01,
-                "default_form_factor": "high-volume-oil-vat",
-                "default_salt_pct": 0.01,
-                "default_form_factor": "high-volume-oil-vat",
-                "default_salt_pct": 0.01,
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.0% - 13.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high gas retention and maximum structural lightness. The dough demands an elastic, highly resilient "
-                "long-chain protein web capable of capturing yeast respiration during proofing, enabling the ring to float "
-                "high in hot fat while building an oil-impermeable outer crust."
-            ),
-        },
-        "cake_donut": {
-            "default_form_factor": "deep-fry-vat",
-            "default_salt_pct": 0.01,
-            "label": "Cake / Chemical Donut",
-            "icon": "🍩",
-            "description": "Tender, friable, batter-based rings dropping directly into fat.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on complete gluten suppression and controlled chemical gas expansion. Grains must maximize tender starch "
-                "swelling with zero elastic snapback, allowing the thick batter to release cleanly from extrusion dies and "
-                "fry into a soft, cakey ring with a short crumb."
-            ),
-        },
-        "fritter_beignet": {
-            "default_form_factor": "high-volume-oil-vat",
-            "default_salt_pct": 0.01,
-            "label": "Batter Fritter / Beignet",
-            "yield_unit": "beignets",
-            "icon": "☁️",
-            "description": "Irregular high-hydration moisture puffs expanding violently in oil.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "high_spread",
-                "moisture_lipid_ratio": "high_hydration_lean",
-                "optimal_protein_window": "9.0% - 11.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high-hydration steam puffs and explosive internal vapor expansion. Grains must allow irregular, wet "
-                "dough masses to hold their shape loosely upon dropping into fat, flash-frying into hollow, airy pillows "
-                "without absorbing excess grease."
-            ),
-        },
-        "fried_laminate": {
-            "default_form_factor": "high-volume-oil-vat",
-            "default_salt_pct": 0.01,
-            "label": "Fried Laminated",
-            "yield_unit": "pastries",
-            "icon": "🫓",
-            "description": "Alternating layers flashing open instantly in convection fat.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "moderate_extensible",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "10.0% - 12.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on thin alternating layer definition under sudden convective thermal shock. The flour must provide excellent "
-                "extensibility to hold crisp rolled structural sheets separate from fat boundaries, allowing the layers to separate "
-                "cleanly into flaky shards upon frying."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in FryEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "high-volume-oil-vat"),
+                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.01),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "donuts"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "medium_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def apply_sub_class_constraints(
         self,
@@ -196,11 +130,8 @@ class FryEngine(BaseEngine):
         side_a_sec = 120
         flip_sec = 10
         side_b_sec = 120
-        preset_slug = kwargs.get("preset_slug") or ""
 
-        is_batter = False
-        if "cake" in preset_slug.lower() or "fritter" in preset_slug.lower() or "batter" in preset_slug.lower():
-            is_batter = True
+        is_batter = getattr(self, "is_batter", False)
 
         if is_batter:
             steps = [
@@ -284,3 +215,97 @@ class FryEngine(BaseEngine):
             ]
         )
         return steps
+
+
+class YeastRaisedDonutArchetype(FryEngine):
+    archetype_slug = "yeast_raised_donut"
+    label = "Yeast-Raised Donut"
+    icon = "🍩"
+    description = "Highly aerated, light, floating dough rings."
+    default_form_factor = "high-volume-oil-vat"
+    default_salt_pct = 0.01
+    grain_affinity = "medium_protein"
+    preset_matchers = ["yeast", "raised", "donut"]
+    is_batter = False
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_retention",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "11.0% - 13.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high gas retention and maximum structural lightness. The dough demands an elastic, highly resilient "
+        "long-chain protein web capable of capturing yeast respiration during proofing, enabling the ring to float "
+        "high in hot fat while building an oil-impermeable outer crust."
+    )
+
+
+class CakeDonutArchetype(FryEngine):
+    archetype_slug = "cake_donut"
+    label = "Cake / Chemical Donut"
+    icon = "🍩"
+    description = "Tender, friable, batter-based rings dropping directly into fat."
+    default_form_factor = "deep-fry-vat"  # deep-fry-vat is missing from permissible, but inherited
+    default_salt_pct = 0.01
+    grain_affinity = "low_protein"
+    preset_matchers = ["cake-donut", "batter-donut"]
+    is_batter = True
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on complete gluten suppression and controlled chemical gas expansion. Grains must maximize tender starch "
+        "swelling with zero elastic snapback, allowing the thick batter to release cleanly from extrusion dies and "
+        "fry into a soft, cakey ring with a short crumb."
+    )
+
+
+class FritterBeignetArchetype(FryEngine):
+    archetype_slug = "fritter_beignet"
+    label = "Batter Fritter / Beignet"
+    yield_unit = "beignets"
+    icon = "☁️"
+    description = "Irregular high-hydration moisture puffs expanding violently in oil."
+    default_form_factor = "high-volume-oil-vat"
+    default_salt_pct = 0.01
+    grain_affinity = "low_protein"
+    preset_matchers = ["fritter", "beignet", "sopapilla"]
+    is_batter = True
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "high_spread",
+        "moisture_lipid_ratio": "high_hydration_lean",
+        "optimal_protein_window": "9.0% - 11.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high-hydration steam puffs and explosive internal vapor expansion. Grains must allow irregular, wet "
+        "dough masses to hold their shape loosely upon dropping into fat, flash-frying into hollow, airy pillows "
+        "without absorbing excess grease."
+    )
+
+
+class FriedLaminateArchetype(FryEngine):
+    archetype_slug = "fried_laminate"
+    label = "Fried Laminated"
+    yield_unit = "pastries"
+    icon = "🫓"
+    description = "Alternating layers flashing open instantly in convection fat."
+    default_form_factor = "high-volume-oil-vat"
+    default_salt_pct = 0.01
+    grain_affinity = "medium_protein"
+    preset_matchers = ["frybread", "cruller", "laminated"]
+    is_batter = False
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "moderate_extensible",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "10.0% - 12.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on thin alternating layer definition under sudden convective thermal shock. The flour must provide excellent "
+        "extensibility to hold crisp rolled structural sheets separate from fat boundaries, allowing the layers to separate "
+        "cleanly into flaky shards upon frying."
+    )

@@ -58,73 +58,28 @@ class ChouxEngine(BaseEngine):
         "Paris-Brest Pastries",
     ]
 
-    archetypes = {
-        "piped_shell": {
-            "default_form_factor": "extrusion-piping-sheet",
-            "default_salt_pct": 0.005,
-            "label": "Piped Shell",
-            "icon": "🍫",
-            "description": "Linear or round hollow vectors like Éclairs and Profiteroles.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "extrusion-piping-sheet",
-                "default_salt_pct": 0.005,
-                "default_form_factor": "extrusion-piping-sheet",
-                "default_salt_pct": 0.005,
-                "default_form_factor": "extrusion-piping-sheet",
-                "default_salt_pct": 0.005,
-                "required_gluten_elasticity": "moderate_extensible",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "9.5% - 11.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on pre-gelatinized starch panade formation and moderate gluten extensibility. The flour must bind "
-                "massive egg moisture volumes during the secondary paste integration, providing a flexible protein web "
-                "that stretches cleanly under explosive internal steam expansion without rupturing the shell walls."
-            ),
-        },
-        "extrusion_fried": {
-            "default_form_factor": "extrusion-piping-sheet",
-            "default_salt_pct": 0.005,
-            "label": "Extrusion Fried Paste",
-            "yield_unit": "churros",
-            "icon": "🌀",
-            "description": "Star-die extrusion profiles built for rapid oil expansion like Churros.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "9.0% - 11.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on structural moisture containment and rapid surface setting under direct hot fat conduction. The paste "
-                "network must minimize horizontal flow while maintaining deep star-die definition, allowing water-vapor to flash "
-                "immediately into a light interior puff while sealing out oil absorption."
-            ),
-        },
-        "savory_emulsion": {
-            "default_form_factor": "extrusion-piping-sheet",
-            "default_salt_pct": 0.005,
-            "label": "Savory Emulsion",
-            "yield_unit": "puffs",
-            "icon": "🧀",
-            "description": "High-lipid, cheese-bound panade drops like Gougères.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "moderate_extensible",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "9.5% - 11.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high lipid encapsulation alongside moderate protein elasticity. The matrix must support heavy grated "
-                "cheese weights and fat loads, maintaining stable structural drops that puff cleanly in the oven without "
-                "collapsing into oily pools."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in ChouxEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "extrusion-piping-sheet"),
+                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.005),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "pastries"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "low_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import SWEET_FALLBACKS
@@ -264,3 +219,72 @@ class ChouxEngine(BaseEngine):
                 "desc": "Transfer to a wire rack to cool completely before filling. Filling warm shells will melt pastry cream and make them soggy.",
             },
         ]
+
+
+class PipedShellArchetype(ChouxEngine):
+    archetype_slug = "piped_shell"
+    label = "Piped Shell"
+    icon = "🍫"
+    description = "Linear or round hollow vectors like Éclairs and Profiteroles."
+    default_form_factor = "extrusion-piping-sheet"
+    default_salt_pct = 0.005
+    grain_affinity = "low_protein"
+    yield_unit = "pastries"
+    preset_matchers = ["éclair", "eclair", "cream puff", "profiterole", "paris-brest"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "moderate_extensible",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "9.5% - 11.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on pre-gelatinized starch panade formation and moderate gluten extensibility. The flour must bind "
+        "massive egg moisture volumes during the secondary paste integration, providing a flexible protein web "
+        "that stretches cleanly under explosive internal steam expansion without rupturing the shell walls."
+    )
+
+
+class ExtrusionFriedPasteArchetype(ChouxEngine):
+    archetype_slug = "extrusion_fried"
+    label = "Extrusion Fried Paste"
+    icon = "🌀"
+    description = "Star-die extrusion profiles built for rapid oil expansion like Churros."
+    default_form_factor = "extrusion-piping-sheet"
+    default_salt_pct = 0.005
+    grain_affinity = "low_protein"
+    yield_unit = "churros"
+    preset_matchers = ["cruller", "churro"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "9.0% - 11.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on structural moisture containment and rapid surface setting under direct hot fat conduction. The paste "
+        "network must minimize horizontal flow while maintaining deep star-die definition, allowing water-vapor to flash "
+        "immediately into a light interior puff while sealing out oil absorption."
+    )
+
+
+class SavoryEmulsionArchetype(ChouxEngine):
+    archetype_slug = "savory_emulsion"
+    label = "Savory Emulsion"
+    icon = "🧀"
+    description = "High-lipid, cheese-bound panade drops like Gougères."
+    default_form_factor = "extrusion-piping-sheet"
+    default_salt_pct = 0.005
+    grain_affinity = "low_protein"
+    yield_unit = "puffs"
+    preset_matchers = ["gougere", "gougères", "cheese"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "moderate_extensible",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "9.5% - 11.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high lipid encapsulation alongside moderate protein elasticity. The matrix must support heavy grated "
+        "cheese weights and fat loads, maintaining stable structural drops that puff cleanly in the oven without "
+        "collapsing into oily pools."
+    )

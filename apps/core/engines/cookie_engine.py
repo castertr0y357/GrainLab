@@ -105,96 +105,28 @@ class CookieEngine(BaseEngine):
         "Classic Sugar Cookies",
     ]
 
-    archetypes = {
-        "drop_cookie": {
-            "default_form_factor": "half-sheet-pan",
-            "default_salt_pct": 0.0075,
-            "label": "Drop Cookie",
-            "icon": "🍪",
-            "description": "Irregular mounds designed to flow into tender discs.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "heavy-aluminum-sheet",
-                "default_salt_pct": 0.0075,
-                "default_form_factor": "heavy-aluminum-sheet",
-                "default_salt_pct": 0.0075,
-                "default_form_factor": "heavy-aluminum-sheet",
-                "default_salt_pct": 0.0075,
-                "default_form_factor": "heavy-aluminum-sheet",
-                "default_salt_pct": 0.0075,
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "high_spread",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "For drop cookies, the balance of gluten development and moisture retention determines the final texture. "
-                "CRITICAL PHYSICS: High pentosan concentrations (found in grains like Rye) can aggressively absorb water, "
-                "starving wheat proteins of hydration. This can be used to inhibit gluten for tender textures, or to trap moisture for a gooey chew. "
-                "FLAVOR COMPATIBILITY: Strictly sensitive to high-astringent red wheat tannins, which create bitter notes. "
-                "Tannin-free Hard White Wheats, Soft White Wheats, or low-malty ancient profiles (like Spelt or Kamut) are excellent choices "
-                "that introduce desirable culinary depth without clashing with confections."
-            ),
-        },
-        "bar_cookie": {
-            "default_form_factor": "heavy-aluminum-sheet",
-            "default_salt_pct": 0.0075,
-            "label": "Bar / Slab",
-            "yield_unit": "bars",
-            "icon": "🍫",
-            "description": "Continuous uniform block baking, minimizing perimeter crisping.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on perimeter stability and controlled horizontal expansion. Grains must preserve a tender, short crumb "
-                "that slices cleanly without shattering, while providing enough uniform starch walls to hold heavy inclusion "
-                "weights across a continuous slab pan without center sinking."
-            ),
-        },
-        "slice_bake": {
-            "default_form_factor": "heavy-aluminum-sheet",
-            "default_salt_pct": 0.0075,
-            "label": "Slice & Bake",
-            "icon": "🔪",
-            "description": "Log configuration, highly compressed fat crystals for crisp rings.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high compression crystal arrays and clean circular margins. Dough demands maximum fat-crystal packing "
-                "with minimal protein resilience, allowing chilled logs to be sheeted or sliced cleanly without dragging crumbs, "
-                "baking into uniform, crisp rings."
-            ),
-        },
-        "rolled_cutout": {
-            "default_form_factor": "half-sheet-pan",
-            "default_salt_pct": 0.0075,
-            "label": "Rolled Cutout",
-            "icon": "📐",
-            "description": "Zero-spread formulation maintaining clean geometric edges post-bake.",
-            "grain_affinity": "medium_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "moderate_extensible",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "9.0% - 11.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on moderate structural extensibility and zero thermal flow. Grains must allow the dough to accept "
-                "sharp die-cutting and release cleanly from rolling mats, holding precise geometric definitions and sharp "
-                "borders under immediate oven heat."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in CookieEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "heavy-aluminum-sheet"),
+                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.0075),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "cookies"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "low_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import SWEET_FALLBACKS
@@ -257,8 +189,6 @@ class CookieEngine(BaseEngine):
         leaven_type: str = "yeast",
         **kwargs,
     ) -> tuple[float, float, float, float, float]:
-        # Cookies have zero added water (hydration comes entirely from eggs and butter).
-        # We allow a small amount (5%) if an explicit flavor liquid (like lemon juice) is requested.
         sec_liquids = kwargs.get("sec_liquids", [])
         has_liquid = False
         for liq in sec_liquids:
@@ -278,15 +208,13 @@ class CookieEngine(BaseEngine):
                 except (ValueError, TypeError):
                     pass
 
-        # Dynamic guardrails based on the presence of structural inclusions.
         if total_inclusion_pct < 15.0:
-            # Bare doughs (snickerdoodles, sugar cookies): restrict liquefiers to prevent excessive spread
             cookie_fat = max(0.20, min(0.70, fat))
             cookie_sugar = max(0.40, min(0.95, sugar))
         else:
-            # Loaded doughs: allow wider guardrails to bind the extra matter
             cookie_fat = max(0.20, min(1.20, fat))
             cookie_sugar = max(0.40, min(2.00, sugar))
+
         if leaven_type == "sourdough":
             leaven = max(0.0, min(0.60, leaven))
         elif leaven_type == "chemical":
@@ -329,7 +257,6 @@ class CookieEngine(BaseEngine):
         fold_min = 3
         chill_min = 60
         bake_min = bake_time_min
-        preset_slug = kwargs.get("preset_slug") or ""
 
         steps = [
             {
@@ -347,16 +274,6 @@ class CookieEngine(BaseEngine):
             },
         ]
 
-        if "slice" in preset_slug.lower() or "biscotti" in preset_slug.lower():
-            steps.append(
-                {
-                    "key": "shape_log",
-                    "name": "Form Dough Cylinder",
-                    "duration_sec": 10 * 60,
-                    "desc": "Form dough into a tight cylinder or log on parchment paper before chilling.",
-                }
-            )
-
         steps.append(
             {
                 "key": "chill",
@@ -366,24 +283,15 @@ class CookieEngine(BaseEngine):
             }
         )
 
-        if "bar" in preset_slug.lower() or "slab" in preset_slug.lower() or "continuous" in preset_slug.lower():
-            bake_name = "Continuous Slab Bake"
-            bake_desc = "Press dough evenly into a prepared continuous pan. Bake until edges are set and golden. Center will set soft."
-        elif "slice" in preset_slug.lower() or "biscotti" in preset_slug.lower():
-            bake_name = "Sliced Disc Bake"
-            bake_desc = (
-                "Slice chilled log into uniform discs and arrange on a baking sheet. Bake until crisp and golden."
-            )
-        elif "cutout" in preset_slug.lower() or "gingerbread" in preset_slug.lower() or "sugar" in preset_slug.lower():
-            bake_name = "Geometric Rolled Bake"
-            bake_desc = "Roll out chilled dough on a floured surface, cut with geometric dies/cutters, and place on sheet pan. Bake until edges are set."
-        else:
-            bake_name = "Horizontal Spread Bake"
-            bake_desc = "Scoop dough balls onto sheet pan. Bake until edges are set and golden, watching horizontal expansion spread. Center will set soft."
-
         steps.extend(
             [
-                {"key": "bake", "name": bake_name, "duration_sec": bake_min * 60, "desc": bake_desc, "is_bake": True},
+                {
+                    "key": "bake",
+                    "name": "Horizontal Spread Bake",
+                    "duration_sec": bake_min * 60,
+                    "desc": "Scoop dough balls onto sheet pan. Bake until edges are set and golden, watching horizontal expansion spread. Center will set soft.",
+                    "is_bake": True,
+                },
                 {
                     "key": "cool",
                     "name": "Pan & Wire Rack Cooling",
@@ -392,4 +300,170 @@ class CookieEngine(BaseEngine):
                 },
             ]
         )
+        return steps
+
+
+class DropCookieArchetype(CookieEngine):
+    archetype_slug = "drop_cookie"
+    label = "Drop Cookie"
+    icon = "🍪"
+    description = "Irregular mounds designed to flow into tender discs."
+    default_form_factor = "half-sheet-pan"
+    default_salt_pct = 0.0075
+    grain_affinity = "low_protein"
+    preset_matchers = ["cookie", "macaron", "snickerdoodle", "bake"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "high_spread",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+    culinary_nuance_directive = (
+        "For drop cookies, the balance of gluten development and moisture retention determines the final texture. "
+        "CRITICAL PHYSICS: High pentosan concentrations (found in grains like Rye) can aggressively absorb water, "
+        "starving wheat proteins of hydration. This can be used to inhibit gluten for tender textures, or to trap moisture for a gooey chew. "
+        "FLAVOR COMPATIBILITY: Strictly sensitive to high-astringent red wheat tannins, which create bitter notes. "
+        "Tannin-free Hard White Wheats, Soft White Wheats, or low-malty ancient profiles (like Spelt or Kamut) are excellent choices "
+        "that introduce desirable culinary depth without clashing with confections."
+    )
+
+    # Inherits base bake steps
+
+
+class BarCookieArchetype(CookieEngine):
+    archetype_slug = "bar_cookie"
+    label = "Bar / Slab"
+    icon = "🍫"
+    description = "Continuous uniform block baking, minimizing perimeter crisping."
+    default_form_factor = "heavy-aluminum-sheet"
+    default_salt_pct = 0.0075
+    yield_unit = "bars"
+    grain_affinity = "low_protein"
+    preset_matchers = ["bar", "brownie", "blondie", "slab", "continuous"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on perimeter stability and controlled horizontal expansion. Grains must preserve a tender, short crumb "
+        "that slices cleanly without shattering, while providing enough uniform starch walls to hold heavy inclusion "
+        "weights across a continuous slab pan without center sinking."
+    )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        steps = super().get_live_timeline_steps(
+            recipe_data, estimated_bulk_minutes, estimated_proof_minutes, bake_time_min, mixing_method, **kwargs
+        )
+        for step in steps:
+            if step["key"] == "bake":
+                step["name"] = "Continuous Slab Bake"
+                step["desc"] = (
+                    "Press dough evenly into a prepared continuous pan. Bake until edges are set and golden. Center will set soft."
+                )
+        return steps
+
+
+class SliceBakeArchetype(CookieEngine):
+    archetype_slug = "slice_bake"
+    label = "Slice & Bake"
+    icon = "🔪"
+    description = "Log configuration, highly compressed fat crystals for crisp rings."
+    default_form_factor = "heavy-aluminum-sheet"
+    default_salt_pct = 0.0075
+    grain_affinity = "low_protein"
+    preset_matchers = ["biscotti", "slice"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high compression crystal arrays and clean circular margins. Dough demands maximum fat-crystal packing "
+        "with minimal protein resilience, allowing chilled logs to be sheeted or sliced cleanly without dragging crumbs, "
+        "baking into uniform, crisp rings."
+    )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        steps = super().get_live_timeline_steps(
+            recipe_data, estimated_bulk_minutes, estimated_proof_minutes, bake_time_min, mixing_method, **kwargs
+        )
+
+        chill_idx = next((i for i, s in enumerate(steps) if s["key"] == "chill"), 2)
+        steps.insert(
+            chill_idx,
+            {
+                "key": "shape_log",
+                "name": "Form Dough Cylinder",
+                "duration_sec": 10 * 60,
+                "desc": "Form dough into a tight cylinder or log on parchment paper before chilling.",
+            },
+        )
+
+        for step in steps:
+            if step["key"] == "bake":
+                step["name"] = "Sliced Disc Bake"
+                step["desc"] = (
+                    "Slice chilled log into uniform discs and arrange on a baking sheet. Bake until crisp and golden."
+                )
+        return steps
+
+
+class RolledCutoutArchetype(CookieEngine):
+    archetype_slug = "rolled_cutout"
+    label = "Rolled Cutout"
+    icon = "📐"
+    description = "Zero-spread formulation maintaining clean geometric edges post-bake."
+    default_form_factor = "half-sheet-pan"
+    default_salt_pct = 0.0075
+    grain_affinity = "medium_protein"
+    preset_matchers = ["gingerbread", "shortbread", "cutout", "sugar"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "moderate_extensible",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "9.0% - 11.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on moderate structural extensibility and zero thermal flow. Grains must allow the dough to accept "
+        "sharp die-cutting and release cleanly from rolling mats, holding precise geometric definitions and sharp "
+        "borders under immediate oven heat."
+    )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        steps = super().get_live_timeline_steps(
+            recipe_data, estimated_bulk_minutes, estimated_proof_minutes, bake_time_min, mixing_method, **kwargs
+        )
+        for step in steps:
+            if step["key"] == "bake":
+                step["name"] = "Geometric Rolled Bake"
+                step["desc"] = (
+                    "Roll out chilled dough on a floured surface, cut with geometric dies/cutters, and place on sheet pan. Bake until edges are set."
+                )
         return steps

@@ -45,6 +45,7 @@ def get_engines_ff_json() -> str:
     for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():
         engine = ENGINES[eng_name]
         engines_ff_data[cat_slug] = {
+            "default_yield_unit": getattr(engine, "default_yield_unit", "pieces"),
             "permissible_form_factors": getattr(engine, "permissible_form_factors", {}),
             "production_profile": getattr(engine, "production_profile", {}),
             "secondary_ingredients": getattr(engine, "secondary_ingredients", {}),

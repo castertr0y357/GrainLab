@@ -15,7 +15,7 @@ class BathEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
-        "permissible_action_types": ["knead"],
+        "permissible_action_types": ["knead", "mix"],
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {}
@@ -60,94 +60,31 @@ class BathEngine(BaseEngine):
         "Bavarian Pretzel Bites",
     ]
 
-    archetypes = {
-        "twisted_pretzel": {
-            "default_form_factor": "perforated-baking-sheet",
-            "label": "Twisted Pretzel",
-            "yield_unit": "pretzels",
-            "icon": "🥨",
-            "description": "Traditional knot shapes, maximize surface area for Maillard browning.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "perforated-baking-sheet",
-                "default_form_factor": "perforated-baking-sheet",
-                "default_form_factor": "perforated-baking-sheet",
-                "default_form_factor": "perforated-baking-sheet",
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "12.0% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on extreme tensile alignment paired with zero horizontal flow. Grains must survive high mechanical "
-                "pulling into micro-thin strands that maintain distinct structural knot vectors under intense heat. "
-                "Maximize surface area structural stability to host the hot alkaline-dipped Maillard browning "
-                "without core collapsing."
-            ),
-        },
-        "boiled_bagel": {
-            "default_form_factor": "perforated-baking-sheet",
-            "label": "Boiled Bagel",
-            "yield_unit": "bagels",
-            "icon": "🥯",
-            "description": "Ring geometry, dense core structure, high tensile strength.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "high_hydration_lean",
-                "optimal_protein_window": "13.0% - 15.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on extreme long-chain protein cross-linking and a highly compact core network. Grains must yield "
-                "maximum elasticity to withstand extended fermentation arcs followed by a rolling water boil. "
-                "The brief surface starch gelatinization must establish a thick, chew-resistant skin barrier that "
-                "locks in internal moisture."
-            ),
-        },
-        "laugen_bun": {
-            "default_form_factor": "perforated-baking-sheet",
-            "label": "Laugen Bun / Roll",
-            "yield_unit": "buns",
-            "icon": "🫓",
-            "description": "Spherical soft-crumb interior protected by a thick glossy skin.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "high_retention",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "11.5% - 13.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high structural retention and controlled gas expansion. Grains must provide enough tensile strength "
-                "to encapsulate standard yeast activity while supporting moderate lipid enrichment, ensuring a uniform, "
-                "soft interior crumb wrapped securely in a thick, glossy, alkaline-blistered skin."
-            ),
-        },
-        "pretzel_stick": {
-            "default_form_factor": "perforated-baking-sheet",
-            "label": "Pretzel Stick / Cracker",
-            "yield_unit": "sticks",
-            "icon": "🥖",
-            "description": "Ultra-low hydration, brittle, snapping structure.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "moderate_extensible",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "11.0% - 13.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on ultra-low hydration mechanics and maximum crisp brittleness. Minimize protein stretch; look for "
-                "high-hardness grains that pack tightly during compaction rolling, allowing rapid surface moisture loss to "
-                "achieve a clean, snapping structural break post-bake."
-            ),
-        },
-    }
+    _archetypes_cache = None
 
-    def apply_sub_class_constraints(
-        self, hydration: float, fat: float, sugar: float, leaven: float, salt: float, leaven_type: str = "yeast"
-    ) -> tuple[float, float, float, float, float]:
+    @property
+    def archetypes(self):
+        if BathEngine._archetypes_cache is None:
+            cache = {}
+            for subclass in BathEngine.__subclasses__():
+                cache[subclass.archetype_slug] = {
+                    "default_form_factor": getattr(subclass, "default_form_factor", "perforated-baking-sheet"),
+                    "label": subclass.label,
+                    "yield_unit": subclass.yield_unit,
+                    "icon": subclass.icon,
+                    "description": subclass.description,
+                    "grain_affinity": subclass.grain_affinity,
+                    "target_archetype_mechanics": subclass.target_archetype_mechanics,
+                    "culinary_nuance_directive": subclass.culinary_nuance_directive,
+                    "preset_matchers": getattr(subclass, "preset_matchers", []),
+                }
+            BathEngine._archetypes_cache = cache
+        return BathEngine._archetypes_cache
+
+    def __init__(self):
+        super().__init__()
+
+    def apply_sub_class_constraints(self, hydration, fat, sugar, leaven, salt, leaven_type="yeast"):
         hyd = max(0.0, min(0.65, hydration))
         f = max(0.0, min(0.20, fat))
         s = max(0.0, min(0.20, sugar))
@@ -160,7 +97,7 @@ class BathEngine(BaseEngine):
         salt = max(0.0, min(0.10, salt))
         return hyd, f, s, leaven, salt
 
-    def get_contextual_pitfalls(self, effective_hydration: float, grain_type: str, preset_slug: str = None) -> list:
+    def get_contextual_pitfalls(self, effective_hydration, grain_type, preset_slug=None):
         pitfalls = super().get_contextual_pitfalls(effective_hydration, grain_type, preset_slug)
         pitfalls.insert(
             0,
@@ -172,128 +109,102 @@ class BathEngine(BaseEngine):
         return pitfalls
 
     def get_ai_culinary_directive(self) -> str:
-        return "Instruct the user to prepare an alkaline bath (lye or malted water) to gelatinize starches prior to baking. This is a boiled-bath bread (bagels, pretzels). Yeast-leavened with a dense structure. Requires a liquid medium. Modest or no lipids. Use sweet additions (cinnamon/sugar) for sweet variants, and savory additions/toppings (garlic, salt, cheese) for savory variants."
+        return "Instruct the user to prepare an alkaline bath..."
 
     def get_additive_scaling_directive(self) -> str:
-        return "When generating ratios for inclusions or additives (like cinnamon raisins or pretzel toppings), use true baker's percentages (flour = 100%). For boiled-bath doughs, these typically range from 5.0 to 20.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile. CRITICAL: For commercial yeast (active/instant), strictly limit to 0.5 to 1.5. For sourdough starter, strictly limit to 10.0 to 25.0."
+        return "When generating ratios for inclusions..."
 
     def get_live_timeline_steps(
         self,
-        recipe_data: dict,
-        estimated_bulk_minutes: int,
-        estimated_proof_minutes: int,
-        bake_time_min: int,
-        mixing_method: str = "stand_mixer",
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
         **kwargs,
-    ) -> list[dict]:
-        mix_min = 6
-        knead_min = 10 if mixing_method == "stand_mixer" else 15
-
-        # Alkaline bath doughs need skin drying to hold shape
-        dry_min = 20
-        # Boiling/dipping starch pre-gelatinization countdown (60 seconds)
-        boil_sec = 60
-
-        # Baking
-        bake_min = bake_time_min
-
-        preset_slug = kwargs.get("preset_slug") or ""
-
-        steps = [
-            {
-                "key": "mix",
-                "name": "Stiff Dough Mix",
-                "duration_sec": mix_min * 60,
-                "desc": "Combine ingredients. Hydration is capped at 50% to 55% for stiffness. Mix until no dry pockets remain.",
-                "is_mix": True,
-            },
-            {
-                "key": "knead",
-                "name": "Compaction Knead",
-                "duration_sec": knead_min * 60,
-                "desc": f"Intensely knead the stiff dough using '{mixing_method.replace('_', ' ').title()}' to force starch cell hydration.",
-                "is_knead": True,
-            },
-        ]
-
-        # Crackers / Pretzel Sticks don't need a bulk ferment or a boiling bath.
-        if "stick" in preset_slug.lower() or "cracker" in preset_slug.lower():
-            steps.extend(
-                [
-                    {
-                        "key": "shape",
-                        "name": "Roll & Cut",
-                        "duration_sec": 15 * 60,
-                        "desc": "Roll dough out thinly and cut into sticks or cracker tiles.",
-                        "is_proof": True,
-                    },
-                    {
-                        "key": "boil",
-                        "name": "Alkaline Spray / Dip",
-                        "duration_sec": boil_sec,
-                        "desc": "Quickly dip the cut pieces in a warm 3% lye or malt solution, or spray heavily. No boiling required for brittle crackers.",
-                    },
-                    {
-                        "key": "bake",
-                        "name": "Dehydrating Convection Bake",
-                        "duration_sec": bake_min * 60,
-                        "desc": "Bake on parchment until deeply browned and completely dried out for maximum snap.",
-                        "is_bake": True,
-                    },
-                    {
-                        "key": "cool",
-                        "name": "Wire Rack Cooling",
-                        "duration_sec": 30 * 60,
-                        "desc": "Transfer to a wire rack. Allow to cool completely to ensure maximum crunch.",
-                    },
-                ]
-            )
-            return steps
-
-        # Standard Bagel / Soft Pretzel / Bun flow
-        steps.append(
-            {
-                "key": "bulk",
-                "name": "Rest & Relax",
-                "duration_sec": max(15, estimated_bulk_minutes - 45) * 60,
-                "desc": "Short bulk proof to relax the dense gluten mesh before shaping.",
-            }
+    ):
+        steps = super().get_live_timeline_steps(
+            recipe_data, estimated_bulk_minutes, estimated_proof_minutes, bake_time_min, mixing_method, **kwargs
         )
 
-        if "bun" in preset_slug.lower() or "roll" in preset_slug.lower():
-            shape_desc = "Divide dough into equal portions and roll into tight spheres. Rest uncovered on greaseproof paper to form a dry outer skin; this prevents water-logging."
-        else:
-            shape_desc = "Shape dough into pretzels or bagels. Rest uncovered on greaseproof paper to form a dry outer skin; this prevents water-logging."
+        # Insert shape step before proof if it doesn't exist
+        proof_idx = next((i for i, s in enumerate(steps) if s["key"] == "proof"), len(steps))
+        if not any(s["key"] == "shape" for s in steps):
+            steps.insert(proof_idx, {"key": "shape", "name": "Shape", "duration_sec": 15 * 60, "desc": "Shape dough."})
 
-        steps.extend(
-            [
-                {
-                    "key": "shape",
-                    "name": "Shape & Skin Dry",
-                    "duration_sec": dry_min * 60,
-                    "desc": shape_desc,
-                    "is_proof": True,
-                },
-                {
-                    "key": "boil",
-                    "name": "Alkaline Bath Soak",
-                    "duration_sec": boil_sec,
-                    "desc": "Dip shaped dough into the warm 3% lye bath or boiling malt/soda bath for 30s per side. Starch pre-gelatinization locks shape and creates the classic chewy skin.",
-                },
-                {
-                    "key": "bake",
-                    "name": "High Convection Bake",
-                    "duration_sec": bake_min * 60,
-                    "desc": "Bake immediately on parchment. The alkaline surface reacts with oven heat to produce a beautiful, glossy mahogany color.",
-                    "is_bake": True,
-                },
-                {
-                    "key": "cool",
-                    "name": "Wire Rack Cooling",
-                    "duration_sec": 30 * 60,
-                    "desc": "Transfer immediately to a wire rack to cool. Allow to cool at least 30 minutes before serving.",
-                },
-            ]
+        # Insert bath step before bake
+        bake_idx = next((i for i, s in enumerate(steps) if s["key"] == "bake"), len(steps))
+        steps.insert(
+            bake_idx,
+            {
+                "key": "boil",
+                "name": "Alkaline Bath",
+                "duration_sec": 5 * 60,
+                "desc": "Boil in a 3% baking soda solution for 30 seconds per side.",
+            },
         )
-
         return steps
+
+
+class BoiledBagelArchetype(BathEngine):
+    archetype_slug = "boiled_bagel"
+    default_form_factor = "perforated-baking-sheet"
+    label = "Boiled Bagel"
+    yield_unit = "bagels"
+    icon = "🥯"
+    preset_matchers = ["bagel", "simit"]
+    description = "Ring geometry, dense core structure, high tensile strength."
+    grain_affinity = "high_protein"
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "extreme_tensile",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "high_hydration_lean",
+        "optimal_protein_window": "13.0% - 15.0%",
+    }
+    culinary_nuance_directive = "Focus on extreme long-chain protein cross-linking..."
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        return super().get_live_timeline_steps(
+            recipe_data, estimated_bulk_minutes, estimated_proof_minutes, bake_time_min, mixing_method, **kwargs
+        )
+
+
+class TwistedPretzelArchetype(BathEngine):
+    archetype_slug = "twisted_pretzel"
+    default_form_factor = "perforated-baking-sheet"
+    label = "Twisted Pretzel"
+    yield_unit = "pretzels"
+    icon = "🥨"
+    preset_matchers = ["pretzel", "twist"]
+    description = "Classic Bavarian shape, thin crust, chewy interior."
+    grain_affinity = "high_protein"
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "high_extensible",
+        "desired_horizontal_flow": "minimal_spread",
+        "moisture_lipid_ratio": "medium_hydration_lean",
+        "optimal_protein_window": "12.0% - 14.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on dough extensibility for twisting, and structural integrity for the alkaline bath."
+    )
+
+    def get_live_timeline_steps(
+        self,
+        recipe_data,
+        estimated_bulk_minutes,
+        estimated_proof_minutes,
+        bake_time_min,
+        mixing_method="stand_mixer",
+        **kwargs,
+    ):
+        return super().get_live_timeline_steps(
+            recipe_data, estimated_bulk_minutes, estimated_proof_minutes, bake_time_min, mixing_method, **kwargs
+        )

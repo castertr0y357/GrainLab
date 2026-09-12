@@ -12,32 +12,6 @@ class PastaEngine(BaseEngine):
     gluten_behavior = "High Plastic Deformation, Zero Leavening. Requires an ultra-dense, low-hydration network that maintains a firm, snap-resistant 'al dente' structural bite when boiled."
     flavor_affinity = "Tannin Tolerant (Rustic/Savory). Welcomes rich egg, nutty semolina, or distinctive alkaline noodle mineral complexities."
     tannin_sensitive = False
-    variations = {
-        "delicate_silky": {
-            "label": "Delicate & Silky (Egg Pasta)",
-            "mechanics_overrides": {
-                "required_gluten_elasticity": "moderate_extensible",
-                "optimal_protein_window": "8.5% - 10.0%",
-            },
-            "culinary_nuance_directive_append": (
-                "CRITICAL: The user selected DELICATE & SILKY. This is ideal for ravioli or thin ribbons. "
-                "Rely on low-protein soft wheats (like Type 00 or Soft White Wheat) to create a tender, melt-in-the-mouth "
-                "texture. Rely heavily on whole eggs or egg yolks for hydration and structure."
-            ),
-        },
-        "sturdy_chewy": {
-            "label": "Sturdy & Chewy (Extruded/Rustic)",
-            "mechanics_overrides": {
-                "required_gluten_elasticity": "highly_elastic_rigid",
-                "optimal_protein_window": "12.0% - 14.0%",
-            },
-            "culinary_nuance_directive_append": (
-                "CRITICAL: The user selected STURDY & CHEWY. This pasta must hold up to heavy sauces and boiling. "
-                "Favor extremely hard, high-protein grains (like Durum / Semolina or Hard Red Wheat). "
-                "Limit egg usage and favor water to develop a rigid gluten structure with 'al dente' bite."
-            ),
-        },
-    }
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "mechanical_compaction",
@@ -94,92 +68,28 @@ class PastaEngine(BaseEngine):
         "Gyoza / Dumpling Wrappers",
     ]
 
-    archetypes = {
-        "sheeted_ribbon": {
-            "default_form_factor": "mechanical-sheeter",
-            "default_salt_pct": 0.0,
-            "label": "Sheeted Ribbon Pastas",
-            "icon": "🍝",
-            "description": "Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "default_form_factor": "mechanical-sheeter",
-                "default_salt_pct": 0.0,
-                "default_form_factor": "mechanical-sheeter",
-                "default_salt_pct": 0.0,
-                "default_form_factor": "mechanical-sheeter",
-                "default_salt_pct": 0.0,
-                "default_form_factor": "mechanical-sheeter",
-                "default_salt_pct": 0.0,
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "12.5% - 15.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on structural deformation and rolling mechanics. Grains must allow the matrix "
-                "to be sheeted down to sub-millimeter thickness through sequential mechanical passes without tearing, "
-                "accommodating either a firm 'al dente' bite or a silky-smooth texture depending on the variation."
-            ),
-        },
-        "stuffed_pocket": {
-            "default_form_factor": "mechanical-sheeter",
-            "default_salt_pct": 0.0,
-            "label": "Stuffed / Encased Pockets",
-            "icon": "🥟",
-            "description": "High-elasticity envelopes meant to seal wet fillings securely like Ravioli.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "12.0% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high structural extensibility and watertight protein cross-linking. The matrix must form a dense, flexible "
-                "envelope that seals damp fillings securely, stretching cleanly without tearing or leaching starches when dropped into "
-                "rolling boiling water."
-            ),
-        },
-        "extruded_shape": {
-            "default_form_factor": "mechanical-sheeter",
-            "default_salt_pct": 0.0,
-            "label": "Extruded Die Shapes",
-            "icon": "🔩",
-            "description": "High-pressure compression matrix tubes or hollows like Rigatoni.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "13.0% - 15.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on maximum high-pressure compaction stability. The flour must yield an ultra-dense, non-elastic protein web "
-                "that forces smoothly through mechanical dies, retaining sharp structural ridges and hollows without losing shape or "
-                "turning gummy when boiled."
-            ),
-        },
-        "alkaline_noodles": {
-            "default_form_factor": "mechanical-sheeter",
-            "default_salt_pct": 0.0,
-            "label": "Alkaline Cut Noodles",
-            "icon": "🍜",
-            "description": "Mineral-fortified strings built for snap and yellow coloration like Ramen.",
-            "grain_affinity": "high_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "extreme_tensile",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "12.0% - 14.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on high tensile snap and mineral-induced protein compaction. Grains must provide a clean, high-protein background "
-                "that interacts with alkaline salts to accelerate snapping elasticity, keeping the strands firm and springy while "
-                "resisting grey structural discoloration."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in PastaEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "mechanical-sheeter"),
+                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.0),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "portions"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "high_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import PASTA_FALLBACKS
@@ -261,7 +171,6 @@ class PastaEngine(BaseEngine):
         rest_min = 30
         roll_min = 15
         cut_min = 10
-        preset_slug = kwargs.get("preset_slug") or ""
 
         steps = [
             {
@@ -287,46 +196,27 @@ class PastaEngine(BaseEngine):
             },
         ]
 
-        if "extrud" in preset_slug.lower() or "rigatoni" in preset_slug.lower():
-            steps.extend(
-                [
+        finish_steps = getattr(self, "finish_steps", [])
+        if finish_steps:
+            for s in finish_steps:
+                steps.append(
                     {
-                        "key": "roll_pass",
-                        "name": "High-Pressure Extrusion",
-                        "duration_sec": roll_min * 60,
-                        "desc": "Extrude dough through high-pressure bronze or teflon dies, cutting to desired length.",
-                    },
-                    {
-                        "key": "bake",
-                        "name": "Air-Dry / Cook",
-                        "duration_sec": cut_min * 60,
-                        "desc": "Let the extruded shapes air dry slightly on a mesh rack, or cook immediately in boiling salted water.",
-                        "is_bake": True,
-                    },
-                ]
-            )
-            return steps
-
-        steps.append(
-            {
-                "key": "roll_pass",
-                "name": "Mechanical Roller Passes",
-                "duration_sec": roll_min * 60,
-                "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm).",
-            }
-        )
-
-        if "stuffed" in preset_slug.lower() or "ravioli" in preset_slug.lower() or "tortellini" in preset_slug.lower():
+                        "key": s["key"],
+                        "name": s["name"],
+                        "duration_sec": (roll_min if s["key"] == "roll_pass" else cut_min) * 60,
+                        "desc": s["desc"],
+                        **({"is_bake": True} if s.get("is_bake") else {}),
+                    }
+                )
+        else:
             steps.append(
                 {
-                    "key": "bake",
-                    "name": "Fill, Seal & Cut",
-                    "duration_sec": cut_min * 60,
-                    "desc": "Pipe filling in mounds along sheet, lay second sheet on top (or fold over), press out air to seal edges tightly, and cut into pockets.",
-                    "is_bake": True,
+                    "key": "roll_pass",
+                    "name": "Mechanical Roller Passes",
+                    "duration_sec": roll_min * 60,
+                    "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm).",
                 }
             )
-        else:
             steps.append(
                 {
                     "key": "bake",
@@ -338,3 +228,143 @@ class PastaEngine(BaseEngine):
             )
 
         return steps
+
+
+class SheetedRibbonArchetype(PastaEngine):
+    archetype_slug = "sheeted_ribbon"
+    label = "Sheeted Ribbon Pastas"
+    icon = "🍝"
+    description = "Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine."
+    default_form_factor = "mechanical-sheeter"
+    default_salt_pct = 0.0
+    grain_affinity = "high_protein"
+    preset_matchers = ["tagliatelle", "fettuccine", "ribbon", "sheet"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "extreme_tensile",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "12.5% - 15.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on structural deformation and rolling mechanics. Grains must allow the matrix "
+        "to be sheeted down to sub-millimeter thickness through sequential mechanical passes without tearing, "
+        "accommodating either a firm 'al dente' bite or a silky-smooth texture depending on the variation."
+    )
+    finish_steps = [
+        {
+            "key": "roll_pass",
+            "name": "Mechanical Roller Passes",
+            "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm).",
+        },
+        {
+            "key": "bake",
+            "name": "Dust, Cut & Air-Dry",
+            "desc": "Dust sheet with semolina flour. Cut into noodles (e.g. tagliatelle) or wrappers. Let dry on a rack or cook immediately in boiling salted water.",
+            "is_bake": True,
+        },
+    ]
+
+
+class StuffedPocketArchetype(PastaEngine):
+    archetype_slug = "stuffed_pocket"
+    label = "Stuffed / Encased Pockets"
+    icon = "🥟"
+    description = "High-elasticity envelopes meant to seal wet fillings securely like Ravioli."
+    default_form_factor = "mechanical-sheeter"
+    default_salt_pct = 0.0
+    grain_affinity = "high_protein"
+    preset_matchers = ["stuffed", "ravioli", "tortellini", "gyoza", "dumpling"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "extreme_tensile",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "12.0% - 14.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high structural extensibility and watertight protein cross-linking. The matrix must form a dense, flexible "
+        "envelope that seals damp fillings securely, stretching cleanly without tearing or leaching starches when dropped into "
+        "rolling boiling water."
+    )
+    finish_steps = [
+        {
+            "key": "roll_pass",
+            "name": "Mechanical Roller Passes",
+            "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm).",
+        },
+        {
+            "key": "bake",
+            "name": "Fill, Seal & Cut",
+            "desc": "Pipe filling in mounds along sheet, lay second sheet on top (or fold over), press out air to seal edges tightly, and cut into pockets.",
+            "is_bake": True,
+        },
+    ]
+
+
+class ExtrudedShapeArchetype(PastaEngine):
+    archetype_slug = "extruded_shape"
+    label = "Extruded Die Shapes"
+    icon = "🔩"
+    description = "High-pressure compression matrix tubes or hollows like Rigatoni."
+    default_form_factor = "high-pressure-dies"
+    default_salt_pct = 0.0
+    grain_affinity = "high_protein"
+    preset_matchers = ["extrud", "rigatoni", "macaroni"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "extreme_tensile",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "13.0% - 15.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on maximum high-pressure compaction stability. The flour must yield an ultra-dense, non-elastic protein web "
+        "that forces smoothly through mechanical dies, retaining sharp structural ridges and hollows without losing shape or "
+        "turning gummy when boiled."
+    )
+    finish_steps = [
+        {
+            "key": "roll_pass",
+            "name": "High-Pressure Extrusion",
+            "desc": "Extrude dough through high-pressure bronze or teflon dies, cutting to desired length.",
+        },
+        {
+            "key": "bake",
+            "name": "Air-Dry / Cook",
+            "desc": "Let the extruded shapes air dry slightly on a mesh rack, or cook immediately in boiling salted water.",
+            "is_bake": True,
+        },
+    ]
+
+
+class AlkalineNoodlesArchetype(PastaEngine):
+    archetype_slug = "alkaline_noodles"
+    label = "Alkaline Cut Noodles"
+    icon = "🍜"
+    description = "Mineral-fortified strings built for snap and yellow coloration like Ramen."
+    default_form_factor = "mechanical-sheeter"
+    default_salt_pct = 0.0
+    grain_affinity = "high_protein"
+    preset_matchers = ["ramen", "alkaline", "udon"]
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "extreme_tensile",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "12.0% - 14.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on high tensile snap and mineral-induced protein compaction. Grains must provide a clean, high-protein background "
+        "that interacts with alkaline salts to accelerate snapping elasticity, keeping the strands firm and springy while "
+        "resisting grey structural discoloration."
+    )
+    finish_steps = [
+        {
+            "key": "roll_pass",
+            "name": "Mechanical Roller Passes",
+            "desc": "Divide dough into portions. Run through roller Setting 0, fold, and repeat. Set thickness down incrementally one setting at a time until reaching Setting 6 or 7 (~1.2mm).",
+        },
+        {
+            "key": "bake",
+            "name": "Dust, Cut & Air-Dry",
+            "desc": "Dust sheet with semolina flour. Cut into noodles (e.g. tagliatelle) or wrappers. Let dry on a rack or cook immediately in boiling salted water.",
+            "is_bake": True,
+        },
+    ]

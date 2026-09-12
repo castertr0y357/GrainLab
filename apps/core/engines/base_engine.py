@@ -635,3 +635,11 @@ class BaseEngine(AIPromptBuilder):
                 "is_bake": True,
             },
         ]
+
+    @classmethod
+    def get_subclass_for_preset(cls, preset_slug_lower: str):
+        for subclass in cls.__subclasses__():
+            matchers = getattr(subclass, "preset_matchers", [])
+            if any(m in preset_slug_lower for m in matchers):
+                return subclass()
+        return None

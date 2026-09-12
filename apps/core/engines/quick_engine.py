@@ -111,91 +111,31 @@ class QuickEngine(BaseEngine):
         "Zucchini Bread",
     ]
 
-    archetypes = {
-        "chemical_loaf": {
-            "default_form_factor": "standard-8x4-loaf-pan",
-            "default_salt_pct": 0.0075,
-            "label": "Chemical Loaf",
-            "yield_unit": "loaves",
-            "icon": "🍞",
-            "description": "Thick pourable batters baked slowly in high-walled pans like Banana or Soda Bread.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on uniform gas retention from rapid acid-base neutralization within a thick, pourable matrix. "
-                "Gluten development must be suppressed to ensure a tender, cake-like slice. Look for low-protein grains "
-                "or high-pentosan ancient grains that absorb liquid smoothly, allowing fruit sugars or starches to stabilize "
-                "the high-walled crumb walls slowly during the long baking window without developing elasticity."
-            ),
-        },
-        "layered_scone": {
-            "default_form_factor": "individual-wedge-sheet",
-            "default_salt_pct": 0.0075,
-            "label": "Layered Wedge Scone",
-            "yield_unit": "scones",
-            "icon": "🍰",
-            "description": "Laminated dry-shred flakes cut into solid clean triangles.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on the strict preservation of solid fat crystal domains to drive physical steam lamination. Grains must "
-                "exhibit low protein binding capacity to prevent moisture from initiating a continuous dough web. Highly reward "
-                "highly friable starch profiles that maintain clean, non-elastic geometric wedge cuts, flashing into short, "
-                "flaky layers as the fat melts out in the oven."
-            ),
-        },
-        "dropped_biscuit": {
-            "default_form_factor": "individual-wedge-sheet",
-            "default_salt_pct": 0.0075,
-            "label": "Dropped / Cut Biscuit",
-            "yield_unit": "biscuits",
-            "icon": "🧁",
-            "description": "High vertical expansion rounds utilizing shortening pockets for flaky separation.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "zero_spread_stable",
-                "moisture_lipid_ratio": "low_moisture_high_fat",
-                "optimal_protein_window": "8.5% - 10.0%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on maximizing sudden vertical steam expansion while maintaining zero horizontal spread. Grains must have "
-                "low protein elasticity to ensure complete tenderness. Look for soft white wheats that tolerate brief, "
-                "delicate hand-folding around cold fat pockets, allowing rapid chemical carbon dioxide release to lift the biscuit "
-                "into distinct, flaky layers."
-            ),
-        },
-        "textured_muffin": {
-            "default_form_factor": "muffin-cupcake-tin",
-            "default_salt_pct": 0.0075,
-            "label": "Textured Muffin",
-            "yield_unit": "muffins",
-            "icon": "🧁",
-            "description": "Individual cup-bounded portions prioritizing a domed, porous crown.",
-            "grain_affinity": "low_protein",
-            "target_archetype_mechanics": {
-                "required_gluten_elasticity": "minimal_to_none",
-                "desired_horizontal_flow": "controlled_expansion",
-                "moisture_lipid_ratio": "balanced_emulsion",
-                "optimal_protein_window": "8.5% - 10.5%",
-            },
-            "culinary_nuance_directive": (
-                "Focus on pourable emulsion physics and rapid outer starch setting. Passing quick-acting chemical leavening "
-                "must expand the inner crumb, pushing the center upward into a high, porous, beautifully domed crown "
-                "before the perimeter structural walls set."
-            ),
-        },
-    }
+    _archetypes_cache = None
+
+    @property
+    def archetypes(self):
+        if self.__class__._archetypes_cache is None:
+            self.__class__._archetypes_cache = {}
+            for subclass in QuickEngine.__subclasses__():
+                slug = getattr(subclass, "archetype_slug", None)
+                if slug:
+                    nuance = getattr(subclass, "culinary_nuance_directive", "")
+                    if callable(nuance):
+                        nuance = ""
+                    self.__class__._archetypes_cache[slug] = {
+                        "default_form_factor": getattr(subclass, "default_form_factor", "standard-8x4-loaf-pan"),
+                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.0075),
+                        "label": getattr(subclass, "label", ""),
+                        "yield_unit": getattr(subclass, "yield_unit", "portions"),
+                        "icon": getattr(subclass, "icon", ""),
+                        "description": getattr(subclass, "description", ""),
+                        "grain_affinity": getattr(subclass, "grain_affinity", "low_protein"),
+                        "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "culinary_nuance_directive": nuance,
+                        "preset_matchers": getattr(subclass, "preset_matchers", []),
+                    }
+        return self.__class__._archetypes_cache
 
     def get_diagnostic_insight(self, item_id: str) -> dict:
         from .insights_fallbacks import SWEET_FALLBACKS
@@ -282,11 +222,13 @@ class QuickEngine(BaseEngine):
         fat_min = 5
         fold_min = 3
 
-        preset_slug = kwargs.get("preset_slug") or ""
+        is_muffin_method = getattr(self, "is_muffin_method", False)
 
-        is_muffin_method = False
-        if "loaf" in preset_slug.lower() or "muffin" in preset_slug.lower() or "bread" in preset_slug.lower():
-            is_muffin_method = True
+        # Fallback if QuickEngine itself is called with a preset_slug
+        preset_slug = kwargs.get("preset_slug", "")
+        if self.__class__ == QuickEngine:
+            if "loaf" in preset_slug.lower() or "muffin" in preset_slug.lower() or "bread" in preset_slug.lower():
+                is_muffin_method = True
 
         if is_muffin_method:
             steps = [
@@ -349,13 +291,21 @@ class QuickEngine(BaseEngine):
                 },
             ]
 
-        preset_slug = kwargs.get("preset_slug", "")
-        if "muffin" in preset_slug.lower() or "scone" in preset_slug.lower():
-            cooling_desc = "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
-            cooling_duration = 15
-        else:
-            cooling_desc = "Allow the quick bread to cool in the pan for 10-15 minutes, then turn out onto a wire rack to cool completely before slicing."
-            cooling_duration = 60
+        cooling_duration = getattr(self, "cooling_duration", 60)
+        cooling_desc = getattr(
+            self,
+            "cooling_desc",
+            "Allow the quick bread to cool in the pan for 10-15 minutes, then turn out onto a wire rack to cool completely before slicing.",
+        )
+
+        # Fallback check
+        if self.__class__ == QuickEngine:
+            if "muffin" in preset_slug.lower() or "scone" in preset_slug.lower():
+                cooling_desc = "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
+                cooling_duration = 15
+            else:
+                cooling_desc = "Allow the quick bread to cool in the pan for 10-15 minutes, then turn out onto a wire rack to cool completely before slicing."
+                cooling_duration = 60
 
         steps.append(
             {
@@ -367,3 +317,116 @@ class QuickEngine(BaseEngine):
         )
 
         return steps
+
+
+class ChemicalLoafArchetype(QuickEngine):
+    archetype_slug = "chemical_loaf"
+    label = "Chemical Loaf"
+    yield_unit = "loaves"
+    icon = "🍞"
+    description = "Thick pourable batters baked slowly in high-walled pans like Banana or Soda Bread."
+    default_form_factor = "standard-8x4-loaf-pan"
+    default_salt_pct = 0.0075
+    grain_affinity = "low_protein"
+    preset_matchers = ["loaf", "bread"]
+    is_muffin_method = True
+    cooling_duration = 60
+    cooling_desc = "Allow the quick bread to cool in the pan for 10-15 minutes, then turn out onto a wire rack to cool completely before slicing."
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on uniform gas retention from rapid acid-base neutralization within a thick, pourable matrix. "
+        "Gluten development must be suppressed to ensure a tender, cake-like slice. Look for low-protein grains "
+        "or high-pentosan ancient grains that absorb liquid smoothly, allowing fruit sugars or starches to stabilize "
+        "the high-walled crumb walls slowly during the long baking window without developing elasticity."
+    )
+
+
+class LayeredSconeArchetype(QuickEngine):
+    archetype_slug = "layered_scone"
+    label = "Layered Wedge Scone"
+    yield_unit = "scones"
+    icon = "🍰"
+    description = "Laminated dry-shred flakes cut into solid clean triangles."
+    default_form_factor = "individual-wedge-sheet"
+    default_salt_pct = 0.0075
+    grain_affinity = "low_protein"
+    preset_matchers = ["scone"]
+    is_muffin_method = False
+    cooling_duration = 15
+    cooling_desc = (
+        "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
+    )
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on the strict preservation of solid fat crystal domains to drive physical steam lamination. Grains must "
+        "exhibit low protein binding capacity to prevent moisture from initiating a continuous dough web. Highly reward "
+        "highly friable starch profiles that maintain clean, non-elastic geometric wedge cuts, flashing into short, "
+        "flaky layers as the fat melts out in the oven."
+    )
+
+
+class DroppedBiscuitArchetype(QuickEngine):
+    archetype_slug = "dropped_biscuit"
+    label = "Dropped / Cut Biscuit"
+    yield_unit = "biscuits"
+    icon = "🧁"
+    description = "High vertical expansion rounds utilizing shortening pockets for flaky separation."
+    default_form_factor = "individual-wedge-sheet"
+    default_salt_pct = 0.0075
+    grain_affinity = "low_protein"
+    preset_matchers = ["biscuit"]
+    is_muffin_method = False
+    cooling_duration = 15
+    cooling_desc = (
+        "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
+    )
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "zero_spread_stable",
+        "moisture_lipid_ratio": "low_moisture_high_fat",
+        "optimal_protein_window": "8.5% - 10.0%",
+    }
+    culinary_nuance_directive = (
+        "Focus on maximizing sudden vertical steam expansion while maintaining zero horizontal spread. Grains must have "
+        "low protein elasticity to ensure complete tenderness. Look for soft white wheats that tolerate brief, "
+        "delicate hand-folding around cold fat pockets, allowing rapid chemical carbon dioxide release to lift the biscuit "
+        "into distinct, flaky layers."
+    )
+
+
+class TexturedMuffinArchetype(QuickEngine):
+    archetype_slug = "textured_muffin"
+    label = "Textured Muffin"
+    yield_unit = "muffins"
+    icon = "🧁"
+    description = "Individual cup-bounded portions prioritizing a domed, porous crown."
+    default_form_factor = "muffin-cupcake-tin"
+    default_salt_pct = 0.0075
+    grain_affinity = "low_protein"
+    preset_matchers = ["muffin"]
+    is_muffin_method = True
+    cooling_duration = 15
+    cooling_desc = (
+        "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
+    )
+    target_archetype_mechanics = {
+        "required_gluten_elasticity": "minimal_to_none",
+        "desired_horizontal_flow": "controlled_expansion",
+        "moisture_lipid_ratio": "balanced_emulsion",
+        "optimal_protein_window": "8.5% - 10.5%",
+    }
+    culinary_nuance_directive = (
+        "Focus on pourable emulsion physics and rapid outer starch setting. Passing quick-acting chemical leavening "
+        "must expand the inner crumb, pushing the center upward into a high, porous, beautifully domed crown "
+        "before the perimeter structural walls set."
+    )
