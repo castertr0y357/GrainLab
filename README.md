@@ -5,9 +5,13 @@ GrainLab is an AI-powered, fail-safe food-science compiler and Baker's Math reci
 ## ✨ Features
 
 - **AI-Powered Recipe Generation:** Powered by a local Gemma AI integration to dynamically generate precise timelines, sensory cues, and step-by-step instructions.
+- **Bounded Autonomy & Unified Guardrails:** AI creativity is strictly bounded by hardcoded culinary limits (hydration, fat, sugar, salt bounds). If the AI hallucinates, the backend automatically clamps outputs to mathematically viable baker's percentages, guaranteeing recipe safety and physical success.
 - **Hierarchical Yield Scaling:** Sophisticated yield management engine with archetype-specific terminology (e.g., Bagels, Pretzels, Cookies, Loaves, Pastries).
 - **Detailed Preparatory Instructions:** Intelligent processing pipeline to inject precise physical preparatory requirements (size, shape, temperature constraints) for ingredients.
 - **Baker's Math Engine:** Fully scales recipes cleanly based on target dough/batter weight limits and exact hydration calculations.
+
+## 🛠️ Offline Development Mode
+You can develop and run QA tests entirely offline without pinging the LLM. Simply set `MOCK_MODE=true` in your `.env` file. The backend will bypass actual external AI calls and return locally stored realistic JSON payloads, preserving your API quota and speeding up test runs.
 
 ## 🚀 Quick Start
 
