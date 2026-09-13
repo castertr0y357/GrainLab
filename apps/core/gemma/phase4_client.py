@@ -179,7 +179,7 @@ def get_geometry_advisory(preset_slug: str, preset_name: str, category_slug: str
         f"Active Recipe Category: {category_slug} (Sub-Engine: {engine_slug})\n"
         f"Selected Form Factor (Geometry): {form_factor_slug}\n"
         f"Generate the suitability status, a scientific advisory label, and the recommended oven temperature offset (°F), "
-        f"bake time offset (minutes), and steam override choice. Do not rely on any preset baselines; calculate the ideal offsets directly. "
+        f"cook time offset (minutes), and steam override choice. Do not rely on any preset baselines; calculate the ideal offsets directly. "
         f"Output ONLY valid JSON."
     )
 

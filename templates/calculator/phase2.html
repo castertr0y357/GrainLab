@@ -24,6 +24,7 @@ x-data="phase2App({
     <form id="phase2-form" action="{% url 'calculator_phase2' category=state.selected_master %}" method="POST" style="display: none;">
         {% csrf_token %}
         <input type="hidden" name="active_archetype_id" :value="active_archetype_id">
+        <input type="hidden" name="active_variation_id" :value="active_variation_id">
         <input type="hidden" name="active_berries" :value="JSON.stringify(activeBerries.filter(b => b.selected))">
         <input type="hidden" name="global_ai_enabled" :value="global_ai_enabled">
         <input type="hidden" name="mill_type" :value="mill_type">
@@ -84,6 +85,7 @@ x-data="phase2App({
                                 style="height: 48px; min-width: 120px; padding: 0 1.25rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; letter-spacing: 0.03em; border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); border: none;">
                             <span x-text="entry[1].icon || '🧬'"></span>
                             <span x-text="entry[1].label || entry[0].replace(/_/g, ' ')"></span>
+                            <span x-show="entry[1].recipe_classification" style="font-size: 0.65rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 0.25rem; opacity: 0.8;" x-text="entry[1].recipe_classification"></span>
                         </button>
                     </template>
                 </div>

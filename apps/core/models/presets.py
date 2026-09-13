@@ -51,7 +51,7 @@ class FormFactor(models.Model):
     target_weight = models.FloatField(default=900.0, help_text="Target weight in grams for a single loaf")
     unit_weight = models.FloatField(default=80.0, help_text="Weight in grams for one portioned item")
     default_count = models.IntegerField(default=1, help_text="Default number of portioned items")
-    bake_temp_f = models.IntegerField(default=375, help_text="Baking temperature in Fahrenheit")
+    cook_temp_f = models.IntegerField(default=375, help_text="Baking temperature in Fahrenheit")
     bake_time_min = models.IntegerField(default=35, help_text="Baking time in minutes")
     steam_required = models.BooleanField(default=False, help_text="True if steam should be introduced in the oven")
     is_enriched_profile = models.BooleanField(

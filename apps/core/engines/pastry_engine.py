@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class PastryEngine(BaseEngine):
     name = "Pastry & Lamination Engine"
     slug = "pastry"
+    recipe_classification = "Sweet"
     default_yield_unit = "pastries"
     default_binder_pct = 0.10
     default_leaven_pct = 0.0
@@ -17,7 +18,6 @@ class PastryEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
         "mechanical_energy_threshold": "minimal_folding",
-        "permissible_action_types": ["mix", "fold"],
         "environmental_rest_strategy": "fat_solidification",
     }
     secondary_ingredients = {
@@ -44,7 +44,7 @@ class PastryEngine(BaseEngine):
             "step_increment": 6,
             "unit_label": "pastry",
             "unit_label_plural": "pastries",
-            "bake_temp_f": 400,
+            "cook_temp_f": 400,
             "bake_time_min": 20,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -58,7 +58,7 @@ class PastryEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "tart",
             "unit_label_plural": "tarts",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 25,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -255,6 +255,14 @@ class PastryEngine(BaseEngine):
 
 class LayeredViennoiserieArchetype(PastryEngine):
     archetype_slug = "layered_viennoiserie"
+    guardrails = {
+        "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Layered Viennoiserie"
     icon = "🥐"
     description = "Yeast-leavened laminated structures like Croissants and Danishes."
@@ -333,6 +341,14 @@ class LayeredViennoiserieArchetype(PastryEngine):
 
 class InvertedPuffArchetype(PastryEngine):
     archetype_slug = "inverted_puff"
+    guardrails = {
+        "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Inverted Puff Pastry"
     icon = "🍥"
     description = "Unleavened laminated doughs driven entirely by water-vapor lift."
@@ -402,6 +418,14 @@ class InvertedPuffArchetype(PastryEngine):
 
 class ShortcrustTartArchetype(PastryEngine):
     archetype_slug = "shortcrust_tart"
+    guardrails = {
+        "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Shortcrust Tart Casing"
     yield_unit = "tarts"
     icon = "🥧"
@@ -444,6 +468,14 @@ class ShortcrustTartArchetype(PastryEngine):
 
 class PaperThinPhylloArchetype(PastryEngine):
     archetype_slug = "paper_thin_phyllo"
+    guardrails = {
+        "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Paper-Thin Phyllo / Strudel"
     icon = "🫓"
     description = "Stretched, transparent gluten films stacked with liquid fat layers."

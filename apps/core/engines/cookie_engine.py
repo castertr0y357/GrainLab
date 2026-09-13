@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class CookieEngine(BaseEngine):
     name = "Cookies & Shortbread Engine"
     slug = "cookie"
+    recipe_classification = "Sweet"
     default_yield_unit = "cookies"
     default_binder_pct = 0.35
     default_salt_pct = 0.008
@@ -16,6 +17,14 @@ class CookieEngine(BaseEngine):
     tweak_labels = {"enrichment": ["Crispy / Chewy", "Soft / Cakey"]}
     variations = {
         "thin_crispy": {
+            "guardrails": {
+                "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
+                "cook_temp_min_f": 325,
+                "cook_temp_max_f": 375,
+                "cook_time_min_m": 6,
+                "cook_time_max_m": 25,
+                "boil_required": False,
+            },
             "label": "Thin & Crispy",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "minimal_to_none",
@@ -25,10 +34,20 @@ class CookieEngine(BaseEngine):
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected THIN & CRISPY. Maximize spread by using high proportions of white sugar "
                 "and melted or liquid fats. Favor low-protein soft wheats (e.g., Pastry Flour, Soft White Wheat) "
-                "to completely inhibit gluten formation and ensure a delicate, brittle snap. Increase bake time slightly."
+                "to completely inhibit gluten formation and ensure a delicate, brittle snap. Increase cook time slightly. "
+                "GRAIN SELECTION: Select grains that bring sweet, nutty, or buttery notes (like Spelt or Khorasan) "
+                "but avoid high-tannin or grassy grains (like Rye) which disrupt the sweet, delicate flavor profile."
             ),
         },
         "soft_chewy": {
+            "guardrails": {
+                "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
+                "cook_temp_min_f": 325,
+                "cook_temp_max_f": 375,
+                "cook_time_min_m": 6,
+                "cook_time_max_m": 25,
+                "boil_required": False,
+            },
             "label": "Soft & Chewy",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "moderate_extensible",
@@ -39,14 +58,15 @@ class CookieEngine(BaseEngine):
                 "CRITICAL: The user selected SOFT & CHEWY. Prevent excessive spread by using creamed cold fats "
                 "and higher proportions of brown sugar/molasses. Favor higher-protein hard wheats (e.g., Hard White Wheat, "
                 "Bread Flour) to build enough gluten structure to maintain thickness and deliver a chewy bite. "
-                "Reduce bake time to keep the center doughy."
+                "Reduce cook time to keep the center doughy. "
+                "GRAIN SELECTION: Grains with darker, maltier, or molasses-like flavor profiles (such as Red Fife or whole Rye) "
+                "can work beautifully here to complement the brown sugars, provided their bran is milled finely to avoid cutting gluten."
             ),
         },
     }
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
-        "permissible_action_types": ["cream", "fold", "mix"],
         "environmental_rest_strategy": "fat_solidification",
     }
     secondary_ingredients = {
@@ -73,7 +93,7 @@ class CookieEngine(BaseEngine):
             "step_increment": 12,
             "unit_label": "cookie",
             "unit_label_plural": "cookies",
-            "bake_temp_f": 350,
+            "cook_temp_f": 350,
             "bake_time_min": 12,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -87,7 +107,7 @@ class CookieEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "pan",
             "unit_label_plural": "pans",
-            "bake_temp_f": 350,
+            "cook_temp_f": 350,
             "bake_time_min": 25,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -305,6 +325,14 @@ class CookieEngine(BaseEngine):
 
 class DropCookieArchetype(CookieEngine):
     archetype_slug = "drop_cookie"
+    guardrails = {
+        "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
+        "cook_temp_min_f": 325,
+        "cook_temp_max_f": 375,
+        "cook_time_min_m": 6,
+        "cook_time_max_m": 25,
+        "boil_required": False,
+    }
     label = "Drop Cookie"
     icon = "🍪"
     description = "Irregular mounds designed to flow into tender discs."
@@ -332,6 +360,14 @@ class DropCookieArchetype(CookieEngine):
 
 class BarCookieArchetype(CookieEngine):
     archetype_slug = "bar_cookie"
+    guardrails = {
+        "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
+        "cook_temp_min_f": 325,
+        "cook_temp_max_f": 375,
+        "cook_time_min_m": 6,
+        "cook_time_max_m": 25,
+        "boil_required": False,
+    }
     label = "Bar / Slab"
     icon = "🍫"
     description = "Continuous uniform block baking, minimizing perimeter crisping."
@@ -375,6 +411,14 @@ class BarCookieArchetype(CookieEngine):
 
 class SliceBakeArchetype(CookieEngine):
     archetype_slug = "slice_bake"
+    guardrails = {
+        "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
+        "cook_temp_min_f": 325,
+        "cook_temp_max_f": 375,
+        "cook_time_min_m": 6,
+        "cook_time_max_m": 25,
+        "boil_required": False,
+    }
     label = "Slice & Bake"
     icon = "🔪"
     description = "Log configuration, highly compressed fat crystals for crisp rings."
@@ -429,6 +473,14 @@ class SliceBakeArchetype(CookieEngine):
 
 class RolledCutoutArchetype(CookieEngine):
     archetype_slug = "rolled_cutout"
+    guardrails = {
+        "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
+        "cook_temp_min_f": 325,
+        "cook_temp_max_f": 375,
+        "cook_time_min_m": 6,
+        "cook_time_max_m": 25,
+        "boil_required": False,
+    }
     label = "Rolled Cutout"
     icon = "📐"
     description = "Zero-spread formulation maintaining clean geometric edges post-bake."

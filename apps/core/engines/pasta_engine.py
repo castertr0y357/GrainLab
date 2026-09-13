@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class PastaEngine(BaseEngine):
     name = "Fresh Pasta & Noodles Engine"
     slug = "pasta"
+    primary_cooking_method = "Boiling"
     default_yield_unit = "portions"
     default_binder_pct = 0.50
     default_leaven_pct = 0.0
@@ -15,7 +16,6 @@ class PastaEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "mechanical_compaction",
-        "permissible_action_types": ["knead", "roll"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -37,7 +37,7 @@ class PastaEngine(BaseEngine):
             "step_increment": 2,
             "unit_label": "serving",
             "unit_label_plural": "servings",
-            "bake_temp_f": 0,
+            "cook_temp_f": 0,
             "bake_time_min": 0,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -51,7 +51,7 @@ class PastaEngine(BaseEngine):
             "step_increment": 2,
             "unit_label": "serving",
             "unit_label_plural": "servings",
-            "bake_temp_f": 0,
+            "cook_temp_f": 0,
             "bake_time_min": 0,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -152,7 +152,7 @@ class PastaEngine(BaseEngine):
         return hyd, f, s, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast. This is pasta/noodles. NEVER include leaveners or sweeteners. Focus purely on liquids and binders (eggs). CRITICAL: For fresh pasta, target_bake_temp MUST ALWAYS be 212."
+        return "Pasta requires zero chemical or biological leavening. Focus on mechanical compaction and zero yeast. This is pasta/noodles. NEVER include leaveners or sweeteners. Focus purely on liquids and binders (eggs). CRITICAL: For fresh pasta, target_cook_temp MUST ALWAYS be 212."
 
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like herbs or squid ink), use true baker's percentages (flour = 100%). For pastas, these typically range from 1.0 to 5.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
@@ -232,6 +232,14 @@ class PastaEngine(BaseEngine):
 
 class SheetedRibbonArchetype(PastaEngine):
     archetype_slug = "sheeted_ribbon"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
+        "cook_temp_min_f": 0,
+        "cook_temp_max_f": 0,
+        "cook_time_min_m": 0,
+        "cook_time_max_m": 0,
+        "boil_required": False,
+    }
     label = "Sheeted Ribbon Pastas"
     icon = "🍝"
     description = "Gradual reduction sheeting cut into strands like Tagliatelle or Fettuccine."
@@ -267,6 +275,14 @@ class SheetedRibbonArchetype(PastaEngine):
 
 class StuffedPocketArchetype(PastaEngine):
     archetype_slug = "stuffed_pocket"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
+        "cook_temp_min_f": 0,
+        "cook_temp_max_f": 0,
+        "cook_time_min_m": 0,
+        "cook_time_max_m": 0,
+        "boil_required": False,
+    }
     label = "Stuffed / Encased Pockets"
     icon = "🥟"
     description = "High-elasticity envelopes meant to seal wet fillings securely like Ravioli."
@@ -302,6 +318,14 @@ class StuffedPocketArchetype(PastaEngine):
 
 class ExtrudedShapeArchetype(PastaEngine):
     archetype_slug = "extruded_shape"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
+        "cook_temp_min_f": 0,
+        "cook_temp_max_f": 0,
+        "cook_time_min_m": 0,
+        "cook_time_max_m": 0,
+        "boil_required": False,
+    }
     label = "Extruded Die Shapes"
     icon = "🔩"
     description = "High-pressure compression matrix tubes or hollows like Rigatoni."
@@ -337,6 +361,14 @@ class ExtrudedShapeArchetype(PastaEngine):
 
 class AlkalineNoodlesArchetype(PastaEngine):
     archetype_slug = "alkaline_noodles"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
+        "cook_temp_min_f": 0,
+        "cook_temp_max_f": 0,
+        "cook_time_min_m": 0,
+        "cook_time_max_m": 0,
+        "boil_required": False,
+    }
     label = "Alkaline Cut Noodles"
     icon = "🍜"
     description = "Mineral-fortified strings built for snap and yellow coloration like Ramen."

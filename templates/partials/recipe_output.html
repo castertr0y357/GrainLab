@@ -225,17 +225,17 @@
         </div>
     </div>
 
-    <!-- BAKING PROFILE -->
+    <!-- COOKING PROFILE -->
     <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">{{ primary_cooking_method }} Profile</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Oven Temp</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ primary_cooking_method }} Temp</div>
             </div>
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Bake Time</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ primary_cooking_method }} Time</div>
             </div>
             <div>
                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">

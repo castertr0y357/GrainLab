@@ -192,7 +192,7 @@ class FinalRecipeAIView(View):
                 state=state,
                 recipe_data=recipe_context.get("recipe", {}),
                 countertop_steps_json=recipe_context.get("countertop_steps_json", "[]"),
-                bake_temp_f=recipe_context.get("bake_temp_f"),
+                cook_temp_f=recipe_context.get("cook_temp_f"),
                 bake_time_min=recipe_context.get("bake_time_min"),
                 steam_required=recipe_context.get("steam_required"),
             )
@@ -211,7 +211,8 @@ class FinalRecipeAIView(View):
                 "recipe": recipe_context.get("recipe", {}),
                 "sensory_description": recipe_context.get("sensory_description"),
                 "pitfalls": recipe_context.get("pitfalls"),
-                "bake_temp_f": recipe_context.get("bake_temp_f"),
+                "primary_cooking_method": recipe_context.get("primary_cooking_method", "Baking"),
+                "cook_temp_f": recipe_context.get("cook_temp_f"),
                 "bake_time_min": recipe_context.get("bake_time_min"),
                 "estimated_bulk_minutes": recipe_context.get("estimated_bulk_minutes"),
                 "estimated_proof_minutes": recipe_context.get("estimated_proof_minutes"),

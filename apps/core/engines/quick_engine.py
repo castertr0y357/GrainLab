@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class QuickEngine(BaseEngine):
     name = "Quick Breads & Scones Engine"
     slug = "quick"
+    recipe_classification = "Sweet"
     default_binder_pct = 0.20
     default_leaven_pct = 0.025
     target_protein_min = 8.5
@@ -14,6 +15,14 @@ class QuickEngine(BaseEngine):
     tannin_sensitive = True
     variations = {
         "light_fluffy": {
+            "guardrails": {
+                "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
+                "cook_temp_min_f": 350,
+                "cook_temp_max_f": 425,
+                "cook_time_min_m": 15,
+                "cook_time_max_m": 60,
+                "boil_required": False,
+            },
             "label": "Light & Fluffy",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "minimal_to_none",
@@ -26,6 +35,14 @@ class QuickEngine(BaseEngine):
             ),
         },
         "dense_moist": {
+            "guardrails": {
+                "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
+                "cook_temp_min_f": 350,
+                "cook_temp_max_f": 425,
+                "cook_time_min_m": 15,
+                "cook_time_max_m": 60,
+                "boil_required": False,
+            },
             "label": "Dense & Moist (Bakery Style)",
             "mechanics_overrides": {"required_gluten_elasticity": "moderate", "optimal_protein_window": "9.5% - 11.0%"},
             "culinary_nuance_directive_append": (
@@ -38,7 +55,6 @@ class QuickEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "crystalline_fat_preservation",
         "mechanical_energy_threshold": "minimal_folding",
-        "permissible_action_types": ["cut_in", "fold"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -65,7 +81,7 @@ class QuickEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 350,
+            "cook_temp_f": 350,
             "bake_time_min": 50,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -79,7 +95,7 @@ class QuickEngine(BaseEngine):
             "step_increment": 12,
             "unit_label": "muffin",
             "unit_label_plural": "muffins",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 20,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -93,7 +109,7 @@ class QuickEngine(BaseEngine):
             "step_increment": 12,
             "unit_label": "scone",
             "unit_label_plural": "scones",
-            "bake_temp_f": 400,
+            "cook_temp_f": 400,
             "bake_time_min": 18,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -321,6 +337,14 @@ class QuickEngine(BaseEngine):
 
 class ChemicalLoafArchetype(QuickEngine):
     archetype_slug = "chemical_loaf"
+    guardrails = {
+        "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 60,
+        "boil_required": False,
+    }
     label = "Chemical Loaf"
     yield_unit = "loaves"
     icon = "🍞"
@@ -348,6 +372,14 @@ class ChemicalLoafArchetype(QuickEngine):
 
 class LayeredSconeArchetype(QuickEngine):
     archetype_slug = "layered_scone"
+    guardrails = {
+        "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 60,
+        "boil_required": False,
+    }
     label = "Layered Wedge Scone"
     yield_unit = "scones"
     icon = "🍰"
@@ -377,6 +409,14 @@ class LayeredSconeArchetype(QuickEngine):
 
 class DroppedBiscuitArchetype(QuickEngine):
     archetype_slug = "dropped_biscuit"
+    guardrails = {
+        "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 60,
+        "boil_required": False,
+    }
     label = "Dropped / Cut Biscuit"
     yield_unit = "biscuits"
     icon = "🧁"
@@ -406,6 +446,14 @@ class DroppedBiscuitArchetype(QuickEngine):
 
 class TexturedMuffinArchetype(QuickEngine):
     archetype_slug = "textured_muffin"
+    guardrails = {
+        "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 15,
+        "cook_time_max_m": 60,
+        "boil_required": False,
+    }
     label = "Textured Muffin"
     yield_unit = "muffins"
     icon = "🧁"

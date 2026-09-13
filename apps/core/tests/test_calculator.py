@@ -15,7 +15,7 @@ logger = logging.getLogger("grainlab.tests")
 class RecipeRestructuringAndBakingTests(TestCase):
     """
     Tests the restructured progressive wizard features:
-    - Mass-based bake time/temp scaling.
+    - Mass-based cook time/temp scaling.
     - Sourdough bulk/proof countdown timer calculations.
     """
 
@@ -30,7 +30,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
             target_weight=900.0,
             unit_weight=900.0,
             default_count=1,
-            bake_temp_f=375,
+            cook_temp_f=375,
             bake_time_min=45,
             is_enriched_profile=False,
         )
@@ -48,7 +48,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
                 "target_weight": 900.0,
             }
         )
-        self.assertEqual(context["bake_temp_f"], 375)
+        self.assertEqual(context["cook_temp_f"], 375)
         self.assertEqual(context["bake_time_min"], 45)
 
         # Test scaled up weight (1500g) -> time should be increased, temp should decrease (by 10F)
@@ -61,7 +61,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
                 "target_weight": 1500.0,
             }
         )
-        self.assertLess(context_large["bake_temp_f"], 375)
+        self.assertLess(context_large["cook_temp_f"], 375)
         self.assertGreater(context_large["bake_time_min"], 45)
 
     def test_dynamic_fermentation_timers(self):
@@ -172,7 +172,7 @@ class RecipeRestructuringAndBakingTests(TestCase):
         )
         html = context.get("countertop_steps_json", "")
         self.assertIn("countertop_steps_json", context)
-        self.assertIn("bake_temp_f", context)
+        self.assertIn("cook_temp_f", context)
         self.assertIn("steam_required", context)
         self.assertIn("doneness_temp_f", context)
         self.assertIn("required_water_temp_f", context["recipe"])

@@ -33,6 +33,8 @@ from .ai_prompts import AIPromptBuilder
 class BaseEngine(AIPromptBuilder):
     name = "Base Engine"
     slug = "base"
+    recipe_classification = "Savory"
+    primary_cooking_method = "Baking"
     default_yield_unit = "pieces"
     target_protein_min = 11.0
     target_protein_max = 13.0
@@ -115,6 +117,70 @@ class BaseEngine(AIPromptBuilder):
 
         return stacked_text
 
+    def get_active_guardrails(self, active_archetype_id: str = None, active_variation_id: str = None) -> dict:
+        """
+        Dynamically resolve guardrails through a fallback cascade:
+        Engine Defaults -> Archetype Overrides -> Variation Overrides
+        """
+        resolved = getattr(self, "guardrails", {}).copy()
+
+        if active_archetype_id:
+            archetypes = getattr(self, "archetypes", {})
+            archetype = archetypes.get(active_archetype_id)
+            if archetype and "guardrails" in archetype:
+                resolved.update(archetype["guardrails"])
+
+        if active_variation_id and hasattr(self, "variations"):
+            variation = self.variations.get(active_variation_id)
+            if variation and "guardrails" in variation:
+                resolved.update(variation["guardrails"])
+
+        return resolved
+
+    def clamp_recipe_outputs(
+        self, recipe_json: dict, active_archetype_id: str = None, active_variation_id: str = None
+    ) -> dict:
+        """
+        Validates and mathematically clamps AI-generated recipe parameters
+        (like cook time and temp) to fit within the active guardrails.
+        """
+        guardrails = self.get_active_guardrails(active_archetype_id, active_variation_id)
+        if not guardrails:
+            return recipe_json
+
+        timeline = recipe_json.get("timeline", [])
+        for step in timeline:
+            if step.get("type") == "baking_profile":
+                import logging
+
+                logger = logging.getLogger("grainlab.gemma")
+
+                # Clamp oven_temp
+                if "oven_temp" in step and isinstance(step["oven_temp"], (int, float)):
+                    val = step["oven_temp"]
+                    max_f = guardrails.get("cook_temp_max_f")
+                    min_f = guardrails.get("cook_temp_min_f")
+                    if max_f and val > max_f:
+                        step["oven_temp"] = max_f
+                        logger.warning(f"[AI CLAMP] Clamped oven_temp from {val} down to {max_f}")
+                    elif min_f and val < min_f:
+                        step["oven_temp"] = min_f
+                        logger.warning(f"[AI CLAMP] Clamped oven_temp from {val} up to {min_f}")
+
+                # Clamp bake_time_min
+                if "bake_time_min" in step and isinstance(step["bake_time_min"], (int, float)):
+                    val = step["bake_time_min"]
+                    max_m = guardrails.get("cook_time_max_m")
+                    min_m = guardrails.get("cook_time_min_m")
+                    if max_m and val > max_m:
+                        step["bake_time_min"] = max_m
+                        logger.warning(f"[AI CLAMP] Clamped bake_time_min from {val} down to {max_m}")
+                    elif min_m and val < min_m:
+                        step["bake_time_min"] = min_m
+                        logger.warning(f"[AI CLAMP] Clamped bake_time_min from {val} up to {min_m}")
+
+        return recipe_json
+
     permissible_form_factors = {
         "standard-9x5-pan": {
             "name": "Standard 9x5 Loaf Pan",
@@ -125,7 +191,7 @@ class BaseEngine(AIPromptBuilder):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 45,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -589,6 +655,25 @@ class BaseEngine(AIPromptBuilder):
             l = max(0.0, min(0.015, leaven))
         st = max(0.0, min(0.10, salt))
         return hyd, f, s, l, st
+
+    def apply_process_constraints(
+        self, archetype_slug: str, temp_f: int, time_m: int, variation_slug: str = None
+    ) -> tuple[int, int]:
+        """Clamp AI generated bake temperatures and times to archetype physical boundaries."""
+        guardrails = self.get_active_guardrails(active_archetype_id=archetype_slug, active_variation_id=variation_slug)
+
+        if guardrails.get("boil_required", False):
+            clamped_temp = 212 if temp_f >= 100 else 0
+        else:
+            min_temp = guardrails.get("cook_temp_min_f", 300)
+            max_temp = guardrails.get("cook_temp_max_f", 550)
+            clamped_temp = max(min_temp, min(max_temp, temp_f))
+
+        min_time = guardrails.get("cook_time_min_m", 5)
+        max_time = guardrails.get("cook_time_max_m", 120)
+        clamped_time = max(min_time, min(max_time, time_m))
+
+        return clamped_temp, clamped_time
 
     def get_live_timeline_steps(
         self,

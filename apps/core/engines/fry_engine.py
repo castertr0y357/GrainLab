@@ -4,6 +4,7 @@ from apps.core.engines.base_engine import BaseEngine
 class FryEngine(BaseEngine):
     name = "Fried Doughs Engine"
     slug = "fry"
+    primary_cooking_method = "Frying"
     default_yield_unit = "donuts"
     target_protein_min = 11.5
     target_protein_max = 13.0
@@ -13,7 +14,6 @@ class FryEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
-        "permissible_action_types": ["mix", "fry"],
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {
@@ -40,7 +40,7 @@ class FryEngine(BaseEngine):
             "step_increment": 12,
             "unit_label": "donut",
             "unit_label_plural": "donuts",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 5,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -219,6 +219,14 @@ class FryEngine(BaseEngine):
 
 class YeastRaisedDonutArchetype(FryEngine):
     archetype_slug = "yeast_raised_donut"
+    guardrails = {
+        "permissible_actions": ["mix", "fry", "glaze", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 380,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 7,
+        "boil_required": False,
+    }
     label = "Yeast-Raised Donut"
     icon = "🍩"
     description = "Highly aerated, light, floating dough rings."
@@ -242,6 +250,14 @@ class YeastRaisedDonutArchetype(FryEngine):
 
 class CakeDonutArchetype(FryEngine):
     archetype_slug = "cake_donut"
+    guardrails = {
+        "permissible_actions": ["mix", "fry", "glaze", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 380,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 7,
+        "boil_required": False,
+    }
     label = "Cake / Chemical Donut"
     icon = "🍩"
     description = "Tender, friable, batter-based rings dropping directly into fat."
@@ -265,6 +281,14 @@ class CakeDonutArchetype(FryEngine):
 
 class FritterBeignetArchetype(FryEngine):
     archetype_slug = "fritter_beignet"
+    guardrails = {
+        "permissible_actions": ["mix", "fry", "glaze", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 380,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 7,
+        "boil_required": False,
+    }
     label = "Batter Fritter / Beignet"
     yield_unit = "beignets"
     icon = "☁️"
@@ -289,6 +313,14 @@ class FritterBeignetArchetype(FryEngine):
 
 class FriedLaminateArchetype(FryEngine):
     archetype_slug = "fried_laminate"
+    guardrails = {
+        "permissible_actions": ["mix", "fry", "glaze", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 380,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 7,
+        "boil_required": False,
+    }
     label = "Fried Laminated"
     yield_unit = "pastries"
     icon = "🫓"

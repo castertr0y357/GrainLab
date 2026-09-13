@@ -341,6 +341,17 @@ def stream_gemma_api(system_prompt: str, user_prompt: str, yield_raw: bool = Fal
             yield '{"error": "AI Rate Limit Exceeded"}'
         return
 
+    # Check if offline mock mode is active
+    if getattr(settings, "MOCK_MODE", True):
+        # We assume get_mock_gemma_response is available as it's used in call_gemma_api
+        res = get_mock_gemma_response(system_prompt, user_prompt, None)
+        logger.info("[AI Stream] - Mock Mode Response yielded")
+        if yield_raw:
+            yield json.dumps(res)
+        else:
+            yield res
+        return
+
     url, model, api_key = _get_api_config()
     headers = {"Content-Type": "application/json"}
     if api_key:
@@ -1192,7 +1203,7 @@ def stream_final_insights(
     state: dict,
     recipe_data: dict = None,
     countertop_steps_json: str = "[]",
-    bake_temp_f: int = None,
+    cook_temp_f: int = None,
     bake_time_min: int = None,
     steam_required: bool = False,
 ):
@@ -1292,7 +1303,7 @@ def stream_final_insights(
             "process_recommendations": state.get("process_recommendations", {}),
             "engine_timeline_steps": json.loads(countertop_steps_json) if countertop_steps_json else [],
             "engine_baking_parameters": {
-                "bake_temp_f": bake_temp_f,
+                "cook_temp_f": cook_temp_f,
                 "bake_time_min": bake_time_min,
                 "steam_required": "Yes" if steam_required else "No",
             },

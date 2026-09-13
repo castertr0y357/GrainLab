@@ -6,7 +6,7 @@
         "target_weight": 900.0,
         "unit_weight": 900.0,
         "default_count": 1,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 45,
         "steam_required": false,
         "is_enriched_profile": false
@@ -18,7 +18,7 @@
         "target_weight": 750.0,
         "unit_weight": 750.0,
         "default_count": 1,
-        "bake_temp_f": 425,
+        "cook_temp_f": 425,
         "bake_time_min": 35,
         "steam_required": true,
         "is_enriched_profile": false
@@ -30,7 +30,7 @@
         "target_weight": 1080.0,
         "unit_weight": 90.0,
         "default_count": 12,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 20,
         "steam_required": false,
         "is_enriched_profile": true
@@ -42,7 +42,7 @@
         "target_weight": 900.0,
         "unit_weight": 300.0,
         "default_count": 3,
-        "bake_temp_f": 450,
+        "cook_temp_f": 450,
         "bake_time_min": 25,
         "steam_required": true,
         "is_enriched_profile": false
@@ -54,7 +54,7 @@
         "target_weight": 800.0,
         "unit_weight": 800.0,
         "default_count": 1,
-        "bake_temp_f": 420,
+        "cook_temp_f": 420,
         "bake_time_min": 25,
         "steam_required": false,
         "is_enriched_profile": false
@@ -66,7 +66,7 @@
         "target_weight": 750.0,
         "unit_weight": 750.0,
         "default_count": 1,
-        "bake_temp_f": 450,
+        "cook_temp_f": 450,
         "bake_time_min": 40,
         "steam_required": true,
         "is_enriched_profile": false
@@ -78,7 +78,7 @@
         "target_weight": 750.0,
         "unit_weight": 750.0,
         "default_count": 1,
-        "bake_temp_f": 450,
+        "cook_temp_f": 450,
         "bake_time_min": 35,
         "steam_required": true,
         "is_enriched_profile": false
@@ -90,7 +90,7 @@
         "target_weight": 900.0,
         "unit_weight": 900.0,
         "default_count": 1,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 45,
         "steam_required": false,
         "is_enriched_profile": false
@@ -102,7 +102,7 @@
         "target_weight": 1080.0,
         "unit_weight": 90.0,
         "default_count": 12,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 20,
         "steam_required": false,
         "is_enriched_profile": true
@@ -114,7 +114,7 @@
         "target_weight": 880.0,
         "unit_weight": 110.0,
         "default_count": 8,
-        "bake_temp_f": 425,
+        "cook_temp_f": 425,
         "bake_time_min": 20,
         "steam_required": false,
         "is_enriched_profile": false
@@ -126,7 +126,7 @@
         "target_weight": 880.0,
         "unit_weight": 110.0,
         "default_count": 8,
-        "bake_temp_f": 425,
+        "cook_temp_f": 425,
         "bake_time_min": 25,
         "steam_required": false,
         "is_enriched_profile": false
@@ -138,7 +138,7 @@
         "target_weight": 640.0,
         "unit_weight": 80.0,
         "default_count": 8,
-        "bake_temp_f": 500,
+        "cook_temp_f": 500,
         "bake_time_min": 5,
         "steam_required": false,
         "is_enriched_profile": false
@@ -150,7 +150,7 @@
         "target_weight": 640.0,
         "unit_weight": 80.0,
         "default_count": 8,
-        "bake_temp_f": 500,
+        "cook_temp_f": 500,
         "bake_time_min": 5,
         "steam_required": false,
         "is_enriched_profile": false
@@ -162,7 +162,7 @@
         "target_weight": 800.0,
         "unit_weight": 800.0,
         "default_count": 1,
-        "bake_temp_f": 350,
+        "cook_temp_f": 350,
         "bake_time_min": 50,
         "steam_required": false,
         "is_enriched_profile": true
@@ -174,7 +174,7 @@
         "target_weight": 840.0,
         "unit_weight": 70.0,
         "default_count": 12,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 20,
         "steam_required": false,
         "is_enriched_profile": true
@@ -186,7 +186,7 @@
         "target_weight": 840.0,
         "unit_weight": 70.0,
         "default_count": 12,
-        "bake_temp_f": 400,
+        "cook_temp_f": 400,
         "bake_time_min": 18,
         "steam_required": false,
         "is_enriched_profile": true
@@ -198,7 +198,7 @@
         "target_weight": 1000.0,
         "unit_weight": 500.0,
         "default_count": 2,
-        "bake_temp_f": 350,
+        "cook_temp_f": 350,
         "bake_time_min": 30,
         "steam_required": false,
         "is_enriched_profile": true
@@ -210,7 +210,7 @@
         "target_weight": 1000.0,
         "unit_weight": 1000.0,
         "default_count": 1,
-        "bake_temp_f": 350,
+        "cook_temp_f": 350,
         "bake_time_min": 25,
         "steam_required": false,
         "is_enriched_profile": true
@@ -222,7 +222,7 @@
         "target_weight": 1000.0,
         "unit_weight": 41.67,
         "default_count": 24,
-        "bake_temp_f": 350,
+        "cook_temp_f": 350,
         "bake_time_min": 20,
         "steam_required": false,
         "is_enriched_profile": true
@@ -234,7 +234,7 @@
         "target_weight": 540.0,
         "unit_weight": 90.0,
         "default_count": 6,
-        "bake_temp_f": 400,
+        "cook_temp_f": 400,
         "bake_time_min": 20,
         "steam_required": false,
         "is_enriched_profile": true
@@ -246,7 +246,7 @@
         "target_weight": 400.0,
         "unit_weight": 400.0,
         "default_count": 1,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 25,
         "steam_required": false,
         "is_enriched_profile": true
@@ -258,7 +258,7 @@
         "target_weight": 540.0,
         "unit_weight": 45.0,
         "default_count": 12,
-        "bake_temp_f": 425,
+        "cook_temp_f": 425,
         "bake_time_min": 20,
         "steam_required": true,
         "is_enriched_profile": true
@@ -270,7 +270,7 @@
         "target_weight": 960.0,
         "unit_weight": 40.0,
         "default_count": 24,
-        "bake_temp_f": 350,
+        "cook_temp_f": 350,
         "bake_time_min": 12,
         "steam_required": false,
         "is_enriched_profile": true
@@ -282,7 +282,7 @@
         "target_weight": 960.0,
         "unit_weight": 960.0,
         "default_count": 1,
-        "bake_temp_f": 350,
+        "cook_temp_f": 350,
         "bake_time_min": 25,
         "steam_required": false,
         "is_enriched_profile": true
@@ -294,7 +294,7 @@
         "target_weight": 780.0,
         "unit_weight": 65.0,
         "default_count": 12,
-        "bake_temp_f": 375,
+        "cook_temp_f": 375,
         "bake_time_min": 5,
         "steam_required": false,
         "is_enriched_profile": true
@@ -306,7 +306,7 @@
         "target_weight": 480.0,
         "unit_weight": 120.0,
         "default_count": 4,
-        "bake_temp_f": 0,
+        "cook_temp_f": 0,
         "bake_time_min": 0,
         "steam_required": false,
         "is_enriched_profile": false
@@ -318,7 +318,7 @@
         "target_weight": 480.0,
         "unit_weight": 120.0,
         "default_count": 4,
-        "bake_temp_f": 0,
+        "cook_temp_f": 0,
         "bake_time_min": 0,
         "steam_required": false,
         "is_enriched_profile": false

@@ -52,6 +52,7 @@ def get_engines_ff_json() -> str:
             "supported_tweaks": getattr(engine, "supported_tweaks", ["hydration", "leavening"]),
             "tweak_labels": getattr(engine, "tweak_labels", {}),
             "variations": getattr(engine, "variations", {}),
+            "recipe_classification": getattr(engine, "recipe_classification", "Savory"),
         }
     return json.dumps(engines_ff_data)
 
@@ -65,5 +66,13 @@ def get_engines_archetypes_json() -> str:
     archetypes_data = {}
     for cat_slug, eng_name in CATEGORY_TO_ENGINE.items():
         engine = ENGINES[eng_name]
-        archetypes_data[cat_slug] = getattr(engine, "archetypes", {})
+        engine_archetypes = getattr(engine, "archetypes", {})
+        engine_classification = getattr(engine, "recipe_classification", "Savory")
+
+        # Inject classification into each archetype if not explicitly set
+        for arch_slug, arch_data in engine_archetypes.items():
+            if "recipe_classification" not in arch_data:
+                arch_data["recipe_classification"] = engine_classification
+
+        archetypes_data[cat_slug] = engine_archetypes
     return json.dumps(archetypes_data)

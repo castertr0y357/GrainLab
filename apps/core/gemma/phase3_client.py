@@ -108,7 +108,12 @@ def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: lis
 
 
 def evaluate_single_grain(
-    wb, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None
+    wb,
+    engine,
+    preset_name: str = None,
+    preset_slug: str = None,
+    active_archetype_id: str = None,
+    active_variation_id: str = None,
 ) -> dict:
     """
     Polymorphically evaluates a single grain against target mechanics using the two-dataset prompt.
@@ -117,8 +122,11 @@ def evaluate_single_grain(
     engine_id = engine.slug if engine else "default"
     archetype_id = active_archetype_id or "default"
     variant_id = preset_slug or "default"
+    active_var_cache_key = active_variation_id or "default"
     grain_id = str(wb.id)
-    cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
+    cache_key = (
+        f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::subvar_{active_var_cache_key}::grain_{grain_id}"
+    )
 
     cached_val = cache.get(cache_key)
     if cached_val:
@@ -129,7 +137,9 @@ def evaluate_single_grain(
     grain_profile = get_grain_registry_profile(wb.name)
 
     # 2. Fetch target archetype mechanics from active engine (force explicit dynamic prompt binding)
-    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+    archetype_display, mechanics = get_archetype_mechanics(
+        engine, active_archetype_id, preset_slug, active_variation_id
+    )
 
     data_context = (
         f"[INTRINSIC RAW MATERIAL PROFILE]\n"
@@ -220,7 +230,12 @@ def evaluate_single_grain(
 
 
 def evaluate_grains_batch(
-    grains: list, engine, preset_name: str = None, preset_slug: str = None, active_archetype_id: str = None
+    grains: list,
+    engine,
+    preset_name: str = None,
+    preset_slug: str = None,
+    active_archetype_id: str = None,
+    active_variation_id: str = None,
 ) -> dict:
     """
     Evaluates multiple grains in a single LLM API call, caching the results individually.
@@ -229,6 +244,7 @@ def evaluate_grains_batch(
     engine_id = engine.slug if engine else "default"
     archetype_id = active_archetype_id or "default"
     variant_id = preset_slug or "default"
+    active_var_cache_key = active_variation_id or "default"
 
     results = {}
     uncached_grains = []
@@ -236,7 +252,7 @@ def evaluate_grains_batch(
     # 1. Try to load from cache first
     for wb in grains:
         grain_id = str(wb.id)
-        cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{grain_id}"
+        cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::subvar_{active_var_cache_key}::grain_{grain_id}"
 
         cached_val = cache.get(cache_key)
         if cached_val:
@@ -248,7 +264,9 @@ def evaluate_grains_batch(
         return results
 
     # 2. If there are uncached grains, query the LLM in a single batch call
-    archetype_display, mechanics = get_archetype_mechanics(engine, active_archetype_id, preset_slug)
+    archetype_display, mechanics = get_archetype_mechanics(
+        engine, active_archetype_id, preset_slug, active_variation_id
+    )
 
     grains_list = []
     for wb in uncached_grains:
@@ -295,7 +313,7 @@ def evaluate_grains_batch(
         response_schema,
         active_archetype_id=active_archetype_id,
         include_global_rules=False,
-        active_variation_id=preset_slug,
+        active_variation_id=active_variation_id,
     )
 
     payload = {"engine_id": engine_id, "active_archetype_id": active_archetype_id, "action": "batch_evaluate_grains"}
@@ -892,6 +910,8 @@ def generate_recipe_details(
         )
         if result and isinstance(result, dict) and "secondary_ingredients" in result:
             result = sanitize_ai_recipe_json(engine_id, result)
+            if engine:
+                result = engine.clamp_recipe_outputs(result, active_archetype_id, active_variation_id)
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_details: {str(e)}")
@@ -1361,8 +1381,8 @@ def generate_recipe_percentages(
         '  "target_leaven_pct": 1.5,\n'
         '  "target_salt_pct": 2.0,\n'
         '  "target_friction_factor": 10.0,\n'
-        '  "target_bake_temp": 450,\n'
-        '  "target_bake_time": 45,\n'
+        '  "target_cook_temp": 450,\n'
+        '  "target_cook_time": 45,\n'
         '  "percentages": {\n'
         '    "Ingredient Name 1": 20.0,\n'
         '    "Ingredient Name 2": 5.0\n'
@@ -1393,10 +1413,10 @@ def generate_recipe_percentages(
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
         if result and isinstance(result, dict) and "percentages" in result:
             if engine_id == "pasta":
-                result["target_bake_temp"] = 212
+                result["target_cook_temp"] = 212
                 # Pasta is fresh, boil time should be minimal (3 mins) instead of oven bake times
-                if result.get("target_bake_time", 20) > 10:
-                    result["target_bake_time"] = 3
+                if result.get("target_cook_time", 20) > 10:
+                    result["target_cook_time"] = 3
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_percentages: {str(e)}")

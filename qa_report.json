@@ -1,14 +1,24 @@
 [
     {
-        "engine": "bath",
-        "archetype": "boiled_bagel",
+        "engine": "pan",
+        "archetype": "tin_loaf",
         "profile": "savory",
-        "all_passed": true,
+        "all_passed": false,
         "evaluations": [
             {
                 "rule": "Leaven Limit",
                 "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
+                "reason": "Leavener Instant Dry Yeast within limits."
+            },
+            {
+                "rule": "Savory Pan - No Eggs",
+                "passed": true,
+                "reason": "No eggs found."
+            },
+            {
+                "rule": "Savory Pan - Fat %",
+                "passed": false,
+                "reason": "Fat is 15.0%, outside 5-10% bound."
             },
             {
                 "rule": "Chronological Logic",
@@ -18,7 +28,7 @@
             {
                 "rule": "Time Bounds Audit",
                 "passed": true,
-                "reason": "Total duration (13980s) is within reasonable bounds."
+                "reason": "Total duration (19080s) is within reasonable bounds."
             },
             {
                 "rule": "Required Actions Audit",
@@ -33,12 +43,12 @@
             {
                 "rule": "Yield Realism",
                 "passed": true,
-                "reason": "Portion size (242.5g) is realistic."
+                "reason": "Portion size (1960.0g) is realistic."
             },
             {
-                "rule": "Permissible Action Validations",
+                "rule": "Secondary Ingredient Whitelist",
                 "passed": true,
-                "reason": "Timeline respects permissible action types."
+                "reason": "All generated ingredients match engine whitelists."
             },
             {
                 "rule": "Schema Attribute Completeness",
@@ -48,32 +58,29 @@
             {
                 "rule": "Phase 4 - Temp Limit",
                 "passed": true,
-                "reason": "Bake temp 425F is realistic."
+                "reason": "Cook temp 360F is realistic."
             },
             {
                 "rule": "Phase 4 - Time Limit",
                 "passed": true,
-                "reason": "Bake time 18m is realistic."
+                "reason": "Bake time 50m is realistic."
             }
         ],
         "recipe": {
-            "default_yield_amount": 24,
-            "yield_unit": "bagels",
+            "default_yield_amount": 1,
+            "yield_unit": "loaf",
             "is_portionable": true,
-            "sidebar_science_profile": "This recipe is engineered for extreme tensile gluten development necessary to maintain shape during aggressive boiling and baking. The high hydration and protein content ensure the matrix can withstand pre-bake boiling without collapse, forming a tight, stable structure. The savory focus, coupled with the alkaline bath, drives deep Maillard reactions and enhances the crust's rustic, tannic character, complementing the malt sweetness.",
+            "sidebar_science_profile": "This savory pan loaf relies on a high-protein hard wheat blend to provide the necessary structural integrity to support the yeast and lipid components. The process requires disciplined gas proofing to achieve a soft, enriched crumb, while the savory additions (garlic, herbs) complement the creamy, milky base. The target lipid content (5-10%) is crucial for maximizing perceived softness without compromising the bread's structural lift.",
             "recommended_grain_ids": [
-                "Hard White Wheat",
-                "Hard Red Wheat"
+                "30027933-af68-40a4-ba4e-8e88c7008371",
+                "980c5b68-2668-463c-b5ff-95b16271efbf"
             ],
             "flour_blend": {
-                "Hard White Wheat": 60,
-                "Hard Red Wheat": 40
+                "30027933-af68-40a4-ba4e-8e88c7008371": 50,
+                "980c5b68-2668-463c-b5ff-95b16271efbf": 50
             },
             "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "knead",
-                "mix"
-            ],
+            "required_actions": [],
             "required_hardware": [
                 "stand_mixer",
                 "dough_whisk"
@@ -84,150 +91,8 @@
                         "category_name": "Fat / Lipid",
                         "name": "Unsalted Butter",
                         "temperature": "room_temp",
-                        "reasoning": "Provides necessary fat content to enrich the crumb and aid in crust development, essential for handling the high-hydration dough.",
+                        "reasoning": "Provides essential richness and tenderness, crucial for an enriched pan loaf. Its controlled fat content (5-10%) ensures structural support without making the dough too greasy.",
                         "bakers_percentage": 15.0
-                    }
-                ],
-                "liquids": [
-                    {
-                        "category_name": "Liquid Medium",
-                        "name": "Filtered Water",
-                        "temperature": "room_temp",
-                        "reasoning": "The primary hydration source, necessary for activating the gluten network and maintaining the high-hydration profile required for optimal bagel structure.",
-                        "bakers_percentage": 60.0
-                    }
-                ],
-                "binders": [],
-                "sweeteners": [
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Malt Syrup",
-                        "temperature": "room_temp",
-                        "reasoning": "Crucial for enhancing the Maillard reaction during the boiling and baking process, contributing a deep, caramelized, and savory depth to the crust.",
-                        "bakers_percentage": 15.0
-                    }
-                ],
-                "leaveners": [
-                    {
-                        "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "Standard biological leavener to provide the necessary gas proofing and lift, forming the base structure for the bagel.",
-                        "bakers_percentage": 1.5
-                    }
-                ],
-                "additives": [
-                    {
-                        "category_name": "Additive",
-                        "name": "Fine Sea Salt",
-                        "temperature": "room_temp",
-                        "reasoning": "Essential for flavor balance and controlling the gluten network development, strengthening the final tensile structure.",
-                        "bakers_percentage": 2.0
-                    },
-                    {
-                        "category_name": "Additive",
-                        "name": "Baking Soda (Sodium Bicarbonate)",
-                        "temperature": "room_temp",
-                        "reasoning": "The core chemical component of the alkaline bath. It raises the surface pH, stabilizing the crust, enhancing browning, and giving the signature savory, 'bath-treated' flavor profile.",
-                        "bakers_percentage": 0.5
-                    }
-                ]
-            },
-            "target_fat_pct": 15.0,
-            "target_sugar_pct": 15.0,
-            "target_hydration_pct": 60.0,
-            "target_binder_pct": 0.0,
-            "target_leaven_pct": 1.5,
-            "target_salt_pct": 2.0
-        }
-    },
-    {
-        "engine": "bath",
-        "archetype": "boiled_bagel",
-        "profile": "sweet",
-        "all_passed": true,
-        "evaluations": [
-            {
-                "rule": "Leaven Limit",
-                "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
-            },
-            {
-                "rule": "Chronological Logic",
-                "passed": true,
-                "reason": "Steps are chronologically sound."
-            },
-            {
-                "rule": "Time Bounds Audit",
-                "passed": true,
-                "reason": "Total duration (13980s) is within reasonable bounds."
-            },
-            {
-                "rule": "Required Actions Audit",
-                "passed": true,
-                "reason": "All required actions are represented in the timeline."
-            },
-            {
-                "rule": "Hydration Balance",
-                "passed": true,
-                "reason": "Hydration to lipid ratio is physically viable."
-            },
-            {
-                "rule": "Yield Realism",
-                "passed": true,
-                "reason": "Portion size (268.1g) is realistic."
-            },
-            {
-                "rule": "Permissible Action Validations",
-                "passed": true,
-                "reason": "Timeline respects permissible action types."
-            },
-            {
-                "rule": "Schema Attribute Completeness",
-                "passed": true,
-                "reason": "All required schema attributes are present."
-            },
-            {
-                "rule": "Phase 4 - Temp Limit",
-                "passed": true,
-                "reason": "Bake temp 425F is realistic."
-            },
-            {
-                "rule": "Phase 4 - Time Limit",
-                "passed": true,
-                "reason": "Bake time 18m is realistic."
-            }
-        ],
-        "recipe": {
-            "default_yield_amount": 24,
-            "yield_unit": "bagels",
-            "is_portionable": true,
-            "sidebar_science_profile": "This recipe is engineered for extreme tensile gluten development, forming a highly stable matrix capable of withstanding the mechanical stress and chemical alteration of a pre-bake boiling step. The high hydration and protein content support the 'zero_spread_stable' objective. The final structure relies on deep cross-linking and the synergistic pairing of malt sweetness, caramelized sugars, and the alkaline surface chemistry, resulting in a rustic, highly resilient final product.",
-            "recommended_grain_ids": [
-                "Hard White Wheat",
-                "Hard Red Wheat"
-            ],
-            "flour_blend": {
-                "Hard White Wheat": 50,
-                "Hard Red Wheat": 50
-            },
-            "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "knead",
-                "mix"
-            ],
-            "required_hardware": [
-                "stand_mixer",
-                "dough_whisk"
-            ],
-            "secondary_ingredients": {
-                "lipids": [
-                    {
-                        "category_name": "Fat / Lipid",
-                        "name": "Unsalted Butter",
-                        "temperature": "room_temp",
-                        "reasoning": "Adds necessary richness and tenderness, improving handling and mouthfeel without compromising the structural integrity required for the boil.",
-                        "bakers_percentage": 35.0
                     }
                 ],
                 "liquids": [
@@ -235,7 +100,145 @@
                         "category_name": "Liquid Medium",
                         "name": "Whole Milk",
                         "temperature": "room_temp",
-                        "reasoning": "Milk provides a creamy, structured liquid medium that enhances gluten development and contributes to the sweetness and tenderness of the final bagel.",
+                        "reasoning": "The addition of milk fat and lactose contributes to superior softness and a tender crumb structure, which is ideal for an enriched pan bread.",
+                        "bakers_percentage": 75.0
+                    }
+                ],
+                "binders": [],
+                "sweeteners": [],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Instant Dry Yeast",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides the primary lift for the loaf. Instant dry yeast is preferred for its ease of use and minimal interaction with the savory ingredients.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Sea Salt",
+                        "temperature": "room_temp",
+                        "reasoning": "Crucial for flavor enhancement and controlling the rate of yeast fermentation, strengthening the high-protein gluten matrix.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Fresh Garlic",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary aromatic component, providing a robust, savory depth that is perfectly suited for a European-style pan loaf.",
+                        "bakers_percentage": 1.5
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Dried Oregano",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds a classic, complementary herbaceous note that pairs exceptionally well with garlic and milky bread.",
+                        "bakers_percentage": 1.0
+                    }
+                ]
+            },
+            "target_fat_pct": 15.0,
+            "target_sugar_pct": 0.0,
+            "target_hydration_pct": 75.0,
+            "target_binder_pct": 5.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "pan",
+        "archetype": "tin_loaf",
+        "profile": "sweet",
+        "all_passed": false,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Instant Dry Yeast within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (19080s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (4235.0g) is realistic."
+            },
+            {
+                "rule": "Secondary Ingredient Whitelist",
+                "passed": false,
+                "reason": "Hallucinated unsupported ingredients: Large Eggs in binders"
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Cook temp 360F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 50m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 1,
+            "yield_unit": "loaf",
+            "is_portionable": true,
+            "sidebar_science_profile": "This enriched loaf is engineered for maximal structural lift and soft, tender crumb due to the high lipid and sugar content. The combination of hard wheat structure with milk and eggs provides a stable, highly shreddable matrix capable of supporting heavy fat loads. Flavor development will be sweet and milky, achieved through careful yeast management and the use of complementary spices, avoiding any bitter whole-grain notes.",
+            "recommended_grain_ids": [
+                "hard_red_winter_wheat",
+                "hard_red_spring_wheat"
+            ],
+            "flour_blend": {
+                "hard_red_winter_wheat": 50,
+                "hard_red_spring_wheat": 50
+            },
+            "fat_starting_temp": "room_temp",
+            "required_actions": [],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "room_temp",
+                        "reasoning": "Essential for creating a soft crumb and achieving the characteristic 'shreddability' required by an enriched, sweet loaf. Its moderate melting point allows for optimal tenderization.",
+                        "bakers_percentage": 90.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Whole Milk",
+                        "temperature": "room_temp",
+                        "reasoning": "Provides a sweet, milky baseline flavor and crucial moisture content, which helps maintain the high hydration needed for a soft structure without thinning the batter excessively.",
                         "bakers_percentage": 40.0
                     }
                 ],
@@ -244,208 +247,60 @@
                         "category_name": "Binder",
                         "name": "Large Eggs",
                         "temperature": "room_temp",
-                        "reasoning": "Essential for boosting protein content and providing emulsification, which is critical for creating a dough that can withstand the temperature and chemical shock of the boiling process.",
-                        "bakers_percentage": 25.0
+                        "reasoning": "Serves as a robust protein binder, stabilizing the highly enriched dough structure and adding emulsifying properties crucial for a tender, non-crumbly texture.",
+                        "bakers_percentage": 60.0
                     }
                 ],
                 "sweeteners": [
                     {
                         "category_name": "Sweetener",
-                        "name": "Granulated Sugar",
+                        "name": "Granulated White Sugar",
                         "temperature": "room_temp",
-                        "reasoning": "Provides the necessary level of simple carbohydrates for optimal Maillard browning and the 'sweet' profile of the bagel.",
-                        "bakers_percentage": 12.0
+                        "reasoning": "Provides the primary sweetness and acts as a humectant, controlling water activity and promoting the desirable soft, tender crumb structure while feeding the yeast.",
+                        "bakers_percentage": 80.0
                     }
                 ],
                 "leaveners": [
                     {
                         "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
+                        "name": "Instant Dry Yeast",
                         "temperature": "room_temp",
-                        "reasoning": "The primary biological leavener, providing the necessary gas-proofing and metabolic activity to achieve the desired internal volume and crumb structure.",
+                        "reasoning": "The preferred leavening agent for enriched doughs due to its reliability and ability to generate consistent CO2 for the targeted 'gas_proofing' strategy. The thermodynamic focus is biological yeast activity.",
                         "bakers_percentage": 1.5
                     }
                 ],
                 "additives": [
                     {
                         "category_name": "Additive",
-                        "name": "Cinnamon",
+                        "name": "Ground Cinnamon",
                         "temperature": "room_temp",
-                        "reasoning": "Enhances the sweet, warm, and rustic flavor profile, complementing the maltiness and caramelized sugars of the bagel.",
-                        "bakers_percentage": 1.0
+                        "reasoning": "A classic, warm spice pairing that enhances the sweet, milky profile without introducing competing bitter or astringent notes.",
+                        "bakers_percentage": 2.0
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Coarse Sugar Crystals",
+                        "temperature": "room_temp",
+                        "reasoning": "Used as a textural additive on the surface to enhance visual appeal and provide a satisfying, crisp counterpoint to the soft, moist crumb.",
+                        "bakers_percentage": 50.0
                     }
                 ]
             },
-            "target_fat_pct": 35.0,
-            "target_sugar_pct": 12.0,
-            "target_hydration_pct": 65.0,
-            "target_binder_pct": 25.0,
+            "target_fat_pct": 90.0,
+            "target_sugar_pct": 130.0,
+            "target_hydration_pct": 110.0,
+            "target_binder_pct": 60.0,
             "target_leaven_pct": 1.5,
             "target_salt_pct": 2.0
         }
     },
     {
-        "engine": "bath",
-        "archetype": "boiled_bagel",
-        "profile": "flourless_savory",
-        "all_passed": true,
-        "evaluations": [
-            {
-                "rule": "Leaven Limit",
-                "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
-            },
-            {
-                "rule": "Chronological Logic",
-                "passed": true,
-                "reason": "Steps are chronologically sound."
-            },
-            {
-                "rule": "Time Bounds Audit",
-                "passed": true,
-                "reason": "Total duration (13980s) is within reasonable bounds."
-            },
-            {
-                "rule": "Required Actions Audit",
-                "passed": true,
-                "reason": "All required actions are represented in the timeline."
-            },
-            {
-                "rule": "Hydration Balance",
-                "passed": true,
-                "reason": "Hydration to lipid ratio is physically viable."
-            },
-            {
-                "rule": "Yield Realism",
-                "passed": true,
-                "reason": "Portion size (269.6g) is realistic."
-            },
-            {
-                "rule": "Permissible Action Validations",
-                "passed": true,
-                "reason": "Timeline respects permissible action types."
-            },
-            {
-                "rule": "Schema Attribute Completeness",
-                "passed": true,
-                "reason": "All required schema attributes are present."
-            },
-            {
-                "rule": "Phase 4 - Temp Limit",
-                "passed": true,
-                "reason": "Bake temp 425F is realistic."
-            },
-            {
-                "rule": "Phase 4 - Time Limit",
-                "passed": true,
-                "reason": "Bake time 18m is realistic."
-            }
-        ],
-        "recipe": {
-            "default_yield_amount": 24,
-            "yield_unit": "bagels",
-            "is_portionable": true,
-            "sidebar_science_profile": "This recipe is engineered for extreme tensile gluten development, forming a rigid, zero-spread structure capable of withstanding high-heat liquid denaturation during the boiling phase. The flourless, savory nature is designed to maximize deep Maillard browning and complement the alkaline surface chemistry of the bath. Its high hydration and whole-grain profile ensure robust tannin tolerance, resulting in a complex, rustic flavor that holds up against intense caramelization.",
-            "recommended_grain_ids": [
-                "hard_red_wheat",
-                "white_bread_flour"
-            ],
-            "flour_blend": {
-                "hard_red_wheat": 85,
-                "white_bread_flour": 15
-            },
-            "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "mix",
-                "knead"
-            ],
-            "required_hardware": [
-                "stand_mixer",
-                "dough_whisk"
-            ],
-            "secondary_ingredients": {
-                "lipids": [
-                    {
-                        "category_name": "Fat / Lipid",
-                        "name": "Unsalted Butter",
-                        "temperature": "room_temp",
-                        "reasoning": "Adds necessary richness and mouthfeel, helping to tenderize the otherwise intensely structured, dense bagel crumb.",
-                        "bakers_percentage": 12.0
-                    }
-                ],
-                "liquids": [
-                    {
-                        "category_name": "Liquid Medium",
-                        "name": "Filtered Water",
-                        "temperature": "room_temp",
-                        "reasoning": "Provides the primary hydration source required for activating gluten proteins and achieving the necessary high-hydration dough matrix.",
-                        "bakers_percentage": 70.0
-                    }
-                ],
-                "binders": [
-                    {
-                        "category_name": "Binder",
-                        "name": "Large Egg Yolk",
-                        "temperature": "room_temp",
-                        "reasoning": "The yolk provides critical emulsifying properties and additional protein structure, which enhances the tensile strength of the dough without the excess moisture of a whole egg.",
-                        "bakers_percentage": 18.0
-                    }
-                ],
-                "sweeteners": [
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Malt Syrup",
-                        "temperature": "room_temp",
-                        "reasoning": "Crucial for achieving the signature deep, toasted golden color and providing complex, malty notes that complement the savory, roasted character of the bagel.",
-                        "bakers_percentage": 12.0
-                    }
-                ],
-                "leaveners": [
-                    {
-                        "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "Necessary for biological activity, allowing the dough to develop sufficient gas pressure (gas_proofing) to achieve a stable, rounded, zero-spread final form.",
-                        "bakers_percentage": 1.2
-                    }
-                ],
-                "additives": [
-                    {
-                        "category_name": "Additive",
-                        "name": "Coarse Sea Salt",
-                        "temperature": "room_temp",
-                        "reasoning": "Enhances the rustic, savory profile and is vital for controlling osmotic pressure, which is critical for the structural integrity of the high-protein dough.",
-                        "bakers_percentage": 1.0
-                    },
-                    {
-                        "category_name": "Additive",
-                        "name": "Everything Bagel Seasoning Blend",
-                        "temperature": "room_temp",
-                        "reasoning": "Provides the final textural and aromatic burst, complementing the caramelized, savory notes developed during the boiling and baking process.",
-                        "bakers_percentage": 1.5
-                    }
-                ]
-            },
-            "target_fat_pct": 12.0,
-            "target_sugar_pct": 12.0,
-            "target_hydration_pct": 70.0,
-            "target_binder_pct": 18.0,
-            "target_leaven_pct": 1.2,
-            "target_salt_pct": 2.5
-        }
-    },
-    {
-        "engine": "bath",
-        "archetype": "boiled_bagel",
-        "profile": "flourless_sweet",
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "savory",
         "all_passed": false,
         "evaluations": [
             {
-                "rule": "Leaven Limit",
-                "passed": false,
-                "reason": "Leavener Active Dry Yeast exceeds 1.5% max (2.0%)"
-            },
-            {
                 "rule": "Chronological Logic",
                 "passed": true,
                 "reason": "Steps are chronologically sound."
@@ -453,7 +308,7 @@
             {
                 "rule": "Time Bounds Audit",
                 "passed": true,
-                "reason": "Total duration (13980s) is within reasonable bounds."
+                "reason": "Total duration (5940s) is within reasonable bounds."
             },
             {
                 "rule": "Required Actions Audit",
@@ -468,12 +323,17 @@
             {
                 "rule": "Yield Realism",
                 "passed": true,
-                "reason": "Portion size (301.9g) is realistic."
+                "reason": "Portion size (93.5g) is realistic."
             },
             {
-                "rule": "Permissible Action Validations",
+                "rule": "Secondary Ingredient Whitelist",
+                "passed": false,
+                "reason": "Hallucinated unsupported ingredients: Neutral Vegetable Oil (e.g., Grapeseed) in lipids"
+            },
+            {
+                "rule": "Dynamic Salt Limit",
                 "passed": true,
-                "reason": "Timeline respects permissible action types."
+                "reason": "Salt (0.85%) is within expected 0.75% bounds."
             },
             {
                 "rule": "Schema Attribute Completeness",
@@ -483,32 +343,27 @@
             {
                 "rule": "Phase 4 - Temp Limit",
                 "passed": true,
-                "reason": "Bake temp 425F is realistic."
+                "reason": "Cook temp 325F is realistic."
             },
             {
                 "rule": "Phase 4 - Time Limit",
                 "passed": true,
-                "reason": "Bake time 18m is realistic."
+                "reason": "Bake time 16m is realistic."
             }
         ],
         "recipe": {
             "default_yield_amount": 24,
-            "yield_unit": "bagels",
+            "yield_unit": "cookies",
             "is_portionable": true,
-            "sidebar_science_profile": "This bagel structure requires extreme tensile gluten development, which is ideally built through thorough kneading of a high-hydration, high-protein dough. The subsequent boiling step (alkaline bath) achieves a crucial rapid gelatinization of the starch exterior, providing the sought-after protective crust before baking. The resulting crumb will be dense, chewy, and highly stable against the initial boiling/steaming process.",
+            "sidebar_science_profile": "This recipe relies on the immediate melting and emulsification of high-fat lipids and sugars to create a sheet-like dough structure, minimizing gluten development for a delicate, brittle snap. The low-protein, soft-wheat base allows maximum horizontal spread before the crumb sets. The savory nature means flavor depth comes from aromatic additives and complex fats, rather than sweetness, resulting in a highly stable, crisp matrix.",
             "recommended_grain_ids": [
-                "high_protein_bread_flour",
-                "whole_wheat_flour"
+                "190b0477-18e5-4f6c-ae67-5b3102e96e9a"
             ],
             "flour_blend": {
-                "high_protein_bread_flour": 75,
-                "whole_wheat_flour": 25
+                "Spelt Wheat (Ancient)": 100
             },
             "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "knead",
-                "mix"
-            ],
+            "required_actions": [],
             "required_hardware": [
                 "stand_mixer",
                 "dough_whisk"
@@ -519,15 +374,15 @@
                         "category_name": "Fat / Lipid",
                         "name": "Unsalted Butter",
                         "temperature": "room_temp",
-                        "reasoning": "Applied as a wash before baking to enhance Maillard browning and provide a flaky, rich aroma that complements the deep caramelization achieved in the alkaline bath.",
-                        "bakers_percentage": 10.0
+                        "reasoning": "Provides a solid, buttery structure that melts slowly, contributing to the desired spread and rich, savory mouthfeel.",
+                        "bakers_percentage": 35.0
                     },
                     {
                         "category_name": "Fat / Lipid",
-                        "name": "Neutral Oil (e.g., Grapeseed)",
+                        "name": "Neutral Vegetable Oil (e.g., Grapeseed)",
                         "temperature": "room_temp",
-                        "reasoning": "Used in the dough mix to increase overall hydration and elasticity without introducing excessive flavor or compromising the chewy, dense structure.",
-                        "bakers_percentage": 15.0
+                        "reasoning": "Adds liquid fat volume, which is crucial for maximizing horizontal spread and ensuring a crispy, delicate texture consistent with the 'Thin & Crispy' directive.",
+                        "bakers_percentage": 30.0
                     }
                 ],
                 "liquids": [
@@ -535,86 +390,71 @@
                         "category_name": "Liquid Medium",
                         "name": "Buttermilk",
                         "temperature": "room_temp",
-                        "reasoning": "The lactic acid content tenderizes the high-protein gluten matrix and provides a mild, complementary sour tang that works exceptionally well with the savory/rustic profile of the alkaline bath.",
-                        "bakers_percentage": 20.0
-                    },
-                    {
-                        "category_name": "Liquid Medium",
-                        "name": "Warm Water",
-                        "temperature": "warm_temp",
-                        "reasoning": "The base liquid medium necessary for hydration, optimized to activate the yeast without shocking the enzymes.",
-                        "bakers_percentage": 48.0
+                        "reasoning": "The slight acidity of buttermilk reacts gently with the baking process, contributing a subtle tang that elevates the savory profile and helps tenderize the Spelt structure.",
+                        "bakers_percentage": 15.0
                     }
                 ],
                 "binders": [
                     {
                         "category_name": "Binder",
-                        "name": "Large Eggs",
+                        "name": "Large Whole Eggs",
                         "temperature": "room_temp",
-                        "reasoning": "Used for the final egg wash, providing superior golden color and a stable, slightly glossy surface finish essential for visual appeal.",
-                        "bakers_percentage": 25.0
+                        "reasoning": "Acts as the primary structural component, binding the dough while its emulsifying properties stabilize the high lipid content, preventing the cookie from becoming overly crumbly.",
+                        "bakers_percentage": 10.0
                     }
                 ],
                 "sweeteners": [
                     {
                         "category_name": "Sweetener",
-                        "name": "Brown Sugar",
+                        "name": "Maple Syrup",
                         "temperature": "room_temp",
-                        "reasoning": "Provides molasses notes and deep, rich caramelization when exposed to high heat and the alkaline environment, contributing significantly to the desired maltiness.",
-                        "bakers_percentage": 10.0
-                    },
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Granulated Sugar",
-                        "temperature": "room_temp",
-                        "reasoning": "Ensures a crisp, crystalline exterior structure and aids in achieving optimal Maillard browning.",
-                        "bakers_percentage": 10.0
+                        "reasoning": "Instead of pure sugar, maple syrup provides a complex, slightly earthy sweetness that complements savory herbs and brown butter notes without clashing with the savory profile.",
+                        "bakers_percentage": 30.0
                     }
                 ],
-                "leaveners": [
-                    {
-                        "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "The primary biological lift source. While bagels are dense, yeast activity is necessary to achieve the characteristic internal 'pop' and structure.",
-                        "bakers_percentage": 2.0
-                    }
-                ],
+                "leaveners": [],
                 "additives": [
                     {
                         "category_name": "Additive",
-                        "name": "Cinnamon",
+                        "name": "Fine Sea Salt",
                         "temperature": "room_temp",
-                        "reasoning": "Directly aligns with the 'Sweet' nuance of the recipe name, offering warm aromatic spice that complements the smoky, rustic development.",
-                        "bakers_percentage": 1.0
+                        "reasoning": "Essential for balancing the rich fats and bringing out the natural, nutty depth of the Spelt wheat, enhancing the overall savory experience.",
+                        "bakers_percentage": 2.0
                     },
                     {
                         "category_name": "Additive",
-                        "name": "Aluminum Powder",
+                        "name": "Fresh Rosemary",
                         "temperature": "room_temp",
-                        "reasoning": "This is a critical baking science additive used to stabilize the crumb structure and enhance the golden, crusty appearance, mimicking a professional bagel shop finish.",
-                        "bakers_percentage": 0.5
+                        "reasoning": "A classic pairing for savory shortbread and spiced cookies, providing a potent, aromatic lift that defines the savory profile.",
+                        "bakers_percentage": 1.5
+                    },
+                    {
+                        "category_name": "Additive",
+                        "name": "Fresh Black Pepper",
+                        "temperature": "room_temp",
+                        "reasoning": "A pinch of freshly ground black pepper provides a necessary visual pop and a subtle, sharp counterpoint to the rich, buttery fats.",
+                        "bakers_percentage": 1.0
                     }
                 ]
             },
-            "target_fat_pct": 25.0,
-            "target_sugar_pct": 20.0,
-            "target_hydration_pct": 68.0,
-            "target_binder_pct": 25.0,
-            "target_leaven_pct": 2.0,
+            "target_fat_pct": 65.0,
+            "target_sugar_pct": 30.0,
+            "target_hydration_pct": 25.0,
+            "target_binder_pct": 10.0,
+            "target_leaven_pct": 0.5,
             "target_salt_pct": 2.0
         }
     },
     {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
+        "engine": "cookie",
+        "archetype": "drop_cookie",
         "profile": "savory",
         "all_passed": true,
         "evaluations": [
             {
                 "rule": "Leaven Limit",
                 "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
+                "reason": "Leavener Baking Powder within limits."
             },
             {
                 "rule": "Chronological Logic",
@@ -624,7 +464,7 @@
             {
                 "rule": "Time Bounds Audit",
                 "passed": true,
-                "reason": "Total duration (14280s) is within reasonable bounds."
+                "reason": "Total duration (5940s) is within reasonable bounds."
             },
             {
                 "rule": "Required Actions Audit",
@@ -639,12 +479,17 @@
             {
                 "rule": "Yield Realism",
                 "passed": true,
-                "reason": "Portion size (340.6g) is realistic."
+                "reason": "Portion size (172.5g) is realistic."
             },
             {
-                "rule": "Permissible Action Validations",
+                "rule": "Secondary Ingredient Whitelist",
                 "passed": true,
-                "reason": "Timeline respects permissible action types."
+                "reason": "All generated ingredients match engine whitelists."
+            },
+            {
+                "rule": "Dynamic Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.84%) is within expected 0.75% bounds."
             },
             {
                 "rule": "Schema Attribute Completeness",
@@ -654,32 +499,172 @@
             {
                 "rule": "Phase 4 - Temp Limit",
                 "passed": true,
-                "reason": "Bake temp 420F is realistic."
+                "reason": "Cook temp 325F is realistic."
             },
             {
                 "rule": "Phase 4 - Time Limit",
                 "passed": true,
-                "reason": "Bake time 23m is realistic."
+                "reason": "Bake time 16m is realistic."
             }
         ],
         "recipe": {
             "default_yield_amount": 24,
-            "yield_unit": "pretzels",
+            "yield_unit": "cookies",
             "is_portionable": true,
-            "sidebar_science_profile": "This dough is engineered for maximum gluten extensibility and structural resilience, allowing it to withstand the physical stress of twisting and the chemical stress of boiling in an alkaline bath. The blend promotes deep Maillard browning and savory, caramelized notes, creating a highly resilient, chewy matrix ideal for rustic, tannin-tolerant savory applications.",
+            "sidebar_science_profile": "The texture relies on a careful balance: the melting of cold fats and sugars acts as a liquefier, promoting spread, while the flour structure and binder proteins provide necessary stabilization. The use of a nuanced blend of soft and ancient wheat helps achieve a tender, chewy interior by moderating gluten development without sacrificing enough structure to prevent the cookie from melting into a puddle.",
             "recommended_grain_ids": [
-                "Hard White Wheat",
-                "Kamut (Ancient)"
+                "Soft White Wheat",
+                "Spelt Wheat (Ancient)"
             ],
             "flour_blend": {
-                "Hard White Wheat": 75,
-                "Kamut (Ancient)": 25
+                "Soft White Wheat": 60,
+                "Spelt Wheat (Ancient)": 40
+            },
+            "fat_starting_temp": "cold",
+            "required_actions": [],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "Cold",
+                        "reasoning": "Using cold, high-fat butter is critical for the 'Soft & Chewy' profile. The lower melting point fat crystallizes into the dough, trapping moisture and preventing excessive spread, allowing the cookie to retain a thicker, bite-sized structure.",
+                        "bakers_percentage": 85.0
+                    }
+                ],
+                "liquids": [
+                    {
+                        "category_name": "Liquid Medium",
+                        "name": "Buttermilk",
+                        "temperature": "Room Temp",
+                        "reasoning": "Buttermilk provides necessary moisture while its acidity reacts with the baking soda, contributing to lift and tenderizing the crumb structure, which is ideal for a soft, savory cookie.",
+                        "bakers_percentage": 45.0
+                    }
+                ],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "Room Temp",
+                        "reasoning": "Eggs are essential stabilizers in a savory drop cookie. They provide structure and richness, helping the dough maintain its thickness despite the high fat content required for the chewy texture.",
+                        "bakers_percentage": 60.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated White Sugar",
+                        "temperature": "Room Temp",
+                        "reasoning": "Although savory, a moderate amount of white sugar is required to achieve the necessary structure and chewiness by facilitating controlled liquid emulsification during baking. It aids in the crisp, caramelized edges.",
+                        "bakers_percentage": 120.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Powder",
+                        "temperature": "Room Temp",
+                        "reasoning": "As a drop cookie, a chemical leavener is mandatory. Baking powder provides gentle, reliable lift, ensuring the cookie structure rises slightly before the fat melts out, contributing to a light, open chew.",
+                        "bakers_percentage": 2.0
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Kosher Salt",
+                        "temperature": "Room Temp",
+                        "reasoning": "A staple for savory baking, salt is crucial for enhancing the overall flavor profile and balancing the sweetness, giving the cookie a professional, savory depth.",
+                        "bakers_percentage": 2.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 45.0,
+            "target_binder_pct": 60.0,
+            "target_leaven_pct": 2.0,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "sweet",
+        "all_passed": false,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Powder within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5940s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (133.1g) is realistic."
+            },
+            {
+                "rule": "Secondary Ingredient Whitelist",
+                "passed": false,
+                "reason": "Hallucinated unsupported ingredients: Neutral Vegetable Oil (e.g., Canola) in lipids"
+            },
+            {
+                "rule": "Dynamic Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.85%) is within expected 0.75% bounds."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Cook temp 325F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 16m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This cookie design prioritizes lipid emulsification and maximum horizontal spread over gluten development. The use of low-protein Spelt wheat inhibits excessive gluten formation, resulting in a delicate, brittle snap. The high ratio of melted fats and pure sugars ensures rapid caramelization and structural collapse into a crisp, spread-out profile.",
+            "recommended_grain_ids": [
+                "spelt_wheat_ancient"
+            ],
+            "flour_blend": {
+                "spelt_wheat_ancient": 100
             },
             "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "knead",
-                "mix"
-            ],
+            "required_actions": [],
             "required_hardware": [
                 "stand_mixer",
                 "dough_whisk"
@@ -690,17 +675,24 @@
                         "category_name": "Fat / Lipid",
                         "name": "Unsalted Butter",
                         "temperature": "room_temp",
-                        "reasoning": "Adding room-temperature butter enhances the pliability and chewiness of the final pretzel structure, providing necessary elasticity for twisting without sacrificing the hard wheat's structural integrity.",
-                        "bakers_percentage": 18.0
+                        "reasoning": "Provides the necessary solid-state fat base for flavor and structure, crucial for the initial creaming process and mouthfeel. Must be room temperature for optimal emulsification.",
+                        "bakers_percentage": 45.0
+                    },
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Neutral Vegetable Oil (e.g., Canola)",
+                        "temperature": "room_temp",
+                        "reasoning": "Used in conjunction with butter to achieve maximum spread and prevent the inherent nutty/earthy notes of Spelt from dominating the sweet, delicate flavor profile. Oil remains liquid at baking temperatures, enhancing spreadability.",
+                        "bakers_percentage": 40.0
                     }
                 ],
                 "liquids": [
                     {
                         "category_name": "Liquid Medium",
-                        "name": "Water",
+                        "name": "Whole Milk",
                         "temperature": "room_temp",
-                        "reasoning": "Water provides the necessary hydration medium to fully activate the starches and allows for the optimal gluten development required for a high-extensibility dough structure.",
-                        "bakers_percentage": 70.0
+                        "reasoning": "A minimal amount of liquid is required to hydrate the flour and activate the binders without compromising the thin, crispy structure. Whole milk adds desirable fat content for richness.",
+                        "bakers_percentage": 2.0
                     }
                 ],
                 "binders": [
@@ -708,25 +700,176 @@
                         "category_name": "Binder",
                         "name": "Large Eggs",
                         "temperature": "room_temp",
-                        "reasoning": "Eggs are crucial for protein binding, significantly strengthening the gluten network and providing the necessary resilience to maintain shape during boiling and handling.",
+                        "reasoning": "Essential for creating the emulsion that holds the melted fats, sugars, and flour together. The protein structure of the egg is necessary to prevent the cookie from dissolving entirely during the spread phase.",
+                        "bakers_percentage": 10.0
+                    }
+                ],
+                "sweeteners": [
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Granulated White Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "The primary source of crispness and structural integrity. Its high sucrose content facilitates rapid caramelization and creates the desired brittle snap in the finished product.",
+                        "bakers_percentage": 70.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Light Brown Sugar",
+                        "temperature": "room_temp",
+                        "reasoning": "Adds minor molasses notes and a slight chewiness counterpoint to the extreme crispness, enhancing the overall complexity of the 'sweet' profile.",
                         "bakers_percentage": 50.0
+                    }
+                ],
+                "leaveners": [
+                    {
+                        "category_name": "Leavener",
+                        "name": "Baking Powder",
+                        "temperature": "room_temp",
+                        "reasoning": "While minimal, a small dose of leavener helps the cookie achieve maximum spread (lift across the surface) rather than just vertical lift, contributing to the desirable thin, plate-like structure.",
+                        "bakers_percentage": 1.5
+                    }
+                ],
+                "additives": [
+                    {
+                        "category_name": "Additive",
+                        "name": "Vanilla Extract",
+                        "temperature": "room_temp",
+                        "reasoning": "A potent flavor enhancer that rounds out the inherent earthiness of Spelt and elevates the overall confections profile, masking any potential grassy or bitter notes.",
+                        "bakers_percentage": 1.0
+                    }
+                ]
+            },
+            "target_fat_pct": 85.0,
+            "target_sugar_pct": 120.0,
+            "target_hydration_pct": 0.0,
+            "target_binder_pct": 10.0,
+            "target_leaven_pct": 1.5,
+            "target_salt_pct": 2.0
+        }
+    },
+    {
+        "engine": "cookie",
+        "archetype": "drop_cookie",
+        "profile": "sweet",
+        "all_passed": true,
+        "evaluations": [
+            {
+                "rule": "Leaven Limit",
+                "passed": true,
+                "reason": "Leavener Baking Soda within limits."
+            },
+            {
+                "rule": "Chronological Logic",
+                "passed": true,
+                "reason": "Steps are chronologically sound."
+            },
+            {
+                "rule": "Time Bounds Audit",
+                "passed": true,
+                "reason": "Total duration (5940s) is within reasonable bounds."
+            },
+            {
+                "rule": "Required Actions Audit",
+                "passed": true,
+                "reason": "All required actions are represented in the timeline."
+            },
+            {
+                "rule": "Hydration Balance",
+                "passed": true,
+                "reason": "Hydration to lipid ratio is physically viable."
+            },
+            {
+                "rule": "Yield Realism",
+                "passed": true,
+                "reason": "Portion size (147.7g) is realistic."
+            },
+            {
+                "rule": "Secondary Ingredient Whitelist",
+                "passed": true,
+                "reason": "All generated ingredients match engine whitelists."
+            },
+            {
+                "rule": "Dynamic Salt Limit",
+                "passed": true,
+                "reason": "Salt (0.83%) is within expected 0.75% bounds."
+            },
+            {
+                "rule": "Schema Attribute Completeness",
+                "passed": true,
+                "reason": "All required schema attributes are present."
+            },
+            {
+                "rule": "Phase 4 - Temp Limit",
+                "passed": true,
+                "reason": "Cook temp 325F is realistic."
+            },
+            {
+                "rule": "Phase 4 - Time Limit",
+                "passed": true,
+                "reason": "Bake time 16m is realistic."
+            }
+        ],
+        "recipe": {
+            "default_yield_amount": 24,
+            "yield_unit": "cookies",
+            "is_portionable": true,
+            "sidebar_science_profile": "This recipe uses the structural integrity of a blended, low-gluten ancient wheat flour to achieve a chewy, rather than crisp, texture. The high ratio of brown sugar and the creaming of cold fats inhibit excessive spread, while the binding action of eggs and the chemical lift from baking soda keep the center doughy. The result is optimal for rich, molasses-forward confections.",
+            "recommended_grain_ids": [
+                "Soft White Wheat",
+                "Spelt Wheat (Ancient)"
+            ],
+            "flour_blend": {
+                "Soft White Wheat": 60,
+                "Spelt Wheat (Ancient)": 40
+            },
+            "fat_starting_temp": "cold",
+            "required_actions": [],
+            "required_hardware": [
+                "stand_mixer",
+                "dough_whisk"
+            ],
+            "secondary_ingredients": {
+                "lipids": [
+                    {
+                        "category_name": "Fat / Lipid",
+                        "name": "Unsalted Butter",
+                        "temperature": "cold",
+                        "reasoning": "Using cold, high-fat butter is essential for the 'soft & chewy' profile. The cold fat minimizes gluten development during creaming and provides the necessary structure to prevent the cookies from spreading into a puddle.",
+                        "bakers_percentage": 80.0
+                    }
+                ],
+                "liquids": [],
+                "binders": [
+                    {
+                        "category_name": "Binder",
+                        "name": "Large Eggs",
+                        "temperature": "room temp",
+                        "reasoning": "Eggs provide crucial binding protein and moisture. They help maintain the internal structure of the cookie dough, which is necessary for achieving a dense, chewy bite.",
+                        "bakers_percentage": 60.0
                     }
                 ],
                 "sweeteners": [
                     {
                         "category_name": "Sweetener",
                         "name": "Dark Brown Sugar",
-                        "temperature": "room_temp",
-                        "reasoning": "Brown sugar contributes a deep, molasses-rich flavor profile, enhancing the savory caramelization (Maillard reaction) and improving the crust's color and chew.",
-                        "bakers_percentage": 30.0
+                        "temperature": "room temp",
+                        "reasoning": "The dark brown sugar is critical for the molasses-like, deep, and chewy flavor profile. It also contains higher amounts of moisture and solids, which contribute to the desired 'gooey' center.",
+                        "bakers_percentage": 70.0
+                    },
+                    {
+                        "category_name": "Sweetener",
+                        "name": "Molasses",
+                        "temperature": "room temp",
+                        "reasoning": "Molasses stabilizes the flavor profile, amplifying the deep, caramelized, and slightly bitter notes that pair excellently with brown sugar in chewy drop cookies.",
+                        "bakers_percentage": 40.0
                     }
                 ],
                 "leaveners": [
                     {
                         "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "Yeast gas production is critical for achieving the desired volume and airy 'puff' within the pretzel matrix, providing lift before the final bake.",
+                        "name": "Baking Soda",
+                        "temperature": "room temp",
+                        "reasoning": "As a chemical leavener, baking soda reacts with the acidic components (brown sugar/molasses) to provide lift, ensuring the cookie expands slightly without developing an overly rigid crumb.",
                         "bakers_percentage": 1.5
                     }
                 ],
@@ -734,482 +877,25 @@
                     {
                         "category_name": "Additive",
                         "name": "Kosher Salt",
-                        "temperature": "room_temp",
-                        "reasoning": "Essential for flavor balance and controlling the rate of yeast activity, ensuring a robust, savory character that complements the alkaline bath.",
+                        "temperature": "room temp",
+                        "reasoning": "Salt is a crucial flavor additive that balances the intense sweetness of the brown sugar and molasses, making the overall flavor profile seem richer and more complex.",
                         "bakers_percentage": 2.0
                     },
                     {
                         "category_name": "Additive",
-                        "name": "Sodium Bicarbonate (Baking Soda)",
-                        "temperature": "room_temp",
-                        "reasoning": "This is the fundamental chemical component for the alkaline bath, initiating the lye reaction that creates the signature dark crust and unique flavor profile.",
+                        "name": "Ground Cinnamon",
+                        "temperature": "room temp",
+                        "reasoning": "Cinnamon is the classic, highly compatible spice for molasses-based confections, enhancing the warmth and aroma of the finished cookie.",
                         "bakers_percentage": 1.0
                     }
                 ]
             },
-            "target_fat_pct": 18.0,
-            "target_sugar_pct": 30.0,
-            "target_hydration_pct": 70.0,
-            "target_binder_pct": 50.0,
+            "target_fat_pct": 80.0,
+            "target_sugar_pct": 110.0,
+            "target_hydration_pct": 55.0,
+            "target_binder_pct": 60.0,
             "target_leaven_pct": 1.5,
             "target_salt_pct": 2.0
-        }
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "sweet",
-        "all_passed": true,
-        "evaluations": [
-            {
-                "rule": "Leaven Limit",
-                "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
-            },
-            {
-                "rule": "Chronological Logic",
-                "passed": true,
-                "reason": "Steps are chronologically sound."
-            },
-            {
-                "rule": "Time Bounds Audit",
-                "passed": true,
-                "reason": "Total duration (14280s) is within reasonable bounds."
-            },
-            {
-                "rule": "Required Actions Audit",
-                "passed": true,
-                "reason": "All required actions are represented in the timeline."
-            },
-            {
-                "rule": "Hydration Balance",
-                "passed": true,
-                "reason": "Hydration to lipid ratio is physically viable."
-            },
-            {
-                "rule": "Yield Realism",
-                "passed": true,
-                "reason": "Portion size (545.0g) is realistic."
-            },
-            {
-                "rule": "Permissible Action Validations",
-                "passed": true,
-                "reason": "Timeline respects permissible action types."
-            },
-            {
-                "rule": "Schema Attribute Completeness",
-                "passed": true,
-                "reason": "All required schema attributes are present."
-            },
-            {
-                "rule": "Phase 4 - Temp Limit",
-                "passed": true,
-                "reason": "Bake temp 420F is realistic."
-            },
-            {
-                "rule": "Phase 4 - Time Limit",
-                "passed": true,
-                "reason": "Bake time 23m is realistic."
-            }
-        ],
-        "recipe": {
-            "default_yield_amount": 24,
-            "yield_unit": "pretzels",
-            "is_portionable": true,
-            "sidebar_science_profile": "This dough requires a highly extensible gluten matrix to achieve the characteristic twist and withstand the physical stress of handling. The alkaline bath treatment initiates a Maillard reaction and creates a hard, savory crust that compliments the inherent sweetness and malt notes. The structure must be robust enough to maintain its form during the boiling process, forming a tight, stable crumb.",
-            "recommended_grain_ids": [
-                "Hard White Wheat",
-                "Kamut (Ancient)"
-            ],
-            "flour_blend": {
-                "Hard White Wheat": 60,
-                "Kamut (Ancient)": 40
-            },
-            "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "knead",
-                "mix"
-            ],
-            "required_hardware": [
-                "stand_mixer",
-                "dough_whisk"
-            ],
-            "secondary_ingredients": {
-                "lipids": [
-                    {
-                        "category_name": "Fat / Lipid",
-                        "name": "Unsalted Butter",
-                        "temperature": "room_temp",
-                        "reasoning": "Incorporating softened butter provides necessary fat lubrication to the gluten network, improving extensibility and contributing rich mouthfeel while stabilizing the dough structure.",
-                        "bakers_percentage": 85.0
-                    }
-                ],
-                "liquids": [
-                    {
-                        "category_name": "Liquid Medium",
-                        "name": "Water",
-                        "temperature": "room_temp",
-                        "reasoning": "Water is the primary solvent necessary to hydrate the starches and proteins in the flour blend, activating gluten formation and achieving the required medium hydration level.",
-                        "bakers_percentage": 60.0
-                    }
-                ],
-                "binders": [
-                    {
-                        "category_name": "Binder",
-                        "name": "Whole Eggs",
-                        "temperature": "room_temp",
-                        "reasoning": "Eggs act as exceptional emulsifiers and protein binders, strengthening the overall dough structure significantly and contributing to a more stable, cohesive final product.",
-                        "bakers_percentage": 7.0
-                    }
-                ],
-                "sweeteners": [
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Granulated Sugar",
-                        "temperature": "room_temp",
-                        "reasoning": "Provides crystalline sweetness and acts as a crucial humectant, contributing to the deep caramelization and browning necessary for the pretzel's signature crust.",
-                        "bakers_percentage": 80.0
-                    },
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Brown Sugar",
-                        "temperature": "room_temp",
-                        "reasoning": "The molasses content in brown sugar adds depth and a rich, caramel-like notes (maltiness), which pairs perfectly with the savory alkaline bath chemistry.",
-                        "bakers_percentage": 100.0
-                    }
-                ],
-                "leaveners": [
-                    {
-                        "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "Provides the necessary biological lift (CO2 gas production) to achieve a proper rise, allowing the dough to expand and develop the desired internal aeration before baking.",
-                        "bakers_percentage": 1.5
-                    }
-                ],
-                "additives": [
-                    {
-                        "category_name": "Additive",
-                        "name": "Coarse Kosher Salt",
-                        "temperature": "room_temp",
-                        "reasoning": "Essential for flavor enhancement and structural control. It strengthens the gluten network and provides necessary counterpoint to the intense sweetness and savory bath.",
-                        "bakers_percentage": 2.0
-                    },
-                    {
-                        "category_name": "Additive",
-                        "name": "Lye Base (Sodium Bicarbonate/Cocoa Ash)",
-                        "temperature": "room_temp",
-                        "reasoning": "This is the chemical agent for the alkaline bath, which fundamentally changes the crust chemistry, enhancing browning, firming the surface, and creating the distinct, savory pretzel profile.",
-                        "bakers_percentage": 0.5
-                    }
-                ]
-            },
-            "target_fat_pct": 85.0,
-            "target_sugar_pct": 180.0,
-            "target_hydration_pct": 60.0,
-            "target_binder_pct": 7.0,
-            "target_leaven_pct": 1.5,
-            "target_salt_pct": 2.0
-        }
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "flourless_savory",
-        "all_passed": true,
-        "evaluations": [
-            {
-                "rule": "Leaven Limit",
-                "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
-            },
-            {
-                "rule": "Chronological Logic",
-                "passed": true,
-                "reason": "Steps are chronologically sound."
-            },
-            {
-                "rule": "Time Bounds Audit",
-                "passed": true,
-                "reason": "Total duration (14280s) is within reasonable bounds."
-            },
-            {
-                "rule": "Required Actions Audit",
-                "passed": true,
-                "reason": "All required actions are represented in the timeline."
-            },
-            {
-                "rule": "Hydration Balance",
-                "passed": true,
-                "reason": "Hydration to lipid ratio is physically viable."
-            },
-            {
-                "rule": "Yield Realism",
-                "passed": true,
-                "reason": "Portion size (448.8g) is realistic."
-            },
-            {
-                "rule": "Permissible Action Validations",
-                "passed": true,
-                "reason": "Timeline respects permissible action types."
-            },
-            {
-                "rule": "Schema Attribute Completeness",
-                "passed": true,
-                "reason": "All required schema attributes are present."
-            },
-            {
-                "rule": "Phase 4 - Temp Limit",
-                "passed": true,
-                "reason": "Bake temp 420F is realistic."
-            },
-            {
-                "rule": "Phase 4 - Time Limit",
-                "passed": true,
-                "reason": "Bake time 23m is realistic."
-            }
-        ],
-        "recipe": {
-            "default_yield_amount": 24,
-            "yield_unit": "pretzels",
-            "is_portionable": true,
-            "sidebar_science_profile": "This dough requires maximum gluten development (high_extensible) achieved through thorough kneading to withstand the mechanical stress of twisting and boiling. The final structural integrity relies on the tight gluten matrix resisting dissolution in the alkaline bath. Flavor development is driven by the Maillard reaction and the complementary bitterness of the alkaline surface, which beautifully pairs with malt and savory notes.",
-            "recommended_grain_ids": [
-                "bread_flour",
-                "hard_wheat_flour"
-            ],
-            "flour_blend": {
-                "bread_flour": 70,
-                "hard_wheat_flour": 30
-            },
-            "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "knead",
-                "mix"
-            ],
-            "required_hardware": [
-                "stand_mixer",
-                "dough_whisk"
-            ],
-            "secondary_ingredients": {
-                "lipids": [
-                    {
-                        "category_name": "Fat / Lipid",
-                        "name": "Unsalted Butter",
-                        "temperature": "room_temp",
-                        "reasoning": "Adds necessary richness and pliability to the dough, preventing excessive rigidity while maintaining the structural integrity needed for twisting.",
-                        "bakers_percentage": 75.0
-                    }
-                ],
-                "liquids": [
-                    {
-                        "category_name": "Liquid Medium",
-                        "name": "Cold Water",
-                        "temperature": "cold",
-                        "reasoning": "Provides hydration for the gluten network. Using cold water helps manage yeast activity during the initial proofing, leading to a more controlled rise.",
-                        "bakers_percentage": 15.0
-                    }
-                ],
-                "binders": [
-                    {
-                        "category_name": "Binder",
-                        "name": "Large Eggs",
-                        "temperature": "room_temp",
-                        "reasoning": "Eggs provide essential structure and elasticity, helping the final dough retain its shape and chewiness after the intense stretching and boiling process.",
-                        "bakers_percentage": 70.0
-                    }
-                ],
-                "sweeteners": [
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Brown Sugar",
-                        "temperature": "room_temp",
-                        "reasoning": "The molasses content contributes deep, caramel notes and aids in the browning reaction during the alkaline bath, enhancing the savory flavor profile.",
-                        "bakers_percentage": 80.0
-                    }
-                ],
-                "leaveners": [
-                    {
-                        "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "Essential for building the overall volume and chewiness of the pretzel. The controlled rise is critical for the final structure.",
-                        "bakers_percentage": 1.5
-                    }
-                ],
-                "additives": [
-                    {
-                        "category_name": "Additive",
-                        "name": "Coarse Kosher Salt",
-                        "temperature": "room_temp",
-                        "reasoning": "Crucial for seasoning and enhancing the savory depth. Salt helps control the yeast activity and strengthens the gluten structure.",
-                        "bakers_percentage": 2.5
-                    },
-                    {
-                        "category_name": "Additive",
-                        "name": "Malt Powder",
-                        "temperature": "room_temp",
-                        "reasoning": "Aids in the development of a deep, roasted malt flavor, which is highly complementary to the high Maillard browning achieved in the alkaline bath.",
-                        "bakers_percentage": 15.0
-                    }
-                ]
-            },
-            "target_fat_pct": 75.0,
-            "target_sugar_pct": 80.0,
-            "target_hydration_pct": 65.0,
-            "target_binder_pct": 70.0,
-            "target_leaven_pct": 1.5,
-            "target_salt_pct": 2.5
-        }
-    },
-    {
-        "engine": "bath",
-        "archetype": "twisted_pretzel",
-        "profile": "flourless_sweet",
-        "all_passed": false,
-        "evaluations": [
-            {
-                "rule": "Leaven Limit",
-                "passed": true,
-                "reason": "Leavener Active Dry Yeast within limits."
-            },
-            {
-                "rule": "Chronological Logic",
-                "passed": true,
-                "reason": "Steps are chronologically sound."
-            },
-            {
-                "rule": "Time Bounds Audit",
-                "passed": true,
-                "reason": "Total duration (14280s) is within reasonable bounds."
-            },
-            {
-                "rule": "Required Actions Audit",
-                "passed": true,
-                "reason": "All required actions are represented in the timeline."
-            },
-            {
-                "rule": "Hydration Balance",
-                "passed": false,
-                "reason": "High lipid (65.0%) paired with excessive hydration (120.0%) creates structural failure (soup)."
-            },
-            {
-                "rule": "Yield Realism",
-                "passed": true,
-                "reason": "Portion size (840.0g) is realistic."
-            },
-            {
-                "rule": "Permissible Action Validations",
-                "passed": true,
-                "reason": "Timeline respects permissible action types."
-            },
-            {
-                "rule": "Schema Attribute Completeness",
-                "passed": true,
-                "reason": "All required schema attributes are present."
-            },
-            {
-                "rule": "Phase 4 - Temp Limit",
-                "passed": true,
-                "reason": "Bake temp 420F is realistic."
-            },
-            {
-                "rule": "Phase 4 - Time Limit",
-                "passed": true,
-                "reason": "Bake time 23m is realistic."
-            }
-        ],
-        "recipe": {
-            "default_yield_amount": 24,
-            "yield_unit": "pretzels",
-            "is_portionable": true,
-            "sidebar_science_profile": "This pretzel utilizes a high-extensibility dough matrix designed to withstand the intense chemical and thermal stresses of the alkaline bath. The deep Maillard browning resulting from the sodium carbonate/baking soda reaction, combined with the inherent malt sweetness, creates a complex, savory-caramelized profile. The structure relies on a strong gluten network and appropriate hydration to maintain shape integrity during boiling and subsequent cooling.",
-            "recommended_grain_ids": [
-                "hard_wheat_bread_flour",
-                "rye_flour"
-            ],
-            "flour_blend": {
-                "hard_wheat_bread_flour": 85,
-                "rye_flour": 15
-            },
-            "fat_starting_temp": "room_temp",
-            "required_actions": [
-                "mix",
-                "knead"
-            ],
-            "required_hardware": [
-                "stand_mixer",
-                "dough_whisk"
-            ],
-            "secondary_ingredients": {
-                "lipids": [
-                    {
-                        "category_name": "Fat / Lipid",
-                        "name": "Unsalted Butter",
-                        "temperature": "room_temp",
-                        "reasoning": "Adds necessary richness and tenderness to the final product, improving mouthfeel without compromising the structural integrity needed for the high-extensibility dough.",
-                        "bakers_percentage": 65.0
-                    }
-                ],
-                "liquids": [
-                    {
-                        "category_name": "Liquid Medium",
-                        "name": "Warm Water",
-                        "temperature": "35\u00b0C",
-                        "reasoning": "Provides optimal hydration for activating the gluten network in the hard wheat flour, aiding in the necessary dough extensibility for twisting.",
-                        "bakers_percentage": 120.0
-                    }
-                ],
-                "binders": [
-                    {
-                        "category_name": "Binder",
-                        "name": "Large Eggs",
-                        "temperature": "room_temp",
-                        "reasoning": "Due to the 'Flourless Sweet' designation, eggs provide crucial protein structure and emulsification, helping the matrix withstand the alkaline bath and maintaining shape before baking.",
-                        "bakers_percentage": 180.0
-                    }
-                ],
-                "sweeteners": [
-                    {
-                        "category_name": "Sweetener",
-                        "name": "Brown Sugar",
-                        "temperature": "room_temp",
-                        "reasoning": "Provides deep molasses notes and a slower caramelization rate, enhancing the rustic, savory complexity desired by the alkaline bath process.",
-                        "bakers_percentage": 200.0
-                    }
-                ],
-                "leaveners": [
-                    {
-                        "category_name": "Leavener",
-                        "name": "Active Dry Yeast",
-                        "temperature": "room_temp",
-                        "reasoning": "Responsible for the primary biological lift and gas-proofing required for the pretzel's characteristic chew and open structure.",
-                        "bakers_percentage": 1.5
-                    }
-                ],
-                "additives": [
-                    {
-                        "category_name": "Additive",
-                        "name": "Coarse Kosher Salt",
-                        "temperature": "room_temp",
-                        "reasoning": "A foundational seasoning that balances the intense sweetness and enhances the savory depth required for the pretzel profile.",
-                        "bakers_percentage": 2.5
-                    },
-                    {
-                        "category_name": "Additive",
-                        "name": "Lye Solution (or Baking Soda)",
-                        "temperature": "room_temp",
-                        "reasoning": "Crucial for the 'Alkaline Bath' preparation. The sodium carbonate/bicarbonate reaction is what defines the characteristic deep brown crust and enhances the Maillard browning response.",
-                        "bakers_percentage": 3.0
-                    }
-                ]
-            },
-            "target_fat_pct": 65.0,
-            "target_sugar_pct": 200.0,
-            "target_hydration_pct": 85.0,
-            "target_binder_pct": 180.0,
-            "target_leaven_pct": 4.5,
-            "target_salt_pct": 2.5
         }
     }
 ]

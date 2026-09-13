@@ -12,6 +12,14 @@ class FlatEngine(BaseEngine):
     tannin_sensitive = False
     variations = {
         "thin_crust": {
+            "guardrails": {
+                "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
+                "cook_temp_min_f": 400,
+                "cook_temp_max_f": 550,
+                "cook_time_min_m": 2,
+                "cook_time_max_m": 10,
+                "boil_required": False,
+            },
             "label": "Thin & Crispy",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "highly_extensible",
@@ -24,6 +32,14 @@ class FlatEngine(BaseEngine):
             ),
         },
         "thick_chewy": {
+            "guardrails": {
+                "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
+                "cook_temp_min_f": 400,
+                "cook_temp_max_f": 550,
+                "cook_time_min_m": 2,
+                "cook_time_max_m": 10,
+                "boil_required": False,
+            },
             "label": "Thick & Chewy (Deep Dish)",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "strong_elastic",
@@ -39,7 +55,6 @@ class FlatEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "moderate_shearing",
-        "permissible_action_types": ["mix", "roll"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {}
@@ -54,7 +69,7 @@ class FlatEngine(BaseEngine):
             "step_increment": 4,
             "unit_label": "disk",
             "unit_label_plural": "disks",
-            "bake_temp_f": 500,
+            "cook_temp_f": 500,
             "bake_time_min": 2,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -68,7 +83,7 @@ class FlatEngine(BaseEngine):
             "step_increment": 4,
             "unit_label": "disk",
             "unit_label_plural": "disks",
-            "bake_temp_f": 500,
+            "cook_temp_f": 500,
             "bake_time_min": 3,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -208,6 +223,14 @@ class FlatEngine(BaseEngine):
 
 class LeavenedFlatbreadArchetype(FlatEngine):
     archetype_slug = "leavened_flatbread"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
+        "cook_temp_min_f": 400,
+        "cook_temp_max_f": 550,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 10,
+        "boil_required": False,
+    }
     label = "Leavened Flatbread"
     icon = "🫔"
     description = "Puffy, vapor-pocket pockets driven by interior steam like Naan and Pita."
@@ -251,6 +274,14 @@ class LeavenedFlatbreadArchetype(FlatEngine):
 
 class UnleavenedStretchedArchetype(FlatEngine):
     archetype_slug = "unleavened_stretched"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
+        "cook_temp_min_f": 400,
+        "cook_temp_max_f": 550,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 10,
+        "boil_required": False,
+    }
     label = "Unleavened Stretched"
     yield_unit = "wraps"
     icon = "🫓"
@@ -273,6 +304,14 @@ class UnleavenedStretchedArchetype(FlatEngine):
 
 class BlisteredGriddleArchetype(FlatEngine):
     archetype_slug = "blistered_griddle"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
+        "cook_temp_min_f": 400,
+        "cook_temp_max_f": 550,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 10,
+        "boil_required": False,
+    }
     label = "Blistered Griddle Cake"
     icon = "🍳"
     description = "Direct contact stove-top pan bakes."
@@ -294,6 +333,14 @@ class BlisteredGriddleArchetype(FlatEngine):
 
 class CrispFlatbreadArchetype(FlatEngine):
     archetype_slug = "crisp_flatbread"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
+        "cook_temp_min_f": 400,
+        "cook_temp_max_f": 550,
+        "cook_time_min_m": 2,
+        "cook_time_max_m": 10,
+        "boil_required": False,
+    }
     label = "Crisp Crispbread / Lavash"
     icon = "🍘"
     description = "Dehydrated sheet structures prioritizing snap and shelf life."

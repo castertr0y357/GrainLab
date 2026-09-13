@@ -8,6 +8,7 @@ class SidebarInsightForm(forms.Form):
     category_slug = forms.CharField(required=False)
     preset_slug = forms.CharField(required=False)
     active_archetype_id = forms.CharField(required=False)
+    active_variation_id = forms.CharField(required=False)
 
 
 class BatchInsightsForm(forms.Form):
@@ -15,6 +16,7 @@ class BatchInsightsForm(forms.Form):
     category_slug = forms.CharField(required=False)
     preset_slug = forms.CharField(required=False)
     active_archetype_id = forms.CharField(required=False)
+    active_variation_id = forms.CharField(required=False)
 
     def clean_elements(self):
         val = self.cleaned_data.get("elements", "[]")

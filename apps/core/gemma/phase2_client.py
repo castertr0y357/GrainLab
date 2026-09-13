@@ -11,7 +11,9 @@ from apps.core.gemma.core_client import (
 logger = logging.getLogger("grainlab.gemma")
 
 
-def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -> dict | None:
+def get_sidebar_insight_ai(
+    element: str, category_slug: str, preset_slug: str, active_variation_id: str = None
+) -> dict | None:
     """
     Queries Gemma to generate a custom labor ROI tag, recommendation tier, and 'Last 10%' critique/reasoning.
     """
@@ -45,6 +47,15 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
 
         engine = MockEngine()
 
+    if hasattr(engine, "culinary_nuance_directive") and callable(engine.culinary_nuance_directive):
+        nuance_directive = engine.culinary_nuance_directive(
+            active_archetype_id=preset_slug, active_variation_id=active_variation_id
+        )
+    else:
+        nuance_directive = getattr(
+            engine, "culinary_nuance_directive", "Standard baking physics and generic flour interactions."
+        )
+
     # Find the wheat berry matching element if hovered element is a grain
     wb = None
     if element.startswith("grain_"):
@@ -67,7 +78,10 @@ def get_sidebar_insight_ai(element: str, category_slug: str, preset_slug: str) -
         "You are an expert, highly practical food scientist who values human time and forearm fatigue. "
         "The tone must be conversational, insightful, and focused entirely on the sensory experience of eating and the physical reality of cooking. "
         "Analyze the provided hovered workspace setting relative to the active baking category and preset. "
-        "You MUST tailor your critique specifically to the active baking category and preset. "
+        "You MUST tailor your critique specifically to the active baking category and preset.\n"
+        f"[CRITICAL ENGINE FOCUS: {getattr(engine, 'name', 'Default Baking Engine')}]\n"
+        f"{nuance_directive}\n"
+        "If evaluating a grain, focus strictly on how its protein strength, hydration capability, and flavor impact this specific preset. Do NOT explain what the grain is. "
         "Do NOT mention ingredients or processes (e.g., yeast, rising, kneading, proofing, bread ovens, steam) that are not part of the target recipe class. For example, do not mention yeast or proofing for cookies/cakes, and do not mention cookie spread or creaming for sourdough/pizza. "
         "\n"
         "[CRITICAL RULE: CULINARY SOVEREIGNTY]\n"

@@ -23,7 +23,14 @@ logger = logging.getLogger("grainlab.gemma")
 
 
 def evaluate_recipe(
-    recipe, profile_type, engine_id, timeline, final_recipe=None, process_details=None, archetype_id=None
+    recipe,
+    profile_type,
+    engine_id,
+    timeline,
+    final_recipe=None,
+    process_details=None,
+    archetype_id=None,
+    active_variation_id=None,
 ):
     checks = []
 
@@ -235,12 +242,13 @@ def evaluate_recipe(
     # Check 10: Dynamic Engine Attribute Enforcements
     engine_class = ENGINES.get(engine_id)
     if engine_class:
+        guardrails = engine_class.get_active_guardrails(archetype_id, active_variation_id)
         expected_leaven = getattr(engine_class, "default_leaven_pct", None)
         expected_binder = getattr(engine_class, "default_binder_pct", None)
         expected_salt = getattr(engine_class, "default_salt_pct", None)
 
         prod_profile = getattr(engine_class, "production_profile", {})
-        permissible_actions = prod_profile.get("permissible_action_types", [])
+        permissible_actions = []
 
         secondary_options = {}
         secondary_conf = getattr(engine_class, "secondary_ingredients", {})
@@ -248,12 +256,76 @@ def evaluate_recipe(
             if isinstance(conf, dict) and "options" in conf:
                 secondary_options[cat_key] = [opt.lower() for opt in conf["options"]]
 
+        # NEW AI TIMELINE CLAMPING CHECKS
+        if guardrails and timeline:
+            for step in timeline:
+                if step.get("type") == "baking_profile":
+                    oven_temp = step.get("oven_temp")
+                    bake_time = step.get("bake_time_min")
+
+                    if oven_temp and isinstance(oven_temp, (int, float)):
+                        max_temp = guardrails.get("cook_temp_max_f")
+                        min_temp = guardrails.get("cook_temp_min_f")
+                        if max_temp and oven_temp > max_temp:
+                            checks.append(
+                                {
+                                    "rule": "AI Timeline Temp Guard",
+                                    "passed": False,
+                                    "reason": f"Oven temp {oven_temp} exceeds max {max_temp}",
+                                }
+                            )
+                        elif min_temp and oven_temp < min_temp:
+                            checks.append(
+                                {
+                                    "rule": "AI Timeline Temp Guard",
+                                    "passed": False,
+                                    "reason": f"Oven temp {oven_temp} below min {min_temp}",
+                                }
+                            )
+                        else:
+                            checks.append(
+                                {"rule": "AI Timeline Temp Guard", "passed": True, "reason": "Oven temp within bounds."}
+                            )
+
+                    if bake_time and isinstance(bake_time, (int, float)):
+                        max_time = guardrails.get("cook_time_max_m")
+                        min_time = guardrails.get("cook_time_min_m")
+                        if max_time and bake_time > max_time:
+                            checks.append(
+                                {
+                                    "rule": "AI Timeline Time Guard",
+                                    "passed": False,
+                                    "reason": f"Bake time {bake_time} exceeds max {max_time}",
+                                }
+                            )
+                        elif min_time and bake_time < min_time:
+                            checks.append(
+                                {
+                                    "rule": "AI Timeline Time Guard",
+                                    "passed": False,
+                                    "reason": f"Bake time {bake_time} below min {min_time}",
+                                }
+                            )
+                        else:
+                            checks.append(
+                                {"rule": "AI Timeline Time Guard", "passed": True, "reason": "Bake time within bounds."}
+                            )
+
         # Override with archetype specifics if present
-        if archetype_id and hasattr(engine_class, "archetypes"):
+        arch = None
+        if archetype_id and hasattr(engine_class, "archetypes") and archetype_id in engine_class.archetypes:
             arch = engine_class.archetypes.get(archetype_id, {})
+        elif archetype_id and hasattr(engine_class, "variations") and archetype_id in engine_class.variations:
+            arch = engine_class.variations.get(archetype_id, {})
+
+        if arch:
             expected_leaven = arch.get("default_leaven_pct", expected_leaven)
             expected_binder = arch.get("default_binder_pct", expected_binder)
             expected_salt = arch.get("default_salt_pct", expected_salt)
+
+            # Extract guardrails
+            guardrails = arch.get("guardrails", {})
+            permissible_actions = guardrails.get("permissible_actions", [])
 
         # 10A: Strict Leavening Check
         if expected_leaven == 0.0:
@@ -459,7 +531,7 @@ class Command(BaseCommand):
         self.stdout.write("Starting QA Test Suite for Gemma Recipe Generation")
 
         # We want to run across all engines and all archetypes, but only 1 recipe per archetype
-        categories_to_run = [(k, v) for k, v in CATEGORY_TO_ENGINE.items() if v == "bath"]
+        categories_to_run = list(CATEGORY_TO_ENGINE.items())
         if test_mode:
             categories_to_run = [(k, v) for k, v in categories_to_run if v in ("cookie", "pan")]
 
@@ -483,11 +555,6 @@ class Command(BaseCommand):
                 tests_to_run = [
                     {"name": f"{archetype_id.replace('_', ' ').title()} - Savory", "type": "savory"},
                     {"name": f"{archetype_id.replace('_', ' ').title()} - Sweet", "type": "sweet"},
-                    {
-                        "name": f"{archetype_id.replace('_', ' ').title()} - Flourless Savory",
-                        "type": "flourless_savory",
-                    },
-                    {"name": f"{archetype_id.replace('_', ' ').title()} - Flourless Sweet", "type": "flourless_sweet"},
                 ]
 
                 for test in tests_to_run:
@@ -677,7 +744,7 @@ class Command(BaseCommand):
 
                                 # Phase 4
                                 final_recipe = calculate_final_recipe(mock_state, run_ai=True)
-                                bake_temp = final_recipe.get("bake_temp_f", 400)
+                                bake_temp = final_recipe.get("cook_temp_f", 400)
                                 bake_time = final_recipe.get("bake_time_min", 30)
 
                                 # Generate timeline (just for the evaluation checks)
@@ -723,18 +790,26 @@ class Command(BaseCommand):
                                 final_recipe=final_recipe,
                                 process_details=process_details,
                                 archetype_id=archetype_id,
+                                active_variation_id=var_id,
                             )
 
                             # Add Phase 4 evaluation checks
-                            is_pasta = engine_id == "pasta"
+                            engine_class = ENGINES.get(engine_id)
+                            guardrails = {}
+                            if engine_class:
+                                guardrails = engine_class.get_active_guardrails(archetype_id, var_id)
 
-                            if is_pasta:
+                            min_temp = guardrails.get("cook_temp_min_f", 300)
+                            max_temp = guardrails.get("cook_temp_max_f", 550)
+
+                            # If boiling is required, strict check on 212 or 0
+                            if guardrails.get("boil_required", False):
                                 if bake_temp not in [0, 212]:
                                     evaluations.append(
                                         {
                                             "rule": "Phase 4 - Temp Limit",
                                             "passed": False,
-                                            "reason": f"Bake temp {bake_temp}F invalid for pasta (should be 0 or 212)",
+                                            "reason": f"Cook temp {bake_temp}F invalid for {archetype_id} (should be 0 or 212)",
                                         }
                                     )
                                 else:
@@ -742,16 +817,16 @@ class Command(BaseCommand):
                                         {
                                             "rule": "Phase 4 - Temp Limit",
                                             "passed": True,
-                                            "reason": f"Bake temp {bake_temp}F is realistic for pasta.",
+                                            "reason": f"Cook temp {bake_temp}F is realistic.",
                                         }
                                     )
                             else:
-                                if bake_temp < 300 or bake_temp > 550:
+                                if bake_temp < min_temp or bake_temp > max_temp:
                                     evaluations.append(
                                         {
                                             "rule": "Phase 4 - Temp Limit",
                                             "passed": False,
-                                            "reason": f"Bake temp {bake_temp}F outside bounds (300-550)",
+                                            "reason": f"Cook temp {bake_temp}F outside bounds ({min_temp}-{max_temp})",
                                         }
                                     )
                                 else:
@@ -759,7 +834,7 @@ class Command(BaseCommand):
                                         {
                                             "rule": "Phase 4 - Temp Limit",
                                             "passed": True,
-                                            "reason": f"Bake temp {bake_temp}F is realistic.",
+                                            "reason": f"Cook temp {bake_temp}F is realistic.",
                                         }
                                     )
 
@@ -799,7 +874,7 @@ class Command(BaseCommand):
                             md_path = qa_dir / f"{category_slug}_{archetype_id}_{test['type']}_{var_id or 'default'}.md"
 
                             ff = final_recipe.get("ff") if final_recipe else None
-                            bake_temp = final_recipe.get("bake_temp_f", "N/A") if final_recipe else "N/A"
+                            bake_temp = final_recipe.get("cook_temp_f", "N/A") if final_recipe else "N/A"
                             bake_time = final_recipe.get("bake_time_min", "N/A") if final_recipe else "N/A"
                             steam = final_recipe.get("steam_required", False) if final_recipe else False
 

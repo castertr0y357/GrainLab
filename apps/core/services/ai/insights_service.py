@@ -13,6 +13,7 @@ def get_sidebar_insight(cleaned_data):
     category_slug = cleaned_data.get("category_slug", "")
     preset_slug = cleaned_data.get("preset_slug", "")
     active_archetype_id = cleaned_data.get("active_archetype_id", "") or None
+    active_variation_id = cleaned_data.get("active_variation_id", "") or None
 
     if not element:
         return {
@@ -29,7 +30,7 @@ def get_sidebar_insight(cleaned_data):
     insight = None
     if ai_enabled:
         try:
-            insight = gemma.get_sidebar_insight_ai(element, category_slug, preset_slug)
+            insight = gemma.get_sidebar_insight_ai(element, category_slug, preset_slug, active_variation_id)
         except Exception as e:
             logger.error(f"[AI] - Sidebar - Failed querying Gemma: {e}")
 
@@ -49,7 +50,13 @@ def get_sidebar_insight(cleaned_data):
                         break
 
                 if grain_obj:
-                    res = evaluate_single_grain(grain_obj, engine, preset_slug=preset_slug)
+                    res = evaluate_single_grain(
+                        grain_obj,
+                        engine,
+                        preset_slug=preset_slug,
+                        active_archetype_id=active_archetype_id,
+                        active_variation_id=active_variation_id,
+                    )
                     if res["tier"] == "recommended":
                         roi = "High Priority / Flavor Enhancement Opportunity"
                     elif res["tier"] == "sub-optimal":
@@ -85,7 +92,10 @@ def get_sidebar_insight(cleaned_data):
 
         if not ai_enabled:
             inactive_recs = get_inactive_grain_recommendations(
-                preset_slug, category_slug, active_archetype_id=active_archetype_id
+                preset_slug,
+                category_slug,
+                active_archetype_id=active_archetype_id,
+                active_variation_id=active_variation_id,
             )
             if inactive_recs:
                 rec = inactive_recs[0]
@@ -107,6 +117,7 @@ def get_batch_insights(cleaned_data):
     category_slug = cleaned_data.get("category_slug", "")
     preset_slug = cleaned_data.get("preset_slug", "")
     active_archetype_id = cleaned_data.get("active_archetype_id", "") or None
+    active_variation_id = cleaned_data.get("active_variation_id", "") or None
 
     results = {}
     for el in elements:
@@ -116,6 +127,7 @@ def get_batch_insights(cleaned_data):
                 "category_slug": category_slug,
                 "preset_slug": preset_slug,
                 "active_archetype_id": active_archetype_id,
+                "active_variation_id": active_variation_id,
             }
         )
         results[el] = res

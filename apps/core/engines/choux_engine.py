@@ -15,7 +15,6 @@ class ChouxEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "hydration_binding_shock",
         "mechanical_energy_threshold": "moderate_shearing",
-        "permissible_action_types": ["boil", "mix"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -42,7 +41,7 @@ class ChouxEngine(BaseEngine):
             "step_increment": 12,
             "unit_label": "portion",
             "unit_label_plural": "portions",
-            "bake_temp_f": 425,
+            "cook_temp_f": 425,
             "bake_time_min": 20,
             "steam_required": True,
             "is_enriched_profile": True,
@@ -167,7 +166,7 @@ class ChouxEngine(BaseEngine):
         cool_min = 5
         egg_min = 8
 
-        # Split bake time into high expansion puffing and drying phases
+        # Split cook time into high expansion puffing and drying phases
         puff_min = 15
         dry_min = max(10, bake_time_min - puff_min)
 
@@ -223,6 +222,14 @@ class ChouxEngine(BaseEngine):
 
 class PipedShellArchetype(ChouxEngine):
     archetype_slug = "piped_shell"
+    guardrails = {
+        "permissible_actions": ["boil", "mix", "beat", "pipe", "bake", "cool", "fry"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 40,
+        "boil_required": False,
+    }
     label = "Piped Shell"
     icon = "🍫"
     description = "Linear or round hollow vectors like Éclairs and Profiteroles."
@@ -246,6 +253,14 @@ class PipedShellArchetype(ChouxEngine):
 
 class ExtrusionFriedPasteArchetype(ChouxEngine):
     archetype_slug = "extrusion_fried"
+    guardrails = {
+        "permissible_actions": ["boil", "mix", "beat", "pipe", "bake", "cool", "fry"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 40,
+        "boil_required": False,
+    }
     label = "Extrusion Fried Paste"
     icon = "🌀"
     description = "Star-die extrusion profiles built for rapid oil expansion like Churros."
@@ -269,6 +284,14 @@ class ExtrusionFriedPasteArchetype(ChouxEngine):
 
 class SavoryEmulsionArchetype(ChouxEngine):
     archetype_slug = "savory_emulsion"
+    guardrails = {
+        "permissible_actions": ["boil", "mix", "beat", "pipe", "bake", "cool", "fry"],
+        "cook_temp_min_f": 375,
+        "cook_temp_max_f": 425,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 40,
+        "boil_required": False,
+    }
     label = "Savory Emulsion"
     icon = "🧀"
     description = "High-lipid, cheese-bound panade drops like Gougères."

@@ -14,7 +14,6 @@ class HearthEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
-        "permissible_action_types": ["knead", "fold"],
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {}
@@ -29,7 +28,7 @@ class HearthEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 450,
+            "cook_temp_f": 450,
             "bake_time_min": 40,
             "steam_required": True,
             "is_enriched_profile": False,
@@ -43,7 +42,7 @@ class HearthEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 450,
+            "cook_temp_f": 450,
             "bake_time_min": 35,
             "steam_required": True,
             "is_enriched_profile": False,
@@ -57,7 +56,7 @@ class HearthEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 45,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -220,6 +219,14 @@ class HearthEngine(BaseEngine):
 
 class HearthBouleArchetype(HearthEngine):
     archetype_slug = "hearth_boule"
+    guardrails = {
+        "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
+        "cook_temp_min_f": 425,
+        "cook_temp_max_f": 500,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Hearth Boule / Batard"
     icon = "🫓"
     description = "Freeform oval or round configurations baked on radiant stone floors."
@@ -241,6 +248,14 @@ class HearthBouleArchetype(HearthEngine):
 
 class HighHydrationSlabArchetype(HearthEngine):
     archetype_slug = "high_hydration_slab"
+    guardrails = {
+        "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
+        "cook_temp_min_f": 425,
+        "cook_temp_max_f": 500,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "High-Hydration Slab"
     yield_unit = "slabs"
     icon = "🍞"
@@ -346,6 +361,14 @@ class HighHydrationSlabArchetype(HearthEngine):
 
 class TaperedBaguetteArchetype(HearthEngine):
     archetype_slug = "tapered_baguette"
+    guardrails = {
+        "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
+        "cook_temp_min_f": 425,
+        "cook_temp_max_f": 500,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Tapered Baguette"
     yield_unit = "baguettes"
     icon = "🥖"
@@ -368,6 +391,14 @@ class TaperedBaguetteArchetype(HearthEngine):
 
 class FlashPizzaArchetype(HearthEngine):
     archetype_slug = "flash_pizza"
+    guardrails = {
+        "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
+        "cook_temp_min_f": 425,
+        "cook_temp_max_f": 500,
+        "cook_time_min_m": 20,
+        "cook_time_max_m": 45,
+        "boil_required": False,
+    }
     label = "Flash Pizza Crust"
     yield_unit = "pizzas"
     icon = "🍕"

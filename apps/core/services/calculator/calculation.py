@@ -69,7 +69,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
             unit_weight=ff_config_dict.get("unit_weight", 50),
             default_count=ff_config_dict.get("base_count", 12),
             is_enriched_profile=ff_config_dict.get("is_enriched_profile", False),
-            bake_temp_f=ff_config_dict.get("bake_temp_f", 350),
+            cook_temp_f=ff_config_dict.get("cook_temp_f", 350),
             bake_time_min=ff_config_dict.get("bake_time_min", 15),
             steam_required=ff_config_dict.get("steam_required", False),
         )
@@ -357,7 +357,7 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     doneness_temp_c = round((doneness_temp_f - 32) * 5 / 9, 1)
 
     # 7. Resolve form factor baseline parameters from engine configuration
-    base_temp = ff_config.get("bake_temp_f", ff.bake_temp_f)
+    base_temp = ff_config.get("cook_temp_f", ff.cook_temp_f)
     base_time = ff_config.get("bake_time_min", ff.bake_time_min)
     base_steam = ff_config.get("steam_required", ff.steam_required)
 
@@ -431,6 +431,8 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
 
     # Resolve active sub-engine and load dynamic timeline steps
     active_engine = router.get_engine_for_preset(preset_slug_resolved, cat.slug)
+    primary_cooking_method = getattr(active_engine, "primary_cooking_method", "Baking")
+
     steps_list = active_engine.get_live_timeline_steps(
         recipe_data=recipe,
         estimated_bulk_minutes=estimated_bulk_minutes,
@@ -454,7 +456,8 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         "texture_score": texture_score,
         "crumb_score": crumb_score,
         "current_phase": int(state.get("current_phase", 4)),
-        "bake_temp_f": scaled_temp,
+        "primary_cooking_method": primary_cooking_method,
+        "cook_temp_f": scaled_temp,
         "bake_time_min": scaled_time,
         "estimated_bulk_minutes": estimated_bulk_minutes,
         "estimated_proof_minutes": estimated_proof_minutes,

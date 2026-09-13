@@ -43,7 +43,7 @@ def process_grain_advisory(cleaned_data):
 
 
 def get_inactive_grain_recommendations(
-    preset_slug: str, category_slug: str = None, active_archetype_id: str = None
+    preset_slug: str, category_slug: str = None, active_archetype_id: str = None, active_variation_id: str = None
 ) -> list[dict]:
     """
     Evaluates all inactive grains and returns those that are 'recommended' for the current preset/engine/archetype.
@@ -62,7 +62,11 @@ def get_inactive_grain_recommendations(
         return []
 
     evals = evaluate_grains_batch(
-        inactive_berries, engine, preset_slug=preset_slug, active_archetype_id=active_archetype_id
+        inactive_berries,
+        engine,
+        preset_slug=preset_slug,
+        active_archetype_id=active_archetype_id,
+        active_variation_id=active_variation_id,
     )
     recommended_inactive = []
 

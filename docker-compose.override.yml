@@ -11,3 +11,7 @@ services:
   celery-beat:
     volumes:
       - .:/app
+
+  redis:
+    ports:
+      - "6379:6379"

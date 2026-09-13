@@ -15,7 +15,6 @@ class BathEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
-        "permissible_action_types": ["knead", "mix"],
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {}
@@ -30,7 +29,7 @@ class BathEngine(BaseEngine):
             "step_increment": 6,
             "unit_label": "portion",
             "unit_label_plural": "portions",
-            "bake_temp_f": 425,
+            "cook_temp_f": 425,
             "bake_time_min": 20,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -44,7 +43,7 @@ class BathEngine(BaseEngine):
             "step_increment": 6,
             "unit_label": "portion",
             "unit_label_plural": "portions",
-            "bake_temp_f": 425,
+            "cook_temp_f": 425,
             "bake_time_min": 25,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -148,6 +147,14 @@ class BathEngine(BaseEngine):
 
 class BoiledBagelArchetype(BathEngine):
     archetype_slug = "boiled_bagel"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "boil", "bake", "cool"],
+        "cook_temp_min_f": 400,
+        "cook_temp_max_f": 475,
+        "cook_time_min_m": 10,
+        "cook_time_max_m": 25,
+        "boil_required": True,
+    }
     default_form_factor = "perforated-baking-sheet"
     label = "Boiled Bagel"
     yield_unit = "bagels"
@@ -179,6 +186,14 @@ class BoiledBagelArchetype(BathEngine):
 
 class TwistedPretzelArchetype(BathEngine):
     archetype_slug = "twisted_pretzel"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "boil", "bake", "cool"],
+        "cook_temp_min_f": 400,
+        "cook_temp_max_f": 475,
+        "cook_time_min_m": 10,
+        "cook_time_max_m": 25,
+        "boil_required": True,
+    }
     default_form_factor = "perforated-baking-sheet"
     label = "Twisted Pretzel"
     yield_unit = "pretzels"

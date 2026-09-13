@@ -14,7 +14,6 @@ class PanEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
-        "permissible_action_types": ["knead"],
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {
@@ -41,7 +40,7 @@ class PanEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 45,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -55,7 +54,7 @@ class PanEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "loaf",
             "unit_label_plural": "loaves",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 45,
             "steam_required": False,
             "is_enriched_profile": False,
@@ -69,7 +68,7 @@ class PanEngine(BaseEngine):
             "step_increment": 12,
             "unit_label": "bun",
             "unit_label_plural": "buns",
-            "bake_temp_f": 375,
+            "cook_temp_f": 375,
             "bake_time_min": 20,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -250,6 +249,14 @@ class PanEngine(BaseEngine):
 
 class SandwichPanArchetype(PanEngine):
     archetype_slug = "sandwich_pan"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 400,
+        "cook_time_min_m": 30,
+        "cook_time_max_m": 55,
+        "boil_required": False,
+    }
     label = "Sandwich Pan Loaf"
     icon = "🍞"
     description = "Straight sidewall containment maximizing volume and thin slicing."
@@ -280,6 +287,14 @@ class SandwichPanArchetype(PanEngine):
 
 class FreeformBraidedArchetype(PanEngine):
     archetype_slug = "freeform_braided"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 400,
+        "cook_time_min_m": 30,
+        "cook_time_max_m": 55,
+        "boil_required": False,
+    }
     label = "Freeform Braided Loaf"
     icon = "🥯"
     description = "High-tensile strands capable of holding shape without pan walls like Challah or Brioche."
@@ -307,6 +322,14 @@ class FreeformBraidedArchetype(PanEngine):
 
 class SoftDinnerRollArchetype(PanEngine):
     archetype_slug = "soft_dinner_roll"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 400,
+        "cook_time_min_m": 30,
+        "cook_time_max_m": 55,
+        "boil_required": False,
+    }
     label = "Soft Dinner Roll"
     yield_unit = "rolls"
     icon = "🫓"
@@ -335,6 +358,14 @@ class SoftDinnerRollArchetype(PanEngine):
 
 class FilledSweetRollArchetype(PanEngine):
     archetype_slug = "filled_sweet_roll"
+    guardrails = {
+        "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "bake", "cool"],
+        "cook_temp_min_f": 350,
+        "cook_temp_max_f": 400,
+        "cook_time_min_m": 30,
+        "cook_time_max_m": 55,
+        "boil_required": False,
+    }
     label = "Filled Sweet Roll"
     yield_unit = "rolls"
     icon = "🌀"

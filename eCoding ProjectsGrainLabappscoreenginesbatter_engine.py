@@ -16,14 +16,6 @@ class BatterEngine(BaseEngine):
     tweak_labels = {"enrichment": ["Dense / Fudgy", "Light / Spongy"]}
     variations = {
         "light_airy": {
-            "guardrails": {
-                "permissible_actions": ["mix", "whip", "cream", "fold", "bake", "cool"],
-                "cook_temp_min_f": 325,
-                "cook_temp_max_f": 375,
-                "cook_time_min_m": 20,
-                "cook_time_max_m": 90,
-                "boil_required": False,
-            },
             "label": "Light & Airy (Sponge)",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "minimal_to_none",
@@ -36,14 +28,6 @@ class BatterEngine(BaseEngine):
             ),
         },
         "dense_rich": {
-            "guardrails": {
-                "permissible_actions": ["mix", "whip", "cream", "fold", "bake", "cool"],
-                "cook_temp_min_f": 325,
-                "cook_temp_max_f": 375,
-                "cook_time_min_m": 20,
-                "cook_time_max_m": 90,
-                "boil_required": False,
-            },
             "label": "Dense & Rich (Pound/Fudge)",
             "mechanics_overrides": {
                 "required_gluten_elasticity": "low_extensible",
@@ -59,6 +43,7 @@ class BatterEngine(BaseEngine):
     production_profile = {
         "thermodynamic_focus": "lipid_emulsification",
         "mechanical_energy_threshold": "low_emulsifying",
+        "permissible_action_types": ["mix", "fold"],
         "environmental_rest_strategy": "gluten_relaxation",
     }
     secondary_ingredients = {
@@ -85,7 +70,7 @@ class BatterEngine(BaseEngine):
             "step_increment": 2,
             "unit_label": "layer",
             "unit_label_plural": "layers",
-            "cook_temp_f": 350,
+            "bake_temp_f": 350,
             "bake_time_min": 30,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -99,7 +84,7 @@ class BatterEngine(BaseEngine):
             "step_increment": 1,
             "unit_label": "pan",
             "unit_label_plural": "pans",
-            "cook_temp_f": 350,
+            "bake_temp_f": 350,
             "bake_time_min": 25,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -113,7 +98,7 @@ class BatterEngine(BaseEngine):
             "step_increment": 24,
             "unit_label": "cupcake",
             "unit_label_plural": "cupcakes",
-            "cook_temp_f": 350,
+            "bake_temp_f": 350,
             "bake_time_min": 20,
             "steam_required": False,
             "is_enriched_profile": True,
@@ -148,9 +133,8 @@ class BatterEngine(BaseEngine):
                     "icon": inst.icon,
                     "description": inst.description,
                     "grain_affinity": inst.grain_affinity,
-                    "target_archetype_mechanics": getattr(inst, "target_archetype_mechanics", {}),
+                    "target_archetype_mechanics": inst.target_archetype_mechanics,
                     "culinary_nuance_directive": inst.get_ai_culinary_directive(),
-                    "preset_matchers": getattr(inst, "preset_matchers", []),
                 }
                 if hasattr(inst, "yield_unit"):
                     cache[inst.id]["yield_unit"] = inst.yield_unit
@@ -239,7 +223,7 @@ class SpongeCakeArchetype(BatterEngine):
     default_salt_pct = 0.005
     label = "Foam / Sponge Cake"
     icon = "🍰"
-    preset_matchers = ["cake", "cupcake", "madeleine", "sponge", "chiffon", "angel"]
+    preset_matchers = ["cake", "cupcake", "madeleine"]
     description = "Fat-free or low-fat aeration systems like Genoise or Chiffon."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {
@@ -302,7 +286,6 @@ class CreamedCakeArchetype(BatterEngine):
     default_salt_pct = 0.005
     label = "Creamed Layer Cake"
     icon = "🎂"
-    preset_matchers = ["layer-cake", "creamed", "yellow-layer-cake", "butter-cake"]
     description = "Emulsified lipid-sugar crystal structures for standard layers."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {
@@ -365,7 +348,6 @@ class PoundCakeArchetype(BatterEngine):
     default_salt_pct = 0.005
     label = "High-Ratio Pound Cake"
     icon = "🍫"
-    preset_matchers = ["pound", "fudg", "brownie"]
     description = "Dense, uniform crumb carrying massive sugar and fat weights."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {

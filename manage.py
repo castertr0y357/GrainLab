@@ -40,6 +40,18 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+
+    if "test" in sys.argv:
+        import django.template.context
+
+        def safe_copy(self):
+            duplicate = object.__new__(type(self))
+            duplicate.__dict__.update(self.__dict__)
+            duplicate.dicts = self.dicts[:]
+            return duplicate
+
+        django.template.context.BaseContext.__copy__ = safe_copy
+
     execute_from_command_line(sys.argv)
 
 

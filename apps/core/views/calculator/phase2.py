@@ -68,6 +68,7 @@ class Phase2View(View):
             "global_ai_enabled": request.POST.get("global_ai_enabled", "true") == "true",
             "recipe_name": request.POST.get("recipe_name", ""),
             "secondary_ingredients": request.POST.get("secondary_ingredients", "{}"),
+            "active_variation_id": request.POST.get("active_variation_id", ""),
         }
 
         update_calculator_state(request, updates)
