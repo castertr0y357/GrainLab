@@ -294,11 +294,16 @@ def call_gemma_api(system_prompt: str, user_prompt: str, expected_keys: list = N
                 content_str = data["choices"][0]["message"]["content"].strip()
                 logger.info(f"[AI] - Raw Content Received: {content_str}")
 
-                # Clean possible markdown wrap ```json ... ```
-                if content_str.startswith("```"):
-                    lines = content_str.splitlines()
-                    if lines[0].startswith("```json") or lines[0].startswith("```"):
-                        content_str = "\n".join(lines[1:-1])
+                # Clean possible markdown wrap or conversational text
+                first_brace = content_str.find("{")
+                last_brace = content_str.rfind("}")
+                first_bracket = content_str.find("[")
+                last_bracket = content_str.rfind("]")
+
+                if first_brace != -1 and last_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                    content_str = content_str[first_brace : last_brace + 1]
+                elif first_bracket != -1 and last_bracket != -1:
+                    content_str = content_str[first_bracket : last_bracket + 1]
 
                 # Resilient JSON Processing Gate: heal the JSON string
                 healed_content_str = heal_json_string(content_str)

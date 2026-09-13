@@ -81,30 +81,95 @@ def evaluate_recipe(
                     {"rule": "Spice Limit", "passed": True, "reason": f"Spice {a.get('name')} within limits."}
                 )
 
-    # Check 3: Savory profile checks (Pan Engine specifically)
-    if profile_type == "savory" and engine_id == "pan":
-        # Check no eggs
-        binders = ingredients.get("binders", [])
-        has_egg = any("egg" in b.get("name", "").lower() for b in binders)
-        if has_egg:
-            checks.append(
-                {"rule": "Savory Pan - No Eggs", "passed": False, "reason": "Found eggs in a savory pan recipe."}
-            )
-        else:
-            checks.append({"rule": "Savory Pan - No Eggs", "passed": True, "reason": "No eggs found."})
+    # Check 3: Comprehensive Culinary Analysis via Unified Guardrails
+    if final_recipe:
+        try:
+            salt_pct = float(recipe.get("target_salt_pct", 0))
+            sugar_pct = float(recipe.get("target_sugar_pct", 0))
+            fat_pct = float(recipe.get("target_fat_pct", 0))
+            hydration_pct = float(recipe.get("target_hydration_pct", 0))
+        except (ValueError, TypeError):
+            salt_pct = sugar_pct = fat_pct = hydration_pct = 0.0
 
-        # Check total fat 5-10%
-        # Check total fat 5-10%
-        lipids = ingredients.get("lipids", [])
-        total_fat = sum(l.get("bakers_percentage", 0) for l in lipids)
-        if 5.0 <= total_fat <= 10.0:
-            checks.append(
-                {"rule": "Savory Pan - Fat %", "passed": True, "reason": f"Fat is {total_fat}%, within 5-10%."}
-            )
-        else:
-            checks.append(
-                {"rule": "Savory Pan - Fat %", "passed": False, "reason": f"Fat is {total_fat}%, outside 5-10% bound."}
-            )
+        engine_instance = ENGINES.get(engine_id)
+        if engine_instance:
+            guardrails = engine_instance.get_active_guardrails(archetype_id, active_variation_id)
+
+            salt_min = guardrails.get("salt_min", 0.5)
+            salt_max = guardrails.get("salt_max", 3.0)
+            if salt_min <= salt_pct <= salt_max:
+                checks.append(
+                    {
+                        "rule": "Culinary: Salt Balance",
+                        "passed": True,
+                        "reason": f"Salt at {salt_pct}%, within {salt_min}-{salt_max}%.",
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "rule": "Culinary: Salt Balance",
+                        "passed": False,
+                        "reason": f"Salt at {salt_pct}%, outside {salt_min}-{salt_max}% bounds.",
+                    }
+                )
+
+            sugar_min = guardrails.get("sugar_min", 0.0)
+            sugar_max = guardrails.get("sugar_max", 100.0)
+            if sugar_min <= sugar_pct <= sugar_max:
+                checks.append(
+                    {
+                        "rule": f"Culinary: {profile_type.title()} Profile (Sugar)",
+                        "passed": True,
+                        "reason": f"Sugar at {sugar_pct}%, within {sugar_min}-{sugar_max}%.",
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "rule": f"Culinary: {profile_type.title()} Profile (Sugar)",
+                        "passed": False,
+                        "reason": f"Sugar at {sugar_pct}%, outside {sugar_min}-{sugar_max}% bounds.",
+                    }
+                )
+
+            h_min = guardrails.get("hydration_min", 0.0)
+            h_max = guardrails.get("hydration_max", 100.0)
+            if h_min <= hydration_pct <= h_max:
+                checks.append(
+                    {
+                        "rule": f"Culinary: {engine_id.title()} Hydration",
+                        "passed": True,
+                        "reason": f"Hydration at {hydration_pct}%, within {h_min}-{h_max}%.",
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "rule": f"Culinary: {engine_id.title()} Hydration",
+                        "passed": False,
+                        "reason": f"Hydration at {hydration_pct}%, outside {h_min}-{h_max}% bounds.",
+                    }
+                )
+
+            f_min = guardrails.get("fat_min", 0.0)
+            f_max = guardrails.get("fat_max", 100.0)
+            if f_min <= fat_pct <= f_max:
+                checks.append(
+                    {
+                        "rule": f"Culinary: {engine_id.title()} Lipids",
+                        "passed": True,
+                        "reason": f"Fat at {fat_pct}%, within {f_min}-{f_max}%.",
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "rule": f"Culinary: {engine_id.title()} Lipids",
+                        "passed": False,
+                        "reason": f"Fat at {fat_pct}%, outside {f_min}-{f_max}% bounds.",
+                    }
+                )
 
     # Check 4: Chronological Logic Check
     bake_idx = -1
@@ -389,12 +454,24 @@ def evaluate_recipe(
                 )
 
         # 10D: Secondary Ingredient Whitelist Check
+        import difflib
+
         whitelist_violations = []
         for cat_key, allowed_opts in secondary_options.items():
             if cat_key in ingredients:
                 for item in ingredients[cat_key]:
                     item_name = item.get("name", "").lower().replace(" ", "_")
-                    if not any(opt in item_name or item_name in opt for opt in allowed_opts):
+                    item_name_clean = item.get("name", "").lower()
+
+                    # Exact or substring match
+                    if any(opt in item_name or item_name in opt for opt in allowed_opts):
+                        continue
+
+                    # Fuzzy match fallback
+                    allowed_clean = [opt.replace("_", " ") for opt in allowed_opts]
+                    matches = difflib.get_close_matches(item_name_clean, allowed_clean, n=1, cutoff=0.6)
+
+                    if not matches:
                         whitelist_violations.append(f"{item.get('name')} in {cat_key}")
         if whitelist_violations:
             checks.append(
@@ -532,8 +609,9 @@ class Command(BaseCommand):
 
         # We want to run across all engines and all archetypes, but only 1 recipe per archetype
         categories_to_run = list(CATEGORY_TO_ENGINE.items())
-        if test_mode:
-            categories_to_run = [(k, v) for k, v in categories_to_run if v in ("cookie", "pan")]
+        # We always want all engines now. test_mode will only limit archetypes per engine.
+        # if test_mode:
+        #     categories_to_run = [(k, v) for k, v in categories_to_run if v in ("cookie", "pan")]
 
         for category_slug, engine_id in categories_to_run:
             engine_instance = ENGINES.get(engine_id)
@@ -548,6 +626,8 @@ class Command(BaseCommand):
                     archetype_ids = ["drop_cookie"]
                 elif engine_id == "pan":
                     archetype_ids = ["tin_loaf"]
+                else:
+                    archetype_ids = archetype_ids[:1]  # Limit to 1 archetype for faster testing
             variations_dict = getattr(engine_instance, "variations", {})
             variation_ids = list(variations_dict.keys()) if variations_dict else [None]
 

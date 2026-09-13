@@ -67,13 +67,31 @@ def process_recipe_details(cleaned_data):
 
 
 def process_recipe_percentages(cleaned_data):
-    return gemma.generate_recipe_percentages(
+    result = gemma.generate_recipe_percentages(
         engine_id=cleaned_data.get("engine_id"),
         active_archetype_id=cleaned_data.get("active_archetype_id"),
         recipe_slug=cleaned_data.get("recipe_slug"),
         recipe_name=cleaned_data.get("recipe_name"),
         secondary_ingredients=cleaned_data.get("secondary_ingredients", []),
     )
+
+    # Enforce unified culinary guardrails on initial generation
+    if result and isinstance(result, dict):
+        from apps.core.engines.router import ENGINES
+
+        engine_id = cleaned_data.get("engine_id")
+        archetype_id = cleaned_data.get("active_archetype_id")
+
+        # Determine the active profile from the recipe slug or passed data
+        recipe_slug = cleaned_data.get("recipe_slug", "")
+        active_variation_id = "sweet" if "sweet" in recipe_slug.lower() else "savory"
+
+        engine_instance = ENGINES.get(engine_id)
+        if engine_instance:
+            # Re-use the clamping logic we built for tweaks to secure the base generation
+            engine_instance.clamp_recipe_outputs(result, archetype_id, active_variation_id)
+
+    return result
 
 
 def process_generate_substitutes(cleaned_data):
@@ -153,7 +171,17 @@ def process_alternatives(cleaned_data):
 def process_details(cleaned_data, request):
     state = get_calculator_state(request)
     flavor_inclusions = state.get("flavor_inclusions", [])
-    additives = state.get("secondary_ingredients", {}).get("additives", [])
+
+    sec_ing = state.get("secondary_ingredients", {})
+    if isinstance(sec_ing, str):
+        import json
+
+        try:
+            sec_ing = json.loads(sec_ing)
+        except Exception:
+            sec_ing = {}
+
+    additives = sec_ing.get("additives", [])
     combined_inclusions = list(flavor_inclusions) + list(additives)
 
     is_stream = cleaned_data.get("stream", False)

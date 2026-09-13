@@ -148,6 +148,14 @@ class BathEngine(BaseEngine):
 class BoiledBagelArchetype(BathEngine):
     archetype_slug = "boiled_bagel"
     guardrails = {
+        "hydration_min": 45,
+        "hydration_max": 65,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "boil", "bake", "cool"],
         "cook_temp_min_f": 400,
         "cook_temp_max_f": 475,
@@ -187,6 +195,14 @@ class BoiledBagelArchetype(BathEngine):
 class TwistedPretzelArchetype(BathEngine):
     archetype_slug = "twisted_pretzel"
     guardrails = {
+        "hydration_min": 45,
+        "hydration_max": 65,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "bulk_ferment", "shape", "proof", "boil", "bake", "cool"],
         "cook_temp_min_f": 400,
         "cook_temp_max_f": 475,

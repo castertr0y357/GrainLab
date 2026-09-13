@@ -256,6 +256,14 @@ class PastryEngine(BaseEngine):
 class LayeredViennoiserieArchetype(PastryEngine):
     archetype_slug = "layered_viennoiserie"
     guardrails = {
+        "hydration_min": 20,
+        "hydration_max": 55,
+        "fat_min": 40,
+        "fat_max": 100,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,
@@ -342,6 +350,14 @@ class LayeredViennoiserieArchetype(PastryEngine):
 class InvertedPuffArchetype(PastryEngine):
     archetype_slug = "inverted_puff"
     guardrails = {
+        "hydration_min": 20,
+        "hydration_max": 55,
+        "fat_min": 40,
+        "fat_max": 100,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,
@@ -419,6 +435,14 @@ class InvertedPuffArchetype(PastryEngine):
 class ShortcrustTartArchetype(PastryEngine):
     archetype_slug = "shortcrust_tart"
     guardrails = {
+        "hydration_min": 20,
+        "hydration_max": 55,
+        "fat_min": 40,
+        "fat_max": 100,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,
@@ -469,6 +493,14 @@ class ShortcrustTartArchetype(PastryEngine):
 class PaperThinPhylloArchetype(PastryEngine):
     archetype_slug = "paper_thin_phyllo"
     guardrails = {
+        "hydration_min": 20,
+        "hydration_max": 55,
+        "fat_min": 40,
+        "fat_max": 100,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "laminate", "fold", "chill", "shape", "proof", "bake", "cool"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,

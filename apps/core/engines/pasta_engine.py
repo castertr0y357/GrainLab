@@ -233,6 +233,14 @@ class PastaEngine(BaseEngine):
 class SheetedRibbonArchetype(PastaEngine):
     archetype_slug = "sheeted_ribbon"
     guardrails = {
+        "hydration_min": 30,
+        "hydration_max": 55,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
         "cook_temp_min_f": 0,
         "cook_temp_max_f": 0,
@@ -276,6 +284,14 @@ class SheetedRibbonArchetype(PastaEngine):
 class StuffedPocketArchetype(PastaEngine):
     archetype_slug = "stuffed_pocket"
     guardrails = {
+        "hydration_min": 30,
+        "hydration_max": 55,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
         "cook_temp_min_f": 0,
         "cook_temp_max_f": 0,
@@ -319,6 +335,14 @@ class StuffedPocketArchetype(PastaEngine):
 class ExtrudedShapeArchetype(PastaEngine):
     archetype_slug = "extruded_shape"
     guardrails = {
+        "hydration_min": 30,
+        "hydration_max": 55,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
         "cook_temp_min_f": 0,
         "cook_temp_max_f": 0,
@@ -362,6 +386,14 @@ class ExtrudedShapeArchetype(PastaEngine):
 class AlkalineNoodlesArchetype(PastaEngine):
     archetype_slug = "alkaline_noodles"
     guardrails = {
+        "hydration_min": 30,
+        "hydration_max": 55,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
         "cook_temp_min_f": 0,
         "cook_temp_max_f": 0,

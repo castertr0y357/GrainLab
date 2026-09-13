@@ -338,6 +338,14 @@ class QuickEngine(BaseEngine):
 class ChemicalLoafArchetype(QuickEngine):
     archetype_slug = "chemical_loaf"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 85,
+        "fat_min": 20,
+        "fat_max": 55,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 425,
@@ -373,6 +381,14 @@ class ChemicalLoafArchetype(QuickEngine):
 class LayeredSconeArchetype(QuickEngine):
     archetype_slug = "layered_scone"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 85,
+        "fat_min": 20,
+        "fat_max": 55,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 425,
@@ -410,6 +426,14 @@ class LayeredSconeArchetype(QuickEngine):
 class DroppedBiscuitArchetype(QuickEngine):
     archetype_slug = "dropped_biscuit"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 85,
+        "fat_min": 20,
+        "fat_max": 55,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 425,
@@ -447,6 +471,14 @@ class DroppedBiscuitArchetype(QuickEngine):
 class TexturedMuffinArchetype(QuickEngine):
     archetype_slug = "textured_muffin"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 85,
+        "fat_min": 20,
+        "fat_max": 55,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fold", "portion", "bake", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 425,

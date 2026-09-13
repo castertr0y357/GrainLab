@@ -135,6 +135,13 @@ class BaseEngine(AIPromptBuilder):
             if variation and "guardrails" in variation:
                 resolved.update(variation["guardrails"])
 
+        # Universal Profile Overrides (Sweet vs Savory)
+        if active_variation_id:
+            if "sweet" in active_variation_id.lower():
+                resolved["sugar_min"] = max(resolved.get("sugar_min", 0), 10.0)
+            elif "savory" in active_variation_id.lower():
+                resolved["sugar_max"] = min(resolved.get("sugar_max", 100), 5.0)
+
         return resolved
 
     def clamp_recipe_outputs(
@@ -148,13 +155,34 @@ class BaseEngine(AIPromptBuilder):
         if not guardrails:
             return recipe_json
 
+        import logging
+
+        logger = logging.getLogger("grainlab.gemma")
+
+        # 1. Clamp Structural Targets
+        structural_targets = [
+            ("target_hydration_pct", "hydration_min", "hydration_max"),
+            ("target_fat_pct", "fat_min", "fat_max"),
+            ("target_sugar_pct", "sugar_min", "sugar_max"),
+            ("target_salt_pct", "salt_min", "salt_max"),
+        ]
+
+        for tgt_key, min_key, max_key in structural_targets:
+            if tgt_key in recipe_json and isinstance(recipe_json[tgt_key], (int, float)):
+                val = recipe_json[tgt_key]
+                min_v = guardrails.get(min_key)
+                max_v = guardrails.get(max_key)
+                if max_v is not None and val > max_v:
+                    recipe_json[tgt_key] = float(max_v)
+                    logger.warning(f"[AI CLAMP] Clamped {tgt_key} from {val} down to {max_v}")
+                elif min_v is not None and val < min_v:
+                    recipe_json[tgt_key] = float(min_v)
+                    logger.warning(f"[AI CLAMP] Clamped {tgt_key} from {val} up to {min_v}")
+
+        # 2. Clamp Timeline Steps
         timeline = recipe_json.get("timeline", [])
         for step in timeline:
             if step.get("type") == "baking_profile":
-                import logging
-
-                logger = logging.getLogger("grainlab.gemma")
-
                 # Clamp oven_temp
                 if "oven_temp" in step and isinstance(step["oven_temp"], (int, float)):
                     val = step["oven_temp"]

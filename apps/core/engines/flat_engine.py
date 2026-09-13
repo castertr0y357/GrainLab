@@ -224,6 +224,14 @@ class FlatEngine(BaseEngine):
 class LeavenedFlatbreadArchetype(FlatEngine):
     archetype_slug = "leavened_flatbread"
     guardrails = {
+        "hydration_min": 50,
+        "hydration_max": 85,
+        "fat_min": 0,
+        "fat_max": 15,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
         "cook_temp_min_f": 400,
         "cook_temp_max_f": 550,
@@ -275,6 +283,14 @@ class LeavenedFlatbreadArchetype(FlatEngine):
 class UnleavenedStretchedArchetype(FlatEngine):
     archetype_slug = "unleavened_stretched"
     guardrails = {
+        "hydration_min": 50,
+        "hydration_max": 85,
+        "fat_min": 0,
+        "fat_max": 15,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
         "cook_temp_min_f": 400,
         "cook_temp_max_f": 550,
@@ -305,6 +321,14 @@ class UnleavenedStretchedArchetype(FlatEngine):
 class BlisteredGriddleArchetype(FlatEngine):
     archetype_slug = "blistered_griddle"
     guardrails = {
+        "hydration_min": 50,
+        "hydration_max": 85,
+        "fat_min": 0,
+        "fat_max": 15,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
         "cook_temp_min_f": 400,
         "cook_temp_max_f": 550,
@@ -334,6 +358,14 @@ class BlisteredGriddleArchetype(FlatEngine):
 class CrispFlatbreadArchetype(FlatEngine):
     archetype_slug = "crisp_flatbread"
     guardrails = {
+        "hydration_min": 50,
+        "hydration_max": 85,
+        "fat_min": 0,
+        "fat_max": 15,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "stretch", "bake", "fry"],
         "cook_temp_min_f": 400,
         "cook_temp_max_f": 550,

@@ -220,6 +220,14 @@ class FryEngine(BaseEngine):
 class YeastRaisedDonutArchetype(FryEngine):
     archetype_slug = "yeast_raised_donut"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 75,
+        "fat_min": 5,
+        "fat_max": 25,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fry", "glaze", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 380,
@@ -251,6 +259,14 @@ class YeastRaisedDonutArchetype(FryEngine):
 class CakeDonutArchetype(FryEngine):
     archetype_slug = "cake_donut"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 75,
+        "fat_min": 5,
+        "fat_max": 25,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fry", "glaze", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 380,
@@ -282,6 +298,14 @@ class CakeDonutArchetype(FryEngine):
 class FritterBeignetArchetype(FryEngine):
     archetype_slug = "fritter_beignet"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 75,
+        "fat_min": 5,
+        "fat_max": 25,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fry", "glaze", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 380,
@@ -314,6 +338,14 @@ class FritterBeignetArchetype(FryEngine):
 class FriedLaminateArchetype(FryEngine):
     archetype_slug = "fried_laminate"
     guardrails = {
+        "hydration_min": 40,
+        "hydration_max": 75,
+        "fat_min": 5,
+        "fat_max": 25,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "fry", "glaze", "cool"],
         "cook_temp_min_f": 350,
         "cook_temp_max_f": 380,

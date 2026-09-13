@@ -326,6 +326,14 @@ class CookieEngine(BaseEngine):
 class DropCookieArchetype(CookieEngine):
     archetype_slug = "drop_cookie"
     guardrails = {
+        "hydration_min": 0,
+        "hydration_max": 20,
+        "fat_min": 30,
+        "fat_max": 85,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
         "cook_temp_min_f": 325,
         "cook_temp_max_f": 375,
@@ -361,6 +369,14 @@ class DropCookieArchetype(CookieEngine):
 class BarCookieArchetype(CookieEngine):
     archetype_slug = "bar_cookie"
     guardrails = {
+        "hydration_min": 0,
+        "hydration_max": 20,
+        "fat_min": 30,
+        "fat_max": 85,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
         "cook_temp_min_f": 325,
         "cook_temp_max_f": 375,
@@ -412,6 +428,14 @@ class BarCookieArchetype(CookieEngine):
 class SliceBakeArchetype(CookieEngine):
     archetype_slug = "slice_bake"
     guardrails = {
+        "hydration_min": 0,
+        "hydration_max": 20,
+        "fat_min": 30,
+        "fat_max": 85,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
         "cook_temp_min_f": 325,
         "cook_temp_max_f": 375,
@@ -474,6 +498,14 @@ class SliceBakeArchetype(CookieEngine):
 class RolledCutoutArchetype(CookieEngine):
     archetype_slug = "rolled_cutout"
     guardrails = {
+        "hydration_min": 0,
+        "hydration_max": 20,
+        "fat_min": 30,
+        "fat_max": 85,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "cream", "fold", "chill", "portion", "bake", "cool"],
         "cook_temp_min_f": 325,
         "cook_temp_max_f": 375,

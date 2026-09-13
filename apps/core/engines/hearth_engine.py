@@ -220,6 +220,14 @@ class HearthEngine(BaseEngine):
 class HearthBouleArchetype(HearthEngine):
     archetype_slug = "hearth_boule"
     guardrails = {
+        "hydration_min": 60,
+        "hydration_max": 100,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
         "cook_temp_min_f": 425,
         "cook_temp_max_f": 500,
@@ -249,6 +257,14 @@ class HearthBouleArchetype(HearthEngine):
 class HighHydrationSlabArchetype(HearthEngine):
     archetype_slug = "high_hydration_slab"
     guardrails = {
+        "hydration_min": 60,
+        "hydration_max": 100,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
         "cook_temp_min_f": 425,
         "cook_temp_max_f": 500,
@@ -362,6 +378,14 @@ class HighHydrationSlabArchetype(HearthEngine):
 class TaperedBaguetteArchetype(HearthEngine):
     archetype_slug = "tapered_baguette"
     guardrails = {
+        "hydration_min": 60,
+        "hydration_max": 100,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
         "cook_temp_min_f": 425,
         "cook_temp_max_f": 500,
@@ -392,6 +416,14 @@ class TaperedBaguetteArchetype(HearthEngine):
 class FlashPizzaArchetype(HearthEngine):
     archetype_slug = "flash_pizza"
     guardrails = {
+        "hydration_min": 60,
+        "hydration_max": 100,
+        "fat_min": 0,
+        "fat_max": 10,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["mix", "autolyse", "knead", "bulk_ferment", "shape", "proof", "score", "bake", "cool"],
         "cook_temp_min_f": 425,
         "cook_temp_max_f": 500,

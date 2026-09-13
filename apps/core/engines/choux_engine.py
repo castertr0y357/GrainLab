@@ -223,6 +223,14 @@ class ChouxEngine(BaseEngine):
 class PipedShellArchetype(ChouxEngine):
     archetype_slug = "piped_shell"
     guardrails = {
+        "hydration_min": 120,
+        "hydration_max": 180,
+        "fat_min": 40,
+        "fat_max": 80,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["boil", "mix", "beat", "pipe", "bake", "cool", "fry"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,
@@ -254,6 +262,14 @@ class PipedShellArchetype(ChouxEngine):
 class ExtrusionFriedPasteArchetype(ChouxEngine):
     archetype_slug = "extrusion_fried"
     guardrails = {
+        "hydration_min": 120,
+        "hydration_max": 180,
+        "fat_min": 40,
+        "fat_max": 80,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["boil", "mix", "beat", "pipe", "bake", "cool", "fry"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,
@@ -285,6 +301,14 @@ class ExtrusionFriedPasteArchetype(ChouxEngine):
 class SavoryEmulsionArchetype(ChouxEngine):
     archetype_slug = "savory_emulsion"
     guardrails = {
+        "hydration_min": 120,
+        "hydration_max": 180,
+        "fat_min": 40,
+        "fat_max": 80,
+        "sugar_min": 0.0,
+        "sugar_max": 20.0,
+        "salt_min": 0.5,
+        "salt_max": 3.0,
         "permissible_actions": ["boil", "mix", "beat", "pipe", "bake", "cool", "fry"],
         "cook_temp_min_f": 375,
         "cook_temp_max_f": 425,
