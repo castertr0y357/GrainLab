@@ -35,7 +35,14 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
 
         <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="!global_ai_enabled || recipeIngredients.length === 0">
             <!-- Flour Base Weight Row -->
-            <div x-data="{ ingName: '{{ berry|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+            <div x-data="{
+                children: [
+                    {% if recipe.wheat_berry_mix %}{% for berry in recipe.wheat_berry_mix.keys %}'{{ berry|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}
+                    {% else %}'{% if recipe.grain_type == "whole_wheat" %}Whole Wheat Flour{% elif recipe.grain_type == "spelt" %}Spelt Flour{% elif recipe.grain_type == "kamut" %}Kamut Flour{% elif recipe.grain_type == "einkorn" %}Einkorn Flour{% else %}Refined Flour (AP/Bread){% endif %}'{% endif %}
+                ],
+                get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+            }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Flour Base</span>
                 
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -46,7 +53,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             <div style="display: contents;">
                 {% if recipe.wheat_berry_mix %}
                     {% for berry, weight in recipe.wheat_berry_mix.items %}
-                        <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                        <div x-data="{ ingName: '{{ berry|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                             <span style="color: var(--text-muted);">↳ {{ berry }}</span>
                             
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -65,7 +72,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             
             <!-- Added Liquid Row — only shown when there is actual added liquid (hidden for cookies/shortbread) -->
             {% if recipe.liquid_items %}
-                <div x-data="{ ingName: '{% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label|escapejs }}{% else %}Unsalted Butter{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: [{% for item in recipe.liquid_items %}'{{ item.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -82,14 +93,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% endfor %}
             {% elif recipe.added_water and recipe.added_water > 0 %}
-            <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+            <div x-data="{
+                children: ['{% if recipe.liquid_label %}{{ recipe.liquid_label|escapejs }}{% else %}Pure Water{% endif %}'],
+                get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+            }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Liquid Medium</span>
                 
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.added_water|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.added_water }}g</span></span>
             </div>
             <div style="display: contents;">
-                <div x-data="{ ingName: '{% if recipe.binder_label %}{{ recipe.binder_label|escapejs }}{% else %}Whole Eggs{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{ ingName: '{% if recipe.liquid_label %}{{ recipe.liquid_label|escapejs }}{% else %}Pure Water{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label %}{{ recipe.liquid_label }}{% else %}Pure Water{% endif %}</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -100,7 +115,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             
             <!-- Leaven Row -->
             {% if recipe.leavener_items %}
-                <div x-data="{ ingName: 'Salt' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: [{% for item in recipe.leavener_items %}'{{ item.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -108,7 +127,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% for item in recipe.leavener_items %}
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -117,14 +136,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% endfor %}
             {% elif leaven_type == "sourdough" %}
-                <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: ['{% if recipe.yeast_label %}{{ recipe.yeast_label|escapejs }}{% else %}Sourdough Starter{% endif %}'],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener (Sourdough Starter)</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.starter_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.starter_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{% if recipe.yeast_label %}{{ recipe.yeast_label|escapejs }}{% else %}Sourdough Starter{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.yeast_label %}{{ recipe.yeast_label }}{% else %}Sourdough Starter{% endif %}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -132,14 +155,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                     </div>
                 </div>
             {% else %}
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: ['{% if recipe.yeast_label %}{{ recipe.yeast_label|escapejs }}{% else %}Commercial Yeast{% endif %}'],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Leavener</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.yeast_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.yeast_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{% if recipe.yeast_label %}{{ recipe.yeast_label|escapejs }}{% else %}Commercial Yeast{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.yeast_label %}{{ recipe.yeast_label }}{% else %}Commercial Yeast{% endif %}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -150,7 +177,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             
             <!-- Enrichments: Fat / Lipid -->
             {% if recipe.lipid_items %}
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: [{% for item in recipe.lipid_items %}'{{ item.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Fat / Lipid</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -158,7 +189,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% for item in recipe.lipid_items %}
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -167,14 +198,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% endfor %}
             {% elif recipe.effective_fat_pct > 0 %}
-                <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: ['{% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label|escapejs }}{% else %}Unsalted Butter{% endif %}'],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Fat / Lipid</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.fat_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.fat_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label|escapejs }}{% else %}Unsalted Butter{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.fat_substitute_label %}{{ recipe.fat_substitute_label }}{% else %}Unsalted Butter{% endif %}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -185,7 +220,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             
             <!-- Enrichments: Sugar -->
             {% if recipe.sweetener_items %}
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: [{% for item in recipe.sweetener_items %}'{{ item.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Sweetener</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -193,7 +232,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% for item in recipe.sweetener_items %}
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -202,14 +241,18 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% endfor %}
             {% elif recipe.effective_sugar_pct > 0 %}
-                <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: ['{% if recipe.sugar_label %}{{ recipe.sugar_label|escapejs }}{% else %}Granulated Sugar{% endif %}'],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Sweetener</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.sugar_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.sugar_weight }}g</span></span>
                 </div>
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{% if recipe.sugar_label %}{{ recipe.sugar_label|escapejs }}{% else %}Granulated Sugar{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {% if recipe.sugar_label %}{{ recipe.sugar_label }}{% else %}Granulated Sugar{% endif %}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -220,7 +263,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             
             <!-- Binders: Eggs / Aquafaba -->
             {% if recipe.binder_items %}
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: [{% for item in recipe.binder_items %}'{{ item.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Binder</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -228,7 +275,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% for item in recipe.binder_items %}
                 <div style="display: contents;">
-                    <div  style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -237,7 +284,11 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 </div>
                 {% endfor %}
             {% elif recipe.binder_weight > 0 %}
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{
+                    children: [{% for item in recipe.binder_items %}'{{ item.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                    get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                    toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+                }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-primary); font-weight: 600;">Binder</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
