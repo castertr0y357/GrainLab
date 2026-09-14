@@ -63,14 +63,18 @@
             </div>
             
             <!-- Added Liquid Row -->
-            <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+            <div x-data="{
+                children: ['{% if recipe.liquid_label %}{{ recipe.liquid_label|escapejs }}{% else %}Pure Water{% endif %}'],
+                get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+            }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Added Liquid ({{ recipe.liquid_label }})</span>
                 
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.liquid_weight }}g</span>
             </div>
             <div style="display: contents;">
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{ ingName: '{% if recipe.liquid_label %}{{ recipe.liquid_label|escapejs }}{% else %}Pure Water{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-muted);">↳ {% if recipe.liquid_label == "Whole Milk" %}Whole Milk{% elif recipe.liquid_label == "Almond Milk" %}Almond Milk{% else %}Pure Water{% endif %}</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -182,14 +186,18 @@
             {% endif %}
             
             <!-- Salt Row -->
-            <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+            <div x-data="{
+                children: ['Fine Sea Salt'],
+                get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+            }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Salt (2% ratio)</span>
                 
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;">{{ recipe.salt_weight }}g</span>
             </div>
             <div style="display: contents;">
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{ ingName: 'Fine Sea Salt' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>

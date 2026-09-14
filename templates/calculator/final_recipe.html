@@ -29,17 +29,6 @@ x-init="loadCompiledData(); fetchAIInsights();"
 {% block phase_left_panel %}
 <script id="ingredient-weights-data" type="application/json">{{ ingredient_weights_json|safe }}</script>
 
-    <!-- RECIPE HEADER -->
-    <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <span style="background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;" x-text="enginesArchetypes[selected_master]?.[preset_slug]?.label || 'Unknown'"></span>
-            <template x-if="active_variation_id">
-                <span style="background: rgba(255,136,0,0.15); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;" x-text="engines_ff[selected_master]?.variations?.[active_variation_id]?.label || 'Unknown'"></span>
-            </template>
-        </div>
-        <h1 style="color: var(--text-primary); font-size: 1.75rem; font-weight: 700; margin: 0; line-height: 1.2;" x-text="recipe_name || 'Standard Formula'"></h1>
-    </div>
-
     <!-- SCALER UI -->
     <div style="background-color: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -125,7 +114,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
                 </div>
                 {% for item in recipe.liquid_items %}
                 <div style="display: contents;">
-                    <div x-data="{ ingName: '{% if recipe.sugar_label %}{{ recipe.sugar_label|escapejs }}{% else %}Granulated Sugar{% endif %}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <div x-data="{ ingName: '{{ item.name|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                         <span style="color: var(--text-muted);">↳ {{ item.name }}</span>
                         
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
@@ -346,14 +335,18 @@ x-init="loadCompiledData(); fetchAIInsights();"
             {% endif %}
             
             <!-- Salt Row -->
-            <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+            <div x-data="{
+                children: ['Fine Sea Salt'],
+                get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
+                toggle() { let t = !this.allChecked; this.children.forEach(c => checkedIngredients[c] = t); }
+            }" @click="toggle()" :style="allChecked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--text-primary); font-weight: 600;">Salt</span>
                 
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
                 <span style="color: var(--text-primary); font-weight: 700;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
             </div>
             <div style="display: contents;">
-                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div x-data="{ ingName: 'Fine Sea Salt' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                     <span style="color: var(--text-muted);">↳ Fine Sea Salt</span>
                     
                 <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>

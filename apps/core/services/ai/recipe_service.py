@@ -174,8 +174,6 @@ def process_details(cleaned_data, request):
 
     sec_ing = state.get("secondary_ingredients", {})
     if isinstance(sec_ing, str):
-        import json
-
         try:
             sec_ing = json.loads(sec_ing)
         except Exception:

@@ -185,6 +185,8 @@
 # Project Status: GrainLab
 
 ## 📋 Summary of Completed Tasks
+- [x] Remove the redundant recipe header block (Archetype, Variation, Recipe Name) from final recipe layout to simplify view.
+- [x] Fix the Liquid Medium and Salt ingredient rows to be fully linked as groups with functioning toggle and allChecked logic in all recipe templates.
 - [x] Optimize Phase 2 AI evaluations: commented out redundant sifting and mill prompts in the context payloads to significantly reduce token count and LLM inference time.
 - [x] Fix recipe output checklist UI: make sub-components individually clickable and sync group header strikethroughs across the entire formula tree.
 - [x] Integrate AI-inferred flavor profile classification (Sweet vs Savory vs Neutral) to securely enforce math constraints inside `BaseEngine` calculate flow
