@@ -185,6 +185,7 @@
 # Project Status: GrainLab
 
 ## 📋 Summary of Completed Tasks
+- [x] Optimize Phase 2 AI evaluations: commented out redundant sifting and mill prompts in the context payloads to significantly reduce token count and LLM inference time.
 - [x] Fix recipe output checklist UI: make sub-components individually clickable and sync group header strikethroughs across the entire formula tree.
 - [x] Integrate AI-inferred flavor profile classification (Sweet vs Savory vs Neutral) to securely enforce math constraints inside `BaseEngine` calculate flow
 - [x] Implement robust multi-engine QA test suite (`run_qa_recipes`) evaluating AI structural math via phase 3 pipeline
