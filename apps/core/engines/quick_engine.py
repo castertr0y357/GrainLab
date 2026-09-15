@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class QuickEngine(BaseEngine):
     name = "Quick Breads & Scones Engine"
     slug = "quick"
+    default_starter_recipes = {
+        "chemical_loaf": [
+            {
+                "recipe_id": "chemical_loaf_classic_1",
+                "recipe_name": "Banana Walnut Bread",
+                "description": "Dense, moist, sweet loaf packed with overripe bananas.",
+                "menu_description": "Dense, moist, sweet loaf packed with overripe bananas.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "chemical_loaf_classic_2",
+                "recipe_name": "Zucchini Bread",
+                "description": "Spiced sweet bread made incredibly moist with shredded zucchini.",
+                "menu_description": "Spiced sweet bread made incredibly moist with shredded zucchini.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "chemical_loaf_classic_3",
+                "recipe_name": "Pumpkin Spice Loaf",
+                "description": "Autumnal loaf heavily spiced with cinnamon, nutmeg, and cloves.",
+                "menu_description": "Autumnal loaf heavily spiced with cinnamon, nutmeg, and cloves.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "chemical_loaf_classic_4",
+                "recipe_name": "Irish Soda Bread",
+                "description": "Buttermilk and baking soda leavened rustic round.",
+                "menu_description": "Buttermilk and baking soda leavened rustic round.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "chemical_loaf_classic_5",
+                "recipe_name": "Lemon Poppyseed",
+                "description": "Bright citrus loaf with a crunchy poppyseed texture.",
+                "menu_description": "Bright citrus loaf with a crunchy poppyseed texture.",
+                "creativity_level": 1
+            },
+        ],
+        "layered_scone": [
+            {
+                "recipe_id": "layered_scone_classic_1",
+                "recipe_name": "Classic English Scone",
+                "description": "Light, crumbly, slightly sweet, perfect for clotted cream.",
+                "menu_description": "Light, crumbly, slightly sweet, perfect for clotted cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_scone_classic_2",
+                "recipe_name": "Blueberry Lemon Scone",
+                "description": "Fruit-packed triangular scone with a tart lemon glaze.",
+                "menu_description": "Fruit-packed triangular scone with a tart lemon glaze.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_scone_classic_3",
+                "recipe_name": "Cranberry Orange Scone",
+                "description": "Sweet and tart scones with bright citrus notes.",
+                "menu_description": "Sweet and tart scones with bright citrus notes.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_scone_classic_4",
+                "recipe_name": "Cheddar Chive Scone",
+                "description": "Savory, buttery layers packed with sharp cheese.",
+                "menu_description": "Savory, buttery layers packed with sharp cheese.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_scone_classic_5",
+                "recipe_name": "Maple Pecan Scone",
+                "description": "Rich, nutty scone finished with a maple syrup glaze.",
+                "menu_description": "Rich, nutty scone finished with a maple syrup glaze.",
+                "creativity_level": 1
+            },
+        ],
+        "dropped_biscuit": [
+            {
+                "recipe_id": "dropped_biscuit_classic_1",
+                "recipe_name": "Southern Buttermilk",
+                "description": "Tall, flaky, buttery layers achieved through folding.",
+                "menu_description": "Tall, flaky, buttery layers achieved through folding.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "dropped_biscuit_classic_2",
+                "recipe_name": "Drop Biscuits",
+                "description": "Quick, unstructured, craggy biscuits requiring no rolling.",
+                "menu_description": "Quick, unstructured, craggy biscuits requiring no rolling.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "dropped_biscuit_classic_3",
+                "recipe_name": "Cheddar Bay",
+                "description": "Garlic and cheddar drop biscuits brushed with butter.",
+                "menu_description": "Garlic and cheddar drop biscuits brushed with butter.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "dropped_biscuit_classic_4",
+                "recipe_name": "Sweet Shortcake",
+                "description": "Slightly sweetened biscuit optimized for strawberries and cream.",
+                "menu_description": "Slightly sweetened biscuit optimized for strawberries and cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "dropped_biscuit_classic_5",
+                "recipe_name": "Cream Biscuits",
+                "description": "Ultra-tender biscuits using heavy cream instead of butter.",
+                "menu_description": "Ultra-tender biscuits using heavy cream instead of butter.",
+                "creativity_level": 1
+            },
+        ],
+        "textured_muffin": [
+            {
+                "recipe_id": "textured_muffin_classic_1",
+                "recipe_name": "Blueberry Streusel",
+                "description": "Classic bakery-style muffin with a towering crunchy top.",
+                "menu_description": "Classic bakery-style muffin with a towering crunchy top.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "textured_muffin_classic_2",
+                "recipe_name": "Double Chocolate",
+                "description": "Dense, fudgy muffin packed with chocolate chips.",
+                "menu_description": "Dense, fudgy muffin packed with chocolate chips.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "textured_muffin_classic_3",
+                "recipe_name": "Bran Muffin",
+                "description": "Hearty, fiber-rich muffin sweetened with molasses.",
+                "menu_description": "Hearty, fiber-rich muffin sweetened with molasses.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "textured_muffin_classic_4",
+                "recipe_name": "Morning Glory",
+                "description": "Loaded with carrots, apples, raisins, and nuts.",
+                "menu_description": "Loaded with carrots, apples, raisins, and nuts.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "textured_muffin_classic_5",
+                "recipe_name": "Corn Muffin",
+                "description": "Slightly sweet, crumbly texture with real cornmeal.",
+                "menu_description": "Slightly sweet, crumbly texture with real cornmeal.",
+                "creativity_level": 1
+            },
+        ],
+    }
     recipe_classification = "Sweet"
     default_binder_pct = 0.20
     default_leaven_pct = 0.025
@@ -116,6 +266,25 @@ class QuickEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Zucchini Walnut Quick Bread",
+        "Blueberry Lemon Glazed Scone",
+        "Maple Pecan Oatmeal Scone",
+        "Cranberry Orange Loaf",
+        "Chocolate Chip Banana Bread",
+        "Sharp Cheddar Herb Scone",
+        "Spiced Pumpkin Ginger Bread",
+        "Honey Butter Cornbread",
+        "Vanilla Bean Blackberry Scone",
+        "Apple Streusel Quick Loaf",
+        "Savory Bacon Green Onion Scone",
+        "Toasted Almond Poppyseed",
+    ]
+
+    max_liquid_percentage = 80.0
+    max_lipid_percentage = 80.0
+
+
     presets = [
         "Southern Buttermilk Biscuits",
         "Flaky Cream Scones",
@@ -150,6 +319,8 @@ class QuickEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": nuance,
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

@@ -4,13 +4,167 @@ from apps.core.engines.base_engine import BaseEngine
 class PanEngine(BaseEngine):
     name = "Enriched & Soft Engine"
     slug = "pan"
+    default_starter_recipes = {
+        "sandwich_pan": [
+            {
+                "recipe_id": "sandwich_pan_classic_1",
+                "recipe_name": "White Pullman",
+                "description": "Perfectly square, tight crumb, incredibly soft sandwich loaf.",
+                "menu_description": "Perfectly square, tight crumb, incredibly soft sandwich loaf.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sandwich_pan_classic_2",
+                "recipe_name": "Honey Wheat",
+                "description": "Soft 100% whole wheat enriched with a touch of honey.",
+                "menu_description": "Soft 100% whole wheat enriched with a touch of honey.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sandwich_pan_classic_3",
+                "recipe_name": "Japanese Shokupan",
+                "description": "Milk bread made with tangzhong for an ultra-fluffy texture.",
+                "menu_description": "Milk bread made with tangzhong for an ultra-fluffy texture.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sandwich_pan_classic_4",
+                "recipe_name": "Oat & Honey Loaf",
+                "description": "Toasted oats sprinkled over a sweet, enriched crumb.",
+                "menu_description": "Toasted oats sprinkled over a sweet, enriched crumb.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sandwich_pan_classic_5",
+                "recipe_name": "Classic Brioche Loaf",
+                "description": "High butter content, golden crust, pull-apart tenderness.",
+                "menu_description": "High butter content, golden crust, pull-apart tenderness.",
+                "creativity_level": 1
+            },
+        ],
+        "freeform_braided": [
+            {
+                "recipe_id": "freeform_braided_classic_1",
+                "recipe_name": "Classic Challah",
+                "description": "Glossy, egg-enriched braided loaf, slightly sweet.",
+                "menu_description": "Glossy, egg-enriched braided loaf, slightly sweet.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "freeform_braided_classic_2",
+                "recipe_name": "Swiss Zopf",
+                "description": "Butter-enriched Sunday braid with a golden crust.",
+                "menu_description": "Butter-enriched Sunday braid with a golden crust.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "freeform_braided_classic_3",
+                "recipe_name": "Babka Swirl",
+                "description": "Rich dough twisted with deep chocolate ribbons.",
+                "menu_description": "Rich dough twisted with deep chocolate ribbons.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "freeform_braided_classic_4",
+                "recipe_name": "Garlic Herb Braid",
+                "description": "Savory braided loaf stuffed with roasted garlic and herbs.",
+                "menu_description": "Savory braided loaf stuffed with roasted garlic and herbs.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "freeform_braided_classic_5",
+                "recipe_name": "Festive Wreath",
+                "description": "Circular braided loaf often baked with colored eggs.",
+                "menu_description": "Circular braided loaf often baked with colored eggs.",
+                "creativity_level": 1
+            },
+        ],
+        "soft_dinner_roll": [
+            {
+                "recipe_id": "soft_dinner_roll_classic_1",
+                "recipe_name": "Parker House Rolls",
+                "description": "Buttery, folded dinner rolls with a soft, flaky bite.",
+                "menu_description": "Buttery, folded dinner rolls with a soft, flaky bite.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "soft_dinner_roll_classic_2",
+                "recipe_name": "Potato Rolls",
+                "description": "Incredibly soft burger buns enriched with potato starch.",
+                "menu_description": "Incredibly soft burger buns enriched with potato starch.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "soft_dinner_roll_classic_3",
+                "recipe_name": "Hawaiian Sweet Rolls",
+                "description": "Pineapple juice sweetened, fluffy tear-and-share rolls.",
+                "menu_description": "Pineapple juice sweetened, fluffy tear-and-share rolls.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "soft_dinner_roll_classic_4",
+                "recipe_name": "Cloverleaf Rolls",
+                "description": "Three dough balls baked in a muffin tin for pull-apart layers.",
+                "menu_description": "Three dough balls baked in a muffin tin for pull-apart layers.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "soft_dinner_roll_classic_5",
+                "recipe_name": "Garlic Knots",
+                "description": "Tied dough bathed in garlic butter and parsley.",
+                "menu_description": "Tied dough bathed in garlic butter and parsley.",
+                "creativity_level": 1
+            },
+        ],
+        "filled_sweet_roll": [
+            {
+                "recipe_id": "filled_sweet_roll_classic_1",
+                "recipe_name": "Classic Cinnamon Roll",
+                "description": "Soft, spiraled dough with dark brown sugar and cinnamon.",
+                "menu_description": "Soft, spiraled dough with dark brown sugar and cinnamon.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "filled_sweet_roll_classic_2",
+                "recipe_name": "Sticky Pecan Buns",
+                "description": "Caramel-coated inverted sweet rolls heavily studded with pecans.",
+                "menu_description": "Caramel-coated inverted sweet rolls heavily studded with pecans.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "filled_sweet_roll_classic_3",
+                "recipe_name": "Cardamom Knots",
+                "description": "Scandinavian style twisted buns heavily spiced with cardamom.",
+                "menu_description": "Scandinavian style twisted buns heavily spiced with cardamom.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "filled_sweet_roll_classic_4",
+                "recipe_name": "Orange Sweet Rolls",
+                "description": "Citrus zest dough with a bright orange glaze.",
+                "menu_description": "Citrus zest dough with a bright orange glaze.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "filled_sweet_roll_classic_5",
+                "recipe_name": "Chocolate Babka Knot",
+                "description": "Individual twisted buns layered with rich fudge filling.",
+                "menu_description": "Individual twisted buns layered with rich fudge filling.",
+                "creativity_level": 1
+            },
+        ],
+    }
     default_yield_unit = "loaves"
     target_protein_min = 11.5
     target_protein_max = 13.0
     gluten_behavior = "High Shreddability. Must possess enough structural lift to support heavy lipid loads (butter, sugar, milk, egg yolks) without collapsing."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Demands a clean, sweet, milky baseline; whole-grain bitterness is an active defect."
     tannin_sensitive = True
-    supported_tweaks = ["hydration", "leavening", "enrichment"]
+    default_flavor_inclusions = [
+        {"name": "Cinnamon Sugar Swirl", "volume_description": "3 tbsp"},
+        {"name": "Raisins", "volume_description": "1/2 cup"},
+    ]
+    supported_tweaks = ["enrichment", "hydration", "leavening"]
     production_profile = {
         "thermodynamic_focus": "biological_yeast_activity",
         "mechanical_energy_threshold": "high_kneading",
@@ -75,6 +229,22 @@ class PanEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Chocolate Fudge Babka",
+        "Cinnamon Streusel Swirl",
+        "Sweet Maple Braid",
+        "Orange Blossom Honey Rolls",
+        "Cardamom Almond Crown",
+        "Buttermilk Parker House",
+        "Spiced Pumpkin Brioche",
+        "Vanilla Custard Roll",
+        "Toasted Coconut Buns",
+        "Raspberry Jam Twists",
+        "Apple Cinnamon Morning Buns",
+        "Golden Egg Dinner Rolls",
+    ]
+
+
     presets = [
         "Everyday White Sandwich Loaf",
         "Rich Brioche",
@@ -106,6 +276,8 @@ class PanEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

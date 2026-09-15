@@ -40,6 +40,11 @@ class BaseEngine(AIPromptBuilder):
     target_protein_max = 13.0
     gluten_behavior = "Standard gluten development"
     flavor_affinity = "Standard flour profile"
+    default_flavor_inclusions = []
+    default_fat_starting_temp = "room_temp"
+    default_required_hardware = ["stand_mixer"]
+    default_starter_recipes = {}
+
     tannin_sensitive = False
     supported_tweaks = ["hydration", "leavening"]
     tweak_labels = {"enrichment": ["Lean", "Brioche"], "hydration": ["Tight", "Open"], "leavening": ["Yeast", "40%"]}
@@ -50,6 +55,21 @@ class BaseEngine(AIPromptBuilder):
         "environmental_rest_strategy": "gas_proofing",
     }
     secondary_ingredients = {}
+
+    ingredient_prep_directive = ""
+    shaping_directive = ""
+
+    dynamic_flavor_bases = []
+    max_liquid_percentage = None
+    max_lipid_percentage = None
+    ai_cook_temp_override = None
+    ai_cook_time_override = None
+    
+    leavener_limits = {
+        "chemical_max": 5.0,
+        "biological_starter_max": 60.0,
+        "biological_commercial_max": 1.5,
+    }
 
     def culinary_nuance_directive(self, active_archetype_id: str = None, active_variation_id: str = None) -> str:
         """
@@ -108,7 +128,13 @@ class BaseEngine(AIPromptBuilder):
             f"* Optimal Protein Window: {protein_window}\n"
             f"* Grain Affinity: {affinity}"
         )
-
+        prep = archetype.get("ingredient_prep_directive", "")
+        shaping = archetype.get("shaping_directive", "")
+        if prep:
+            stacked_text += f"\\n\\n[INGREDIENT PREP DIRECTIVE]\\n{prep}"
+        if shaping:
+            stacked_text += f"\\n\\n[SHAPING DIRECTIVE]\\n{shaping}"
+            
         if arch_directive:
             stacked_text += f"\n\n[SPECIFIC CULINARY NUANCE DIRECTIVE]\n{arch_directive}"
 

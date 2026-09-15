@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class PastryEngine(BaseEngine):
     name = "Pastry & Lamination Engine"
     slug = "pastry"
+    default_starter_recipes = {
+        "layered_viennoiserie": [
+            {
+                "recipe_id": "layered_viennoiserie_classic_1",
+                "recipe_name": "Classic Croissant",
+                "description": "Flaky, buttery crescent with a distinctly honeycomb crumb.",
+                "menu_description": "Flaky, buttery crescent with a distinctly honeycomb crumb.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_viennoiserie_classic_2",
+                "recipe_name": "Pain au Chocolat",
+                "description": "Rectangular laminated dough encasing dark chocolate batons.",
+                "menu_description": "Rectangular laminated dough encasing dark chocolate batons.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_viennoiserie_classic_3",
+                "recipe_name": "Kouign-Amann",
+                "description": "Caramelized, sugar-layered Breton pastry, dense and crispy.",
+                "menu_description": "Caramelized, sugar-layered Breton pastry, dense and crispy.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_viennoiserie_classic_4",
+                "recipe_name": "Almond Croissant",
+                "description": "Twice-baked croissant filled and topped with frangipane.",
+                "menu_description": "Twice-baked croissant filled and topped with frangipane.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "layered_viennoiserie_classic_5",
+                "recipe_name": "Danish Pastry",
+                "description": "Laminated dough often shaped to hold fruit or cheese fillings.",
+                "menu_description": "Laminated dough often shaped to hold fruit or cheese fillings.",
+                "creativity_level": 1
+            },
+        ],
+        "inverted_puff": [
+            {
+                "recipe_id": "inverted_puff_classic_1",
+                "recipe_name": "Mille-Feuille",
+                "description": "Thousands of delicate, crispy layers separated by pastry cream.",
+                "menu_description": "Thousands of delicate, crispy layers separated by pastry cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "inverted_puff_classic_2",
+                "recipe_name": "Palmiers",
+                "description": "Elephant ear cookies, heavily caramelized laminated layers.",
+                "menu_description": "Elephant ear cookies, heavily caramelized laminated layers.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "inverted_puff_classic_3",
+                "recipe_name": "Vol-au-Vent",
+                "description": "Tall, hollow puff pastry cases for savory fillings.",
+                "menu_description": "Tall, hollow puff pastry cases for savory fillings.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "inverted_puff_classic_4",
+                "recipe_name": "Cheese Straws",
+                "description": "Twisted strips of puff pastry heavily baked with parmesan.",
+                "menu_description": "Twisted strips of puff pastry heavily baked with parmesan.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "inverted_puff_classic_5",
+                "recipe_name": "Beef Wellington Wrap",
+                "description": "Sturdy puff pastry layer designed to encase and insulate meat.",
+                "menu_description": "Sturdy puff pastry layer designed to encase and insulate meat.",
+                "creativity_level": 1
+            },
+        ],
+        "shortcrust_tart": [
+            {
+                "recipe_id": "shortcrust_tart_classic_1",
+                "recipe_name": "Pâte Sucrée",
+                "description": "Sweet, crumbly, cookie-like crust for fruit tarts.",
+                "menu_description": "Sweet, crumbly, cookie-like crust for fruit tarts.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "shortcrust_tart_classic_2",
+                "recipe_name": "Pâte Brisée",
+                "description": "Flaky, buttery, unsweetened crust for savory quiches or pies.",
+                "menu_description": "Flaky, buttery, unsweetened crust for savory quiches or pies.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "shortcrust_tart_classic_3",
+                "recipe_name": "Pâte Sablée",
+                "description": "Ultra-rich, sandy-textured shortcrust utilizing high butter content.",
+                "menu_description": "Ultra-rich, sandy-textured shortcrust utilizing high butter content.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "shortcrust_tart_classic_4",
+                "recipe_name": "Galette Crust",
+                "description": "Rustic, freeform pie crust that is folded over a filling.",
+                "menu_description": "Rustic, freeform pie crust that is folded over a filling.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "shortcrust_tart_classic_5",
+                "recipe_name": "Graham Cracker Crust",
+                "description": "Crumb-based crust bound together with melted butter.",
+                "menu_description": "Crumb-based crust bound together with melted butter.",
+                "creativity_level": 1
+            },
+        ],
+        "paper_thin_phyllo": [
+            {
+                "recipe_id": "paper_thin_phyllo_classic_1",
+                "recipe_name": "Classic Baklava",
+                "description": "Countless layers of buttered phyllo layered with nuts and syrup.",
+                "menu_description": "Countless layers of buttered phyllo layered with nuts and syrup.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "paper_thin_phyllo_classic_2",
+                "recipe_name": "Spanakopita",
+                "description": "Savory Greek pie of spinach and feta wrapped in crispy phyllo.",
+                "menu_description": "Savory Greek pie of spinach and feta wrapped in crispy phyllo.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "paper_thin_phyllo_classic_3",
+                "recipe_name": "Strudel Dough",
+                "description": "Hand-stretched, translucent dough wrapped around apple filling.",
+                "menu_description": "Hand-stretched, translucent dough wrapped around apple filling.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "paper_thin_phyllo_classic_4",
+                "recipe_name": "Börek",
+                "description": "Turkish savory pastry with cheese or meat rolled in thin dough.",
+                "menu_description": "Turkish savory pastry with cheese or meat rolled in thin dough.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "paper_thin_phyllo_classic_5",
+                "recipe_name": "Phyllo Cups",
+                "description": "Miniature baskets of layered phyllo baked crisp.",
+                "menu_description": "Miniature baskets of layered phyllo baked crisp.",
+                "creativity_level": 1
+            },
+        ],
+    }
     recipe_classification = "Sweet"
     default_yield_unit = "pastries"
     default_binder_pct = 0.10
@@ -65,6 +215,22 @@ class PastryEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Meyer Lemon Cream Danish",
+        "Almond Frangipane Turnover",
+        "Raspberry Jam Pinwheel",
+        "Cinnamon Sugar Palmier",
+        "Vanilla Custard Fruit Plait",
+        "Maple Butter Laminated Knot",
+        "Chocolate Hazelnut Croissant",
+        "Orange Glazed Cruffin",
+        "Cardamom Spiced Morning Roll",
+        "Toasted Pecan Laminated Twist",
+        "Apple Compote Turnover",
+        "Savory Ham Cheese Croissant",
+    ]
+
+
     presets = [
         "Classic Croissants",
         "Pain au Chocolat",
@@ -99,6 +265,8 @@ class PastryEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": nuance,
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

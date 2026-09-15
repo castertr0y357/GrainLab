@@ -357,164 +357,12 @@ def generate_dynamic_flavors(cat_slug: str, level: int, count: int = 8, exclude_
         exclude_names = []
     exclude_set = {n.strip().lower() for n in exclude_names}
 
-    bases = {
-        "alkaline-bath": [
-            "Poppy Seed Crusted",
-            "Toasted Onion & Chive",
-            "Sweet Molasses",
-            "Black Pepper Asiago",
-            "Sundried Tomato Basil",
-            "Smoked Paprika Glazed",
-            "Sourdough Rye Twist",
-            "Maple Brown Sugar",
-            "Cheddar Herb Butter",
-            "Spiced Pumpkin Seed",
-            "Garlic Herb Infusion",
-            "Sweet Honey Oat",
-        ],
-        "cakes-batters": [
-            "Lemon Raspberry Drizzle",
-            "Spiced Apple Streusel",
-            "Rich Fudge Marble",
-            "Banana Chocolate Chunk",
-            "Toasted Almond Peach",
-            "Orange Cranberry Spice",
-            "Classic Red Velvet",
-            "Vanilla Cream Swirl",
-            "Coconut Pineapple Delight",
-            "Gingerbread Molasses",
-            "Maple Pecan Muffin",
-            "Strawberry Buttermilk",
-        ],
-        "choux-paste": [
-            "Pecan Maple Cream",
-            "White Chocolate Raspberry",
-            "Dark Chocolate Orange",
-            "Salted Caramel Pecan",
-            "Vanilla Custard Glaze",
-            "Double Chocolate Mousse",
-            "Coffee Espresso Swirl",
-            "Lemon Meringue Puff",
-            "Spiced Apple Cinnamon",
-            "Toasted Almond Praline",
-            "Blueberry Cream Custard",
-            "Sweet Coconut Cream",
-        ],
-        "cookies-shortbread": [
-            "Snickerdoodle Cinnamon",
-            "Triple Chocolate Chunk",
-            "White Chocolate Macadamia",
-            "Chewy Oatmeal Raisin",
-            "Lemon Zest Butter",
-            "Spiced Ginger Molasses",
-            "Classic Sugar Sparkle",
-            "Toasted Pecan Shortbread",
-            "Double Fudge Brownie Drop",
-            "Maple Walnut Cookie",
-            "Cranberry Orange Drop",
-            "Almond Butter Sandies",
-        ],
-        "enriched-soft": [
-            "Chocolate Fudge Babka",
-            "Cinnamon Streusel Swirl",
-            "Sweet Maple Braid",
-            "Orange Blossom Honey Rolls",
-            "Cardamom Almond Crown",
-            "Buttermilk Parker House",
-            "Spiced Pumpkin Brioche",
-            "Vanilla Custard Roll",
-            "Toasted Coconut Buns",
-            "Raspberry Jam Twists",
-            "Apple Cinnamon Morning Buns",
-            "Golden Egg Dinner Rolls",
-        ],
-        "flatbreads-griddles": [
-            "Everything Bagel Focaccia",
-            "Garlic Butter Naan",
-            "Spinach Feta Piadina",
-            "Pesto Mozzarella Flatbread",
-            "Caramelized Onion Roti",
-            "Toasted Sesame Pita",
-            "Chili Flake Olive Flatbread",
-            "Rosemary Parmesan Focaccia",
-            "Sweet Honey Butter Crumpet",
-            "Roasted Garlic Herb Pita",
-            "Smoked Paprika Flatbread",
-            "Za'atar Olive Flatbread",
-        ],
-        "fresh-pasta-noodles": [
-            "Saffron Egg Tagliatelle",
-            "Spinach Ricotta Ravioli",
-            "Beet Root Pink Lasagna",
-            "Squid Ink Black Linguine",
-            "Porcini Mushroom Fettuccine",
-            "Roasted Garlic Pappardelle",
-            "Black Pepper Semolina Pasta",
-            "Basil Pesto Penne",
-            "Tomato Paste Fettuccine",
-            "Lemon Herb Tagliolini",
-            "Spiced Red Pepper Pappardelle",
-            "Whole Grain Durum Noodle",
-        ],
-        "fried-doughs": [
-            "Apple Cider Fritter",
-            "Maple Glazed Bacon Donut",
-            "Meyer Lemon Curd Berliner",
-            "Chocolate Frosted Glaze",
-            "Cinnamon Sugar Beignet",
-            "Cardamom Spiced Churro",
-            "Raspberry Jam Jelly Donut",
-            "Powdered Sugar Funnel Cake",
-            "Vanilla Bean Glazed Cruller",
-            "Spiced Pumpkin Donut",
-            "Toasted Coconut Fry Bread",
-            "Blueberry Glazed Donut",
-        ],
-        "lean-crusty": [
-            "Fig & Walnut Sourdough",
-            "Cranberry Pecan Batard",
-            "Toasted Sesame Boule",
-            "Olive Oregano Sourdough",
-            "Roasted Garlic Hearth Batard",
-            "Rosemary French Baguette",
-            "Multigrain Honey Seeded Boule",
-            "Dark Beer Stout Rye",
-            "Classic Country Sourdough",
-            "Sun-Dried Tomato Batard",
-            "Spiced Pumpkin Seed Hearth",
-            "Ancient Grain Emmer Boule",
-        ],
-        "pastry-lamination": [
-            "Meyer Lemon Cream Danish",
-            "Almond Frangipane Turnover",
-            "Raspberry Jam Pinwheel",
-            "Cinnamon Sugar Palmier",
-            "Vanilla Custard Fruit Plait",
-            "Maple Butter Laminated Knot",
-            "Chocolate Hazelnut Croissant",
-            "Orange Glazed Cruffin",
-            "Cardamom Spiced Morning Roll",
-            "Toasted Pecan Laminated Twist",
-            "Apple Compote Turnover",
-            "Savory Ham Cheese Croissant",
-        ],
-        "quick-breads-scones": [
-            "Zucchini Walnut Quick Bread",
-            "Blueberry Lemon Glazed Scone",
-            "Maple Pecan Oatmeal Scone",
-            "Cranberry Orange Loaf",
-            "Chocolate Chip Banana Bread",
-            "Sharp Cheddar Herb Scone",
-            "Spiced Pumpkin Ginger Bread",
-            "Honey Butter Cornbread",
-            "Vanilla Bean Blackberry Scone",
-            "Apple Streusel Quick Loaf",
-            "Savory Bacon Green Onion Scone",
-            "Toasted Almond Poppyseed",
-        ],
-    }
-
-    category_bases = bases.get(cat_slug, bases["cookies-shortbread"])
+    from apps.core.engines.router import ENGINES
+    from apps.core.engines.cookie_engine import CookieEngine
+    engine_cls = ENGINES.get(cat_slug, CookieEngine)
+    category_bases = getattr(engine_cls, "dynamic_flavor_bases", [])
+    if not category_bases:
+        category_bases = CookieEngine.dynamic_flavor_bases
 
     variants = []
     descriptions = [
@@ -751,42 +599,52 @@ def sanitize_ai_recipe_json(engine_id: str, result: dict) -> dict:
                         new_items.append(item)
             sec[cat_name] = new_items
 
+    from apps.core.engines.router import ENGINES
+    from apps.core.engines.base_engine import BaseEngine
+    engine = ENGINES.get(engine_id, BaseEngine())
+
     # 1. Leavener Limits
     leaveners = sec.get("leaveners", [])
+    limits = getattr(engine, "leavener_limits", {})
+    chem_max = limits.get("chemical_max", 5.0)
+    starter_max = limits.get("biological_starter_max", 60.0)
+    comm_max = limits.get("biological_commercial_max", 1.5)
+
     if isinstance(leaveners, list):
         for l in leaveners:
             if isinstance(l, dict):
                 name = str(l.get("name", "")).lower()
                 pct = float(l.get("bakers_percentage", 0))
                 if "powder" in name or "soda" in name or "chemical" in name:
-                    if pct > 5.0:
-                        l["bakers_percentage"] = 5.0
+                    if pct > chem_max:
+                        l["bakers_percentage"] = chem_max
                 elif "starter" in name or "levain" in name or "sourdough" in name:
-                    if pct > 60.0:
-                        l["bakers_percentage"] = 60.0
+                    if pct > starter_max:
+                        l["bakers_percentage"] = starter_max
                 else:
-                    if pct > 1.5:
-                        l["bakers_percentage"] = 1.5
+                    if pct > comm_max:
+                        l["bakers_percentage"] = comm_max
 
     # 2. Total Liquid Limit
-    # Note: Max 80.0% for quick breads/cookies/batters
-    if engine_id in ["quick", "cookie", "batter"]:
+    liq_max = getattr(engine, "max_liquid_percentage", None)
+    if liq_max is not None:
         liquids = sec.get("liquids", [])
         if isinstance(liquids, list):
             total_liquid = sum(float(x.get("bakers_percentage", 0)) for x in liquids if isinstance(x, dict))
-            if total_liquid > 80.0:
-                scale = 80.0 / total_liquid
+            if total_liquid > liq_max:
+                scale = liq_max / total_liquid
                 for x in liquids:
                     if isinstance(x, dict):
                         x["bakers_percentage"] = round(float(x["bakers_percentage"]) * scale, 2)
 
     # 3. Total Lipid Limit
-    if engine_id in ["quick", "cookie", "batter"]:
+    lipid_max = getattr(engine, "max_lipid_percentage", None)
+    if lipid_max is not None:
         lipids = sec.get("lipids", [])
         if isinstance(lipids, list):
             total_lipid = sum(float(x.get("bakers_percentage", 0)) for x in lipids if isinstance(x, dict))
-            if total_lipid > 80.0:
-                scale = 80.0 / total_lipid
+            if total_lipid > lipid_max:
+                scale = lipid_max / total_lipid
                 for x in lipids:
                     if isinstance(x, dict):
                         x["bakers_percentage"] = round(float(x["bakers_percentage"]) * scale, 2)
@@ -1168,45 +1026,16 @@ def get_local_recipe_details(
             flour_blend_ratios[slug] += round(100.0 - sum(flour_blend_ratios.values()), 2)
     flour_blend = {"ratios": flour_blend_ratios, "reasoning": "Standard mathematical even split applied automatically."}
 
-    fat_starting_temp = "room_temp"
-    required_actions = ["knead"]
-    required_hardware = ["stand_mixer"]
-
-    if category in ["cookies-shortbread", "cakes-batters", "cookies_shortbread", "cakes_batters", "cookie", "batter"]:
-        #         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil", "coconut_oil"]}
-        #         sec_liquids = {"required": "pure_water", "options": ["pure_water"]}
-        #         sec_binders = {"required": "whole_eggs", "options": ["none", "whole_eggs", "egg_whites"]}
-        flavor_inclusions = [
-            {"name": "Dark Chocolate Chunks", "volume_description": "1/2 cup"},
-            {"name": "Maldon Sea Salt", "volume_description": "1 tsp flaky"},
-        ]
-    elif category in [
-        "pastry-lamination",
-        "pastry_lamination",
-        "pastry",
-        "choux-paste",
-        "choux_paste",
-        "choux",
-        "fry",
-        "fried-doughs",
-    ]:
-        pass
-    #         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "salted_butter"]}
-    #         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
-    #         sec_binders = {"required": "whole_eggs", "options": ["whole_eggs", "egg_whites"]}
-    elif category in ["enriched-soft", "enriched_soft", "pan"]:
-        pass
-        #         sec_lipids = {"required": "unsalted_butter", "options": ["unsalted_butter", "avocado_oil"]}
-        #         sec_liquids = {"required": "whole_milk", "options": ["whole_milk", "pure_water"]}
-        #         sec_binders = {"required": "none", "options": ["none", "whole_eggs"]}
-        flavor_inclusions = [
-            {"name": "Cinnamon Sugar Swirl", "volume_description": "3 tbsp"},
-            {"name": "Raisins", "volume_description": "1/2 cup"},
-        ]
-    elif category in ["alkaline-bath", "alkaline_bath", "bath", "flatbreads-griddles", "flatbreads_griddles", "flat"]:
-        pass
-    #         sec_lipids = {"required": "none", "options": ["none", "unsalted_butter"]}
-    #         sec_liquids = {"required": "pure_water", "options": ["pure_water", "whole_milk"]}
+    from apps.core.engines.router import ENGINES
+    from apps.core.engines.base_engine import BaseEngine
+    
+    engine = ENGINES.get(engine_id, BaseEngine())
+    flavor_inclusions = getattr(engine, "default_flavor_inclusions", [])
+    fat_starting_temp = getattr(engine, "default_fat_starting_temp", "room_temp")
+    required_hardware = getattr(engine, "default_required_hardware", ["stand_mixer"])
+    
+    guardrails = engine.get_active_guardrails(active_archetype_id)
+    required_actions = guardrails.get("permissible_actions", ["mix"])
 
     pref_slugs = []
     if selected_grains:
@@ -1412,11 +1241,18 @@ def generate_recipe_percentages(
     try:
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
         if result and isinstance(result, dict) and "percentages" in result:
-            if engine_id == "pasta":
-                result["target_cook_temp"] = 212
-                # Pasta is fresh, boil time should be minimal (3 mins) instead of oven bake times
+            from apps.core.engines.router import ENGINES
+            from apps.core.engines.base_engine import BaseEngine
+            engine = ENGINES.get(engine_id, BaseEngine())
+            temp_override = getattr(engine, "ai_cook_temp_override", None)
+            time_override = getattr(engine, "ai_cook_time_override", None)
+            
+            if temp_override is not None:
+                result["target_cook_temp"] = temp_override
+            if time_override is not None:
+                # If time_override is set, we use it (especially to prevent long oven bake times for fresh pasta)
                 if result.get("target_cook_time", 20) > 10:
-                    result["target_cook_time"] = 3
+                    result["target_cook_time"] = time_override
             return result
     except Exception as e:
         logger.error(f"[Gemma Client] - Error - Failed calling generate_recipe_percentages: {str(e)}")

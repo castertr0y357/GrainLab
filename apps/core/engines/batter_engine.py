@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class BatterEngine(BaseEngine):
     name = "Cakes & Batters Engine"
     slug = "batter"
+    default_starter_recipes = {
+        "sponge_cake": [
+            {
+                "recipe_id": "sponge_cake_classic_1",
+                "recipe_name": "Genoise Sponge",
+                "description": "Classic French sponge, lightened entirely by whipped whole eggs.",
+                "menu_description": "Classic French sponge, lightened entirely by whipped whole eggs.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sponge_cake_classic_2",
+                "recipe_name": "Angel Food Cake",
+                "description": "Fat-free, ultra-light cake leavened entirely by egg whites.",
+                "menu_description": "Fat-free, ultra-light cake leavened entirely by egg whites.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sponge_cake_classic_3",
+                "recipe_name": "Chiffon Cake",
+                "description": "Tall, airy sponge enriched with oil for moisture.",
+                "menu_description": "Tall, airy sponge enriched with oil for moisture.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sponge_cake_classic_4",
+                "recipe_name": "Victoria Sponge",
+                "description": "Sturdy British sponge traditionally layered with jam and cream.",
+                "menu_description": "Sturdy British sponge traditionally layered with jam and cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "sponge_cake_classic_5",
+                "recipe_name": "Swiss Roll",
+                "description": "Thin, flexible sponge designed to be rolled without cracking.",
+                "menu_description": "Thin, flexible sponge designed to be rolled without cracking.",
+                "creativity_level": 1
+            },
+        ],
+        "creamed_cake": [
+            {
+                "recipe_id": "creamed_cake_classic_1",
+                "recipe_name": "Vanilla Butter Cake",
+                "description": "Classic birthday cake crumb, tight, moist, and buttery.",
+                "menu_description": "Classic birthday cake crumb, tight, moist, and buttery.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "creamed_cake_classic_2",
+                "recipe_name": "Devil's Food",
+                "description": "Deeply chocolatey, rich, and moist layer cake.",
+                "menu_description": "Deeply chocolatey, rich, and moist layer cake.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "creamed_cake_classic_3",
+                "recipe_name": "Red Velvet",
+                "description": "Slightly tangy cocoa cake with a vibrant red hue.",
+                "menu_description": "Slightly tangy cocoa cake with a vibrant red hue.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "creamed_cake_classic_4",
+                "recipe_name": "Carrot Cake",
+                "description": "Dense, moist, spiced cake loaded with carrots and nuts.",
+                "menu_description": "Dense, moist, spiced cake loaded with carrots and nuts.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "creamed_cake_classic_5",
+                "recipe_name": "German Chocolate",
+                "description": "Lighter chocolate cake designed for coconut pecan frosting.",
+                "menu_description": "Lighter chocolate cake designed for coconut pecan frosting.",
+                "creativity_level": 1
+            },
+        ],
+        "pound_cake": [
+            {
+                "recipe_id": "pound_cake_classic_1",
+                "recipe_name": "Classic Vanilla Pound",
+                "description": "Dense, buttery, traditional 1:1:1:1 ratio cake.",
+                "menu_description": "Dense, buttery, traditional 1:1:1:1 ratio cake.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "pound_cake_classic_2",
+                "recipe_name": "Lemon Loaf",
+                "description": "Tart, dense pound cake with a heavy lemon syrup soak.",
+                "menu_description": "Tart, dense pound cake with a heavy lemon syrup soak.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "pound_cake_classic_3",
+                "recipe_name": "Marble Cake",
+                "description": "Vanilla and chocolate batter swirled for a dense slice.",
+                "menu_description": "Vanilla and chocolate batter swirled for a dense slice.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "pound_cake_classic_4",
+                "recipe_name": "Cream Cheese Pound",
+                "description": "Ultra-rich pound cake utilizing cream cheese for extra moisture.",
+                "menu_description": "Ultra-rich pound cake utilizing cream cheese for extra moisture.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "pound_cake_classic_5",
+                "recipe_name": "Almond Pound Cake",
+                "description": "Nutty, dense loaf heavily flavored with almond extract.",
+                "menu_description": "Nutty, dense loaf heavily flavored with almond extract.",
+                "creativity_level": 1
+            },
+        ],
+        "griddle_batter": [
+            {
+                "recipe_id": "griddle_batter_classic_1",
+                "recipe_name": "Buttermilk Pancakes",
+                "description": "Fluffy, thick breakfast staples with a tender crumb.",
+                "menu_description": "Fluffy, thick breakfast staples with a tender crumb.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "griddle_batter_classic_2",
+                "recipe_name": "Belgian Waffles",
+                "description": "Deep pockets, crispy exterior, and an airy interior.",
+                "menu_description": "Deep pockets, crispy exterior, and an airy interior.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "griddle_batter_classic_3",
+                "recipe_name": "French Crepes",
+                "description": "Paper-thin, flexible batter cooked rapidly on a flat surface.",
+                "menu_description": "Paper-thin, flexible batter cooked rapidly on a flat surface.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "griddle_batter_classic_4",
+                "recipe_name": "Buckwheat Galettes",
+                "description": "Savory, earthy, crispy-edged thin crepes.",
+                "menu_description": "Savory, earthy, crispy-edged thin crepes.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "griddle_batter_classic_5",
+                "recipe_name": "Dutch Baby",
+                "description": "Oven-baked, wildly puffed pancake that collapses upon exiting.",
+                "menu_description": "Oven-baked, wildly puffed pancake that collapses upon exiting.",
+                "creativity_level": 1
+            },
+        ],
+    }
     default_yield_unit = "cakes"
     default_binder_pct = 0.45
     default_leaven_pct = 0.03
@@ -119,6 +269,25 @@ class BatterEngine(BaseEngine):
             "is_enriched_profile": True,
         },
     }
+
+    dynamic_flavor_bases = [
+        "Lemon Raspberry Drizzle",
+        "Spiced Apple Streusel",
+        "Rich Fudge Marble",
+        "Banana Chocolate Chunk",
+        "Toasted Almond Peach",
+        "Orange Cranberry Spice",
+        "Classic Red Velvet",
+        "Vanilla Cream Swirl",
+        "Coconut Pineapple Delight",
+        "Gingerbread Molasses",
+        "Maple Pecan Muffin",
+        "Strawberry Buttermilk",
+    ]
+
+    max_liquid_percentage = 80.0
+    max_lipid_percentage = 80.0
+
 
     presets = [
         "Yellow Layer Cake",

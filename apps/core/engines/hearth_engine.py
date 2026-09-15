@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class HearthEngine(BaseEngine):
     name = "Lean & Crusty Engine"
     slug = "hearth"
+    default_starter_recipes = {
+        "hearth_boule": [
+            {
+                "recipe_id": "hearth_boule_classic_1",
+                "recipe_name": "San Francisco Sourdough",
+                "description": "High hydration, blistered crust, sharp lactic tang.",
+                "menu_description": "High hydration, blistered crust, sharp lactic tang.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "hearth_boule_classic_2",
+                "recipe_name": "Country Miga",
+                "description": "Rustic blend of whole wheat and white with an open crumb.",
+                "menu_description": "Rustic blend of whole wheat and white with an open crumb.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "hearth_boule_classic_3",
+                "recipe_name": "Seeded Levain",
+                "description": "Toasted flax, sesame, and sunflower seeds throughout.",
+                "menu_description": "Toasted flax, sesame, and sunflower seeds throughout.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "hearth_boule_classic_4",
+                "recipe_name": "Dark Rye Pumpernickel",
+                "description": "Dense, malty rye loaf with a chewy, robust crust.",
+                "menu_description": "Dense, malty rye loaf with a chewy, robust crust.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "hearth_boule_classic_5",
+                "recipe_name": "Pain de Campagne",
+                "description": "Classic French peasant bread with a slight sourdough kick.",
+                "menu_description": "Classic French peasant bread with a slight sourdough kick.",
+                "creativity_level": 1
+            },
+        ],
+        "high_hydration_slab": [
+            {
+                "recipe_id": "high_hydration_slab_classic_1",
+                "recipe_name": "Classic Ciabatta",
+                "description": "Airy, large holes, very high hydration slipper bread.",
+                "menu_description": "Airy, large holes, very high hydration slipper bread.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "high_hydration_slab_classic_2",
+                "recipe_name": "Rosemary Focaccia",
+                "description": "Dimpled slab drowned in olive oil and fresh rosemary.",
+                "menu_description": "Dimpled slab drowned in olive oil and fresh rosemary.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "high_hydration_slab_classic_3",
+                "recipe_name": "Olive Slab",
+                "description": "Studded with Kalamata olives and roasted garlic.",
+                "menu_description": "Studded with Kalamata olives and roasted garlic.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "high_hydration_slab_classic_4",
+                "recipe_name": "Tomato Basil Slab",
+                "description": "Topped with sun-dried tomatoes and fresh basil.",
+                "menu_description": "Topped with sun-dried tomatoes and fresh basil.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "high_hydration_slab_classic_5",
+                "recipe_name": "Potato Sourdough Slab",
+                "description": "Super soft crumb enriched with mashed potatoes.",
+                "menu_description": "Super soft crumb enriched with mashed potatoes.",
+                "creativity_level": 1
+            },
+        ],
+        "tapered_baguette": [
+            {
+                "recipe_id": "tapered_baguette_classic_1",
+                "recipe_name": "Parisian Baguette",
+                "description": "Classic crusty baguette with an airy, irregular crumb.",
+                "menu_description": "Classic crusty baguette with an airy, irregular crumb.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "tapered_baguette_classic_2",
+                "recipe_name": "Demi-Baguette",
+                "description": "Shorter, thicker baguette perfect for sandwiches.",
+                "menu_description": "Shorter, thicker baguette perfect for sandwiches.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "tapered_baguette_classic_3",
+                "recipe_name": "Sourdough Baguette",
+                "description": "A traditional baguette shape with wild yeast tang.",
+                "menu_description": "A traditional baguette shape with wild yeast tang.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "tapered_baguette_classic_4",
+                "recipe_name": "Epi de Blé",
+                "description": "Baguette cut to resemble a stalk of wheat.",
+                "menu_description": "Baguette cut to resemble a stalk of wheat.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "tapered_baguette_classic_5",
+                "recipe_name": "Multigrain Ficelle",
+                "description": "Thin, crispy crust with a blend of ancient grains.",
+                "menu_description": "Thin, crispy crust with a blend of ancient grains.",
+                "creativity_level": 1
+            },
+        ],
+        "flash_pizza": [
+            {
+                "recipe_id": "flash_pizza_classic_1",
+                "recipe_name": "Neapolitan Margherita",
+                "description": "Thin crust, blistered edges, crushed tomatoes, fresh mozzarella.",
+                "menu_description": "Thin crust, blistered edges, crushed tomatoes, fresh mozzarella.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "flash_pizza_classic_2",
+                "recipe_name": "New York Slice",
+                "description": "Thin, flexible base with a sturdy rim, folding effortlessly.",
+                "menu_description": "Thin, flexible base with a sturdy rim, folding effortlessly.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "flash_pizza_classic_3",
+                "recipe_name": "Detroit Deep Dish",
+                "description": "Thick, airy square base with caramelized cheese edges.",
+                "menu_description": "Thick, airy square base with caramelized cheese edges.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "flash_pizza_classic_4",
+                "recipe_name": "Sicilian Grandma",
+                "description": "Pan-baked rectangular pie with a focaccia-like crumb.",
+                "menu_description": "Pan-baked rectangular pie with a focaccia-like crumb.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "flash_pizza_classic_5",
+                "recipe_name": "Roman Al Taglio",
+                "description": "Long rectangular tray pizza with high hydration crisp.",
+                "menu_description": "Long rectangular tray pizza with high hydration crisp.",
+                "creativity_level": 1
+            },
+        ],
+    }
     default_yield_unit = "loaves"
     target_protein_min = 12.0
     target_protein_max = 14.5
@@ -63,6 +213,22 @@ class HearthEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Fig & Walnut Sourdough",
+        "Cranberry Pecan Batard",
+        "Toasted Sesame Boule",
+        "Olive Oregano Sourdough",
+        "Roasted Garlic Hearth Batard",
+        "Rosemary French Baguette",
+        "Multigrain Honey Seeded Boule",
+        "Dark Beer Stout Rye",
+        "Classic Country Sourdough",
+        "Sun-Dried Tomato Batard",
+        "Spiced Pumpkin Seed Hearth",
+        "Ancient Grain Emmer Boule",
+    ]
+
+
     presets = [
         "Sourdough Boule",
         "Classic French Baguette",
@@ -93,6 +259,8 @@ class HearthEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class FryEngine(BaseEngine):
     name = "Fried Doughs Engine"
     slug = "fry"
+    default_starter_recipes = {
+        "yeast_raised_donut": [
+            {
+                "recipe_id": "yeast_raised_donut_classic_1",
+                "recipe_name": "Glazed Ring",
+                "description": "Incredibly light, airy yeast dough completely coated in a sugar glaze.",
+                "menu_description": "Incredibly light, airy yeast dough completely coated in a sugar glaze.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "yeast_raised_donut_classic_2",
+                "recipe_name": "Boston Cream",
+                "description": "Un-holed yeast donut filled with custard and topped with chocolate.",
+                "menu_description": "Un-holed yeast donut filled with custard and topped with chocolate.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "yeast_raised_donut_classic_3",
+                "recipe_name": "Jelly Filled",
+                "description": "Soft, puffy yeast donut injected with bright raspberry jam.",
+                "menu_description": "Soft, puffy yeast donut injected with bright raspberry jam.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "yeast_raised_donut_classic_4",
+                "recipe_name": "Maple Bacon Bar",
+                "description": "Long yeast donut topped with maple icing and crispy bacon.",
+                "menu_description": "Long yeast donut topped with maple icing and crispy bacon.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "yeast_raised_donut_classic_5",
+                "recipe_name": "Sugar Twist",
+                "description": "Twisted strands of yeast dough, fried and tossed in granulated sugar.",
+                "menu_description": "Twisted strands of yeast dough, fried and tossed in granulated sugar.",
+                "creativity_level": 1
+            },
+        ],
+        "cake_donut": [
+            {
+                "recipe_id": "cake_donut_classic_1",
+                "recipe_name": "Old Fashioned",
+                "description": "Dense, slightly tangy cake donut with deep, crispy cracks.",
+                "menu_description": "Dense, slightly tangy cake donut with deep, crispy cracks.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "cake_donut_classic_2",
+                "recipe_name": "Apple Cider Donut",
+                "description": "Moist cake donut flavored with reduced cider and cinnamon sugar.",
+                "menu_description": "Moist cake donut flavored with reduced cider and cinnamon sugar.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "cake_donut_classic_3",
+                "recipe_name": "Blueberry Cake",
+                "description": "Crumbly cake donut studded with real blueberries.",
+                "menu_description": "Crumbly cake donut studded with real blueberries.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "cake_donut_classic_4",
+                "recipe_name": "Chocolate Glazed",
+                "description": "Rich, dense cocoa-based cake donut with a thin glaze.",
+                "menu_description": "Rich, dense cocoa-based cake donut with a thin glaze.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "cake_donut_classic_5",
+                "recipe_name": "Sour Cream Donut",
+                "description": "Extra moist cake donut utilizing sour cream for a tender crumb.",
+                "menu_description": "Extra moist cake donut utilizing sour cream for a tender crumb.",
+                "creativity_level": 1
+            },
+        ],
+        "fritter_beignet": [
+            {
+                "recipe_id": "fritter_beignet_classic_1",
+                "recipe_name": "Apple Fritter",
+                "description": "Chopped apples and cinnamon folded into a craggy, fried dough.",
+                "menu_description": "Chopped apples and cinnamon folded into a craggy, fried dough.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fritter_beignet_classic_2",
+                "recipe_name": "New Orleans Beignet",
+                "description": "Square, pillowy fried dough buried under a mountain of powdered sugar.",
+                "menu_description": "Square, pillowy fried dough buried under a mountain of powdered sugar.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fritter_beignet_classic_3",
+                "recipe_name": "Corn Fritter",
+                "description": "Savory, crispy fried dough bites packed with sweet corn.",
+                "menu_description": "Savory, crispy fried dough bites packed with sweet corn.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fritter_beignet_classic_4",
+                "recipe_name": "Banana Fritter",
+                "description": "Mashed bananas and spices fried into irregular, crispy shapes.",
+                "menu_description": "Mashed bananas and spices fried into irregular, crispy shapes.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fritter_beignet_classic_5",
+                "recipe_name": "Hushpuppies",
+                "description": "Deep-fried, savory cornmeal batter balls.",
+                "menu_description": "Deep-fried, savory cornmeal batter balls.",
+                "creativity_level": 1
+            },
+        ],
+        "fried_laminate": [
+            {
+                "recipe_id": "fried_laminate_classic_1",
+                "recipe_name": "Cronut",
+                "description": "Laminated croissant dough, deep fried and sugar-coated.",
+                "menu_description": "Laminated croissant dough, deep fried and sugar-coated.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fried_laminate_classic_2",
+                "recipe_name": "Kouign-Amann Fritter",
+                "description": "Caramelized, layered dough fried for maximum crunch.",
+                "menu_description": "Caramelized, layered dough fried for maximum crunch.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fried_laminate_classic_3",
+                "recipe_name": "Fried Danish",
+                "description": "Flaky layered dough fried before being filled with fruit.",
+                "menu_description": "Flaky layered dough fried before being filled with fruit.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fried_laminate_classic_4",
+                "recipe_name": "Laminated Twist",
+                "description": "Twisted laminated dough fried until shattering crisp.",
+                "menu_description": "Twisted laminated dough fried until shattering crisp.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "fried_laminate_classic_5",
+                "recipe_name": "Flaky Churro",
+                "description": "Laminated dough piped and fried like a churro for extra layers.",
+                "menu_description": "Laminated dough piped and fried like a churro for extra layers.",
+                "creativity_level": 1
+            },
+        ],
+    }
     primary_cooking_method = "Frying"
     default_yield_unit = "donuts"
     target_protein_min = 11.5
@@ -47,6 +197,22 @@ class FryEngine(BaseEngine):
         }
     }
 
+    dynamic_flavor_bases = [
+        "Apple Cider Fritter",
+        "Maple Glazed Bacon Donut",
+        "Meyer Lemon Curd Berliner",
+        "Chocolate Frosted Glaze",
+        "Cinnamon Sugar Beignet",
+        "Cardamom Spiced Churro",
+        "Raspberry Jam Jelly Donut",
+        "Powdered Sugar Funnel Cake",
+        "Vanilla Bean Glazed Cruller",
+        "Spiced Pumpkin Donut",
+        "Toasted Coconut Fry Bread",
+        "Blueberry Glazed Donut",
+    ]
+
+
     presets = [
         "Yeast-Raised Donuts",
         "Fluffy New Orleans Beignets",
@@ -77,6 +243,8 @@ class FryEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class FlatEngine(BaseEngine):
     name = "Flatbreads & Griddles Engine"
     slug = "flat"
+    default_starter_recipes = {
+        "leavened_flatbread": [
+            {
+                "recipe_id": "leavened_flatbread_classic_1",
+                "recipe_name": "Classic Pita",
+                "description": "High-heat baked pocket bread that puffs like a balloon.",
+                "menu_description": "High-heat baked pocket bread that puffs like a balloon.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "leavened_flatbread_classic_2",
+                "recipe_name": "Garlic Naan",
+                "description": "Tandoor-style flatbread, blistered and brushed with ghee.",
+                "menu_description": "Tandoor-style flatbread, blistered and brushed with ghee.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "leavened_flatbread_classic_3",
+                "recipe_name": "Greek Gyro Pita",
+                "description": "Pocketless, thick, flexible flatbread cooked on a griddle.",
+                "menu_description": "Pocketless, thick, flexible flatbread cooked on a griddle.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "leavened_flatbread_classic_4",
+                "recipe_name": "Manakish",
+                "description": "Levantine flatbread heavily coated with za'atar and olive oil.",
+                "menu_description": "Levantine flatbread heavily coated with za'atar and olive oil.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "leavened_flatbread_classic_5",
+                "recipe_name": "Fluffy Bazlama",
+                "description": "Turkish village bread, soft, thick, and griddle-baked.",
+                "menu_description": "Turkish village bread, soft, thick, and griddle-baked.",
+                "creativity_level": 1
+            },
+        ],
+        "unleavened_stretched": [
+            {
+                "recipe_id": "unleavened_stretched_classic_1",
+                "recipe_name": "Flour Tortilla",
+                "description": "Lard or shortening enriched, ultra-thin and pliable.",
+                "menu_description": "Lard or shortening enriched, ultra-thin and pliable.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "unleavened_stretched_classic_2",
+                "recipe_name": "Roti / Chapati",
+                "description": "Whole wheat Indian flatbread cooked on a hot tawa.",
+                "menu_description": "Whole wheat Indian flatbread cooked on a hot tawa.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "unleavened_stretched_classic_3",
+                "recipe_name": "Scallion Pancake",
+                "description": "Chinese flaky, laminated flatbread layered with green onions.",
+                "menu_description": "Chinese flaky, laminated flatbread layered with green onions.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "unleavened_stretched_classic_4",
+                "recipe_name": "Matzah",
+                "description": "Crispy, completely unleavened cracker-like flatbread.",
+                "menu_description": "Crispy, completely unleavened cracker-like flatbread.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "unleavened_stretched_classic_5",
+                "recipe_name": "Lavash",
+                "description": "Paper-thin Armenian flatbread, soft when fresh, crisp when dried.",
+                "menu_description": "Paper-thin Armenian flatbread, soft when fresh, crisp when dried.",
+                "creativity_level": 1
+            },
+        ],
+        "blistered_griddle": [
+            {
+                "recipe_id": "blistered_griddle_classic_1",
+                "recipe_name": "English Muffin",
+                "description": "Nooks and crannies inside a cornmeal-dusted griddle cake.",
+                "menu_description": "Nooks and crannies inside a cornmeal-dusted griddle cake.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "blistered_griddle_classic_2",
+                "recipe_name": "Crumpet",
+                "description": "Spongy, porous griddle cake cooked only on one side.",
+                "menu_description": "Spongy, porous griddle cake cooked only on one side.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "blistered_griddle_classic_3",
+                "recipe_name": "Welsh Cake",
+                "description": "Cross between a pancake and a biscuit, studded with currants.",
+                "menu_description": "Cross between a pancake and a biscuit, studded with currants.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "blistered_griddle_classic_4",
+                "recipe_name": "Arepa",
+                "description": "Cornmeal cake, crispy outside and creamy inside, split for stuffing.",
+                "menu_description": "Cornmeal cake, crispy outside and creamy inside, split for stuffing.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "blistered_griddle_classic_5",
+                "recipe_name": "Pupusa",
+                "description": "Thick Salvadoran griddle cake, usually stuffed with cheese.",
+                "menu_description": "Thick Salvadoran griddle cake, usually stuffed with cheese.",
+                "creativity_level": 1
+            },
+        ],
+        "crisp_flatbread": [
+            {
+                "recipe_id": "crisp_flatbread_classic_1",
+                "recipe_name": "Rosemary Crackers",
+                "description": "Ultra-thin, snappy olive oil crackers heavily salted.",
+                "menu_description": "Ultra-thin, snappy olive oil crackers heavily salted.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "crisp_flatbread_classic_2",
+                "recipe_name": "Swedish Crispbread",
+                "description": "Rye-based, heavily textured, sturdy crispbread.",
+                "menu_description": "Rye-based, heavily textured, sturdy crispbread.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "crisp_flatbread_classic_3",
+                "recipe_name": "Lavash Crackers",
+                "description": "Dried lavash broken into shards for dipping.",
+                "menu_description": "Dried lavash broken into shards for dipping.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "crisp_flatbread_classic_4",
+                "recipe_name": "Pita Chips",
+                "description": "Twice-baked seasoned pita triangles.",
+                "menu_description": "Twice-baked seasoned pita triangles.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "crisp_flatbread_classic_5",
+                "recipe_name": "Parmesan Crisps",
+                "description": "Cheese-infused thin dough baked until shattering crisp.",
+                "menu_description": "Cheese-infused thin dough baked until shattering crisp.",
+                "creativity_level": 1
+            },
+        ],
+    }
     default_yield_unit = "flatbreads"
     target_protein_min = 10.5
     target_protein_max = 12.0
@@ -90,6 +240,22 @@ class FlatEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Everything Bagel Focaccia",
+        "Garlic Butter Naan",
+        "Spinach Feta Piadina",
+        "Pesto Mozzarella Flatbread",
+        "Caramelized Onion Roti",
+        "Toasted Sesame Pita",
+        "Chili Flake Olive Flatbread",
+        "Rosemary Parmesan Focaccia",
+        "Sweet Honey Butter Crumpet",
+        "Roasted Garlic Herb Pita",
+        "Smoked Paprika Flatbread",
+        "Za'atar Olive Flatbread",
+    ]
+
+
     presets = [
         "Flour Tortillas",
         "Hand-Slapped Naan",
@@ -122,6 +288,8 @@ class FlatEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

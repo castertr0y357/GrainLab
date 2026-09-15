@@ -697,57 +697,6 @@ document.addEventListener('alpine:init', () => {
         this.creativity_recipes = [];
         this.resetAdvisory();
         
-        // Show the cards container immediately, so we can see them stream in
-        this.creativity_loading = true;
-        this.creativity_streaming = true;
-        
-        if (this.creativityRecipesAbortController) {
-            this.creativityRecipesAbortController.abort();
-            this.creativityRecipesAbortController = null;
-        }
-        this.creativityRecipesAbortController = new AbortController();
-        const signal = this.creativityRecipesAbortController.signal;
-
-        const inventory_ids = this.activeBerries.map(b => b.id).join(',');
-        const baseUrl = `/generate-creativity-recipes/?engine_id=${encodeURIComponent(category_slug)}&active_archetype_id=${encodeURIComponent(archetype_id)}&inventory_ids=${encodeURIComponent(inventory_ids)}&active_variation_id=${encodeURIComponent(this.active_variation_id || '')}`;
-        
-        let recipesLevel1 = [];
-        let recipesLevel2 = [];
-        
-        const updateUI = () => {
-            this.creativity_recipes = [...recipesLevel1, ...recipesLevel2];
-        };
-
-        const fetchLevel = async (level) => {
-            const url = `${baseUrl}&level=${level}`;
-            try {
-                const res = await fetch(url, { signal });
-                if (!res.ok) {
-                    let errData;
-                    try { errData = await res.json(); } catch(e) {}
-                    throw new Error(errData?.error || `HTTP error! status: ${res.status}`);
-                }
-                
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder("utf-8");
-                let buffer = "";
-                let rawBuffer = "";
-                
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop();
-                    
-                    for (const line of lines) {
-                        if (line.startsWith('event: close')) {
-                            // close event
-                        } else if (line.startsWith('data: ')) {
-                            const dataStr = line.substring(6).trim();
-                            if (dataStr && dataStr !== '{}') {
-                                try {
                                     const parsed = JSON.parse(dataStr);
                                     if (typeof parsed === 'string') {
                                         rawBuffer += parsed;

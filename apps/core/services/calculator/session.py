@@ -53,6 +53,7 @@ def get_engines_ff_json() -> str:
             "tweak_labels": getattr(engine, "tweak_labels", {}),
             "variations": getattr(engine, "variations", {}),
             "recipe_classification": getattr(engine, "recipe_classification", "Savory"),
+            "default_starter_recipes": getattr(engine, "default_starter_recipes", {}),
         }
     return json.dumps(engines_ff_data)
 

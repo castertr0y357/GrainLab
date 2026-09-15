@@ -4,6 +4,156 @@ from apps.core.engines.base_engine import BaseEngine
 class CookieEngine(BaseEngine):
     name = "Cookies & Shortbread Engine"
     slug = "cookie"
+    default_starter_recipes = {
+        "drop_cookie": [
+            {
+                "recipe_id": "drop_cookie_classic_1",
+                "recipe_name": "Classic Chocolate Chip",
+                "description": "Crispy edges, chewy center, loaded with semi-sweet chips.",
+                "menu_description": "Crispy edges, chewy center, loaded with semi-sweet chips.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "drop_cookie_classic_2",
+                "recipe_name": "Snickerdoodle",
+                "description": "Soft, tangy cookie rolled generously in cinnamon sugar.",
+                "menu_description": "Soft, tangy cookie rolled generously in cinnamon sugar.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "drop_cookie_classic_3",
+                "recipe_name": "Oatmeal Raisin",
+                "description": "Chewy, hearty, spiced cookie loaded with oats and raisins.",
+                "menu_description": "Chewy, hearty, spiced cookie loaded with oats and raisins.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "drop_cookie_classic_4",
+                "recipe_name": "Peanut Butter Criss-Cross",
+                "description": "Dense, crumbly, peanut-heavy cookie with fork marks.",
+                "menu_description": "Dense, crumbly, peanut-heavy cookie with fork marks.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "drop_cookie_classic_5",
+                "recipe_name": "Double Chocolate Chunk",
+                "description": "Cocoa-based dough with massive dark chocolate chunks.",
+                "menu_description": "Cocoa-based dough with massive dark chocolate chunks.",
+                "creativity_level": 1
+            },
+        ],
+        "bar_cookie": [
+            {
+                "recipe_id": "bar_cookie_classic_1",
+                "recipe_name": "Fudgy Brownie",
+                "description": "Dense, incredibly rich chocolate square with a crinkly top.",
+                "menu_description": "Dense, incredibly rich chocolate square with a crinkly top.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "bar_cookie_classic_2",
+                "recipe_name": "Chewy Blondie",
+                "description": "Brown sugar and vanilla base, dense like a brownie but without cocoa.",
+                "menu_description": "Brown sugar and vanilla base, dense like a brownie but without cocoa.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "bar_cookie_classic_3",
+                "recipe_name": "Lemon Bars",
+                "description": "Shortbread crust heavily topped with tart lemon curd.",
+                "menu_description": "Shortbread crust heavily topped with tart lemon curd.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "bar_cookie_classic_4",
+                "recipe_name": "Pecan Pie Bars",
+                "description": "Shortbread base with a gooey, caramelized pecan topping.",
+                "menu_description": "Shortbread base with a gooey, caramelized pecan topping.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "bar_cookie_classic_5",
+                "recipe_name": "Millionaire's Shortbread",
+                "description": "Layers of shortbread, caramel, and a snappy chocolate shell.",
+                "menu_description": "Layers of shortbread, caramel, and a snappy chocolate shell.",
+                "creativity_level": 1
+            },
+        ],
+        "slice_bake": [
+            {
+                "recipe_id": "slice_bake_classic_1",
+                "recipe_name": "Vanilla Icebox",
+                "description": "Simple, buttery slice-and-bake cookies with crisp edges.",
+                "menu_description": "Simple, buttery slice-and-bake cookies with crisp edges.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "slice_bake_classic_2",
+                "recipe_name": "Pinwheels",
+                "description": "Swirled chocolate and vanilla dough sliced into spirals.",
+                "menu_description": "Swirled chocolate and vanilla dough sliced into spirals.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "slice_bake_classic_3",
+                "recipe_name": "Pistachio Cranberry",
+                "description": "Nutty and tart studded dough logs sliced thin.",
+                "menu_description": "Nutty and tart studded dough logs sliced thin.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "slice_bake_classic_4",
+                "recipe_name": "Checkerboard Cookies",
+                "description": "Meticulously stacked square logs sliced for a checkerboard effect.",
+                "menu_description": "Meticulously stacked square logs sliced for a checkerboard effect.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "slice_bake_classic_5",
+                "recipe_name": "Sablé Breton",
+                "description": "Rich, salted butter French cookies, baked incredibly crisp.",
+                "menu_description": "Rich, salted butter French cookies, baked incredibly crisp.",
+                "creativity_level": 1
+            },
+        ],
+        "rolled_cutout": [
+            {
+                "recipe_id": "rolled_cutout_classic_1",
+                "recipe_name": "Gingerbread Men",
+                "description": "Sturdy, heavily spiced cookie dough designed for intricate shapes.",
+                "menu_description": "Sturdy, heavily spiced cookie dough designed for intricate shapes.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "rolled_cutout_classic_2",
+                "recipe_name": "Sugar Cookie",
+                "description": "Soft, flat cookie specifically formulated to hold royal icing.",
+                "menu_description": "Soft, flat cookie specifically formulated to hold royal icing.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "rolled_cutout_classic_3",
+                "recipe_name": "Linzer Cookies",
+                "description": "Nutty cutout dough sandwiched with bright raspberry jam.",
+                "menu_description": "Nutty cutout dough sandwiched with bright raspberry jam.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "rolled_cutout_classic_4",
+                "recipe_name": "Shortbread",
+                "description": "Classic Scottish 3-ingredient cookie, crumbly and rich.",
+                "menu_description": "Classic Scottish 3-ingredient cookie, crumbly and rich.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "rolled_cutout_classic_5",
+                "recipe_name": "Alfajores",
+                "description": "Tender cornstarch cookies sandwiching dulce de leche.",
+                "menu_description": "Tender cornstarch cookies sandwiching dulce de leche.",
+                "creativity_level": 1
+            },
+        ],
+    }
     recipe_classification = "Sweet"
     default_yield_unit = "cookies"
     default_binder_pct = 0.35
@@ -13,6 +163,10 @@ class CookieEngine(BaseEngine):
     gluten_behavior = "Minimal Gluten Interaction. Flour must allow melting fats and sugars to spread horizontally before the crumb structure sets in the oven."
     flavor_affinity = "Tannin Sensitive (Sweet/Neutral). Designed for toasted brown sugars and confections; whole-grain bitterness clashes aggressively."
     tannin_sensitive = True
+    default_flavor_inclusions = [
+        {"name": "Dark Chocolate Chunks", "volume_description": "1/2 cup"},
+        {"name": "Maldon Sea Salt", "volume_description": "1 tsp flaky"},
+    ]
     supported_tweaks = ["enrichment"]
     tweak_labels = {"enrichment": ["Crispy / Chewy", "Soft / Cakey"]}
     variations = {
@@ -114,6 +268,25 @@ class CookieEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Snickerdoodle Cinnamon",
+        "Triple Chocolate Chunk",
+        "White Chocolate Macadamia",
+        "Chewy Oatmeal Raisin",
+        "Lemon Zest Butter",
+        "Spiced Ginger Molasses",
+        "Classic Sugar Sparkle",
+        "Toasted Pecan Shortbread",
+        "Double Fudge Brownie Drop",
+        "Maple Walnut Cookie",
+        "Cranberry Orange Drop",
+        "Almond Butter Sandies",
+    ]
+
+    max_liquid_percentage = 80.0
+    max_lipid_percentage = 80.0
+
+
     presets = [
         "Chewy Chocolate Chip Cookies",
         "Oatmeal Raisin Bakes",
@@ -145,6 +318,8 @@ class CookieEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 
@@ -362,6 +537,8 @@ class DropCookieArchetype(CookieEngine):
         "Tannin-free Hard White Wheats, Soft White Wheats, or low-malty ancient profiles (like Spelt or Kamut) are excellent choices "
         "that introduce desirable culinary depth without clashing with confections."
     )
+    shaping_directive = "Scoop into balls (approx 2 tablespoons). Lightly press down the tops of the dough balls before baking to encourage horizontal spread and even baking edges."
+    ingredient_prep_directive = "Butter MUST be properly softened (room temperature, ~65°F) for creaming unless explicitly stated otherwise. Eggs should also be at room temperature to prevent the butter from seizing."
 
     # Inherits base bake steps
 
@@ -403,6 +580,8 @@ class BarCookieArchetype(CookieEngine):
         "that slices cleanly without shattering, while providing enough uniform starch walls to hold heavy inclusion "
         "weights across a continuous slab pan without center sinking."
     )
+    shaping_directive = "Press dough or spread batter evenly into a parchment-lined baking pan. Ensure corners are filled and the surface is flat for uniform baking."
+    ingredient_prep_directive = "If using melted butter or chocolate, allow it to cool slightly before adding eggs to prevent scrambling."
 
     def get_live_timeline_steps(
         self,
@@ -461,6 +640,8 @@ class SliceBakeArchetype(CookieEngine):
         "with minimal protein resilience, allowing chilled logs to be sheeted or sliced cleanly without dragging crumbs, "
         "baking into uniform, crisp rings."
     )
+    shaping_directive = "Form dough into a tight, even log, wrap tightly in plastic, and chill until completely firm. Slice evenly (approx 1/4 to 1/2 inch thick) using a sharp knife before baking."
+    ingredient_prep_directive = "Butter must be properly softened for initial mixing, but the final dough MUST be thoroughly chilled before slicing."
 
     def get_live_timeline_steps(
         self,
@@ -497,6 +678,8 @@ class SliceBakeArchetype(CookieEngine):
 
 class RolledCutoutArchetype(CookieEngine):
     archetype_slug = "rolled_cutout"
+    shaping_directive = "Roll dough out evenly (approx 1/4 inch thick) on a lightly floured surface or between parchment sheets. Cut into desired shapes, minimizing re-rolling to prevent tough cookies."
+    ingredient_prep_directive = "Dough usually requires chilling before rolling to maintain sharp edges during cutting and baking."
     guardrails = {
         "hydration_min": 0,
         "hydration_max": 20,

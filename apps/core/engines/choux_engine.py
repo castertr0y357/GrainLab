@@ -4,6 +4,119 @@ from apps.core.engines.base_engine import BaseEngine
 class ChouxEngine(BaseEngine):
     name = "Choux Paste Engine"
     slug = "choux"
+    default_starter_recipes = {
+        "piped_shell": [
+            {
+                "recipe_id": "piped_shell_classic_1",
+                "recipe_name": "Classic Éclair",
+                "description": "Oblong choux pastry, baked hollow, filled with cream.",
+                "menu_description": "Oblong choux pastry, baked hollow, filled with cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "piped_shell_classic_2",
+                "recipe_name": "Cream Puffs (Profiteroles)",
+                "description": "Round choux buns, baked crisp, often split for ice cream.",
+                "menu_description": "Round choux buns, baked crisp, often split for ice cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "piped_shell_classic_3",
+                "recipe_name": "Gougères",
+                "description": "Savory cheese-infused choux puffs, light and airy.",
+                "menu_description": "Savory cheese-infused choux puffs, light and airy.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "piped_shell_classic_4",
+                "recipe_name": "Paris-Brest",
+                "description": "Large ring of choux pastry, split and filled with praline cream.",
+                "menu_description": "Large ring of choux pastry, split and filled with praline cream.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "piped_shell_classic_5",
+                "recipe_name": "Religieuse",
+                "description": "Two stacked choux buns resembling a nun in a habit.",
+                "menu_description": "Two stacked choux buns resembling a nun in a habit.",
+                "creativity_level": 1
+            },
+        ],
+        "extrusion_fried": [
+            {
+                "recipe_id": "extrusion_fried_classic_1",
+                "recipe_name": "Classic Churros",
+                "description": "Star-piped choux fried until crispy, coated in cinnamon sugar.",
+                "menu_description": "Star-piped choux fried until crispy, coated in cinnamon sugar.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "extrusion_fried_classic_2",
+                "recipe_name": "French Cruller",
+                "description": "Ring-piped choux, fried for an airy, deeply ridged donut.",
+                "menu_description": "Ring-piped choux, fried for an airy, deeply ridged donut.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "extrusion_fried_classic_3",
+                "recipe_name": "Beignets de Soufflé",
+                "description": "Deep fried balls of choux pastry that puff significantly.",
+                "menu_description": "Deep fried balls of choux pastry that puff significantly.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "extrusion_fried_classic_4",
+                "recipe_name": "Funnel Cake",
+                "description": "Drizzled batter fried in a chaotic, overlapping web.",
+                "menu_description": "Drizzled batter fried in a chaotic, overlapping web.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "extrusion_fried_classic_5",
+                "recipe_name": "Zeppole",
+                "description": "Italian fried dough balls, often made with a choux-like base.",
+                "menu_description": "Italian fried dough balls, often made with a choux-like base.",
+                "creativity_level": 1
+            },
+        ],
+        "savory_emulsion": [
+            {
+                "recipe_id": "savory_emulsion_classic_1",
+                "recipe_name": "Potato Churros",
+                "description": "Savory choux dough enriched with mashed potato before frying.",
+                "menu_description": "Savory choux dough enriched with mashed potato before frying.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "savory_emulsion_classic_2",
+                "recipe_name": "Cheese Gougère Bites",
+                "description": "Miniature, sharply flavored cheese puffs.",
+                "menu_description": "Miniature, sharply flavored cheese puffs.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "savory_emulsion_classic_3",
+                "recipe_name": "Herb & Black Pepper Choux",
+                "description": "Savory pastry bases designed for delicate hors d'oeuvres.",
+                "menu_description": "Savory pastry bases designed for delicate hors d'oeuvres.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "savory_emulsion_classic_4",
+                "recipe_name": "Smoked Salmon Choux",
+                "description": "Savory shells intended to be filled with salmon mousse.",
+                "menu_description": "Savory shells intended to be filled with salmon mousse.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "savory_emulsion_classic_5",
+                "recipe_name": "Truffle Puffs",
+                "description": "Earthy, truffle-oil infused savory choux bites.",
+                "menu_description": "Earthy, truffle-oil infused savory choux bites.",
+                "creativity_level": 1
+            },
+        ],
+    }
     default_yield_unit = "pastries"
     default_binder_pct = 1.60
     default_salt_pct = 0.01
@@ -48,6 +161,22 @@ class ChouxEngine(BaseEngine):
         }
     }
 
+    dynamic_flavor_bases = [
+        "Pecan Maple Cream",
+        "White Chocolate Raspberry",
+        "Dark Chocolate Orange",
+        "Salted Caramel Pecan",
+        "Vanilla Custard Glaze",
+        "Double Chocolate Mousse",
+        "Coffee Espresso Swirl",
+        "Lemon Meringue Puff",
+        "Spiced Apple Cinnamon",
+        "Toasted Almond Praline",
+        "Blueberry Cream Custard",
+        "Sweet Coconut Cream",
+    ]
+
+
     presets = [
         "Chocolate Éclairs",
         "Cream Puffs (Profiteroles)",
@@ -77,6 +206,8 @@ class ChouxEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                     }
         return self.__class__._archetypes_cache
 

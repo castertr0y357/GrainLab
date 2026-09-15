@@ -1266,6 +1266,18 @@ def stream_final_insights(
         "   - CRITICAL PREP DETAILS: For ANY ingredient that requires physical preparation prior to mixing (e.g., cutting fats into specific shapes/sizes, tempering liquids, chopping inclusions, sifting dry ingredients, or blooming yeast), you MUST create an object with `type`: 'prep_step', `ingredient`: '<ingredient name>', and `instruction`: '<how to prep>' BEFORE the mixing phases. Do NOT include these preparation instructions in the timeline `phase` steps. The timeline `phase` steps should assume the ingredients are already prepped according to the `prep_step` objects.\n"
     )
 
+    # Inject engine directives (ingredient prep and shaping) if available
+    category_slug = state.get("selected_master") or state.get("dough_category")
+    preset_slug = state.get("preset_slug")
+    if category_slug:
+        engine_id = CATEGORY_TO_ENGINE.get(category_slug, "base")
+        from apps.core.engines.router import ENGINES
+        from apps.core.engines.base_engine import BaseEngine
+        engine = ENGINES.get(engine_id, BaseEngine())
+        directives = engine.culinary_nuance_directive(active_archetype_id=preset_slug)
+        if directives:
+            system_prompt += f"\n[ENGINE DIRECTIVES]\n{directives}\n"
+
     # Organize recipe_data into a clean, categorized list of ingredients WITHOUT weights
     safe_recipe_data = {}
     if recipe_data:

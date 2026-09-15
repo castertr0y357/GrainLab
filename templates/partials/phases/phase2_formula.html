@@ -170,15 +170,14 @@
                         </div>
                     </template>
                     
-                    <!-- Loading Skeletons -->
-                    <template x-if="creativity_streaming">
-                        <div style="display: contents;">
-                            <template x-for="i in Math.max(0, 5 - getRecipesForLevel(2).length)">
-                                <div class="card"
-                                     :style="'min-width: 250px; max-width: 300px; flex-shrink: 0; height: 72px; padding: 1rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; display: flex; align-items: center; justify-content: center; animation-delay: ' + (i * 0.2) + 's;'">
-                                    <span class="spinner" style="width: 20px; height: 20px; border-color: var(--accent) transparent var(--accent) transparent;"></span>
-                                </div>
-                            </template>
+                    <!-- Placeholder if empty -->
+                    <template x-if="!creativity_streaming && getRecipesForLevel(2).length === 0">
+                        <div class="card" 
+                             @click="toggleExpandLevel(2)"
+                             style="width: 100%; padding: 1rem; cursor: pointer; border: 2px dashed rgba(255,255,255,0.1); border-radius: var(--radius-md); transition: var(--transition); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-secondary);"
+                             onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--text-primary)';"
+                             onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-secondary)';">
+                            <span style="font-size: 0.9rem; font-weight: 500;">✨ Click here to generate creative AI variations ✨</span>
                         </div>
                     </template>
                 </div>

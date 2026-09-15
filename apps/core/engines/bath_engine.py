@@ -4,6 +4,82 @@ from apps.core.engines.base_engine import BaseEngine
 class BathEngine(BaseEngine):
     name = "Alkaline Bath Engine"
     slug = "bath"
+    default_starter_recipes = {
+        "boiled_bagel": [
+            {
+                "recipe_id": "boiled_bagel_classic_1",
+                "recipe_name": "New York Water Bagel",
+                "description": "Chewy, dense interior with a shiny, malt-boiled crust.",
+                "menu_description": "Chewy, dense interior with a shiny, malt-boiled crust.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "boiled_bagel_classic_2",
+                "recipe_name": "Montreal Style",
+                "description": "Smaller, sweeter, wood-fired ring boiled in honey water.",
+                "menu_description": "Smaller, sweeter, wood-fired ring boiled in honey water.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "boiled_bagel_classic_3",
+                "recipe_name": "Everything Bagel",
+                "description": "Classic NY style coated entirely in an everything spice blend.",
+                "menu_description": "Classic NY style coated entirely in an everything spice blend.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "boiled_bagel_classic_4",
+                "recipe_name": "Pumpernickel Bagel",
+                "description": "Dark, molasses and rye flavored dense ring.",
+                "menu_description": "Dark, molasses and rye flavored dense ring.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "boiled_bagel_classic_5",
+                "recipe_name": "Cinnamon Raisin",
+                "description": "Sweetly spiced with plump raisins throughout.",
+                "menu_description": "Sweetly spiced with plump raisins throughout.",
+                "creativity_level": 1
+            },
+        ],
+        "twisted_pretzel": [
+            {
+                "recipe_id": "twisted_pretzel_classic_1",
+                "recipe_name": "Bavarian Soft Pretzel",
+                "description": "Lye-dipped, deep mahogany crust with a soft interior.",
+                "menu_description": "Lye-dipped, deep mahogany crust with a soft interior.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "twisted_pretzel_classic_2",
+                "recipe_name": "Pretzel Buns",
+                "description": "Lye-dipped burger buns for ultimate structural integrity.",
+                "menu_description": "Lye-dipped burger buns for ultimate structural integrity.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "twisted_pretzel_classic_3",
+                "recipe_name": "Pretzel Bites",
+                "description": "Bite-sized nuggets perfect for dipping in cheese.",
+                "menu_description": "Bite-sized nuggets perfect for dipping in cheese.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "twisted_pretzel_classic_4",
+                "recipe_name": "Cinnamon Sugar Pretzel",
+                "description": "Butter-brushed and coated in sweet cinnamon sugar.",
+                "menu_description": "Butter-brushed and coated in sweet cinnamon sugar.",
+                "creativity_level": 1
+            },
+            {
+                "recipe_id": "twisted_pretzel_classic_5",
+                "recipe_name": "Jalapeño Cheddar Pretzel",
+                "description": "Stuffed or topped with sharp cheddar and spicy jalapeños.",
+                "menu_description": "Stuffed or topped with sharp cheddar and spicy jalapeños.",
+                "creativity_level": 1
+            },
+        ],
+    }
     default_yield_unit = "pieces"
     target_protein_min = 12.0
     target_protein_max = 14.0
@@ -50,6 +126,22 @@ class BathEngine(BaseEngine):
         },
     }
 
+    dynamic_flavor_bases = [
+        "Poppy Seed Crusted",
+        "Toasted Onion & Chive",
+        "Sweet Molasses",
+        "Black Pepper Asiago",
+        "Sundried Tomato Basil",
+        "Smoked Paprika Glazed",
+        "Sourdough Rye Twist",
+        "Maple Brown Sugar",
+        "Cheddar Herb Butter",
+        "Spiced Pumpkin Seed",
+        "Garlic Herb Infusion",
+        "Sweet Honey Oat",
+    ]
+
+
     presets = [
         "Soft Bavarian Pretzels",
         "Traditional Boiled New York Bagels",
@@ -76,6 +168,8 @@ class BathEngine(BaseEngine):
                     "target_archetype_mechanics": subclass.target_archetype_mechanics,
                     "culinary_nuance_directive": subclass.culinary_nuance_directive,
                     "preset_matchers": getattr(subclass, "preset_matchers", []),
+                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
+                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
                 }
             BathEngine._archetypes_cache = cache
         return BathEngine._archetypes_cache
