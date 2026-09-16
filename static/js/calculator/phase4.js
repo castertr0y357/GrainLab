@@ -415,8 +415,7 @@ document.addEventListener('alpine:init', () => {
             };
 
             Promise.allSettled([
-                streamFetch(createParams('processes')),
-                streamFetch(createParams('tweaks'))
+                streamFetch(createParams('processes'))
             ]).then((results) => {
                 results.forEach((result, idx) => {
                     if (result.status === 'rejected') {
