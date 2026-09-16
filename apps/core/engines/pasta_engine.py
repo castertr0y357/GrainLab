@@ -11,35 +11,35 @@ class PastaEngine(BaseEngine):
                 "recipe_name": "Fettuccine",
                 "description": "Flat, thick ribbons perfect for heavy cream or cheese sauces.",
                 "menu_description": "Flat, thick ribbons perfect for heavy cream or cheese sauces.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "sheeted_ribbon_classic_2",
                 "recipe_name": "Pappardelle",
                 "description": "Wide, rustic ribbons designed to hold hearty ragù.",
                 "menu_description": "Wide, rustic ribbons designed to hold hearty ragù.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "sheeted_ribbon_classic_3",
                 "recipe_name": "Tagliatelle",
                 "description": "Classic Bolognese ribbon pasta, slightly thinner than fettuccine.",
                 "menu_description": "Classic Bolognese ribbon pasta, slightly thinner than fettuccine.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "sheeted_ribbon_classic_4",
                 "recipe_name": "Lasagna Sheets",
                 "description": "Wide, flat sheets used for layering with cheese and sauce.",
                 "menu_description": "Wide, flat sheets used for layering with cheese and sauce.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "sheeted_ribbon_classic_5",
                 "recipe_name": "Linguine",
                 "description": "Flattened oval noodles, delicate enough for seafood sauces.",
                 "menu_description": "Flattened oval noodles, delicate enough for seafood sauces.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
         ],
         "stuffed_pocket": [
@@ -48,35 +48,35 @@ class PastaEngine(BaseEngine):
                 "recipe_name": "Cheese Ravioli",
                 "description": "Square pasta pockets filled with ricotta and parmesan.",
                 "menu_description": "Square pasta pockets filled with ricotta and parmesan.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "stuffed_pocket_classic_2",
                 "recipe_name": "Tortellini",
                 "description": "Small, ring-shaped stuffed pasta typically filled with meat or cheese.",
                 "menu_description": "Small, ring-shaped stuffed pasta typically filled with meat or cheese.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "stuffed_pocket_classic_3",
                 "recipe_name": "Agnolotti",
                 "description": "Piedmontese pinched pasta pockets with savory fillings.",
                 "menu_description": "Piedmontese pinched pasta pockets with savory fillings.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "stuffed_pocket_classic_4",
                 "recipe_name": "Mezzaluna",
                 "description": "Half-moon shaped stuffed pasta.",
                 "menu_description": "Half-moon shaped stuffed pasta.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "stuffed_pocket_classic_5",
                 "recipe_name": "Pierogi",
                 "description": "Thicker dough pockets stuffed with potato and cheese.",
                 "menu_description": "Thicker dough pockets stuffed with potato and cheese.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
         ],
         "extruded_shape": [
@@ -85,35 +85,35 @@ class PastaEngine(BaseEngine):
                 "recipe_name": "Penne Rigate",
                 "description": "Ridged tubes cut on a bias to hold thick sauces.",
                 "menu_description": "Ridged tubes cut on a bias to hold thick sauces.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "extruded_shape_classic_2",
                 "recipe_name": "Rigatoni",
                 "description": "Large, straight, ridged tubes perfect for chunky meat sauces.",
                 "menu_description": "Large, straight, ridged tubes perfect for chunky meat sauces.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "extruded_shape_classic_3",
                 "recipe_name": "Macaroni",
                 "description": "Small, curved tubes ubiquitous in cheese sauces.",
                 "menu_description": "Small, curved tubes ubiquitous in cheese sauces.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "extruded_shape_classic_4",
                 "recipe_name": "Fusilli",
                 "description": "Corkscrew shaped pasta that traps sauce in its spirals.",
                 "menu_description": "Corkscrew shaped pasta that traps sauce in its spirals.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "extruded_shape_classic_5",
                 "recipe_name": "Bucatini",
                 "description": "Thick, spaghetti-like pasta with a hole running through the center.",
                 "menu_description": "Thick, spaghetti-like pasta with a hole running through the center.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
         ],
         "alkaline_noodles": [
@@ -122,35 +122,35 @@ class PastaEngine(BaseEngine):
                 "recipe_name": "Tokyo Ramen",
                 "description": "Thin, firm, slightly wavy alkaline noodles.",
                 "menu_description": "Thin, firm, slightly wavy alkaline noodles.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "alkaline_noodles_classic_2",
                 "recipe_name": "Hakata Ramen",
                 "description": "Ultra-thin, straight, low-hydration noodles for tonkotsu broth.",
                 "menu_description": "Ultra-thin, straight, low-hydration noodles for tonkotsu broth.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "alkaline_noodles_classic_3",
                 "recipe_name": "Tsukemen",
                 "description": "Thick, highly chewy alkaline noodles meant for dipping.",
                 "menu_description": "Thick, highly chewy alkaline noodles meant for dipping.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "alkaline_noodles_classic_4",
                 "recipe_name": "Lo Mein",
                 "description": "Soft, thick Chinese egg noodles for stir-frying.",
                 "menu_description": "Soft, thick Chinese egg noodles for stir-frying.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
             {
                 "recipe_id": "alkaline_noodles_classic_5",
                 "recipe_name": "Wonton Noodles",
                 "description": "Thin, incredibly springy egg and alkaline noodles.",
                 "menu_description": "Thin, incredibly springy egg and alkaline noodles.",
-                "creativity_level": 1
+                "creativity_level": 1,
             },
         ],
     }
@@ -187,8 +187,8 @@ class PastaEngine(BaseEngine):
             "step_increment": 2,
             "unit_label": "serving",
             "unit_label_plural": "servings",
-            "cook_temp_f": 0,
-            "bake_time_min": 0,
+            "cook_temp_f": 212,
+            "bake_time_min": 3,
             "steam_required": False,
             "is_enriched_profile": False,
         },
@@ -201,8 +201,8 @@ class PastaEngine(BaseEngine):
             "step_increment": 2,
             "unit_label": "serving",
             "unit_label_plural": "servings",
-            "cook_temp_f": 0,
-            "bake_time_min": 0,
+            "cook_temp_f": 212,
+            "bake_time_min": 3,
             "steam_required": False,
             "is_enriched_profile": False,
         },
@@ -225,7 +225,6 @@ class PastaEngine(BaseEngine):
 
     ai_cook_temp_override = 212
     ai_cook_time_override = 3
-
 
     presets = [
         "Fresh Egg Tagliatelle",
@@ -257,8 +256,14 @@ class PastaEngine(BaseEngine):
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
-                        "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
-                        "shaping_directive": getattr(subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")),
+                        "ingredient_prep_directive": getattr(
+                            subclass,
+                            "ingredient_prep_directive",
+                            getattr(self.__class__, "ingredient_prep_directive", ""),
+                        ),
+                        "shaping_directive": getattr(
+                            subclass, "shaping_directive", getattr(self.__class__, "shaping_directive", "")
+                        ),
                     }
         return self.__class__._archetypes_cache
 

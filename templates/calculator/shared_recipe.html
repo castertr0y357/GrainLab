@@ -30,7 +30,6 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
         <div x-data="{ ingName: 'Flour Base' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
             <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: <span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 0.75rem;" x-show="!global_ai_enabled || recipeIngredients.length === 0">
@@ -305,6 +304,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             {% endif %}
             
             <!-- Salt Row -->
+            {% if recipe.salt_weight > 0 %}
             <div x-data="{
                 children: ['Fine Sea Salt'],
                 get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
@@ -323,6 +323,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
                 <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
                 </div>
             </div>
+            {% endif %}
             
             <!-- Additives Row -->
             {% if recipe.additive_items %}
@@ -395,21 +396,25 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
             </div>
         </div>
 
-    <!-- BAKING PROFILE -->
+    <!-- COOKING PROFILE -->
     <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Baking Profile</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Cooking Profile</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div x-show="bakeTemp" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
-                <div x-show="!bakeTemp && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
-                <div x-show="aiLoading && !bakeTemp" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Oven Temp</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ primary_cooking_method|default:'Baking' }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Method</div>
             </div>
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div x-show="bakeTimeMin" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTimeMin + 'm'"></div>
-                <div x-show="!bakeTimeMin && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
-                <div x-show="aiLoading && !bakeTimeMin" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Bake Time</div>
+                <div x-show="bakeTemp !== null" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
+                <div x-show="bakeTemp === null && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ cook_temp_f }}°F</div>
+                <div x-show="aiLoading && bakeTemp === null" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Temp</div>
+            </div>
+            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
+                <div x-show="bakeTimeMin !== null" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeTimeMin + 'm'"></div>
+                <div x-show="bakeTimeMin === null && !aiLoading" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
+                <div x-show="aiLoading && bakeTimeMin === null" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem auto;"></div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Time</div>
             </div>
             <div>
                 <div x-show="bakeSteam" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);" x-text="bakeSteam"></div>
@@ -534,7 +539,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
             <div>
                 <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Temp</div>
-                <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">{{ bake_temp_f }}°F</div>
+                <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">{{ cook_temp_f }}°F</div>
             </div>
             <div>
                 <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Time</div>
@@ -613,7 +618,7 @@ x-init="init(); if(recipeCompiled) loadCompiledData();"
     <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
     <div id="countertop-data" 
          data-steps="{{ countertop_steps_json }}"
-         data-bake-temp="{{ bake_temp_f }}"
+         data-bake-temp="{{ cook_temp_f }}"
          data-bake-time="{{ bake_time_min }}"
          data-bake-steam="{% if steam_required %}Yes{% else %}No{% endif %}"
          data-doneness-temp="{{ doneness_temp_f }}"

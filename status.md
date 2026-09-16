@@ -12,6 +12,8 @@
 - [x] Build HTMX + Alpine.js interactive UI ("Countertop Mode")
 - [x] Add unit, integration, and dynamic route scanning tests
 - [x] Move local AI parameters exclusively to database settings (remove from env settings)
+- [x] Fix missing temperature for non-baking engines by updating templates to use `cook_temp_f` and fixing JavaScript conditional checks for temperatures/times of 0.
+- [x] Update PastaEngine default form factor configurations to explicitly return 212°F and 3 minutes as accurate base constants for boiling pasta, replacing previous 0 placeholders.
 - [x] Parameterize local port bindings and DB options inside `.env` configurations
 - [x] Implement coordinate-based Euclidean Classifier Engine and dynamic feedback panel
 - [x] Migrate form inputs to simplified Texture and Crumb sliders

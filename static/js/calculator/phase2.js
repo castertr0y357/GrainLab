@@ -676,89 +676,23 @@ document.addEventListener('alpine:init', () => {
             this.active_variation_id = null;
         }
         
-        // Fetch 5 recipes per creativity level for this archetype!
-        this.fetchCreativityRecipes(engine_id, archetype_id);
+        // Load default starter recipes instantly
+        const defaultRecipes = this.engines_ff[this.selected_master]?.default_starter_recipes?.[archetype_id] || [];
+        // Deep copy to avoid mutating the original defaults
+        this.creativity_recipes = JSON.parse(JSON.stringify(defaultRecipes));
+        
+        // Ensure they have the expected fields
+        this.creativity_recipes.forEach((r, idx) => {
+             r.creativity_level = r.creativity_level || 1; 
+             r.recipe_id = r.recipe_id || `default_${archetype_id}_${idx}`;
+        });
+        
+        this.creativity_streaming = false;
     },
 
 
     fetchCreativityRecipes(category_slug, archetype_id) {
-        if (!category_slug || category_slug === 'null' || !archetype_id) {
-            this.creativity_recipes = [];
-            this.creativity_loading = false;
-            return;
-        }
-        
-        // Clear old state before streaming
-        this.recipe_selected = false;
-        this.selected_recipe_id = null;
-        this.expanded_level = null;
-        this.alternative_variants = [];
-        this.grainEvaluations = [];
-        this.creativity_recipes = [];
-        this.resetAdvisory();
-        
-                                    const parsed = JSON.parse(dataStr);
-                                    if (typeof parsed === 'string') {
-                                        rawBuffer += parsed;
-                                        const objects = this.extractPartialObjects(rawBuffer);
-                                        
-                                        const newRecipes = [];
-                                        const targetArray = level === 1 ? recipesLevel1 : recipesLevel2;
-                                        
-                                        for (let i = 0; i < objects.length; i++) {
-                                            const objStr = objects[i];
-                                            const parsedObj = this.repairAndParse(objStr);
-                                            
-                                            if (parsedObj) {
-                                                const norm = {
-                                                    recipe_id: targetArray[i]?.recipe_id || `temp_${level}_${i}`,
-                                                    creativity_level: level
-                                                };
-                                                for (const key in parsedObj) {
-                                                    if (key.toLowerCase() === 'recipe_id' && parsedObj[key]) {
-                                                        norm.recipe_id = parsedObj[key];
-                                                    } else if (key.toLowerCase() !== 'recipe_id') {
-                                                        norm[key.toLowerCase()] = parsedObj[key];
-                                                    }
-                                                }
-                                                newRecipes.push(norm);
-                                            } else {
-                                                if (targetArray[i]) {
-                                                    newRecipes.push(targetArray[i]);
-                                                }
-                                            }
-                                        }
-                                        
-                                        if (level === 1) {
-                                            recipesLevel1 = newRecipes;
-                                        } else {
-                                            recipesLevel2 = newRecipes;
-                                        }
-                                        
-                                        updateUI();
-                                    }
-                                } catch (e) {
-                                    console.error('Error parsing chunk', e);
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(`Error fetching creativity recipes level ${level}:`, err);
-                }
-            }
-        };
-
-        // Fire both levels simultaneously
-        Promise.all([fetchLevel(1), fetchLevel(2)]).then(() => {
-            this.creativity_streaming = false;
-            // Clean up abort controller if completed normally
-            if (this.creativityRecipesAbortController && !this.creativityRecipesAbortController.signal.aborted) {
-                this.creativityRecipesAbortController = null;
-            }
-        });
+        // No longer used, defaults are loaded immediately in selectArchetype.
     },
 
 
@@ -848,9 +782,7 @@ document.addEventListener('alpine:init', () => {
             this.expanded_level = null;
         } else {
             this.expanded_level = level;
-            if (this.expanded_level === 1 || this.expanded_level === 2) {
-                this.fetchAlternativeVariants(level);
-            }
+            // Removed auto-fetch to let user choose standard vs creative generation via buttons.
         }
     },
 

@@ -582,7 +582,12 @@ document.addEventListener('alpine:init', () => {
             if (dataEl) {
                 try {
                     this.steps = JSON.parse(dataEl.getAttribute('data-steps') || '[]');
-                    this.bakeTemp = parseInt(dataEl.getAttribute('data-bake-temp')) || 450;
+                    
+                    let tempVal = dataEl.getAttribute('data-bake-temp');
+                    this.bakeTemp = (tempVal !== null && tempVal !== '') ? parseInt(tempVal) : null;
+                    
+                    let timeVal = dataEl.getAttribute('data-bake-time');
+                    this.bakeTimeMin = (timeVal !== null && timeVal !== '') ? parseInt(timeVal) : null;
                     this.bakeSteam = dataEl.getAttribute('data-bake-steam') || 'Yes';
                     this.donenessTemp = parseInt(dataEl.getAttribute('data-doneness-temp')) || 205;
                     this.waterTemp = parseInt(dataEl.getAttribute('data-water-temp')) || 75;

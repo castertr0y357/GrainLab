@@ -55,7 +55,6 @@ x-init="loadCompiledData(); fetchAIInsights();"
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
         <div x-data="{ ingName: 'Flour Base' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
             <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: <span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center; justify-content: center; padding: 2rem 0;" x-show="applyProgressText !== ''" style="display: none;">
@@ -335,6 +334,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
             {% endif %}
             
             <!-- Salt Row -->
+            {% if recipe.salt_weight > 0 %}
             <div x-data="{
                 children: ['Fine Sea Salt'],
                 get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
@@ -353,6 +353,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
                 <span style="color: var(--text-secondary); font-weight: 500;"><span x-text="( {{ recipe.salt_weight|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.salt_weight }}g</span></span>
                 </div>
             </div>
+            {% endif %}
             
             <!-- Additives Row -->
             {% if recipe.additive_items %}
@@ -421,32 +422,37 @@ x-init="loadCompiledData(); fetchAIInsights();"
         <!-- Total Scaled Weight Row -->
             <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
+                <div style="flex-grow: 1;"></div>
                 <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;"><span x-text="( {{ recipe.target_mass|default:'0' }} * scaleMultiplier ).toFixed(1) + 'g'">{{ recipe.target_mass }}g</span></span>
             </div>
         </div>
 
-    <!-- BAKING PROFILE -->
+    <!-- COOKING PROFILE -->
     <div x-show="!countertopMode" x-transition style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem;">
-        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Baking Profile</div>
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Cooking Profile</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-            <div>
+            <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Method</div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ primary_cooking_method|default:'Baking' }}</div>
+            </div>
+            <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
                 <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Temp</div>
-                <div x-show="bakeTemp" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
-                <div x-show="!bakeTemp && !aiLoading" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
-                <div x-show="aiLoading && !bakeTemp" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
+                <div x-show="bakeTemp !== null" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);" x-text="bakeTemp + '°F'"></div>
+                <div x-show="bakeTemp === null && !aiLoading" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ cook_temp_f }}°F</div>
+                <div x-show="aiLoading && bakeTemp === null" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
             </div>
-            <div>
+            <div style="padding-top: 0.25rem;">
                 <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Time</div>
-                <div x-show="bakeTimeMin" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);" x-text="bakeTimeMin + 'm'"></div>
-                <div x-show="!bakeTimeMin && !aiLoading" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ bake_time_min }}m</div>
-                <div x-show="aiLoading && !bakeTimeMin" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
+                <div x-show="bakeTimeMin !== null" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);" x-text="bakeTimeMin + 'm'"></div>
+                <div x-show="bakeTimeMin === null && !aiLoading" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ bake_time_min }}m</div>
+                <div x-show="aiLoading && bakeTimeMin === null" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
             </div>
-            <div style="grid-column: 1 / -1; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="padding-top: 0.25rem;">
                 <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Steam Required</div>
                 <div style="font-weight: 600; color: var(--text-primary);">
                     <span x-show="bakeSteam" x-text="bakeSteam"></span>
                     <span x-show="!bakeSteam && !aiLoading">{% if steam_required %}Yes{% else %}No{% endif %}</span>
-                    <span x-show="aiLoading && !bakeSteam" class="spinner" style="display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle;"></span>
+                    <div x-show="aiLoading && !bakeSteam" class="spinner" style="width: 1rem; height: 1rem; border: 2px solid rgba(255,136,0,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0.15rem 0;"></div>
                 </div>
             </div>
         </div>
@@ -455,14 +461,14 @@ x-init="loadCompiledData(); fetchAIInsights();"
     <!-- EQUIPMENT NEEDED -->
     <div x-show="!countertopMode && filteredTools.length > 0" x-transition style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem;">
         <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Equipment Needed</div>
-        <ul style="margin: 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; color: var(--text-primary);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
             <template x-for="tool in filteredTools" :key="tool.id">
-                <li style="line-height: 1.4; padding-left: 0.25rem;">
-                    <span style="font-weight: 700; color: var(--text-primary);" x-text="tool.name"></span>
-                    <span style="color: var(--text-secondary); font-size: 0.9rem; margin-left: 0.25rem;" x-text="'- ' + tool.desc"></span>
-                </li>
+                <div class="card" 
+                     style="width: 100%; padding: 1rem; border-width: 2px; border-style: solid; transition: var(--transition); margin-bottom: 0; display: flex; align-items: center; justify-content: center; text-align: center; border-color: var(--border); background: var(--bg-card);">
+                    <strong style="color: var(--text-primary); font-size: 0.9rem; display: block;" x-text="tool.name"></strong>
+                </div>
             </template>
-        </ul>
+        </div>
     </div>
     
     <!-- INGREDIENT PREP -->
@@ -728,7 +734,7 @@ x-init="loadCompiledData(); fetchAIInsights();"
     <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
     <div id="countertop-data" 
          data-steps="{{ countertop_steps_json }}"
-         data-bake-temp="{{ bake_temp_f }}"
+         data-bake-temp="{{ cook_temp_f }}"
          data-bake-time="{{ bake_time_min }}"
          data-bake-steam="{% if steam_required %}Yes{% else %}No{% endif %}"
          data-doneness-temp="{{ doneness_temp_f }}"

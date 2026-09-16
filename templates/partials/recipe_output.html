@@ -29,7 +29,6 @@
     <div style="background-color: #1a1a1f; padding: 1.25rem; border-radius: var(--radius-md); border: none; margin-bottom: 1.5rem;">
         <div x-data="{ ingName: '{{ berry|escapejs }}' }" @click="toggleIngredient(ingName)" :style="checkedIngredients[ingName] ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
             <h3 style="color: var(--accent); margin: 0; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em;">Compiled Formula</h3>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Total Mass: {{ recipe.target_mass }}g</span>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -186,6 +185,7 @@
             {% endif %}
             
             <!-- Salt Row -->
+            {% if recipe.salt_weight > 0 %}
             <div x-data="{
                 children: ['Fine Sea Salt'],
                 get allChecked() { return this.children.length > 0 && this.children.every(c => checkedIngredients[c]); },
@@ -204,6 +204,7 @@
                 <span style="color: var(--text-secondary); font-weight: 500;">{{ recipe.salt_weight }}g</span>
                 </div>
             </div>
+            {% endif %}
             
             <!-- Flavor Inclusions Row -->
             {% if recipe.flavor_inclusions %}
@@ -228,6 +229,7 @@
             <!-- Total Scaled Weight Row -->
             <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>
+                <div style="flex-grow: 1;"></div>
                 <span style="color: var(--accent); font-weight: 800; font-size: 1.05rem;">{{ recipe.target_mass }}g</span>
             </div>
         </div>
@@ -235,15 +237,19 @@
 
     <!-- COOKING PROFILE -->
     <div x-show="!countertopMode" x-transition style="background-color: #1a1a1f; border-left: 4px solid var(--accent); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">{{ primary_cooking_method }} Profile</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Cooking Profile</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
-                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_temp_f }}°F</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ primary_cooking_method }} Temp</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ primary_cooking_method|default:'Baking' }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Method</div>
+            </div>
+            <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ cook_temp_f }}°F</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Temp</div>
             </div>
             <div style="border-right: 1px solid rgba(255, 255, 255, 0.05);">
                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ bake_time_min }}m</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ primary_cooking_method }} Time</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">Time</div>
             </div>
             <div>
                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">
@@ -354,7 +360,7 @@
     <!-- METADATA TIMING CONTAINER FOR COUNTERTOP VIEW -->
     <div id="countertop-data" 
          data-steps="{{ countertop_steps_json }}"
-         data-bake-temp="{{ bake_temp_f }}"
+         data-bake-temp="{{ cook_temp_f }}"
          data-bake-steam="{% if steam_required %}Yes{% else %}No{% endif %}"
          data-doneness-temp="{{ doneness_temp_f }}"
          data-water-temp="{{ recipe.required_water_temp_f }}"
