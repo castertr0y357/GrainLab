@@ -357,8 +357,9 @@ def generate_dynamic_flavors(cat_slug: str, level: int, count: int = 8, exclude_
         exclude_names = []
     exclude_set = {n.strip().lower() for n in exclude_names}
 
-    from apps.core.engines.router import ENGINES
     from apps.core.engines.cookie_engine import CookieEngine
+    from apps.core.engines.router import ENGINES
+
     engine_cls = ENGINES.get(cat_slug, CookieEngine)
     category_bases = getattr(engine_cls, "dynamic_flavor_bases", [])
     if not category_bases:
@@ -539,9 +540,21 @@ def stream_creativity_variants(
     """
     Streaming generator for creativity variants.
     """
+    creativity_level = int(creativity_level)
+
+    if creativity_level == 1:
+        creativity_instruction = (
+            "These variations should be standard, common, and reliable baseline profiles that are widely recognized."
+        )
+        temperature = 0.2
+    else:
+        creativity_instruction = "These variations should be highly creative, unique, and exploratory culinary flavor profiles that push boundaries."
+        temperature = 0.8
+
     system_prompt = (
         f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
         f"generate exactly {count} alternative structural profile variations matching ONLY that creativity level.\n"
+        f"{creativity_instruction}\n"
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
@@ -573,7 +586,7 @@ def stream_creativity_variants(
         }
     )
 
-    for item in stream_gemma_api(system_prompt, user_prompt, yield_raw=True):
+    for item in stream_gemma_api(system_prompt, user_prompt, yield_raw=True, temperature=temperature):
         yield item
 
 
@@ -599,8 +612,9 @@ def sanitize_ai_recipe_json(engine_id: str, result: dict) -> dict:
                         new_items.append(item)
             sec[cat_name] = new_items
 
-    from apps.core.engines.router import ENGINES
     from apps.core.engines.base_engine import BaseEngine
+    from apps.core.engines.router import ENGINES
+
     engine = ENGINES.get(engine_id, BaseEngine())
 
     # 1. Leavener Limits
@@ -1026,14 +1040,14 @@ def get_local_recipe_details(
             flour_blend_ratios[slug] += round(100.0 - sum(flour_blend_ratios.values()), 2)
     flour_blend = {"ratios": flour_blend_ratios, "reasoning": "Standard mathematical even split applied automatically."}
 
-    from apps.core.engines.router import ENGINES
     from apps.core.engines.base_engine import BaseEngine
-    
+    from apps.core.engines.router import ENGINES
+
     engine = ENGINES.get(engine_id, BaseEngine())
     flavor_inclusions = getattr(engine, "default_flavor_inclusions", [])
     fat_starting_temp = getattr(engine, "default_fat_starting_temp", "room_temp")
     required_hardware = getattr(engine, "default_required_hardware", ["stand_mixer"])
-    
+
     guardrails = engine.get_active_guardrails(active_archetype_id)
     required_actions = guardrails.get("permissible_actions", ["mix"])
 
@@ -1241,12 +1255,13 @@ def generate_recipe_percentages(
     try:
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
         if result and isinstance(result, dict) and "percentages" in result:
-            from apps.core.engines.router import ENGINES
             from apps.core.engines.base_engine import BaseEngine
+            from apps.core.engines.router import ENGINES
+
             engine = ENGINES.get(engine_id, BaseEngine())
             temp_override = getattr(engine, "ai_cook_temp_override", None)
             time_override = getattr(engine, "ai_cook_time_override", None)
-            
+
             if temp_override is not None:
                 result["target_cook_temp"] = temp_override
             if time_override is not None:
