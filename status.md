@@ -15,6 +15,7 @@
 - [x] Fix AI generation timeout deadlocks by scaling Gunicorn WSGI to `--workers 3 --threads 4` in Dockerfile, allowing multiple simultaneous Server-Sent Event (SSE) streams.
 - [x] Fix missing temperature for non-baking engines by updating templates to use `cook_temp_f` and fixing JavaScript conditional checks for temperatures/times of 0.
 - [x] Remove dead AI process fetch (`target=tweaks`) from `phase4.js` to reduce unnecessary background SSE requests, as sliders are no longer shown in the final UI.
+- [x] Implemented dynamic creativity level variables (prompts and temperature bounds) for AI structural variants generator in `phase3_client.py`.
 - [x] Update PastaEngine default form factor configurations to explicitly return 212°F and 3 minutes as accurate base constants for boiling pasta, replacing previous 0 placeholders.
 - [x] Parameterize local port bindings and DB options inside `.env` configurations
 - [x] Implement coordinate-based Euclidean Classifier Engine and dynamic feedback panel
