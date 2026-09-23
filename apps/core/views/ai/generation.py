@@ -69,6 +69,8 @@ class GenerateVariantsView(View):
                     }
                 )
 
+        active_variation_id = request.GET.get("active_variation_id", "").strip()
+
         if creativity_level_raw:
             try:
                 creativity_level = int(creativity_level_raw)
@@ -79,6 +81,7 @@ class GenerateVariantsView(View):
                     inventory,
                     exclude_names=exclude_names,
                     count=limit,
+                    active_variation_id=active_variation_id,
                 )
             except Exception as e:
                 logger.error(f"[Views] Failed generating creativity variants: {e}")

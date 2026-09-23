@@ -100,6 +100,14 @@ def assemble_system_prompt(
             engine, "culinary_nuance_directive", "Standard baking physics and generic flour interactions."
         )
 
+    import logging
+
+    log = logging.getLogger("grainlab.gemma")
+    log.info(
+        f"[AI PROMPT ASSEMBLE] - active_archetype_id: {active_archetype_id}, active_variation_id: {active_variation_id}"
+    )
+    log.info(f"[AI PROMPT ASSEMBLE] - Generated Nuance Directive:\n{nuance_directive}")
+
     nuance_injection = f"\n[CRITICAL ENGINE FOCUS: {engine_name}]\n" f"{nuance_directive}\n"
 
     schema_text = ""
@@ -1271,10 +1279,13 @@ def stream_final_insights(
     preset_slug = state.get("preset_slug")
     if category_slug:
         engine_id = CATEGORY_TO_ENGINE.get(category_slug, "base")
-        from apps.core.engines.router import ENGINES
         from apps.core.engines.base_engine import BaseEngine
+        from apps.core.engines.router import ENGINES
+
         engine = ENGINES.get(engine_id, BaseEngine())
-        directives = engine.culinary_nuance_directive(active_archetype_id=preset_slug)
+        directives = engine.culinary_nuance_directive(
+            active_archetype_id=preset_slug, active_variation_id=state.get("active_variation_id")
+        )
         if directives:
             system_prompt += f"\n[ENGINE DIRECTIVES]\n{directives}\n"
 

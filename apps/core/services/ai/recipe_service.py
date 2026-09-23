@@ -67,12 +67,18 @@ def process_recipe_details(cleaned_data):
 
 
 def process_recipe_percentages(cleaned_data):
+    active_variation_id = cleaned_data.get("active_variation_id")
+    recipe_slug = cleaned_data.get("recipe_slug", "")
+    if not active_variation_id:
+        active_variation_id = "sweet" if "sweet" in recipe_slug.lower() else "savory"
+
     result = gemma.generate_recipe_percentages(
         engine_id=cleaned_data.get("engine_id"),
         active_archetype_id=cleaned_data.get("active_archetype_id"),
-        recipe_slug=cleaned_data.get("recipe_slug"),
+        recipe_slug=recipe_slug,
         recipe_name=cleaned_data.get("recipe_name"),
         secondary_ingredients=cleaned_data.get("secondary_ingredients", []),
+        active_variation_id=active_variation_id,
     )
 
     # Enforce unified culinary guardrails on initial generation
@@ -81,10 +87,6 @@ def process_recipe_percentages(cleaned_data):
 
         engine_id = cleaned_data.get("engine_id")
         archetype_id = cleaned_data.get("active_archetype_id")
-
-        # Determine the active profile from the recipe slug or passed data
-        recipe_slug = cleaned_data.get("recipe_slug", "")
-        active_variation_id = "sweet" if "sweet" in recipe_slug.lower() else "savory"
 
         engine_instance = ENGINES.get(engine_id)
         if engine_instance:

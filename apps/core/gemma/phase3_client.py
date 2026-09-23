@@ -177,7 +177,7 @@ def evaluate_single_grain(
         response_schema,
         active_archetype_id=active_archetype_id,
         include_global_rules=False,
-        active_variation_id=preset_slug,
+        active_variation_id=active_variation_id,
     )
 
     user_prompt = json.dumps(
@@ -331,7 +331,7 @@ def evaluate_grains_batch(
                 matched_wb = next((g for g in uncached_grains if str(g.id) == g_id), None)
                 if matched_wb:
                     res_dict = {"tier": tier, "reasoning": reasoning}
-                    cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::grain_{g_id}"
+                    cache_key = f"engine_{engine_id}::arch_{archetype_id}::var_{variant_id}::subvar_{active_var_cache_key}::grain_{g_id}"
                     cache.set(cache_key, res_dict, timeout=None)
                     results[g_id] = res_dict
     except Exception as e:
@@ -423,14 +423,29 @@ def get_fallback_variants(
 
 
 def stream_recipe_variants(
-    engine_id: str, active_archetype_id: str, inventory: list, exclude_names: list = None, count: int = 5
+    engine_id: str,
+    active_archetype_id: str,
+    inventory: list,
+    exclude_names: list = None,
+    count: int = 5,
+    active_variation_id: str = None,
 ):
     """
     Streaming generator for recipe variants.
     """
+    engine = ENGINES.get(engine_id)
+    nuance_directive = (
+        engine.culinary_nuance_directive(
+            active_archetype_id=active_archetype_id, active_variation_id=active_variation_id
+        )
+        if engine
+        else ""
+    )
+
     system_prompt = (
         "You are a baking science variant generator. Given an engine type and structural archetype, "
         f"generate exactly {count} distinct recipe variants optimized for fresh-milled whole grains.\n"
+        f"{nuance_directive}\n"
         f"CRITICAL: The variants must belong strictly to the exact same archetype category: '{active_archetype_id}'.\n"
         f"Provide unique variants distinct from these existing recipes: {exclude_names or []}.\n"
         "Use simple and natural variant names without structural suffix words like 'Classic', 'Modern', 'Variant', or 'Level'.\n"
@@ -458,6 +473,7 @@ def stream_recipe_variants(
             "active_archetype_id": active_archetype_id,
             "inventory": inventory,
             "exclude_names": exclude_names or [],
+            "active_variation_id": active_variation_id,
         }
     )
 
@@ -536,11 +552,21 @@ def stream_creativity_variants(
     inventory: list,
     exclude_names: list = None,
     count: int = 5,
+    active_variation_id: str = None,
 ):
     """
     Streaming generator for creativity variants.
     """
     creativity_level = int(creativity_level)
+
+    engine = ENGINES.get(engine_id)
+    nuance_directive = (
+        engine.culinary_nuance_directive(
+            active_archetype_id=active_archetype_id, active_variation_id=active_variation_id
+        )
+        if engine
+        else ""
+    )
 
     if creativity_level == 1:
         creativity_instruction = (
@@ -555,6 +581,7 @@ def stream_creativity_variants(
         f"You are a baking science expert. Given an engine type, a parent recipe ID, and a target Creativity Level of {creativity_level}, "
         f"generate exactly {count} alternative structural profile variations matching ONLY that creativity level.\n"
         f"{creativity_instruction}\n"
+        f"{nuance_directive}\n"
         f"CRITICAL: The variations must belong strictly to the exact same archetype category: '{active_archetype_id}'. "
         f"You are strictly prohibited from generating recipes crossing over into other archetypes or categories.\n"
         f"CRITICAL: The generated variants must NOT repeat or have the same flavor/recipe name as these primary/existing recipes: {exclude_names or []}.\n"
@@ -583,6 +610,7 @@ def stream_creativity_variants(
             "active_archetype_id": active_archetype_id,
             "inventory": inventory,
             "exclude_names": exclude_names or [],
+            "active_variation_id": active_variation_id,
         }
     )
 
@@ -1200,10 +1228,20 @@ def generate_recipe_percentages(
     recipe_name: str,
     secondary_ingredients: list,
     inferred_flavor_profile: str = "neutral",
+    active_variation_id: str = None,
 ) -> dict | None:
     """
     Asks the LLM to calculate strict Baker's Percentages for an already generated list of secondary ingredients.
     """
+
+    engine = ENGINES.get(engine_id)
+    nuance_directive = (
+        engine.culinary_nuance_directive(
+            active_archetype_id=active_archetype_id, active_variation_id=active_variation_id
+        )
+        if engine
+        else ""
+    )
 
     ai_thinking_enabled = SystemSetting.get_val("ai_thinking_enabled", "True") == "True"
     ai_thinking_effort = SystemSetting.get_val("ai_thinking_effort", "medium")
@@ -1211,6 +1249,7 @@ def generate_recipe_percentages(
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a recipe name, and a list of secondary ingredients, "
         "your ONLY job is to calculate the precise optimal Baker's Percentage for each provided ingredient, as well as the base core ratios.\n"
+        f"{nuance_directive}\n"
         "CRITICAL RULE FOR CORE RATIOS (BAKER'S PERCENTAGES):\n"
         "You MUST output the optimal Baker's Percentages for the base recipe structure, where the total flour is always 100%. For example, a classic cookie needs 100-150% sugar and 80-100% fat. A bread might need 75% hydration and 0% sugar. Output these strictly as floats (e.g., 120.0 for 120%).\n"
         "CRITICAL RULE FOR INGREDIENT PERCENTAGES:\n"
