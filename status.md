@@ -353,6 +353,7 @@
 - [x] Integrate Equipment Inventory into Phase 4 AI so process recommendations favor and explain using tools the user actually owns.
 - [x] Add optional API key field to settings for cloud model support.
 - [x] Wire database seeding to respect AUTO_SEED_DB environment variable.
+- [x] Fix active variation ID propagation in AI generation prompts and caching to ensure variation parameters correctly alter recipe instructions and evaluations.
 
 ## 🏗️ Architectural Changes & Decisions
 - SPA-feel using HTMX and Alpine.js with Gunicorn/Django serving html fragments.
