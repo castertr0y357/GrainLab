@@ -1250,6 +1250,7 @@ def generate_recipe_percentages(
         "You are a baking science expert. Given an engine type, target archetype, a recipe name, and a list of secondary ingredients, "
         "your ONLY job is to calculate the precise optimal Baker's Percentage for each provided ingredient, as well as the base core ratios.\n"
         f"{nuance_directive}\n"
+        "CRITICAL RULE FOR INGREDIENT MATCHING: You MUST use the exact, identical ingredient names provided in the user's secondary_ingredients list for the keys in your 'percentages' object. DO NOT alter the ingredient names, hallucinate new ingredients, or substitute them based on flavor nuances.\n"
         "CRITICAL RULE FOR CORE RATIOS (BAKER'S PERCENTAGES):\n"
         "You MUST output the optimal Baker's Percentages for the base recipe structure, where the total flour is always 100%. For example, a classic cookie needs 100-150% sugar and 80-100% fat. A bread might need 75% hydration and 0% sugar. Output these strictly as floats (e.g., 120.0 for 120%).\n"
         "CRITICAL RULE FOR INGREDIENT PERCENTAGES:\n"
@@ -1295,7 +1296,6 @@ def generate_recipe_percentages(
         result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
         if result and isinstance(result, dict) and "percentages" in result:
             from apps.core.engines.base_engine import BaseEngine
-            from apps.core.engines.router import ENGINES
 
             engine = ENGINES.get(engine_id, BaseEngine())
             temp_override = getattr(engine, "ai_cook_temp_override", None)
