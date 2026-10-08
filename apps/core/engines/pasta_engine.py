@@ -253,6 +253,7 @@ class PastaEngine(BaseEngine):
                         "icon": getattr(subclass, "icon", ""),
                         "description": getattr(subclass, "description", ""),
                         "grain_affinity": getattr(subclass, "grain_affinity", "high_protein"),
+                        "guardrails": getattr(subclass, "guardrails", getattr(self.__class__, "guardrails", {})),
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
@@ -407,6 +408,11 @@ class PastaEngine(BaseEngine):
 
 
 class SheetedRibbonArchetype(PastaEngine):
+    target_hydration_ratio = 45.0
+    target_fat_ratio = 0.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 0.0
     archetype_slug = "sheeted_ribbon"
     guardrails = {
         "hydration_min": 30,
@@ -415,11 +421,11 @@ class SheetedRibbonArchetype(PastaEngine):
         "fat_max": 10,
         "sugar_min": 0.0,
         "sugar_max": 20.0,
-        "salt_min": 0.5,
+        "salt_min": 0.0,
         "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
-        "cook_temp_min_f": 0,
-        "cook_temp_max_f": 0,
+        "cook_temp_min_f": 200,
+        "cook_temp_max_f": 220,
         "cook_time_min_m": 0,
         "cook_time_max_m": 0,
         "boil_required": False,
@@ -432,6 +438,7 @@ class SheetedRibbonArchetype(PastaEngine):
     grain_affinity = "high_protein"
     preset_matchers = ["tagliatelle", "fettuccine", "ribbon", "sheet"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Highly Elastic and Extensible (Requires hard/strong wheat for bite and workability)",
         "required_gluten_elasticity": "extreme_tensile",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -458,6 +465,11 @@ class SheetedRibbonArchetype(PastaEngine):
 
 
 class StuffedPocketArchetype(PastaEngine):
+    target_hydration_ratio = 50.0
+    target_fat_ratio = 5.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 0.0
     archetype_slug = "stuffed_pocket"
     guardrails = {
         "hydration_min": 30,
@@ -466,11 +478,11 @@ class StuffedPocketArchetype(PastaEngine):
         "fat_max": 10,
         "sugar_min": 0.0,
         "sugar_max": 20.0,
-        "salt_min": 0.5,
+        "salt_min": 0.0,
         "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
-        "cook_temp_min_f": 0,
-        "cook_temp_max_f": 0,
+        "cook_temp_min_f": 200,
+        "cook_temp_max_f": 220,
         "cook_time_min_m": 0,
         "cook_time_max_m": 0,
         "boil_required": False,
@@ -483,6 +495,7 @@ class StuffedPocketArchetype(PastaEngine):
     grain_affinity = "high_protein"
     preset_matchers = ["stuffed", "ravioli", "tortellini", "gyoza", "dumpling"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Highly Elastic and Extensible (Requires hard/strong wheat for bite and workability)",
         "required_gluten_elasticity": "extreme_tensile",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -509,6 +522,11 @@ class StuffedPocketArchetype(PastaEngine):
 
 
 class ExtrudedShapeArchetype(PastaEngine):
+    target_hydration_ratio = 35.0
+    target_fat_ratio = 0.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 13.0
+    base_leavening_ratio = 0.0
     archetype_slug = "extruded_shape"
     guardrails = {
         "hydration_min": 30,
@@ -517,11 +535,11 @@ class ExtrudedShapeArchetype(PastaEngine):
         "fat_max": 10,
         "sugar_min": 0.0,
         "sugar_max": 20.0,
-        "salt_min": 0.5,
+        "salt_min": 0.0,
         "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
-        "cook_temp_min_f": 0,
-        "cook_temp_max_f": 0,
+        "cook_temp_min_f": 200,
+        "cook_temp_max_f": 220,
         "cook_time_min_m": 0,
         "cook_time_max_m": 0,
         "boil_required": False,
@@ -534,6 +552,7 @@ class ExtrudedShapeArchetype(PastaEngine):
     grain_affinity = "high_protein"
     preset_matchers = ["extrud", "rigatoni", "macaroni"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Highly Elastic and Extensible (Requires hard/strong wheat for bite and workability)",
         "required_gluten_elasticity": "extreme_tensile",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -560,6 +579,11 @@ class ExtrudedShapeArchetype(PastaEngine):
 
 
 class AlkalineNoodlesArchetype(PastaEngine):
+    target_hydration_ratio = 40.0
+    target_fat_ratio = 0.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 0.0
     archetype_slug = "alkaline_noodles"
     guardrails = {
         "hydration_min": 30,
@@ -568,11 +592,11 @@ class AlkalineNoodlesArchetype(PastaEngine):
         "fat_max": 10,
         "sugar_min": 0.0,
         "sugar_max": 20.0,
-        "salt_min": 0.5,
+        "salt_min": 0.0,
         "salt_max": 3.0,
         "permissible_actions": ["mix", "knead", "rest", "sheet", "extrude", "boil"],
-        "cook_temp_min_f": 0,
-        "cook_temp_max_f": 0,
+        "cook_temp_min_f": 200,
+        "cook_temp_max_f": 220,
         "cook_time_min_m": 0,
         "cook_time_max_m": 0,
         "boil_required": False,
@@ -585,6 +609,7 @@ class AlkalineNoodlesArchetype(PastaEngine):
     grain_affinity = "high_protein"
     preset_matchers = ["ramen", "alkaline", "udon"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Highly Elastic and Extensible (Requires hard/strong wheat for bite and workability)",
         "required_gluten_elasticity": "extreme_tensile",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",

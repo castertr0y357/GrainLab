@@ -386,6 +386,11 @@ class HearthEngine(BaseEngine):
 
 
 class HearthBouleArchetype(HearthEngine):
+    target_hydration_ratio = 75.0
+    target_fat_ratio = 0.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 1.5
     archetype_slug = "hearth_boule"
     guardrails = {
         "hydration_min": 60,
@@ -407,9 +412,10 @@ class HearthBouleArchetype(HearthEngine):
     icon = "🫓"
     description = "Freeform oval or round configurations baked on radiant stone floors."
     default_form_factor = "cast-iron-dutch-oven"
-    grain_affinity = "high_protein"
+    grain_affinity = "medium_protein"
     preset_matchers = ["boule", "batard", "sourdough", "campagne", "altamura"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong and Structured (Requires hard wheat for maximum gluten elasticity and volume)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "high_hydration_lean",
@@ -423,6 +429,11 @@ class HearthBouleArchetype(HearthEngine):
 
 
 class HighHydrationSlabArchetype(HearthEngine):
+    target_hydration_ratio = 85.0
+    target_fat_ratio = 5.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 13.0
+    base_leavening_ratio = 1.5
     archetype_slug = "high_hydration_slab"
     guardrails = {
         "hydration_min": 60,
@@ -448,6 +459,7 @@ class HighHydrationSlabArchetype(HearthEngine):
     grain_affinity = "high_protein"
     preset_matchers = ["slab", "focaccia", "ciabatta"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong and Structured (Requires hard wheat for maximum gluten elasticity and volume)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "high_hydration_lean",
@@ -544,6 +556,11 @@ class HighHydrationSlabArchetype(HearthEngine):
 
 
 class TaperedBaguetteArchetype(HearthEngine):
+    target_hydration_ratio = 70.0
+    target_fat_ratio = 0.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 1.5
     archetype_slug = "tapered_baguette"
     guardrails = {
         "hydration_min": 60,
@@ -566,9 +583,10 @@ class TaperedBaguetteArchetype(HearthEngine):
     icon = "🥖"
     description = "Elongated, thin cylinder format optimizing the crust-to-crumb ratio."
     default_form_factor = "cast-iron-dutch-oven"
-    grain_affinity = "high_protein"
+    grain_affinity = "medium_protein"
     preset_matchers = ["baguette", "french"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong and Structured (Requires hard wheat for maximum gluten elasticity and volume)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "high_hydration_lean",
@@ -582,6 +600,11 @@ class TaperedBaguetteArchetype(HearthEngine):
 
 
 class FlashPizzaArchetype(HearthEngine):
+    target_hydration_ratio = 65.0
+    target_fat_ratio = 5.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 1.0
     archetype_slug = "flash_pizza"
     guardrails = {
         "hydration_min": 60,
@@ -607,6 +630,7 @@ class FlashPizzaArchetype(HearthEngine):
     grain_affinity = "high_protein"
     preset_matchers = ["pizza", "calzone"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong and Structured (Requires hard wheat for maximum gluten elasticity and volume)",
         "required_gluten_elasticity": "extreme_tensile",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "high_hydration_lean",

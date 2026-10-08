@@ -18,6 +18,15 @@ FRICTION_FACTORS = {
     "bread_machine": 15.0,
 }
 
+FLAVOR_CLASSIFICATIONS = {
+    "Base_Spice": {"Subtle": 0.005, "Medium": 0.015, "Heavy": 0.030}, # 0.5%, 1.5%, 3.0%
+    "Pungent_Spice": {"Subtle": 0.0005, "Medium": 0.0015, "Heavy": 0.0025}, # 0.05%, 0.15%, 0.25%
+    "Extract": {"Subtle": 0.005, "Medium": 0.010, "Heavy": 0.020}, # 0.5%, 1.0%, 2.0%
+    "Dry_Inclusion": {"Subtle": 0.10, "Medium": 0.20, "Heavy": 0.30}, # 10.0%, 20.0%, 30.0%
+    "Wet_Inclusion": {"Subtle": 0.05, "Medium": 0.10, "Heavy": 0.15}, # 5.0%, 10.0%, 15.0%
+    "Salt": {"Subtle": 0.005, "Medium": 0.015, "Heavy": 0.025},
+}
+
 
 def _get_val(obj, key, default=None):
     if hasattr(obj, key):
@@ -563,7 +572,17 @@ class BaseEngine(AIPromptBuilder):
             if isinstance(items, dict):
                 items = [items]
 
-            total_ratio = sum(float(item.get("ratio", 1.0)) for item in items if isinstance(item, dict))
+            proportion_map = {"dominant": 4.0, "equal": 2.0, "accent": 1.0}
+            total_ratio = 0.0
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                tag = str(item.get("proportion_tag", "")).strip().lower()
+                ratio = proportion_map.get(tag, float(item.get("ratio", 2.0))) # Fallback to 2.0 or legacy ratio
+                item["_calc_ratio"] = ratio
+                total_ratio += ratio
+
             if total_ratio == 0:
                 total_ratio = 1.0
 
@@ -571,7 +590,7 @@ class BaseEngine(AIPromptBuilder):
             for item in items:
                 if not isinstance(item, dict):
                     continue
-                ratio = float(item.get("ratio", 1.0))
+                ratio = item.get("_calc_ratio", 2.0)
                 weight = int(round(total_weight * (ratio / total_ratio)))
                 if weight > 0:
                     raw_name = item.get("name")
@@ -604,16 +623,42 @@ class BaseEngine(AIPromptBuilder):
         friction = friction_override if friction_override is not None else FRICTION_FACTORS.get(mixing_method, 10.0)
         required_water_temp_f = (3.0 * ddt_target_f) - room_temp_f - flour_temp_f - friction
 
+        def extract_qualitative_pct(inc):
+            name = inc.get("name", "")
+            cat = inc.get("category", "")
+            intensity = inc.get("intensity", "Medium")
+            proportion = str(inc.get("proportion_tag", "")).strip().title()
+            pct = 0.0
+
+            if cat == "Extract":
+                pct = {"Subtle": 0.01, "Medium": 0.02, "Heavy": 0.04}.get(intensity, 0.02)
+            elif cat == "Pungent_Spice":
+                pct = {"Subtle": 0.005, "Medium": 0.01, "Heavy": 0.02}.get(intensity, 0.01)
+            elif cat == "Base_Spice":
+                pct = {"Subtle": 0.01, "Medium": 0.02, "Heavy": 0.04}.get(intensity, 0.02)
+            elif cat == "Dry_Inclusion":
+                pct = {"Subtle": 0.05, "Medium": 0.10, "Heavy": 0.20}.get(intensity, 0.10)
+            elif cat == "Wet_Inclusion":
+                pct = {"Subtle": 0.05, "Medium": 0.15, "Heavy": 0.25}.get(intensity, 0.15)
+            elif cat == "Salt":
+                # Salt base amounts are handled elsewhere; inclusions loop skips it
+                pct = 0.0
+            elif proportion in ["Dominant", "Equal", "Accent"]:
+                pct = {"Accent": 0.005, "Equal": 0.01, "Dominant": 0.02}.get(proportion, 0.01)
+            else:
+                # Fallback to old behavior for backward compatibility
+                try:
+                    pct = float(inc.get("ratio", inc.get("bakers_percentage", 0))) / 100.0
+                except (ValueError, TypeError):
+                    pass
+            return pct
+
         processed_inclusions = []
         for inc in flavor_inclusions:
             if isinstance(inc, dict) and "name" in inc:
                 name = inc["name"]
                 vol = inc.get("volume_description", "")
-                pct = 0.0
-                try:
-                    pct = float(inc.get("bakers_percentage", 0)) / 100.0
-                except (ValueError, TypeError):
-                    pass
+                pct = extract_qualitative_pct(inc)
 
                 if "salt" in name.lower() and pct <= 0.04:
                     continue
@@ -630,11 +675,7 @@ class BaseEngine(AIPromptBuilder):
             if isinstance(inc, dict) and "name" in inc:
                 name = inc["name"]
                 vol = inc.get("volume_description", "")
-                pct = 0.0
-                try:
-                    pct = float(inc.get("ratio", inc.get("bakers_percentage", 0))) / 100.0
-                except (ValueError, TypeError):
-                    pass
+                pct = extract_qualitative_pct(inc)
 
                 if "salt" in name.lower() and pct <= 0.04:
                     continue
@@ -708,6 +749,19 @@ class BaseEngine(AIPromptBuilder):
         else:
             l = max(0.0, min(0.015, leaven))
         st = max(0.0, min(0.10, salt))
+        
+        flavor_inclusions = kwargs.get("flavor_inclusions", [])
+        if flavor_inclusions:
+            for inc in flavor_inclusions:
+                if isinstance(inc, dict) and inc.get("category") == "Salt":
+                    intensity = inc.get("intensity", "Medium")
+                    if intensity == "Subtle":
+                        st = 0.01
+                    elif intensity == "Medium":
+                        st = 0.02
+                    elif intensity == "Heavy":
+                        st = 0.03
+
         return hyd, f, s, l, st
 
     def apply_process_constraints(

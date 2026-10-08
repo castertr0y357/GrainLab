@@ -21,6 +21,8 @@ class WheatBerry(SoftDeleteModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100, unique=True)
     protein_content = models.FloatField(default=12.0, help_text="Protein percentage (e.g. 14.5 for 14.5%)")
+    protein_grams = models.FloatField(null=True, blank=True, help_text="Protein in grams per serving")
+    serving_size_grams = models.FloatField(null=True, blank=True, help_text="Serving size in grams")
     hardness = models.CharField(max_length=20, choices=Hardness.choices, default=Hardness.HARD)
     moisture_absorption_coef = models.FloatField(
         default=1.0, help_text="Water absorption multiplier (e.g. 1.0 for baseline)"
@@ -36,6 +38,11 @@ class WheatBerry(SoftDeleteModel):
         indexes = [
             models.Index(fields=["is_active"]),
         ]
+
+    def save(self, *args, **kwargs):
+        if self.protein_grams is not None and self.serving_size_grams is not None and self.serving_size_grams > 0:
+            self.protein_content = round((self.protein_grams / self.serving_size_grams) * 100, 2)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.protein_content}%)"

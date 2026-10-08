@@ -175,7 +175,11 @@ class BatterEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Light & Airy (Sponge)",
+            "hydration_offset": 10.0,
+            "fat_ratio_offset": -10.0,
+            "sugar_ratio_offset": -5.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Delicate and Tender (Soft wheat preferred to prevent tough gluten development)",
                 "required_gluten_elasticity": "minimal_to_none",
                 "optimal_protein_window": "7.0% - 8.5%",
             },
@@ -195,7 +199,11 @@ class BatterEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Dense & Rich (Pound/Fudge)",
+            "hydration_offset": -10.0,
+            "fat_ratio_offset": 20.0,
+            "sugar_ratio_offset": 20.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Delicate and Tender (Soft wheat preferred to prevent tough gluten development)",
                 "required_gluten_elasticity": "low_extensible",
                 "optimal_protein_window": "9.0% - 10.5%",
             },
@@ -403,6 +411,11 @@ class BatterEngine(BaseEngine):
 
 
 class SpongeCakeArchetype(BatterEngine):
+    target_hydration_ratio = 100.0
+    target_fat_ratio = 20.0
+    target_sugar_ratio = 100.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 2.0
     id = "sponge_cake"
     default_form_factor = "straight-sided-round-tin"
     default_salt_pct = 0.005
@@ -412,6 +425,7 @@ class SpongeCakeArchetype(BatterEngine):
     description = "Fat-free or low-fat aeration systems like Genoise or Chiffon."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {
+        "flour_strength_profile": "Delicate and Tender (Soft wheat preferred to prevent tough gluten development)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -466,6 +480,11 @@ class SpongeCakeArchetype(BatterEngine):
 
 
 class CreamedCakeArchetype(BatterEngine):
+    target_hydration_ratio = 80.0
+    target_fat_ratio = 50.0
+    target_sugar_ratio = 100.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 2.0
     id = "creamed_cake"
     default_form_factor = "straight-sided-round-tin"
     default_salt_pct = 0.005
@@ -475,6 +494,7 @@ class CreamedCakeArchetype(BatterEngine):
     description = "Emulsified lipid-sugar crystal structures for standard layers."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {
+        "flour_strength_profile": "Delicate and Tender (Soft wheat preferred to prevent tough gluten development)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -529,6 +549,11 @@ class CreamedCakeArchetype(BatterEngine):
 
 
 class PoundCakeArchetype(BatterEngine):
+    target_hydration_ratio = 50.0
+    target_fat_ratio = 100.0
+    target_sugar_ratio = 100.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 1.5
     id = "pound_cake"
     default_form_factor = "straight-sided-round-tin"
     default_salt_pct = 0.005
@@ -538,6 +563,7 @@ class PoundCakeArchetype(BatterEngine):
     description = "Dense, uniform crumb carrying massive sugar and fat weights."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {
+        "flour_strength_profile": "Delicate and Tender (Soft wheat preferred to prevent tough gluten development)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -599,6 +625,11 @@ class PoundCakeArchetype(BatterEngine):
 
 
 class GriddleBatterArchetype(BatterEngine):
+    target_hydration_ratio = 120.0
+    target_fat_ratio = 15.0
+    target_sugar_ratio = 10.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 3.0
     id = "griddle_batter"
     default_form_factor = "straight-sided-round-tin"
     default_salt_pct = 0.005
@@ -609,6 +640,7 @@ class GriddleBatterArchetype(BatterEngine):
     description = "High-moisture pourable structures like Pancakes, Waffles, and Crepes."
     grain_affinity = "low_protein"
     target_archetype_mechanics = {
+        "flour_strength_profile": "Delicate and Tender (Soft wheat preferred to prevent tough gluten development)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "high_spread",
         "moisture_lipid_ratio": "balanced_emulsion",

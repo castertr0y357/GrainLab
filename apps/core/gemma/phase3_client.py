@@ -69,42 +69,108 @@ def calculate_local_compatibility_from_specs(wb, engine, preset_slug=None, activ
 
 def optimize_grain_blend(preset_slug: str, preset_name: str, active_berries: list) -> tuple[dict, str | None] | None:
     """
-    Queries Gemma model to optimize the percentage blend of active wheat berries
-    for a specific bread preset.
+    Mathematically optimizes the percentage blend of active wheat berries
+    to hit the target protein percentage of the requested bread preset.
     Returns: (shares_dict, structural_warning) or None
     """
-    system_prompt = (
-        "You are a food science assistant specializing in flour milling. "
-        "Analyze the requested bread preset and the active wheat berries available. "
-        "Optimize the percentage blend (between 0.0 and 1.0, summing to 1.0) of each active wheat berry "
-        "to achieve the best structural and flavor profile for the preset. "
-        "If the preset is a high-rise bread (like Boule, Baguette, Ciabatta, French Loaf, Pizza, Bagel) "
-        "and the user has selected a blend that lacks sufficient gluten strength (e.g. too much soft wheat/ancient grains), "
-        "you MUST set 'structural_warning' to a warning string explaining the hazard, and adjust the blend to include "
-        "at least 70% of a hard/structural wheat berry. "
-        "Return a JSON object containing:\n"
-        '1. \'shares\': a dictionary mapping each active wheat berry name to its float share (e.g., {"Hard Red Spring Wheat": 0.7, "Soft White Wheat": 0.3})\n'
-        "2. 'structural_warning': a string warning if the configuration is impossible/unsafe, or null/empty if safe."
-    )
-
-    # Serialize berries to simple representation for the model
+    if not active_berries:
+        return None
+        
+    from apps.core.engines.router import ENGINES
+    from apps.core.gemma.core_client import _get_val
+    
+    target_protein = 12.0
+    is_high_rise = False
+    
+    for eng_id, eng_inst in ENGINES.items():
+        if preset_slug in getattr(eng_inst, 'archetypes', {}):
+            arch = eng_inst.archetypes[preset_slug]
+            target_protein = arch.get("target_protein_pct", 12.0)
+            if eng_inst.slug in ["hearth", "pan", "enriched", "pasta"]:
+                is_high_rise = True
+            break
+            
     berries_data = []
     for b in active_berries:
-        berries_data.append(
-            {
-                "name": _get_val(b, "name"),
-                "protein_content": _get_val(b, "protein_content", 12.0),
-                "hardness": _get_val(b, "hardness", "hard"),
-                "moisture_absorption_coef": _get_val(b, "moisture_absorption_coef", 1.0),
-            }
-        )
+        try:
+            p = float(_get_val(b, "protein_content", 12.0))
+        except Exception:
+            p = 12.0
+        berries_data.append({
+            "name": _get_val(b, "name"), 
+            "protein": p, 
+            "hardness": _get_val(b, "hardness", "hard")
+        })
 
-    user_prompt = json.dumps({"preset_slug": preset_slug, "preset_name": preset_name, "active_berries": berries_data})
+    shares = {}
+    warning = None
 
-    result = call_gemma_api(system_prompt, user_prompt, expected_keys=["shares"])
-    if result and isinstance(result.get("shares"), dict):
-        return result.get("shares"), result.get("structural_warning")
-    return None
+    if len(berries_data) == 1:
+        shares[berries_data[0]["name"]] = 1.0
+        if is_high_rise and berries_data[0]["hardness"] in ["soft", "ancient", "durum"]:
+            warning = f"Warning: {berries_data[0]['name']} is a {berries_data[0]['hardness']} wheat and lacks sufficient gluten elasticity for high-rise breads. Expect a denser, flatter loaf."
+        return shares, warning
+
+    # Sort berries by protein content
+    berries_data.sort(key=lambda x: x["protein"])
+    p_min = berries_data[0]["protein"]
+    p_max = berries_data[-1]["protein"]
+    
+    if target_protein <= p_min:
+        shares[berries_data[0]["name"]] = 1.0
+        for b in berries_data[1:]:
+            shares[b["name"]] = 0.0
+    elif target_protein >= p_max:
+        shares[berries_data[-1]["name"]] = 1.0
+        for b in berries_data[:-1]:
+            shares[b["name"]] = 0.0
+    else:
+        # We have a reachable target!
+        # Assign equal base weight to interior berries
+        interior_berries = berries_data[1:-1]
+        
+        base_w = 0.0
+        if len(interior_berries) > 0:
+            base_w = min(0.15, 0.4 / len(interior_berries))
+
+        W = 1.0 - (len(interior_berries) * base_w)
+        interior_p_sum = sum(b["protein"] * base_w for b in interior_berries)
+        P_rem = target_protein - interior_p_sum
+        
+        w_max = (P_rem - W * p_min) / (p_max - p_min)
+        
+        # Fallback to 0 if out of bounds
+        if w_max < 0 or w_max > W:
+            base_w = 0.0
+            W = 1.0
+            P_rem = target_protein
+            w_max = (P_rem - W * p_min) / (p_max - p_min)
+
+        w_min = W - w_max
+
+        # Assign shares
+        shares[berries_data[0]["name"]] = round(w_min, 2)
+        shares[berries_data[-1]["name"]] = round(w_max, 2)
+        for b in interior_berries:
+            shares[b["name"]] = round(base_w, 2)
+
+        # Normalize to ensure exactly 1.0
+        total = sum(shares.values())
+        if total != 1.0:
+            largest_key = max(shares, key=shares.get)
+            shares[largest_key] = round(shares[largest_key] + (1.0 - total), 2)
+
+    # Evaluate structural safety of the final blend
+    if is_high_rise:
+        weak_share = 0.0
+        for b in berries_data:
+            if b["hardness"] in ["soft", "ancient", "durum"]:
+                weak_share += shares.get(b["name"], 0.0)
+        
+        if weak_share > 0.5:
+            warning = f"Warning: Your blend contains {int(weak_share * 100)}% weak-gluten grains. This lacks sufficient elasticity for high-rise breads and may cause the loaf to spread horizontally."
+
+    return shares, warning
 
 
 def evaluate_single_grain(
@@ -739,6 +805,7 @@ def generate_recipe_details(
         "You MUST provide your absolute best recommendations for each required category (e.g., 'lipids', 'liquids', 'binders', 'leaveners').\n"
         "You MAY provide multiple ingredients for a single category if a blend yields a superior result (e.g., blending butter and oil for lipids, or using both brown and white sugar for sweeteners).\n"
         "For each recommended ingredient, you MUST provide the specific `name` (e.g. 'Unsalted Butter'), the target `temperature` (e.g. 'Room Temp'), and a concise `reasoning` explaining why it is the perfect fit.\n"
+        "If you provide MULTIPLE ingredients in the SAME category (e.g. two sugars), you MUST assign a `proportion_tag` of either 'Dominant', 'Equal', or 'Accent' to describe their balance. If there is only one ingredient in a category, use 'Equal'.\n"
         "CRITICAL RULE FOR ADDITIVES:\n"
         "You MUST align the 'additives' specifically with the provided recipe_name. For example, if the recipe is 'Cinnamon Sugar Drop', you MUST include cinnamon and sugar as additives. Chocolate chips for a chocolate chip cookie MUST be additives.\n"
         "CRITICAL RULE FOR REQUIRED ACTIONS:\n"
@@ -757,12 +824,12 @@ def generate_recipe_details(
         '  "required_actions": ["ACTION_STRING"],\n'
         '  "required_hardware": ["stand_mixer", "dough_whisk"],\n'
         '  "secondary_ingredients": {\n'
-        '    "lipids": [{ "category_name": "Fat / Lipid", "name": "string", "temperature": "string", "reasoning": "string" }],\n'
-        '    "liquids": [{ "category_name": "Liquid Medium", "name": "string", "temperature": "string", "reasoning": "string" }],\n'
-        '    "binders": [{ "category_name": "Binder", "name": "string", "temperature": "string", "reasoning": "string" }],\n'
-        '    "sweeteners": [{ "category_name": "Sweetener", "name": "string", "temperature": "string", "reasoning": "string" }],\n'
-        '    "leaveners": [{ "category_name": "Leavener", "name": "string", "temperature": "string", "reasoning": "string" }],\n'
-        '    "additives": [{ "category_name": "Additive", "name": "string", "temperature": "string", "reasoning": "string" }]\n'
+        '    "lipids": [{ "category_name": "Fat / Lipid", "name": "string", "temperature": "string", "proportion_tag": "Dominant|Equal|Accent", "reasoning": "string" }],\n'
+        '    "liquids": [{ "category_name": "Liquid Medium", "name": "string", "temperature": "string", "proportion_tag": "Dominant|Equal|Accent", "reasoning": "string" }],\n'
+        '    "binders": [{ "category_name": "Binder", "name": "string", "temperature": "string", "proportion_tag": "Dominant|Equal|Accent", "reasoning": "string" }],\n'
+        '    "sweeteners": [{ "category_name": "Sweetener", "name": "string", "temperature": "string", "proportion_tag": "Dominant|Equal|Accent", "reasoning": "string" }],\n'
+        '    "leaveners": [{ "category_name": "Leavener", "name": "string", "temperature": "string", "proportion_tag": "Dominant|Equal|Accent", "reasoning": "string" }],\n'
+        '    "additives": [{ "category_name": "Additive", "name": "string", "temperature": "string", "proportion_tag": "Dominant|Equal|Accent", "reasoning": "string", "category": "Extract|Pungent_Spice|Base_Spice|Dry_Inclusion|Wet_Inclusion|Salt", "intensity": "Subtle|Medium|Heavy" }]\n'
         "  }\n"
         "}\n\n"
         "ABSOLUTE CATEGORY RULES — violating any of these is a critical error:\n"
@@ -775,15 +842,21 @@ def generate_recipe_details(
 
     engine = router.get_engine_for_preset(recipe_slug, category_slug)
     permissible_actions = engine.production_profile.get("permissible_action_types", [])
-    system_prompt += f"\n\n🚨 [PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
+    system_prompt += f"\n\n[PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
+
+    secondary_conf = getattr(engine, "secondary_ingredients", {})
+    whitelist_str = ""
+    for cat_key, conf in secondary_conf.items():
+        if isinstance(conf, dict) and "options" in conf:
+            valid_opts = [opt.replace("_", " ").title() for opt in conf["options"]]
+            if valid_opts:
+                whitelist_str += f"- {cat_key}: {', '.join(valid_opts)}\n"
+    if whitelist_str:
+        system_prompt += f"\n\n*** [PERMISSIBLE SECONDARY INGREDIENTS]\nYou MUST ONLY select ingredients from the following whitelisted options for each category. Do not hallucinate ingredients outside of these options:\n{whitelist_str}"
 
     culinary_directive = engine.get_ai_culinary_directive()
     if culinary_directive:
-        system_prompt += f"\n\n🚨 [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
-
-    additive_directive = getattr(engine, "get_additive_scaling_directive", lambda: "")()
-    if additive_directive:
-        system_prompt += f"\n\n🚨 [ADDITIVE SCALING DIRECTIVE]\n{additive_directive}"
+        system_prompt += f"\n\n[ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
 
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
@@ -900,8 +973,8 @@ def stream_recipe_details(
             '    { "type": "secondary", "category_key": "liquids", "category_name": "Liquid Medium", "name": "string", "temperature": "string", "reasoning": "string" },\n'
             '    { "type": "secondary", "category_key": "binders", "category_name": "Binder", "name": "string", "temperature": "string", "reasoning": "string" },\n'
             '    { "type": "secondary", "category_key": "sweeteners", "category_name": "Sweetener", "name": "string", "temperature": "string", "reasoning": "string" },\n'
-            '    { "type": "secondary", "category_key": "leaveners", "category_name": "Leavener", "name": "string", "temperature": "string", "reasoning": "string" },\n'
-            '    { "type": "secondary", "category_key": "additives", "category_name": "Additive", "name": "string", "temperature": "string", "reasoning": "string" }\n'
+            '    { "type": "secondary", "category_key": "leaveners", "category_name": "Leavener", "name": "string", "temperature": "string", "reasoning": "string", "proportion_tag": "Dominant|Equal|Accent" },\n'
+            '    { "type": "secondary", "category_key": "additives", "category_name": "Additive", "name": "string", "temperature": "string", "reasoning": "string", "proportion_tag": "Dominant|Equal|Accent", "category": "Extract|Pungent_Spice|Base_Spice|Dry_Inclusion|Wet_Inclusion|Salt", "intensity": "Subtle|Medium|Heavy" }\n'
             "  ]\n"
             "}\n\n"
             "Do not include markdown blocks, just raw JSON."
@@ -938,8 +1011,8 @@ def stream_recipe_details(
             '    { "type": "secondary", "category_key": "liquids", "category_name": "Liquid Medium", "name": "string", "temperature": "string", "reasoning": "string" },\n'
             '    { "type": "secondary", "category_key": "binders", "category_name": "Binder", "name": "string", "temperature": "string", "reasoning": "string" },\n'
             '    { "type": "secondary", "category_key": "sweeteners", "category_name": "Sweetener", "name": "string", "temperature": "string", "reasoning": "string" },\n'
-            '    { "type": "secondary", "category_key": "leaveners", "category_name": "Leavener", "name": "string", "temperature": "string", "reasoning": "string" },\n'
-            '    { "type": "secondary", "category_key": "additives", "category_name": "Additive", "name": "string", "temperature": "string", "reasoning": "string" }\n'
+            '    { "type": "secondary", "category_key": "leaveners", "category_name": "Leavener", "name": "string", "temperature": "string", "reasoning": "string", "proportion_tag": "Dominant|Equal|Accent" },\n'
+            '    { "type": "secondary", "category_key": "additives", "category_name": "Additive", "name": "string", "temperature": "string", "reasoning": "string", "proportion_tag": "Dominant|Equal|Accent", "category": "Extract|Pungent_Spice|Base_Spice|Dry_Inclusion|Wet_Inclusion|Salt", "intensity": "Subtle|Medium|Heavy" }\n'
             "  ]\n"
             "}\n\n"
             "CRITICAL RULE: You MAY generate multiple objects for the same category_key (e.g. two sweeteners). If a recipe has multiple distinct flavors (e.g. 'Lemon Blueberry'), you MUST generate multiple distinct 'additives' objects (one for Lemon, one for Blueberry).\n"
@@ -955,15 +1028,25 @@ def stream_recipe_details(
     engine = router.get_engine_for_preset(recipe_slug, category_slug)
     permissible_actions = engine.production_profile.get("permissible_action_types", [])
     if target in ["all", "base"]:
-        system_prompt += f"\n\n🚨 [PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
+        system_prompt += f"\n\n*** [PERMISSIBLE REQUIRED ACTIONS]\nYou MUST ONLY use actions from this list for 'required_actions': {permissible_actions}"
+
+    secondary_conf = getattr(engine, "secondary_ingredients", {})
+    whitelist_str = ""
+    for cat_key, conf in secondary_conf.items():
+        if isinstance(conf, dict) and "options" in conf:
+            valid_opts = [opt.replace("_", " ").title() for opt in conf["options"]]
+            if valid_opts:
+                whitelist_str += f"- {cat_key}: {', '.join(valid_opts)}\n"
+    if whitelist_str and target in ["all", "ingredients"]:
+        system_prompt += f"\n\n*** [PERMISSIBLE SECONDARY INGREDIENTS]\nYou MUST ONLY select ingredients from the following whitelisted options for each category. Do not hallucinate ingredients outside of these options:\n{whitelist_str}"
 
     culinary_directive = engine.get_ai_culinary_directive()
     if culinary_directive:
-        system_prompt += f"\n\n🚨 [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
+        system_prompt += f"\n\n*** [ENGINE CULINARY DIRECTIVE]\n{culinary_directive}"
 
     additive_directive = getattr(engine, "get_additive_scaling_directive", lambda: "")()
     if additive_directive and target in ["all", "ingredients"]:
-        system_prompt += f"\n\n🚨 [ADDITIVE SCALING DIRECTIVE]\n{additive_directive}"
+        system_prompt += f"\n\n*** [ADDITIVE SCALING DIRECTIVE]\n{additive_directive}"
 
     if ai_thinking_enabled:
         system_prompt += f"\n[CRITICAL] Use thorough reasoning and step-by-step thinking (thinking effort: {ai_thinking_effort}) before responding."
@@ -1248,28 +1331,22 @@ def generate_recipe_percentages(
 
     system_prompt = (
         "You are a baking science expert. Given an engine type, target archetype, a recipe name, and a list of secondary ingredients, "
-        "your ONLY job is to calculate the precise optimal Baker's Percentage for each provided ingredient, as well as the base core ratios.\n"
+        "your ONLY job is to assign a qualitative intensity (Subtle, Medium, Heavy) and a category to each provided ingredient.\n"
         f"{nuance_directive}\n"
-        "CRITICAL RULE FOR INGREDIENT MATCHING: You MUST use the exact, identical ingredient names provided in the user's secondary_ingredients list for the keys in your 'percentages' object. DO NOT alter the ingredient names, hallucinate new ingredients, or substitute them based on flavor nuances.\n"
-        "CRITICAL RULE FOR CORE RATIOS (BAKER'S PERCENTAGES):\n"
-        "You MUST output the optimal Baker's Percentages for the base recipe structure, where the total flour is always 100%. For example, a classic cookie needs 100-150% sugar and 80-100% fat. A bread might need 75% hydration and 0% sugar. Output these strictly as floats (e.g., 120.0 for 120%).\n"
-        "CRITICAL RULE FOR INGREDIENT PERCENTAGES:\n"
-        "Ensure the 'bakers_percentage' field for each ingredient is a true Baker's Percentage relative to flour weight and is expressed as a full number (e.g. output 15.0 for 15%, do NOT output 0.15).\n"
+        "CRITICAL RULE FOR INGREDIENT MATCHING: You MUST use the exact, identical ingredient names provided in the user's secondary_ingredients list. DO NOT alter the ingredient names, hallucinate new ingredients, or substitute them based on flavor nuances.\n"
+        "Do not calculate percentages or grams. Select non-flour ingredients (fats, sugars, spices, inclusions) and assign them to one of the provided Ingredient Categories: Base_Spice, Pungent_Spice, Extract, Dry_Inclusion, Wet_Inclusion, or Salt.\n"
+        "Assign an intensity (Subtle, Medium, Heavy) to flavor components.\n"
         "Each response must match this JSON schema exactly:\n"
         "{\n"
-        '  "target_fat_pct": 85.0,\n'
-        '  "target_sugar_pct": 120.0,\n'
-        '  "target_hydration_pct": 0.0,\n'
-        '  "target_binder_pct": 10.0,\n'
-        '  "target_leaven_pct": 1.5,\n'
-        '  "target_salt_pct": 2.0,\n'
-        '  "target_friction_factor": 10.0,\n'
+        '  "flavor_profile": [\n'
+        '    {\n'
+        '      "name": "Ingredient Name",\n'
+        '      "category": "Extract",\n'
+        '      "intensity": "Subtle"\n'
+        '    }\n'
+        '  ],\n'
         '  "target_cook_temp": 450,\n'
-        '  "target_cook_time": 45,\n'
-        '  "percentages": {\n'
-        '    "Ingredient Name 1": 20.0,\n'
-        '    "Ingredient Name 2": 5.0\n'
-        "  }\n"
+        '  "target_cook_time": 45\n'
         "}\n\n"
         "Do not include markdown blocks, just raw JSON."
     )
@@ -1293,8 +1370,8 @@ def generate_recipe_percentages(
     logger.info(f"[Gemma Client] - Info - Calling generate_recipe_percentages for: {recipe_slug}")
 
     try:
-        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["percentages"])
-        if result and isinstance(result, dict) and "percentages" in result:
+        result = call_gemma_api(system_prompt, user_prompt, expected_keys=["flavor_profile"])
+        if result and isinstance(result, dict) and "flavor_profile" in result:
             from apps.core.engines.base_engine import BaseEngine
 
             engine = ENGINES.get(engine_id, BaseEngine())

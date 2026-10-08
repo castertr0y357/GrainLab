@@ -174,7 +174,11 @@ class QuickEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Light & Fluffy",
+            "hydration_offset": 10.0,
+            "fat_ratio_offset": 0.0,
+            "sugar_ratio_offset": -5.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Flaky and Tender (Soft wheat strongly preferred to prevent tough gluten)",
                 "required_gluten_elasticity": "minimal_to_none",
                 "optimal_protein_window": "8.0% - 9.5%",
             },
@@ -194,6 +198,9 @@ class QuickEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Dense & Moist (Bakery Style)",
+            "hydration_offset": 0.0,
+            "fat_ratio_offset": 10.0,
+            "sugar_ratio_offset": 10.0,
             "mechanics_overrides": {"required_gluten_elasticity": "moderate", "optimal_protein_window": "9.5% - 11.0%"},
             "culinary_nuance_directive_append": (
                 "CRITICAL: The user selected DENSE & MOIST. The crumb should be rich, heavy, and satisfying. "
@@ -317,6 +324,11 @@ class QuickEngine(BaseEngine):
                         "description": getattr(subclass, "description", ""),
                         "grain_affinity": getattr(subclass, "grain_affinity", "low_protein"),
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "target_hydration_ratio": getattr(subclass, "target_hydration_ratio", 0.0),
+                        "target_fat_ratio": getattr(subclass, "target_fat_ratio", 0.0),
+                        "target_sugar_ratio": getattr(subclass, "target_sugar_ratio", 0.0),
+                        "variations": getattr(subclass, "variations", []),
+
                         "culinary_nuance_directive": nuance,
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
                         "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
@@ -507,6 +519,11 @@ class QuickEngine(BaseEngine):
 
 
 class ChemicalLoafArchetype(QuickEngine):
+    target_hydration_ratio = 80.0
+    target_fat_ratio = 30.0
+    target_sugar_ratio = 40.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 3.0
     archetype_slug = "chemical_loaf"
     guardrails = {
         "hydration_min": 40,
@@ -536,6 +553,7 @@ class ChemicalLoafArchetype(QuickEngine):
     cooling_duration = 60
     cooling_desc = "Allow the quick bread to cool in the pan for 10-15 minutes, then turn out onto a wire rack to cool completely before slicing."
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat strongly preferred to prevent tough gluten)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -550,6 +568,11 @@ class ChemicalLoafArchetype(QuickEngine):
 
 
 class LayeredSconeArchetype(QuickEngine):
+    target_hydration_ratio = 60.0
+    target_fat_ratio = 35.0
+    target_sugar_ratio = 20.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 4.0
     archetype_slug = "layered_scone"
     guardrails = {
         "hydration_min": 40,
@@ -581,6 +604,7 @@ class LayeredSconeArchetype(QuickEngine):
         "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
     )
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat strongly preferred to prevent tough gluten)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -595,6 +619,11 @@ class LayeredSconeArchetype(QuickEngine):
 
 
 class DroppedBiscuitArchetype(QuickEngine):
+    target_hydration_ratio = 70.0
+    target_fat_ratio = 35.0
+    target_sugar_ratio = 5.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 4.0
     archetype_slug = "dropped_biscuit"
     guardrails = {
         "hydration_min": 40,
@@ -626,6 +655,7 @@ class DroppedBiscuitArchetype(QuickEngine):
         "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
     )
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat strongly preferred to prevent tough gluten)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -640,6 +670,11 @@ class DroppedBiscuitArchetype(QuickEngine):
 
 
 class TexturedMuffinArchetype(QuickEngine):
+    target_hydration_ratio = 90.0
+    target_fat_ratio = 30.0
+    target_sugar_ratio = 45.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 3.5
     archetype_slug = "textured_muffin"
     guardrails = {
         "hydration_min": 40,
@@ -671,6 +706,7 @@ class TexturedMuffinArchetype(QuickEngine):
         "Allow to cool in the pan for 5 minutes before transferring to a wire rack. Serve warm or at room temperature."
     )
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat strongly preferred to prevent tough gluten)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",

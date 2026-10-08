@@ -226,6 +226,26 @@
                 {% endfor %}
             {% endif %}
             
+            <!-- Additives Row -->
+            {% if recipe.additive_items %}
+                {% for additive in recipe.additive_items %}
+                <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                    <span style="color: var(--text-primary); font-weight: 600;">{{ additive.name }}</span>
+                    
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-primary); font-weight: 700;">{{ additive.weight }}g</span>
+                </div>
+                <div style="display: contents;">
+                    <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem; padding-left: 2rem; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                        <span style="color: var(--text-muted);">↳ {{ additive.volume_description }}</span>
+                        
+                <div style="flex-grow: 1; border-bottom: 2px dotted rgba(255,255,255,0.15); margin: 0 0.75rem; transform: translateY(-4px);"></div>
+                <span style="color: var(--text-secondary); font-weight: 500;">{{ additive.weight }}g</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
             <!-- Total Scaled Weight Row -->
             <div x-data="{ checked: false }" @click="checked = !checked" :style="checked ? { textDecoration: 'line-through', opacity: 0.5 } : {}" style="display: flex; align-items: center; cursor: pointer; transition: background 0.2s, opacity 0.2s; padding: 0.35rem 0.5rem; border-radius: 4px; margin: 0 -0.5rem;border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                 <span style="color: var(--accent); font-weight: 700;">Total Scaled Weight</span>

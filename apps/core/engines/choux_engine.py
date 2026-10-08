@@ -197,12 +197,13 @@ class ChouxEngine(BaseEngine):
                 if slug:
                     self.__class__._archetypes_cache[slug] = {
                         "default_form_factor": getattr(subclass, "default_form_factor", "extrusion-piping-sheet"),
-                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.005),
+                        "default_salt_pct": getattr(subclass, "default_salt_pct", 0.01),
                         "label": getattr(subclass, "label", ""),
                         "yield_unit": getattr(subclass, "yield_unit", "pastries"),
                         "icon": getattr(subclass, "icon", ""),
                         "description": getattr(subclass, "description", ""),
                         "grain_affinity": getattr(subclass, "grain_affinity", "low_protein"),
+                        "guardrails": getattr(subclass, "guardrails", getattr(self.__class__, "guardrails", {})),
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
@@ -278,7 +279,7 @@ class ChouxEngine(BaseEngine):
         return hyd, f, s, leaven, salt
 
     def get_ai_culinary_directive(self) -> str:
-        return "Choux paste relies heavily on a high ratio of eggs for leavening puff. Ensure you include a substantial amount of whole eggs, and zero yeast. This is choux pastry. NEVER include leaveners (it relies on steam). Requires high hydration, high lipids (butter), and high binders (eggs)."
+        return "Choux paste relies heavily on a high ratio of eggs for leavening puff. Ensure you include a substantial amount of whole eggs, and zero yeast. This is choux pastry. NEVER include leaveners (it relies on steam). Requires high hydration (you MUST include a liquid medium like water or milk to boil the panade), high lipids (butter), high binders (eggs), and you MUST include salt (0.5% - 2%)."
 
     def get_additive_scaling_directive(self) -> str:
         return "When generating ratios for inclusions or additives (like cheese), use true baker's percentages (flour = 100%). For choux doughs, these typically range from 10.0 to 25.0. CRITICAL: For potent spices or herbs (e.g. garlic, oregano, cinnamon, pepper), strictly limit to 0.1 to 1.5 to avoid overpowering the profile."
@@ -352,6 +353,11 @@ class ChouxEngine(BaseEngine):
 
 
 class PipedShellArchetype(ChouxEngine):
+    target_hydration_ratio = 150.0
+    target_fat_ratio = 80.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 0.0
     archetype_slug = "piped_shell"
     guardrails = {
         "hydration_min": 120,
@@ -378,6 +384,7 @@ class PipedShellArchetype(ChouxEngine):
     yield_unit = "pastries"
     preset_matchers = ["éclair", "eclair", "cream puff", "profiterole", "paris-brest"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong but Extensible (Requires hard wheat or a blend to trap steam and expand without bursting)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -391,6 +398,11 @@ class PipedShellArchetype(ChouxEngine):
 
 
 class ExtrusionFriedPasteArchetype(ChouxEngine):
+    target_hydration_ratio = 150.0
+    target_fat_ratio = 40.0
+    target_sugar_ratio = 10.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 0.0
     archetype_slug = "extrusion_fried"
     guardrails = {
         "hydration_min": 120,
@@ -417,6 +429,7 @@ class ExtrusionFriedPasteArchetype(ChouxEngine):
     yield_unit = "churros"
     preset_matchers = ["cruller", "churro"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong but Extensible (Requires hard wheat or a blend to trap steam and expand without bursting)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -430,6 +443,11 @@ class ExtrusionFriedPasteArchetype(ChouxEngine):
 
 
 class SavoryEmulsionArchetype(ChouxEngine):
+    target_hydration_ratio = 150.0
+    target_fat_ratio = 80.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 0.0
     archetype_slug = "savory_emulsion"
     guardrails = {
         "hydration_min": 120,
@@ -456,6 +474,7 @@ class SavoryEmulsionArchetype(ChouxEngine):
     yield_unit = "puffs"
     preset_matchers = ["gougere", "gougères", "cheese"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Strong but Extensible (Requires hard wheat or a blend to trap steam and expand without bursting)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",

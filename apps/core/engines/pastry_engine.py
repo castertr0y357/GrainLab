@@ -422,6 +422,11 @@ class PastryEngine(BaseEngine):
 
 
 class LayeredViennoiserieArchetype(PastryEngine):
+    target_hydration_ratio = 45.0
+    target_fat_ratio = 50.0
+    target_sugar_ratio = 10.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 1.5
     archetype_slug = "layered_viennoiserie"
     guardrails = {
         "hydration_min": 20,
@@ -447,6 +452,7 @@ class LayeredViennoiserieArchetype(PastryEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["croissant", "danish", "chocolat", "viennoiserie"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat preferred, but puff pastry may require a blend for structural lamination)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -516,6 +522,11 @@ class LayeredViennoiserieArchetype(PastryEngine):
 
 
 class InvertedPuffArchetype(PastryEngine):
+    target_hydration_ratio = 45.0
+    target_fat_ratio = 80.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 0.0
     archetype_slug = "inverted_puff"
     guardrails = {
         "hydration_min": 20,
@@ -541,6 +552,7 @@ class InvertedPuffArchetype(PastryEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["puff", "palmier", "vol-au-vent"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat preferred, but puff pastry may require a blend for structural lamination)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -601,6 +613,11 @@ class InvertedPuffArchetype(PastryEngine):
 
 
 class ShortcrustTartArchetype(PastryEngine):
+    target_hydration_ratio = 30.0
+    target_fat_ratio = 60.0
+    target_sugar_ratio = 10.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 0.0
     archetype_slug = "shortcrust_tart"
     guardrails = {
         "hydration_min": 20,
@@ -627,6 +644,7 @@ class ShortcrustTartArchetype(PastryEngine):
     grain_affinity = "low_protein"
     preset_matchers = ["tart", "pie", "shortcrust"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat preferred, but puff pastry may require a blend for structural lamination)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -659,6 +677,11 @@ class ShortcrustTartArchetype(PastryEngine):
 
 
 class PaperThinPhylloArchetype(PastryEngine):
+    target_hydration_ratio = 50.0
+    target_fat_ratio = 10.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 0.0
     archetype_slug = "paper_thin_phyllo"
     guardrails = {
         "hydration_min": 20,
@@ -684,6 +707,7 @@ class PaperThinPhylloArchetype(PastryEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["phyllo", "strudel"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Flaky and Tender (Soft wheat preferred, but puff pastry may require a blend for structural lamination)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",

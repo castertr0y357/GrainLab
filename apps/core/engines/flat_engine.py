@@ -171,7 +171,11 @@ class FlatEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Thin & Crispy",
+            "hydration_offset": -5.0,
+            "fat_ratio_offset": 0.0,
+            "sugar_ratio_offset": 0.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Extensible and Pliable (Requires hard wheat to roll thin without tearing)",
                 "required_gluten_elasticity": "highly_extensible",
                 "optimal_protein_window": "10.0% - 11.5%",
             },
@@ -191,7 +195,11 @@ class FlatEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Thick & Chewy (Deep Dish)",
+            "hydration_offset": 10.0,
+            "fat_ratio_offset": 5.0,
+            "sugar_ratio_offset": 2.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Extensible and Pliable (Requires hard wheat to roll thin without tearing)",
                 "required_gluten_elasticity": "strong_elastic",
                 "optimal_protein_window": "12.0% - 14.0%",
             },
@@ -286,6 +294,11 @@ class FlatEngine(BaseEngine):
                         "description": getattr(subclass, "description", ""),
                         "grain_affinity": getattr(subclass, "grain_affinity", "medium_protein"),
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "target_hydration_ratio": getattr(subclass, "target_hydration_ratio", 0.0),
+                        "target_fat_ratio": getattr(subclass, "target_fat_ratio", 0.0),
+                        "target_sugar_ratio": getattr(subclass, "target_sugar_ratio", 0.0),
+                        "variations": getattr(subclass, "variations", []),
+
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
                         "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
@@ -390,6 +403,11 @@ class FlatEngine(BaseEngine):
 
 
 class LeavenedFlatbreadArchetype(FlatEngine):
+    target_hydration_ratio = 65.0
+    target_fat_ratio = 10.0
+    target_sugar_ratio = 2.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 1.5
     archetype_slug = "leavened_flatbread"
     guardrails = {
         "hydration_min": 50,
@@ -414,6 +432,7 @@ class LeavenedFlatbreadArchetype(FlatEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["naan", "pita", "leavened"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Extensible and Pliable (Requires hard wheat to roll thin without tearing)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -449,6 +468,11 @@ class LeavenedFlatbreadArchetype(FlatEngine):
 
 
 class UnleavenedStretchedArchetype(FlatEngine):
+    target_hydration_ratio = 60.0
+    target_fat_ratio = 15.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 0.0
     archetype_slug = "unleavened_stretched"
     guardrails = {
         "hydration_min": 50,
@@ -474,6 +498,7 @@ class UnleavenedStretchedArchetype(FlatEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["tortilla", "roti", "chapati", "unleavened"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Extensible and Pliable (Requires hard wheat to roll thin without tearing)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -487,6 +512,11 @@ class UnleavenedStretchedArchetype(FlatEngine):
 
 
 class BlisteredGriddleArchetype(FlatEngine):
+    target_hydration_ratio = 70.0
+    target_fat_ratio = 5.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 1.5
     archetype_slug = "blistered_griddle"
     guardrails = {
         "hydration_min": 50,
@@ -511,6 +541,7 @@ class BlisteredGriddleArchetype(FlatEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["paratha", "scallion", "pancake"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Extensible and Pliable (Requires hard wheat to roll thin without tearing)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -524,6 +555,11 @@ class BlisteredGriddleArchetype(FlatEngine):
 
 
 class CrispFlatbreadArchetype(FlatEngine):
+    target_hydration_ratio = 45.0
+    target_fat_ratio = 20.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 0.0
     archetype_slug = "crisp_flatbread"
     guardrails = {
         "hydration_min": 50,
@@ -548,6 +584,7 @@ class CrispFlatbreadArchetype(FlatEngine):
     grain_affinity = "low_protein"
     preset_matchers = ["crisp", "lavash", "cracker", "matzo"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Extensible and Pliable (Requires hard wheat to roll thin without tearing)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",

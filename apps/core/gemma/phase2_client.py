@@ -90,7 +90,7 @@ def get_sidebar_insight_ai(
         "For example, Rye is highly recommended for cookies due to pentosans blocking gluten to maximize cookie tenderness, even though its protein is low. "
         "Evaluate the hovered element purely based on real-world baking physics for the active preset.\n"
         "\n"
-        "🚨 CRITICAL RULES:\n"
+        "[CRITICAL RULES]:\n"
         "1. Use highly practical, kitchen-focused language. Keep descriptions grounded in tangible baking concepts rather than abstract technical jargon.\n"
         "2. Strict Context Anchoring: The 'last_10_percent_analysis' field must explicitly synthesize the hovered element name directly with the active recipe target name (e.g. 'Soft White Wheat' + 'Chewy Chocolate Chip Cookies'). It cannot output generic definitions.\n"
         "3. TRULY INSIGHTFUL ANALYSIS & OUT-OF-STOCK ALTERNATIVES:\n"
@@ -359,10 +359,12 @@ def stream_grain_evaluations(
     inventory_text = "".join(inventory_list)
 
     variation_line = f"* Requested Target Variation: {active_variation_id}\n" if active_variation_id else ""
+    strength_line = f"* Flour Strength Profile: {mechanics.get('flour_strength_profile')}\n" if mechanics.get('flour_strength_profile') else ""
     data_context = (
         f"[TARGET PRODUCTION ARCHETYPE MECHANICS]\n"
         f"* Core Archetype: {archetype_display} (Engine: {getattr(engine, 'name', 'Default')})\n"
         f"{variation_line}"
+        f"{strength_line}"
         f"* Required Gluten Elasticity: {mechanics.get('required_gluten_elasticity')}\n"
         f"* Desired Horizontal Flow: {mechanics.get('desired_horizontal_flow')}\n"
         f"* Moisture/Lipid Ratio: {mechanics.get('moisture_lipid_ratio')}\n"
@@ -384,6 +386,7 @@ def stream_grain_evaluations(
     if target == "grains":
         task_instructions = (
             f"GrainLab celebrates the unique, vibrant properties of freshly milled whole grains! When evaluating the inventory, look for grains that shine as powerful structural components. "
+            "You MUST strictly adhere to the 'Flour Strength Profile'. If the profile requires 'spread-resistance' or 'structural support', you cannot recommend only soft/weak grains; you MUST recommend a blend incorporating a hard/strong grain to prevent structure collapse. "
             "Classify a grain as RECOMMENDED if its native chemistry directly supports the target mechanics and its flavor profile complements the target flavor profile, OR if it contributes essential characteristics to a custom whole-grain flour blend without overpowering the desired flavor. "
             "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification highlighting its potential and flavor fit. "
             f"You MUST evaluate ALL {len(active_berries)} provided raw material grains against the target mechanics. DO NOT skip or group any grains together."
@@ -438,6 +441,7 @@ def stream_grain_evaluations(
         # Fallback to the original monolithic logic
         task_instructions = (
             f"GrainLab celebrates the unique, vibrant properties of freshly milled whole grains! When evaluating the inventory, look for grains that shine as powerful structural components. "
+            "You MUST strictly adhere to the 'Flour Strength Profile'. If the profile requires 'spread-resistance' or 'structural support', you cannot recommend only soft/weak grains; you MUST recommend a blend incorporating a hard/strong grain to prevent structure collapse. "
             "Classify a grain as RECOMMENDED if its native chemistry directly supports the target mechanics and its flavor profile complements the target flavor profile, OR if it contributes essential characteristics to a custom whole-grain flour blend without overpowering the desired flavor. "
             "For each grain, assign a RECOMMENDED, SUB-OPTIMAL, or NOT RECOMMENDED tier, and write a 2-sentence chemistry justification highlighting its potential and flavor fit. "
             f"You MUST evaluate ALL {len(active_berries)} raw material grains provided in the inventory against the mechanics. DO NOT skip or group any grains together.\n"

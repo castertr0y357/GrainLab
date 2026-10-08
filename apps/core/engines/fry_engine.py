@@ -386,6 +386,11 @@ class FryEngine(BaseEngine):
 
 
 class YeastRaisedDonutArchetype(FryEngine):
+    target_hydration_ratio = 50.0
+    target_fat_ratio = 15.0
+    target_sugar_ratio = 15.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 2.0
     archetype_slug = "yeast_raised_donut"
     guardrails = {
         "hydration_min": 40,
@@ -412,6 +417,7 @@ class YeastRaisedDonutArchetype(FryEngine):
     preset_matchers = ["yeast", "raised", "donut"]
     is_batter = False
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Elastic (Requires a blend of soft wheat for tenderness and hard wheat for structural integrity during frying)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -425,6 +431,11 @@ class YeastRaisedDonutArchetype(FryEngine):
 
 
 class CakeDonutArchetype(FryEngine):
+    target_hydration_ratio = 65.0
+    target_fat_ratio = 20.0
+    target_sugar_ratio = 40.0
+    target_protein_pct = 9.0
+    base_leavening_ratio = 3.0
     archetype_slug = "cake_donut"
     guardrails = {
         "hydration_min": 40,
@@ -451,6 +462,7 @@ class CakeDonutArchetype(FryEngine):
     preset_matchers = ["cake-donut", "batter-donut"]
     is_batter = True
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Elastic (Requires a blend of soft wheat for tenderness and hard wheat for structural integrity during frying)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -464,6 +476,11 @@ class CakeDonutArchetype(FryEngine):
 
 
 class FritterBeignetArchetype(FryEngine):
+    target_hydration_ratio = 80.0
+    target_fat_ratio = 10.0
+    target_sugar_ratio = 10.0
+    target_protein_pct = 10.0
+    base_leavening_ratio = 2.0
     archetype_slug = "fritter_beignet"
     guardrails = {
         "hydration_min": 40,
@@ -491,6 +508,7 @@ class FritterBeignetArchetype(FryEngine):
     preset_matchers = ["fritter", "beignet", "sopapilla"]
     is_batter = True
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Elastic (Requires a blend of soft wheat for tenderness and hard wheat for structural integrity during frying)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "high_spread",
         "moisture_lipid_ratio": "high_hydration_lean",
@@ -504,6 +522,11 @@ class FritterBeignetArchetype(FryEngine):
 
 
 class FriedLaminateArchetype(FryEngine):
+    target_hydration_ratio = 40.0
+    target_fat_ratio = 50.0
+    target_sugar_ratio = 10.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 1.5
     archetype_slug = "fried_laminate"
     guardrails = {
         "hydration_min": 40,
@@ -531,6 +554,7 @@ class FriedLaminateArchetype(FryEngine):
     preset_matchers = ["frybread", "cruller", "laminated"]
     is_batter = False
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Elastic (Requires a blend of soft wheat for tenderness and hard wheat for structural integrity during frying)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",

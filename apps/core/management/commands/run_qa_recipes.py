@@ -39,55 +39,67 @@ def evaluate_recipe(
 
     ingredients = recipe.get("secondary_ingredients", {})
 
-    # Check 1: Leavener scaling logic (Yeast vs Chemical vs Starter)
-    leaveners = ingredients.get("leaveners", [])
-    for l in leaveners:
-        name_lower = l.get("name", "").lower()
-        if "starter" in name_lower or "levain" in name_lower:
-            max_leaven = 25.0
-        elif "powder" in name_lower or "soda" in name_lower or "chemical" in name_lower:
-            max_leaven = 5.0
-        else:
-            max_leaven = 1.5
+    if final_recipe:
+        recipe_math = final_recipe.get("recipe", {})
+        flour_w = recipe_math.get("flour_weight", 1)
+        if flour_w == 0: flour_w = 1
 
-        if l.get("bakers_percentage", 0) > max_leaven:
-            checks.append(
-                {
-                    "rule": "Leaven Limit",
-                    "passed": False,
-                    "reason": f"Leavener {l.get('name')} exceeds {max_leaven}% max ({l.get('bakers_percentage')}%)",
-                }
-            )
-        else:
-            checks.append(
-                {"rule": "Leaven Limit", "passed": True, "reason": f"Leavener {l.get('name')} within limits."}
-            )
+        # Check 1: Leavener scaling logic (Yeast vs Chemical vs Starter)
+        leavener_items = recipe_math.get("leavener_items", [])
+        for l in leavener_items:
+            name_lower = l.get("name", "").lower()
+            if "starter" in name_lower or "levain" in name_lower:
+                max_leaven = 25.0
+            elif "powder" in name_lower or "soda" in name_lower or "chemical" in name_lower:
+                max_leaven = 5.0
+            else:
+                max_leaven = 2.0  # Slightly looser bound for standard yeast since engines handle it now
 
-    # Check 2: Aromatics herbs/spices <= 2.0%
-    aromatics = ingredients.get("aromatics", [])
-    for a in aromatics:
-        name_lower = a.get("name", "").lower()
-        if any(spice in name_lower for spice in ["garlic", "oregano", "cinnamon", "pepper", "herb", "spice"]):
-            if a.get("bakers_percentage", 0) > 2.0:
+            actual_pct = (l.get("weight", 0) / flour_w) * 100
+            if actual_pct > max_leaven:
                 checks.append(
                     {
-                        "rule": "Spice Limit",
+                        "rule": "Leaven Limit",
                         "passed": False,
-                        "reason": f"Spice {a.get('name')} exceeds 2.0% max ({a.get('bakers_percentage')}%)",
+                        "reason": f"Leavener {l.get('name')} exceeds {max_leaven}% max ({actual_pct:.1f}%)",
                     }
                 )
             else:
                 checks.append(
-                    {"rule": "Spice Limit", "passed": True, "reason": f"Spice {a.get('name')} within limits."}
+                    {"rule": "Leaven Limit", "passed": True, "reason": f"Leavener {l.get('name')} within limits."}
                 )
+
+        # Check 2: Aromatics herbs/spices <= 4.0% (Using the new qualitative math limits)
+        inclusions = recipe_math.get("inclusions", []) + recipe_math.get("additive_items", [])
+        for inc in inclusions:
+            name_lower = inc.get("name", "").lower()
+            if any(spice in name_lower for spice in ["garlic", "oregano", "cinnamon", "pepper", "herb", "spice", "extract"]):
+                actual_pct = inc.get("percentage", 0)
+                if actual_pct > 4.0:
+                    checks.append(
+                        {
+                            "rule": "Spice Limit",
+                            "passed": False,
+                            "reason": f"Spice {inc.get('name')} exceeds 4.0% max ({actual_pct:.1f}%)",
+                        }
+                    )
+                else:
+                    checks.append(
+                        {"rule": "Spice Limit", "passed": True, "reason": f"Spice {inc.get('name')} within limits."}
+                    )
 
     # Check 3: Comprehensive Culinary Analysis via Unified Guardrails
     if final_recipe:
         try:
-            salt_pct = float(recipe.get("target_salt_pct", 0))
-            sugar_pct = float(recipe.get("target_sugar_pct", 0))
-            fat_pct = float(recipe.get("target_fat_pct", 0))
-            hydration_pct = float(recipe.get("target_hydration_pct", 0))
+            recipe_math = final_recipe.get("recipe", {})
+            flour_w = recipe_math.get("flour_weight", 0)
+            if flour_w > 0:
+                salt_pct = (recipe_math.get("salt_weight", 0) / flour_w) * 100
+                sugar_pct = (recipe_math.get("sugar_weight", 0) / flour_w) * 100
+                fat_pct = (recipe_math.get("fat_weight", 0) / flour_w) * 100
+                hydration_pct = (recipe_math.get("water_weight", 0) / flour_w) * 100
+            else:
+                salt_pct = sugar_pct = fat_pct = hydration_pct = 0.0
         except (ValueError, TypeError):
             salt_pct = sugar_pct = fat_pct = hydration_pct = 0.0
 
@@ -242,10 +254,8 @@ def evaluate_recipe(
         )
 
     # Check 7: Hydration vs Lipid Balancing
-    liquids = ingredients.get("liquids", [])
-    total_liquid = sum(l.get("bakers_percentage", 0) for l in liquids) if liquids else 0.0
-    lipids = ingredients.get("lipids", [])
-    total_lipid = sum(l.get("bakers_percentage", 0) for l in lipids) if lipids else 0.0
+    total_liquid = hydration_pct
+    total_lipid = fat_pct
 
     if engine_id != "choux" and total_lipid > 30.0 and total_liquid > 85.0:
         checks.append(
@@ -772,37 +782,28 @@ class Command(BaseCommand):
                                         ),
                                     }
                                 )
-                            if percentages_data and "percentages" in percentages_data:
+                            if percentages_data and "flavor_profile" in percentages_data:
+                                flavor_map = {item["name"]: item for item in percentages_data.get("flavor_profile", [])}
+                                
                                 for cat_key, items in recipe_data.get("secondary_ingredients", {}).items():
                                     if isinstance(items, list):
                                         for item in items:
-                                            if item.get("name") in percentages_data["percentages"]:
-                                                item["bakers_percentage"] = percentages_data["percentages"][
-                                                    item.get("name")
-                                                ]
+                                            if item.get("name") in flavor_map:
+                                                f_item = flavor_map[item.get("name")]
+                                                item["category"] = f_item.get("category")
+                                                item["intensity"] = f_item.get("intensity")
                                     else:
-                                        if items.get("name") in percentages_data["percentages"]:
-                                            items["bakers_percentage"] = percentages_data["percentages"][
-                                                items.get("name")
-                                            ]
+                                        if items.get("name") in flavor_map:
+                                            f_item = flavor_map[items.get("name")]
+                                            items["category"] = f_item.get("category")
+                                            items["intensity"] = f_item.get("intensity")
 
                                 if "flavor_inclusions" in recipe_data:
                                     for item in recipe_data["flavor_inclusions"]:
-                                        if item.get("name") in percentages_data["percentages"]:
-                                            item["bakers_percentage"] = percentages_data["percentages"][
-                                                item.get("name")
-                                            ]
-
-                                for target_key in [
-                                    "target_fat_pct",
-                                    "target_sugar_pct",
-                                    "target_hydration_pct",
-                                    "target_binder_pct",
-                                    "target_leaven_pct",
-                                    "target_salt_pct",
-                                ]:
-                                    if target_key in percentages_data:
-                                        recipe_data[target_key] = percentages_data[target_key]
+                                        if item.get("name") in flavor_map:
+                                            f_item = flavor_map[item.get("name")]
+                                            item["category"] = f_item.get("category")
+                                            item["intensity"] = f_item.get("intensity")
 
                             active_arch = engine_instance.archetypes.get(archetype_id, {})
                             ff_slug = active_arch.get("default_form_factor")

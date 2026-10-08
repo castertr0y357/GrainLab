@@ -420,6 +420,11 @@ class PanEngine(BaseEngine):
 
 
 class SandwichPanArchetype(PanEngine):
+    target_hydration_ratio = 65.0
+    target_fat_ratio = 10.0
+    target_sugar_ratio = 5.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 2.0
     archetype_slug = "sandwich_pan"
     guardrails = {
         "hydration_min": 50,
@@ -444,6 +449,7 @@ class SandwichPanArchetype(PanEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["sandwich", "loaf", "pullman", "milk_bread"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Lofty (Requires hard wheat to support a high rise and fine crumb structure)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -466,6 +472,11 @@ class SandwichPanArchetype(PanEngine):
 
 
 class FreeformBraidedArchetype(PanEngine):
+    target_hydration_ratio = 55.0
+    target_fat_ratio = 20.0
+    target_sugar_ratio = 15.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 2.0
     archetype_slug = "freeform_braided"
     guardrails = {
         "hydration_min": 50,
@@ -490,6 +501,7 @@ class FreeformBraidedArchetype(PanEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["braid", "challah", "brioche"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Lofty (Requires hard wheat to support a high rise and fine crumb structure)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -509,6 +521,11 @@ class FreeformBraidedArchetype(PanEngine):
 
 
 class SoftDinnerRollArchetype(PanEngine):
+    target_hydration_ratio = 60.0
+    target_fat_ratio = 25.0
+    target_sugar_ratio = 20.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 2.0
     archetype_slug = "soft_dinner_roll"
     guardrails = {
         "hydration_min": 50,
@@ -534,6 +551,7 @@ class SoftDinnerRollArchetype(PanEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["roll", "bun"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Lofty (Requires hard wheat to support a high rise and fine crumb structure)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",
@@ -553,6 +571,11 @@ class SoftDinnerRollArchetype(PanEngine):
 
 
 class FilledSweetRollArchetype(PanEngine):
+    target_hydration_ratio = 50.0
+    target_fat_ratio = 30.0
+    target_sugar_ratio = 25.0
+    target_protein_pct = 11.0
+    base_leavening_ratio = 2.0
     archetype_slug = "filled_sweet_roll"
     guardrails = {
         "hydration_min": 50,
@@ -578,6 +601,7 @@ class FilledSweetRollArchetype(PanEngine):
     grain_affinity = "medium_protein"
     preset_matchers = ["cinnamon", "sweet_roll", "babka", "monkey_bread"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Soft but Lofty (Requires hard wheat to support a high rise and fine crumb structure)",
         "required_gluten_elasticity": "high_retention",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "balanced_emulsion",

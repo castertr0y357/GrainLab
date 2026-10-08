@@ -240,6 +240,11 @@ class BathEngine(BaseEngine):
 
 
 class BoiledBagelArchetype(BathEngine):
+    target_hydration_ratio = 55.0
+    target_fat_ratio = 2.0
+    target_sugar_ratio = 5.0
+    target_protein_pct = 14.0
+    base_leavening_ratio = 1.0
     archetype_slug = "boiled_bagel"
     guardrails = {
         "hydration_min": 45,
@@ -265,6 +270,7 @@ class BoiledBagelArchetype(BathEngine):
     description = "Ring geometry, dense core structure, high tensile strength."
     grain_affinity = "high_protein"
     target_archetype_mechanics = {
+        "flour_strength_profile": "Dense and Chewy (Requires high-protein hard wheat for maximum gluten strength and chew)",
         "required_gluten_elasticity": "extreme_tensile",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "high_hydration_lean",
@@ -287,6 +293,11 @@ class BoiledBagelArchetype(BathEngine):
 
 
 class TwistedPretzelArchetype(BathEngine):
+    target_hydration_ratio = 50.0
+    target_fat_ratio = 5.0
+    target_sugar_ratio = 0.0
+    target_protein_pct = 12.0
+    base_leavening_ratio = 1.0
     archetype_slug = "twisted_pretzel"
     guardrails = {
         "hydration_min": 45,
@@ -312,6 +323,7 @@ class TwistedPretzelArchetype(BathEngine):
     description = "Classic Bavarian shape, thin crust, chewy interior."
     grain_affinity = "high_protein"
     target_archetype_mechanics = {
+        "flour_strength_profile": "Dense and Chewy (Requires high-protein hard wheat for maximum gluten strength and chew)",
         "required_gluten_elasticity": "high_extensible",
         "desired_horizontal_flow": "minimal_spread",
         "moisture_lipid_ratio": "medium_hydration_lean",

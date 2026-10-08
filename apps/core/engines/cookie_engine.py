@@ -180,7 +180,11 @@ class CookieEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Thin & Crispy",
+            "hydration_offset": -5.0,
+            "fat_ratio_offset": 10.0,
+            "sugar_ratio_offset": 10.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Tender but Structured (Requires blending a soft grain for tenderness with a hard grain for spread-resistance)",
                 "required_gluten_elasticity": "minimal_to_none",
                 "desired_horizontal_flow": "high_spread",
                 "optimal_protein_window": "8.0% - 9.5%",
@@ -203,7 +207,11 @@ class CookieEngine(BaseEngine):
                 "boil_required": False,
             },
             "label": "Soft & Chewy",
+            "hydration_offset": 5.0,
+            "fat_ratio_offset": 0.0,
+            "sugar_ratio_offset": -5.0,
             "mechanics_overrides": {
+                "flour_strength_profile": "Tender but Structured (Requires blending a soft grain for tenderness with a hard grain for spread-resistance)",
                 "required_gluten_elasticity": "moderate_extensible",
                 "desired_horizontal_flow": "minimal_spread",
                 "optimal_protein_window": "10.0% - 12.0%",
@@ -316,6 +324,11 @@ class CookieEngine(BaseEngine):
                         "description": getattr(subclass, "description", ""),
                         "grain_affinity": getattr(subclass, "grain_affinity", "low_protein"),
                         "target_archetype_mechanics": getattr(subclass, "target_archetype_mechanics", {}),
+                        "target_hydration_ratio": getattr(subclass, "target_hydration_ratio", 0.0),
+                        "target_fat_ratio": getattr(subclass, "target_fat_ratio", 0.0),
+                        "target_sugar_ratio": getattr(subclass, "target_sugar_ratio", 0.0),
+                        "variations": getattr(subclass, "variations", []),
+
                         "culinary_nuance_directive": getattr(subclass, "culinary_nuance_directive", ""),
                         "preset_matchers": getattr(subclass, "preset_matchers", []),
                         "ingredient_prep_directive": getattr(subclass, "ingredient_prep_directive", getattr(self.__class__, "ingredient_prep_directive", "")),
@@ -499,6 +512,11 @@ class CookieEngine(BaseEngine):
 
 
 class DropCookieArchetype(CookieEngine):
+    target_hydration_ratio = 15.0
+    target_fat_ratio = 55.0
+    target_sugar_ratio = 75.0
+    target_protein_pct = 10.0
+    base_leavening_ratio = 1.5
     archetype_slug = "drop_cookie"
     guardrails = {
         "hydration_min": 0,
@@ -524,6 +542,7 @@ class DropCookieArchetype(CookieEngine):
     grain_affinity = "low_protein"
     preset_matchers = ["cookie", "macaron", "snickerdoodle", "bake"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Tender but Structured (Requires blending a soft grain for tenderness with a hard grain for spread-resistance)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "high_spread",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -544,6 +563,11 @@ class DropCookieArchetype(CookieEngine):
 
 
 class BarCookieArchetype(CookieEngine):
+    target_hydration_ratio = 20.0
+    target_fat_ratio = 60.0
+    target_sugar_ratio = 100.0
+    target_protein_pct = 10.0
+    base_leavening_ratio = 1.0
     archetype_slug = "bar_cookie"
     guardrails = {
         "hydration_min": 0,
@@ -570,6 +594,7 @@ class BarCookieArchetype(CookieEngine):
     grain_affinity = "low_protein"
     preset_matchers = ["bar", "brownie", "blondie", "slab", "continuous"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Tender but Structured (Requires blending a soft grain for tenderness with a hard grain for spread-resistance)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -605,6 +630,11 @@ class BarCookieArchetype(CookieEngine):
 
 
 class SliceBakeArchetype(CookieEngine):
+    target_hydration_ratio = 10.0
+    target_fat_ratio = 65.0
+    target_sugar_ratio = 45.0
+    target_protein_pct = 10.0
+    base_leavening_ratio = 0.5
     archetype_slug = "slice_bake"
     guardrails = {
         "hydration_min": 0,
@@ -630,6 +660,7 @@ class SliceBakeArchetype(CookieEngine):
     grain_affinity = "low_protein"
     preset_matchers = ["biscotti", "slice"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Tender but Structured (Requires blending a soft grain for tenderness with a hard grain for spread-resistance)",
         "required_gluten_elasticity": "minimal_to_none",
         "desired_horizontal_flow": "controlled_expansion",
         "moisture_lipid_ratio": "low_moisture_high_fat",
@@ -677,6 +708,11 @@ class SliceBakeArchetype(CookieEngine):
 
 
 class RolledCutoutArchetype(CookieEngine):
+    target_hydration_ratio = 10.0
+    target_fat_ratio = 40.0
+    target_sugar_ratio = 40.0
+    target_protein_pct = 10.0
+    base_leavening_ratio = 0.5
     archetype_slug = "rolled_cutout"
     shaping_directive = "Roll dough out evenly (approx 1/4 inch thick) on a lightly floured surface or between parchment sheets. Cut into desired shapes, minimizing re-rolling to prevent tough cookies."
     ingredient_prep_directive = "Dough usually requires chilling before rolling to maintain sharp edges during cutting and baking."
@@ -701,9 +737,10 @@ class RolledCutoutArchetype(CookieEngine):
     description = "Zero-spread formulation maintaining clean geometric edges post-bake."
     default_form_factor = "half-sheet-pan"
     default_salt_pct = 0.0075
-    grain_affinity = "medium_protein"
+    grain_affinity = "low_protein"
     preset_matchers = ["gingerbread", "shortbread", "cutout", "sugar"]
     target_archetype_mechanics = {
+        "flour_strength_profile": "Tender but Structured (Requires blending a soft grain for tenderness with a hard grain for spread-resistance)",
         "required_gluten_elasticity": "moderate_extensible",
         "desired_horizontal_flow": "zero_spread_stable",
         "moisture_lipid_ratio": "low_moisture_high_fat",

@@ -354,6 +354,12 @@
 - [x] Add optional API key field to settings for cloud model support.
 - [x] Wire database seeding to respect AUTO_SEED_DB environment variable.
 - [x] Fix active variation ID propagation in AI generation prompts and caching to ensure variation parameters correctly alter recipe instructions and evaluations.
+- [x] Shift grain protein calculation away from LLM-guessing to a mathematical calculation using `protein_grams` and `serving_size_grams`.
+- [x] Create database migration for new `WheatBerry` fields and update the container initialization flow to ensure migrations and the seed script execute correctly on empty volumes.
+- [x] Implement robust seed script to gracefully handle partial configurations when auto-seeding.
+- [x] Adjust `cookie_engine` and `quick_engine` default targets to reduce fat and sugar ratios, ensuring cookies and quick breads using low-protein structural grains do not flatten out during baking.
+- [x] Offload Phase 3 `optimize_grain_blend` and Phase 4 `calibrate_fermentation` away from the local LLM to deterministic Python math solvers to increase generation speed and accuracy.
+- [x] Add structural safety calculation in the Grain Blend optimizer to warn users if high-rise bread blends contain more than 50% weak-gluten grains (e.g. Soft, Durum, Ancient).
 
 ## 🏗️ Architectural Changes & Decisions
 - SPA-feel using HTMX and Alpine.js with Gunicorn/Django serving html fragments.

@@ -57,6 +57,8 @@ class Command(BaseCommand):
 
         # Load the fixture data
         try:
+            from apps.core.models import SystemSetting
+            SystemSetting.objects.all().delete()
             call_command("loaddata", fixture_path)
             self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))
         except Exception as e:

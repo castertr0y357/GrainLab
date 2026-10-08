@@ -90,31 +90,9 @@ def get_substitution_offset(original_ing: str, substitute_ing: str, current_reci
 
 def calibrate_fermentation(starter_feed_hours: str, rise_speed: str, mill_type: str, is_sifted: bool) -> dict:
     """
-    Computes diagnostic parameters based on sourdough activity and sifting factors.
+    Computes diagnostic parameters based on sourdough activity and sifting factors using pure Python equations.
     """
-    if True:
-        system_prompt = (
-            "Calibrate bulk fermentation countdown targets and ash estimate based on "
-            "starter feeding schedule and milling profile. Return a JSON object with: "
-            "'ash_content_estimate' (float), 'estimated_bulk_fermentation_hours' (float), "
-            "and 'notes' (string)."
-        )
-        user_prompt = json.dumps(
-            {
-                "starter_feed_hours": starter_feed_hours,
-                "rise_speed": rise_speed,
-                "mill_type": mill_type,
-                "is_sifted": is_sifted,
-            }
-        )
-
-        result = call_gemma_api(
-            system_prompt, user_prompt, expected_keys=["estimated_bulk_fermentation_hours", "ash_content_estimate"]
-        )
-        if result:
-            return result
-
-    # Fallback calculations based on bread-science equations
+    # Calculations based on bread-science equations
     # Ash estimate: stoneground = 1.5%, steel roller = 0.5%. Sifting reduces ash by 0.3%.
     ash = 1.5 if mill_type == "stoneground" else 0.5
     if is_sifted:
@@ -548,8 +526,8 @@ def generate_tweak_application_state(
     engine_id, active_archetype_id, recipe_slug, recipe_name, proposed_modifications, current_state
 ) -> dict:
     system_prompt = (
-        "You are an expert baking scientist. Categorize a list of newly applied ingredients into the correct backend categories and baker's percentages. "
-        "CRITICAL: If modifying an existing base ingredient (like flour, fat, sugar, or binders/eggs), output the updated `target_xxx_pct` INSTEAD of adding it to secondary_ingredients. For example, if adjusting eggs, adjust target_binder_pct. Do not duplicate base ingredients in secondary_ingredients."
+        "You are an expert baking scientist. Categorize a list of newly applied ingredients into the correct backend categories and assign qualitative intent (Subtle, Medium, Heavy) to flavors. "
+        "CRITICAL: If modifying an existing base ingredient, change the flour blend or the flavor profile array. Do not duplicate base ingredients in secondary_ingredients."
         "Return a pure JSON object matching this schema:\n"
         "{\n"
         '  "secondary_ingredients": {\n'
@@ -559,20 +537,18 @@ def generate_tweak_application_state(
         '    "sugars": [],\n'
         '    "binders": []\n'
         "  },\n"
-        '  "percentages": {\n'
-        '    "Ingredient Name": 5.0\n'
-        "  },\n"
-        '  "target_fat_pct": 15.0,\n'
-        '  "target_sugar_pct": 10.0,\n'
-        '  "target_hydration_pct": 75.0,\n'
-        '  "target_leaven_pct": 20.0,\n'
-        '  "target_salt_pct": 2.0,\n'
-        '  "target_binder_pct": 35.0,\n'
+        '  "flavor_profile": [\n'
+        '    {\n'
+        '      "name": "Ingredient Name",\n'
+        '      "category": "Extract",\n'
+        '      "intensity": "Subtle"\n'
+        '    }\n'
+        '  ],\n'
         '  "target_mixing_method": "stand_mixer",\n'
         '  "target_flour_blend": {"soft_white_wheat": 75, "spelt": 20, "rye": 5}\n'
         "}\n"
         "If modifying the flour blend (rebalancing grain ratios), provide the new `target_flour_blend` mapping. Provide relative proportional weights for the blend; the backend will automatically normalize these values to 100%. "
-        "If a base parameter like hydration or fat doesn't change, omit it from the root object. Omit empty categories."
+        "Omit empty categories."
     )
     user_prompt = json.dumps(
         {
@@ -584,7 +560,7 @@ def generate_tweak_application_state(
     )
     from apps.core.gemma.core_client import call_gemma_api
 
-    result = call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "percentages"])
+    result = call_gemma_api(system_prompt, user_prompt, expected_keys=["secondary_ingredients", "flavor_profile"])
     if result:
         blend = result.get("target_flour_blend")
         if isinstance(blend, dict) and len(blend) > 0:

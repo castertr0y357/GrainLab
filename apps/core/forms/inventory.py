@@ -6,7 +6,7 @@ from apps.core.models import Equipment, WheatBerry
 class WheatBerryForm(forms.ModelForm):
     class Meta:
         model = WheatBerry
-        fields = ["name", "protein_content", "hardness", "moisture_absorption_coef", "is_active", "notes"]
+        fields = ["name", "protein_grams", "serving_size_grams", "protein_content", "hardness", "moisture_absorption_coef", "is_active", "notes"]
 
 
 class EquipmentForm(forms.ModelForm):

@@ -106,20 +106,45 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
     except (ValueError, TypeError):
         base_sugar_pct = -1.0
 
+    archetype_class = None
+    if getattr(engine.__class__, "archetype_slug", None) == archetype_id:
+        archetype_class = engine.__class__
+    else:
+        for subclass in engine.__class__.__subclasses__():
+            if getattr(subclass, "archetype_slug", None) == archetype_id:
+                archetype_class = subclass
+                break
+
+    active_variation_id = state.get("active_variation_id") or state.get("variation_slug")
+    variation_data = {}
+    if archetype_class and hasattr(archetype_class, "variations") and active_variation_id:
+        variation_data = archetype_class.variations.get(active_variation_id, {})
+    elif hasattr(engine.__class__, "variations") and active_variation_id:
+        variation_data = engine.__class__.variations.get(active_variation_id, {})
+
     if base_hydration_pct >= 0:
         hydration_pct = base_hydration_pct
     else:
-        hydration_pct = 0.45 + (crumb_score / 100.0) * 0.40
+        if archetype_class and getattr(archetype_class, "target_hydration_ratio", None) is not None:
+            hydration_pct = (getattr(archetype_class, "target_hydration_ratio") + variation_data.get("hydration_offset", 0.0)) / 100.0
+        else:
+            hydration_pct = 0.45 + (crumb_score / 100.0) * 0.40
 
     if base_fat_pct >= 0:
         fat_pct = base_fat_pct
     else:
-        fat_pct = (texture_score / 100.0) * 0.15
+        if archetype_class and getattr(archetype_class, "target_fat_ratio", None) is not None:
+            fat_pct = (getattr(archetype_class, "target_fat_ratio") + variation_data.get("fat_ratio_offset", 0.0)) / 100.0
+        else:
+            fat_pct = (texture_score / 100.0) * 0.15
 
     if base_sugar_pct >= 0:
         sugar_pct = base_sugar_pct
     else:
-        sugar_pct = (texture_score / 100.0) * 0.12
+        if archetype_class and getattr(archetype_class, "target_sugar_ratio", None) is not None:
+            sugar_pct = (getattr(archetype_class, "target_sugar_ratio") + variation_data.get("sugar_ratio_offset", 0.0)) / 100.0
+        else:
+            sugar_pct = (texture_score / 100.0) * 0.12
 
     try:
         starter_pct = float(state.get("starter", state.get("starter_pct", 0))) / 100.0
@@ -442,6 +467,22 @@ def calculate_final_recipe(state: dict, run_ai: bool = False) -> dict:
         preset_slug=preset_slug_resolved,
     )
     countertop_steps_json = json.dumps(steps_list)
+
+    # 9. Apply strict overrides for specific engine types (e.g. Pasta must boil at 212)
+    ai_temp_override = getattr(active_engine, "ai_cook_temp_override", None)
+    ai_time_override = getattr(active_engine, "ai_cook_time_override", None)
+
+    if ai_temp_override is not None:
+        scaled_temp = ai_temp_override
+    else:
+        # Clamp to guardrails
+        guardrails = active_engine.get_active_guardrails(archetype_id, active_variation_id)
+        if "cook_temp_min_f" in guardrails and "cook_temp_max_f" in guardrails:
+            scaled_temp = max(guardrails["cook_temp_min_f"], min(scaled_temp, guardrails["cook_temp_max_f"]))
+
+    if ai_time_override is not None:
+        if scaled_time > 10:  # Prevent AI from baking fresh pasta for 45 minutes
+            scaled_time = ai_time_override
 
     return {
         "recipe": recipe,
