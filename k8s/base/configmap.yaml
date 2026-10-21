@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grainlab-config
+data:
+  DATABASE_HOST: "db"
+  DATABASE_PORT: "5432"
+  POSTGRES_DB: "grainlab"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  CELERY_BROKER_URL: "redis://redis:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+  DEBUG: "False"
+  MOCK_MODE: "False"
+  AUTO_SEED_DB: "True"
+  ALLOWED_HOSTS: "*"
+  CSRF_TRUSTED_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000,https://grainlab.example.com,http://grainlab.example.com"
