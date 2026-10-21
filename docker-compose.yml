@@ -8,6 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - backups:/backups
       - backups:/app/backups
     networks:
       - app_network
@@ -37,6 +38,7 @@ services:
       - db
       - redis
     volumes:
+      - backups:/backups
       - backups:/app/backups
     networks:
       - app_network
@@ -55,6 +57,7 @@ services:
       - db
       - redis
     volumes:
+      - backups:/backups
       - backups:/app/backups
     networks:
       - app_network
@@ -73,6 +76,7 @@ services:
       - db
       - redis
     volumes:
+      - backups:/backups
       - backups:/app/backups
     networks:
       - app_network

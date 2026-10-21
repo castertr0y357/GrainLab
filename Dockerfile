@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     postgresql-client \
+    libnfs14 \
+    libnfs-dev \
+    libnfs-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -27,7 +30,10 @@ RUN python manage.py collectstatic --noinput
 RUN chmod +x /app/entrypoint.sh
 
 # Create a non-privileged user and switch to it
-RUN useradd -U -d /app django && chown -R django:django /app
+RUN useradd -U -d /app django \
+    && mkdir -p /backups \
+    && chown -R django:django /app /backups \
+    && chmod 700 /backups
 
 USER django
 

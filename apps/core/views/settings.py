@@ -9,6 +9,8 @@ from apps.core import gemma
 from apps.core.models import (
     Equipment,
     SystemSetting,
+    BackupConfiguration,
+    BackupRecord,
 )
 
 logger = logging.getLogger("grainlab.views")
@@ -41,7 +43,7 @@ class SettingsPageView(View):
             "soft_delete_retention_days": SystemSetting.get_val("soft_delete_retention_days", "30"),
             "export_format_default": SystemSetting.get_val("export_format_default", "json"),
             "backup_schedule": SystemSetting.get_val("backup_schedule", "disabled"),
-            "backup_retention": SystemSetting.get_val("backup_retention", "14"),
+            "backup_retention": SystemSetting.get_val("backup_retention", "14"),`n            "backup_config": BackupConfiguration.get_config(),`n            "backup_records": BackupRecord.objects.all().order_by("-created_at")[:50],`n            "storage_choices": BackupConfiguration.STORAGE_CHOICES,`n            "weekday_choices": BackupConfiguration.WEEKDAY_CHOICES,
             # Inventory for dropdowns
             "mixers": Equipment.objects.filter(equipment_type="mixer", deleted_at__isnull=True),
             "proofing_environments": Equipment.objects.filter(equipment_type="proofing_box", deleted_at__isnull=True),
@@ -160,3 +162,4 @@ class DiscoverModelsView(View):
             "current_model": current_model,
         }
         return render(request, "partials/model_discovery_output.html", context)
+

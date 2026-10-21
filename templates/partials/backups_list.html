@@ -1,32 +1,93 @@
-{% if backups %}
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
-    <thead>
-        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
-            <th style="padding: 0.5rem;">Filename</th>
-            <th style="padding: 0.5rem;">Size (MB)</th>
-            <th style="padding: 0.5rem;">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for backup in backups %}
-        <tr style="border-bottom: 1px solid var(--border-light);">
-            <td style="padding: 0.5rem; font-family: monospace;">{{ backup.name }}</td>
-            <td style="padding: 0.5rem;">{{ backup.size_mb }}</td>
-            <td style="padding: 0.5rem; display: flex; gap: 0.5rem;">
-                <form method="post" hx-post="{% url 'backup_restore' backup.name %}" style="margin: 0;">
-                    {% csrf_token %}
-                    <button class="nav-btn" style="border: 1px solid #e67e22; color: #e67e22; background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer;" type="submit" onclick="return confirm('WARNING: Restoring a backup will WIPE the current database and replace it. Are you absolutely sure?')">Restore</button>
-                </form>
-                <a href="{% url 'backup_download' backup.name %}" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none;">Download</a>
-                <form method="post" hx-post="{% url 'backup_delete' backup.name %}" style="margin: 0;">
-                    {% csrf_token %}
-                    <button class="nav-btn" style="border: 1px solid #e74c3c; color: #e74c3c; background: transparent; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer;" type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% if backup_records %}
+<div style="overflow-x: auto; margin-bottom: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+                <th style="padding: 0.6rem 0.5rem;">Date / Time</th>
+                <th style="padding: 0.6rem 0.5rem;">Filename</th>
+                <th style="padding: 0.6rem 0.5rem;">Tier</th>
+                <th style="padding: 0.6rem 0.5rem;">Target</th>
+                <th style="padding: 0.6rem 0.5rem;">Size</th>
+                <th style="padding: 0.6rem 0.5rem;">Status</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in backup_records %}
+            <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 0.6rem 0.5rem; font-family: monospace; white-space: nowrap;">{{ b.created_at|date:"Y-m-d H:i" }}</td>
+                <td style="padding: 0.6rem 0.5rem; font-family: monospace; font-weight: 500; color: var(--text-bright);">
+                    {% if b.is_encrypted %}🔒 {% endif %}{{ b.filename }}
+                </td>
+                <td style="padding: 0.6rem 0.5rem; white-space: nowrap;">
+                    {% if b.tier == 'MONTHLY' %}
+                    <span style="padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3);">MONTHLY</span>
+                    {% elif b.tier == 'WEEKLY' %}
+                    <span style="padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: rgba(243,156,18,0.15); color: #f39c12; border: 1px solid rgba(243,156,18,0.3);">WEEKLY</span>
+                    {% elif b.tier == 'DAILY' %}
+                    <span style="padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: rgba(52,152,219,0.15); color: #3498db; border: 1px solid rgba(52,152,219,0.3);">DAILY</span>
+                    {% else %}
+                    <span style="padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: rgba(149,165,166,0.15); color: #95a5a6; border: 1px solid rgba(149,165,166,0.3);">MANUAL</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 0.6rem 0.5rem; white-space: nowrap;">
+                    <span style="padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.7rem; background: var(--surface-light); color: var(--text-muted); border: 1px solid var(--border);">{{ b.storage_type }}</span>
+                </td>
+                <td style="padding: 0.6rem 0.5rem; white-space: nowrap;">{{ b.file_size|filesizeformat }}</td>
+                <td style="padding: 0.6rem 0.5rem; white-space: nowrap;">
+                    {% if b.status == 'SUCCESS' %}
+                    <span style="color: #2ecc71; font-weight: 600;">✓ Ready</span>
+                    {% else %}
+                    <span style="color: #e74c3c; font-weight: 600;" title="{{ b.error_message }}">✗ Failed</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right; white-space: nowrap;">
+                    <div style="display: inline-flex; gap: 0.4rem;">
+                        <a href="{% url 'download_backup_file' b.uuid %}" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.75rem;" title="Download backup archive">Download</a>
+                        <!-- ONE-CLICK RESTORE ACTION BUTTON -->
+                        <button type="button" class="nav-btn" style="border: 1px solid #e67e22; color: #e67e22; background: transparent; padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; font-weight: 600;" onclick="restoreSnapshot('{{ b.uuid }}', '{{ b.filename }}', {{ b.is_encrypted|yesno:'true,false' }})" title="One-click restore database to this backup">Restore</button>
+                        <button type="button" class="nav-btn" style="border: 1px solid #e74c3c; color: #e74c3c; background: transparent; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem;" onclick="deleteSnapshot('{{ b.uuid }}', '{{ b.filename }}')" title="Delete backup">Delete</button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% elif backups %}
+<!-- Fallback for legacy local files -->
+<div style="overflow-x: auto; margin-bottom: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+                <th style="padding: 0.6rem 0.5rem;">Filename</th>
+                <th style="padding: 0.6rem 0.5rem;">Size (MB)</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for backup in backups %}
+            <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 0.6rem 0.5rem; font-family: monospace;">{{ backup.name }}</td>
+                <td style="padding: 0.6rem 0.5rem;">{{ backup.size_mb }}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right;">
+                    <div style="display: inline-flex; gap: 0.4rem;">
+                        <a href="{% url 'backup_download' backup.name %}" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.75rem;">Download</a>
+                        <form method="post" hx-post="{% url 'backup_restore' backup.name %}" style="margin: 0; display: inline;">
+                            {% csrf_token %}
+                            <button class="nav-btn" style="border: 1px solid #e67e22; color: #e67e22; background: transparent; padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; font-weight: 600;" type="submit" onclick="return confirm('WARNING: Restoring a backup will WIPE the current database and replace it. Are you absolutely sure?')">Restore</button>
+                        </form>
+                        <form method="post" hx-post="{% url 'backup_delete' backup.name %}" style="margin: 0; display: inline;">
+                            {% csrf_token %}
+                            <button class="nav-btn" style="border: 1px solid #e74c3c; color: #e74c3c; background: transparent; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem;" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% else %}
-<p style="color: var(--text-muted); font-style: italic;">No backups found.</p>
+<p style="color: var(--text-muted); font-style: italic; font-size: 0.9rem;">No backups found in catalog yet. Initiate an export or configure scheduled backups.</p>
 {% endif %}

@@ -3,6 +3,7 @@ from .inventory import Equipment, WheatBerry
 from .presets import BreadPreset, DoughCategory, FormFactor
 from .recipe import SavedRecipe
 from .system import BackgroundTask, SystemSetting
+from .backup import BackupConfiguration, BackupRecord
 
 __all__ = [
     "SoftDeleteQuerySet",
@@ -17,4 +18,6 @@ __all__ = [
     "SystemSetting",
     "BackgroundTask",
     "SavedRecipe",
+    "BackupConfiguration",
+    "BackupRecord",
 ]

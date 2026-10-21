@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="card" style="max-width: 600px; margin: 2rem auto;"
+<div class="card" :style="activeTab === 'backups' ? 'max-width: 900px; margin: 2rem auto; transition: max-width 0.3s;' : 'max-width: 600px; margin: 2rem auto; transition: max-width 0.3s;'"
      x-data="{ 
          activeTab: 'ai',
          ai_enabled: {% if ai_enabled %}true{% else %}false{% endif %},
@@ -19,7 +19,7 @@
         </form>
     </div>
     
-    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;">
+    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; flex-wrap: wrap;">
         <button type="button" @click="activeTab = 'ai'" :style="activeTab === 'ai' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">AI Settings</button>
         <button type="button" @click="activeTab = 'ux'" :style="activeTab === 'ux' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Localization & UX</button>
         <button type="button" @click="activeTab = 'env'" :style="activeTab === 'env' ? 'color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; font-weight: 600; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;' : 'color: var(--text-muted); padding-bottom: 0.5rem; background: none; border: none; cursor: pointer;'">Environment</button>
@@ -37,7 +37,6 @@
         
         <!-- TAB: AI -->
         <div x-show="activeTab === 'ai'" x-transition>
-            <!-- Parent AI Integration Toggle -->
             <div class="switch-container">
                 <div>
                     <strong>Local AI Assistance (Gemma)</strong>
@@ -51,7 +50,6 @@
                 </label>
             </div>
 
-            <!-- Dependent Inputs (Hidden when AI is disabled) -->
             <div x-show="ai_enabled" x-transition style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
                 <div class="input-group" style="margin-bottom: 1rem;">
                     <label for="ai_api_url">API Base URL</label>
@@ -84,7 +82,6 @@
                     </div>
                 </div>
 
-                <!-- Thinking Toggles -->
                 <div class="switch-container" style="margin-bottom: 1rem;">
                     <div>
                         <strong>AI Thinking/Reasoning</strong>
@@ -98,7 +95,6 @@
                     </label>
                 </div>
 
-                <!-- Dependent Thinking Input -->
                 <div class="input-group" x-show="thinking_enabled" x-transition style="margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid var(--accent);">
                     <label for="ai_thinking_effort">Thinking Effort Level</label>
                     <select name="ai_thinking_effort" id="ai_thinking_effort" class="form-select">
@@ -237,35 +233,222 @@
 
         <!-- TAB: Data & Backups -->
         <div x-show="activeTab === 'backups'" x-transition style="display: none;">
-            <div class="input-group" style="margin-bottom: 1rem;">
-                <label for="backup_schedule">Automated Backup Schedule</label>
-                <select name="backup_schedule" id="backup_schedule" class="form-select">
-                    <option value="disabled" {% if backup_schedule == "disabled" %}selected{% endif %}>Disabled</option>
-                    <option value="daily" {% if backup_schedule == "daily" %}selected{% endif %}>Daily</option>
-                    <option value="weekly" {% if backup_schedule == "weekly" %}selected{% endif %}>Weekly</option>
-                </select>
-            </div>
-            
-            <div class="input-group" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;">
-                <label for="backup_retention">Backup Retention (Max Files to Keep)</label>
-                <input type="number" name="backup_retention" id="backup_retention" class="num-input" style="width: 100%;" value="{{ backup_retention }}" min="0">
-                <span style="font-size: 0.8rem; color: var(--text-muted);">Set to 0 to keep backups forever (not recommended).</span>
+            <!-- Quick Actions -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">📦</div>
+                        <strong style="color: var(--text-bright); display: block; margin-bottom: 0.25rem;">Instant Export</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem 0;">Download a direct, compressed PostgreSQL snapshot (.sql.gz).</p>
+                    </div>
+                    <a href="{% url 'export_data' %}" class="nav-btn primary" style="text-align: center; text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: var(--radius-sm);">Export SQL Backup</a>
+                </div>
+
+                <div style="background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">🚀</div>
+                        <strong style="color: var(--text-bright); display: block; margin-bottom: 0.25rem;">Run Backup Now</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 0.5rem 0;">Trigger immediate snapshot to active storage target.</p>
+                        <div id="runNowProgressContainer" style="display: none; margin-bottom: 0.5rem;">
+                            <div style="width: 100%; background: var(--border); height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div id="runNowProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+                            </div>
+                            <span id="runNowStatusText" style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">Initiating...</span>
+                        </div>
+                    </div>
+                    <button type="button" id="btnRunBackupNow" onclick="runBackupNow()" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: var(--radius-sm); cursor: pointer;">Run Backup Now</button>
+                </div>
+
+                <div style="background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">🔄</div>
+                        <strong style="color: var(--text-bright); display: block; margin-bottom: 0.25rem;">Restore File</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 0.5rem 0;">Upload a .sql.gz, .sql, or .enc file to restore.</p>
+                        <input type="file" id="backupFileInput" accept=".sql.gz,.sql,.enc" style="width: 100%; font-size: 0.75rem; margin-bottom: 0.4rem;">
+                        <input type="password" id="backupFilePassphrase" placeholder="Passphrase (if encrypted)" class="form-input" style="width: 100%; font-size: 0.75rem; padding: 0.3rem 0.5rem; margin-bottom: 0.4rem;">
+                    </div>
+                    <button type="button" onclick="uploadAndRestoreFile()" id="btnUploadRestore" class="nav-btn" style="border: 1px solid #e67e22; color: #e67e22; background: transparent; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: var(--radius-sm); cursor: pointer;">Upload & Restore</button>
+                </div>
             </div>
 
+            <!-- Automated GFS Backup Schedule & Destination Configuration -->
+            <div style="background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.05rem; color: var(--accent);">Automated GFS Backup Schedule & Destination</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Background advisory-locked scheduling and multi-target storage</span>
+                    </div>
+                    <label class="switch" style="margin: 0;">
+                        <input type="checkbox" id="schedEnabled" {% if backup_config.is_enabled %}checked{% endif %} onchange="toggleScheduleFields()">
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                <div id="scheduleConfigFields" style="transition: opacity 0.3s;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Backup Time (UTC)</label>
+                            <input type="text" id="schedTime" value="{{ backup_config.backup_time }}" placeholder="02:00" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">24-hour UTC (HH:MM)</span>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Weekly Promotion Day</label>
+                            <select id="schedWeeklyDay" class="form-select" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                {% for code, label in weekday_choices %}
+                                <option value="{{ code }}" {% if backup_config.weekly_day == code %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Monthly Promotion Day</label>
+                            <input type="number" min="1" max="28" id="schedMonthlyDay" value="{{ backup_config.monthly_day }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">GFS Retention (D / W / M)</label>
+                            <div style="display: flex; gap: 0.25rem;">
+                                <input type="number" min="0" id="schedKeepDaily" value="{{ backup_config.keep_daily }}" title="Keep Daily" class="form-input" style="width: 33%; font-size: 0.85rem; padding: 0.4rem; text-align: center;">
+                                <input type="number" min="0" id="schedKeepWeekly" value="{{ backup_config.keep_weekly }}" title="Keep Weekly" class="form-input" style="width: 33%; font-size: 0.85rem; padding: 0.4rem; text-align: center;">
+                                <input type="number" min="0" id="schedKeepMonthly" value="{{ backup_config.keep_monthly }}" title="Keep Monthly" class="form-input" style="width: 33%; font-size: 0.85rem; padding: 0.4rem; text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Destination Selection -->
+                    <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-bright);">Storage Destination</label>
+                            <button type="button" onclick="testConnection()" class="nav-btn" style="border: 1px solid var(--border); color: var(--text-muted); background: transparent; padding: 0.2rem 0.6rem; font-size: 0.75rem; border-radius: var(--radius-sm); cursor: pointer;">Test Connection</button>
+                        </div>
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.75rem;">
+                            <select id="schedStorageType" onchange="toggleStoragePanels()" class="form-select" style="min-width: 220px; font-size: 0.85rem; padding: 0.4rem;">
+                                {% for code, label in storage_choices %}
+                                <option value="{{ code }}" {% if backup_config.storage_type == code %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <span id="connResultBadge" style="font-size: 0.8rem;"></span>
+                        </div>
+
+                        <!-- Local Volume -->
+                        <div id="panelLocal" style="margin-bottom: 0.5rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Local Volume Path</label>
+                            <input type="text" id="schedLocalPath" value="{{ backup_config.local_path }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                        </div>
+
+                        <!-- S3 -->
+                        <div id="panelS3" style="display: none; margin-bottom: 0.5rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Bucket Name</label>
+                                    <input type="text" id="schedS3Bucket" value="{{ backup_config.s3_bucket }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Region</label>
+                                    <input type="text" id="schedS3Region" value="{{ backup_config.s3_region }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Key Prefix</label>
+                                    <input type="text" id="schedS3Prefix" value="{{ backup_config.s3_prefix }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Access Key</label>
+                                    <input type="password" id="schedS3AccessKey" value="{{ backup_config.s3_access_key }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Secret Key</label>
+                                    <input type="password" id="schedS3SecretKey" value="{{ backup_config.s3_secret_key }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Endpoint (Optional)</label>
+                                    <input type="text" id="schedS3Endpoint" value="{{ backup_config.s3_endpoint_url|default:'' }}" placeholder="https://minio.local" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CIFS -->
+                        <div id="panelCIFS" style="display: none; margin-bottom: 0.5rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Server Host / IP</label>
+                                    <input type="text" id="schedCifsServer" value="{{ backup_config.cifs_server }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Share Name</label>
+                                    <input type="text" id="schedCifsShare" value="{{ backup_config.cifs_share }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Subpath</label>
+                                    <input type="text" id="schedCifsSubpath" value="{{ backup_config.cifs_subpath }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Username</label>
+                                    <input type="text" id="schedCifsUsername" value="{{ backup_config.cifs_username }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Password</label>
+                                    <input type="password" id="schedCifsPassword" value="{{ backup_config.cifs_password }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Domain</label>
+                                    <input type="text" id="schedCifsDomain" value="{{ backup_config.cifs_domain }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NFS -->
+                        <div id="panelNFS" style="display: none; margin-bottom: 0.5rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">NFS Server Host / IP</label>
+                                    <input type="text" id="schedNfsServer" value="{{ backup_config.nfs_server }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Export Path</label>
+                                    <input type="text" id="schedNfsExport" value="{{ backup_config.nfs_export }}" placeholder="/volume1/backups" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Subpath</label>
+                                    <input type="text" id="schedNfsSubpath" value="{{ backup_config.nfs_subpath }}" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security & Alerts -->
+                    <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">AES-256-GCM Encryption Passphrase</label>
+                            <input type="password" id="schedPassphrase" value="{{ backup_config.encryption_passphrase }}" placeholder="Leave blank to disable" class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Failure Webhook Alert URL</label>
+                            <input type="url" id="schedWebhook" value="{{ backup_config.webhook_url }}" placeholder="https://discord.com/api/webhooks/..." class="form-input" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="schedPreserveConfig" {% if backup_config.preserve_config_on_restore %}checked{% endif %}>
+                        <label for="schedPreserveConfig" style="font-size: 0.8rem; color: var(--text-muted);">Preserve Schedule on Database Restore</label>
+                    </div>
+
+                    <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                        <button type="button" onclick="saveBackupConfig()" class="nav-btn primary" style="padding: 0.4rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer;">Save Schedule Configuration</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Backups Catalog Table with One-Click Restore -->
             <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 1.1rem; color: var(--accent);">Available Backups</h3>
-                <button type="button" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.4rem 1rem; border-radius: var(--radius-sm); cursor: pointer;" hx-post="{% url 'backup_create' %}">Trigger Manual Backup</button>
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--accent);">Backup Snapshots History</h3>
+                <button type="button" class="nav-btn" style="border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.3rem 0.8rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem;" hx-get="{% url 'backups_list' %}" hx-target="#backups-list-container">Refresh List</button>
             </div>
 
             <div id="backups-list-container" hx-get="{% url 'backups_list' %}" hx-trigger="load, refreshBackups from:body">
                 <!-- Loaded via HTMX -->
                 <div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 1rem auto;"></div>
-            </div>
-
-            <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                <h3 style="margin-top: 0; font-size: 1.1rem;">Upload External Backup</h3>
-                <p style="font-size: 0.9rem; color: var(--text-muted);">Upload a <code>.sql.gz</code> file to restore from another instance.</p>
-                <!-- Separate form for file upload since main form is HTMX JSON/form-data with loader -->
             </div>
         </div>
 
@@ -296,14 +479,273 @@
     <div id="settings-feedback" style="margin-top: 1.5rem;">
         <!-- Status alerts populate here -->
     </div>
-
-    <!-- Upload form outside the main settings form -->
-    <div x-show="activeTab === 'backups'" style="display: none; margin-top: 1rem;">
-        <form method="post" action="{% url 'backup_upload' %}" enctype="multipart/form-data" style="display: flex; gap: 1rem; align-items: center;">
-            {% csrf_token %}
-            <input type="file" name="backup_file" accept=".sql.gz" required style="flex-grow: 1;">
-            <button type="submit" class="nav-btn secondary" style="padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">Upload</button>
-        </form>
-    </div>
 </div>
+
+<script>
+function toggleScheduleFields() {
+    const enabled = document.getElementById('schedEnabled').checked;
+    const fields = document.getElementById('scheduleConfigFields');
+    if (fields) fields.style.opacity = enabled ? '1' : '0.5';
+}
+
+function toggleStoragePanels() {
+    const select = document.getElementById('schedStorageType');
+    if (!select) return;
+    const val = select.value;
+    const pLocal = document.getElementById('panelLocal');
+    const pS3 = document.getElementById('panelS3');
+    const pCifs = document.getElementById('panelCIFS');
+    const pNfs = document.getElementById('panelNFS');
+    if (pLocal) pLocal.style.display = val === 'LOCAL' ? 'block' : 'none';
+    if (pS3) pS3.style.display = val === 'S3' ? 'block' : 'none';
+    if (pCifs) pCifs.style.display = val === 'CIFS' ? 'block' : 'none';
+    if (pNfs) pNfs.style.display = val === 'NFS' ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    toggleStoragePanels();
+    toggleScheduleFields();
+});
+
+function runBackupNow() {
+    const btn = document.getElementById('btnRunBackupNow');
+    const pContainer = document.getElementById('runNowProgressContainer');
+    const pBar = document.getElementById('runNowProgressBar');
+    const pText = document.getElementById('runNowStatusText');
+
+    if (btn) btn.disabled = true;
+    if (pContainer) pContainer.style.display = 'block';
+    if (pBar) pBar.style.width = '20%';
+    if (pText) pText.innerText = 'Triggering backup...';
+
+    fetch('/settings/backup/run-now/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'accepted') {
+            const taskId = data.task_id;
+            const poller = setInterval(() => {
+                fetch(`/tasks/status/${taskId}/`)
+                    .then(res => res.json())
+                    .then(tdata => {
+                        if (pBar) pBar.style.width = `${tdata.progress}%`;
+                        if (pText) pText.innerText = (tdata.result && tdata.result.message) ? tdata.result.message : `Task progress: ${tdata.progress}%`;
+                        if (tdata.status === 'SUCCESS') {
+                            clearInterval(poller);
+                            if (pText) pText.innerText = 'Snapshot created successfully!';
+                            setTimeout(() => {
+                                htmx.trigger('#backups-list-container', 'refreshBackups');
+                                if (btn) btn.disabled = false;
+                                if (pContainer) pContainer.style.display = 'none';
+                            }, 1200);
+                        } else if (tdata.status === 'FAILED') {
+                            clearInterval(poller);
+                            if (pText) pText.innerText = 'Error: ' + (tdata.error || 'Failed');
+                            if (btn) btn.disabled = false;
+                        }
+                    })
+                    .catch(() => clearInterval(poller));
+            }, 1000);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to dispatch'));
+            if (btn) btn.disabled = false;
+        }
+    })
+    .catch(err => {
+        alert('Network error: ' + err);
+        if (btn) btn.disabled = false;
+    });
+}
+
+function uploadAndRestoreFile() {
+    const fileInput = document.getElementById('backupFileInput');
+    const passphraseInput = document.getElementById('backupFilePassphrase');
+    const btn = document.getElementById('btnUploadRestore');
+
+    if (!fileInput.files.length) {
+        alert('Please select a backup file first.');
+        return;
+    }
+    if (!confirm('WARNING: Restoring will completely replace the current database with the uploaded file. Proceed?')) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('backup_file', fileInput.files[0]);
+    formData.append('passphrase', passphraseInput ? passphraseInput.value.trim() : '');
+
+    if (btn) btn.disabled = true;
+
+    fetch('/settings/import/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (btn) btn.disabled = false;
+        if (data.status === 'success') {
+            alert('RESTORATION SUCCESS: ' + data.message);
+            location.reload();
+        } else {
+            alert('RESTORATION ERROR: ' + (data.error || 'Failed'));
+        }
+    })
+    .catch(err => {
+        if (btn) btn.disabled = false;
+        alert('Error: ' + err);
+    });
+}
+
+function testConnection() {
+    const badge = document.getElementById('connResultBadge');
+    if (badge) badge.innerHTML = '<span style="color: var(--accent);">Testing connection...</span>';
+
+    const payload = {
+        storage_type: document.getElementById('schedStorageType').value,
+        local_path: document.getElementById('schedLocalPath').value,
+        s3_endpoint_url: document.getElementById('schedS3Endpoint').value,
+        s3_bucket: document.getElementById('schedS3Bucket').value,
+        s3_region: document.getElementById('schedS3Region').value,
+        s3_access_key: document.getElementById('schedS3AccessKey').value,
+        s3_secret_key: document.getElementById('schedS3SecretKey').value,
+        s3_prefix: document.getElementById('schedS3Prefix').value,
+        cifs_server: document.getElementById('schedCifsServer').value,
+        cifs_share: document.getElementById('schedCifsShare').value,
+        cifs_subpath: document.getElementById('schedCifsSubpath').value,
+        cifs_username: document.getElementById('schedCifsUsername').value,
+        cifs_password: document.getElementById('schedCifsPassword').value,
+        cifs_domain: document.getElementById('schedCifsDomain').value,
+        nfs_server: document.getElementById('schedNfsServer').value,
+        nfs_export: document.getElementById('schedNfsExport').value,
+        nfs_subpath: document.getElementById('schedNfsSubpath').value,
+    };
+
+    fetch('/settings/backup/test-connection/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (badge) badge.innerHTML = `<span style="color: #2ecc71; font-weight: bold;">✓ ${data.message}</span>`;
+        } else {
+            if (badge) badge.innerHTML = `<span style="color: #e74c3c; font-weight: bold;">✗ ${data.message}</span>`;
+        }
+    })
+    .catch(err => {
+        if (badge) badge.innerHTML = `<span style="color: #e74c3c;">✗ Communication error: ${err}</span>`;
+    });
+}
+
+function saveBackupConfig() {
+    const payload = {
+        is_enabled: document.getElementById('schedEnabled').checked,
+        backup_time: document.getElementById('schedTime').value.trim(),
+        weekly_day: parseInt(document.getElementById('schedWeeklyDay').value, 10),
+        monthly_day: parseInt(document.getElementById('schedMonthlyDay').value, 10),
+        keep_daily: parseInt(document.getElementById('schedKeepDaily').value, 10),
+        keep_weekly: parseInt(document.getElementById('schedKeepWeekly').value, 10),
+        keep_monthly: parseInt(document.getElementById('schedKeepMonthly').value, 10),
+        preserve_config_on_restore: document.getElementById('schedPreserveConfig').checked,
+        storage_type: document.getElementById('schedStorageType').value,
+        local_path: document.getElementById('schedLocalPath').value,
+        s3_endpoint_url: document.getElementById('schedS3Endpoint').value,
+        s3_bucket: document.getElementById('schedS3Bucket').value,
+        s3_region: document.getElementById('schedS3Region').value,
+        s3_access_key: document.getElementById('schedS3AccessKey').value,
+        s3_secret_key: document.getElementById('schedS3SecretKey').value,
+        s3_prefix: document.getElementById('schedS3Prefix').value,
+        cifs_server: document.getElementById('schedCifsServer').value,
+        cifs_share: document.getElementById('schedCifsShare').value,
+        cifs_subpath: document.getElementById('schedCifsSubpath').value,
+        cifs_username: document.getElementById('schedCifsUsername').value,
+        cifs_password: document.getElementById('schedCifsPassword').value,
+        cifs_domain: document.getElementById('schedCifsDomain').value,
+        nfs_server: document.getElementById('schedNfsServer').value,
+        nfs_export: document.getElementById('schedNfsExport').value,
+        nfs_subpath: document.getElementById('schedNfsSubpath').value,
+        encryption_passphrase: document.getElementById('schedPassphrase').value,
+        webhook_url: document.getElementById('schedWebhook').value.trim(),
+    };
+
+    fetch('/settings/backup/config/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Backup configuration saved successfully.');
+        } else {
+            alert('Error: ' + (data.error || 'Failed to save configuration.'));
+        }
+    })
+    .catch(err => alert('Communication error: ' + err));
+}
+
+// ONE-CLICK RESTORE ACTION FROM CATALOG
+function restoreSnapshot(uuid, filename, isEncrypted) {
+    let passphrase = '';
+    if (isEncrypted) {
+        passphrase = prompt(`Snapshot '${filename}' is encrypted. Enter decryption passphrase:`);
+        if (passphrase === null) return;
+    }
+    if (!confirm(`Warning: Restoring '${filename}' will completely overwrite the current database state. Proceed?`)) {
+        return;
+    }
+
+    fetch(`/settings/backup/${uuid}/restore/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ passphrase: passphrase })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('RESTORATION SUCCESS: ' + data.message);
+            location.reload();
+        } else {
+            alert('RESTORATION ERROR: ' + (data.error || 'Failed to restore snapshot.'));
+        }
+    })
+    .catch(err => {
+        alert('Restoration error: ' + err);
+    });
+}
+
+function deleteSnapshot(uuid, filename) {
+    if (!confirm(`Permanently delete snapshot '${filename}' from storage?`)) return;
+
+    fetch(`/settings/backup/${uuid}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            htmx.trigger('#backups-list-container', 'refreshBackups');
+        } else {
+            alert('Delete error: ' + data.error);
+        }
+    })
+    .catch(err => alert('Communication error deleting snapshot: ' + err));
+}
+</script>
 {% endblock %}

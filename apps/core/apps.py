@@ -77,3 +77,7 @@ class CoreConfig(AppConfig):
         if not connected:
             logger.critical("[Startup] - Database - Max retries exceeded. Database connection failed.")
             sys.exit("[Startup] - Database - Critical Error: Database connection failed.")
+
+        # 3. Start automated GFS backup daemon thread
+        from apps.core.tasks.backups import start_backup_scheduler_task
+        start_backup_scheduler_task()

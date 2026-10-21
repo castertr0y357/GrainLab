@@ -1,126 +1,151 @@
-import datetime
-import glob
-import os
-import subprocess
-
+import logging
+import threading
+import time
+from typing import Callable, Any
 from celery import shared_task
 from django.conf import settings
-from django.core.cache import cache
+from django.db import connection, transaction
+from apps.core.models.backup import BackupConfiguration, BackupRecord
+from apps.core.models.system import BackgroundTask
 
-from apps.core.models.system import SystemSetting
-
-BACKUP_DIR = os.path.join(settings.BASE_DIR, "backups")
-
-
-def get_db_env():
-    """Returns environment variables dictionary for pg commands."""
-    db = settings.DATABASES["default"]
-    env = os.environ.copy()
-    if db.get("PASSWORD"):
-        env["PGPASSWORD"] = str(db["PASSWORD"])
-    return env, db
+logger = logging.getLogger(__name__)
 
 
-@shared_task
-def create_backup():
-    """Creates a pg_dump backup and saves it to the backups directory."""
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"grainlab_backup_{timestamp}.sql.gz"
-    filepath = os.path.join(BACKUP_DIR, filename)
+# ---------------------------------------------------------------------------
+# Background Task Progress Helpers
+# ---------------------------------------------------------------------------
 
-    env, db = get_db_env()
-    host = db.get("HOST", "localhost")
-    port = db.get("PORT", "5432")
-    user = db.get("USER", "postgres")
-    name = db.get("NAME", "postgres")
-
-    command = f"pg_dump -h {host} -p {port} -U {user} -d {name} --clean --if-exists --no-owner --no-privileges | gzip > '{filepath}'"
-    result = subprocess.run(command, shell=True, capture_output=True, text=True, env=env)
-
-    if result.returncode != 0:
-        raise Exception(f"Backup failed: {result.stderr}")
-
-    # Automatically prune old backups after creating a new one
-    prune_backups()
-
-    return f"Created backup: {filename}"
+def update_progress_factory(task_id: Any) -> Callable[..., None]:
+    """Generates a thread-safe helper to update task progress."""
+    def update_progress(progress_val: int, status: str = 'RUNNING', error_msg: str = None, result_data: Any = None) -> None:
+        try:
+            with transaction.atomic():
+                task = BackgroundTask.objects.get(id=task_id)
+                task.progress = progress_val
+                task.status = status
+                if error_msg is not None:
+                    task.error = error_msg
+                if result_data is not None:
+                    task.result = result_data
+                task.save()
+        except Exception as e:
+            logger.error(f"TaskRegistry - Error - Failed to update task {task_id} progress: {e}")
+    return update_progress
 
 
-@shared_task
-def restore_backup(filename: str):
-    """Restores a backup and wipes the existing database."""
-    filepath = os.path.join(BACKUP_DIR, filename)
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"Backup file not found: {filename}")
-
-    env, db = get_db_env()
-    host = db.get("HOST", "localhost")
-    port = db.get("PORT", "5432")
-    user = db.get("USER", "postgres")
-    name = db.get("NAME", "postgres")
-
-    # Set maintenance mode flag
-    cache.set("MAINTENANCE_MODE", True, timeout=None)
-
+def run_task_in_thread(task_id: Any, func: Callable[..., None], *args: Any, **kwargs: Any) -> None:
+    """Wrapper running the task and ensuring database connection cleanup."""
+    update_progress = update_progress_factory(task_id)
+    update_progress(0, status='RUNNING')
+    
     try:
-        # We can restore by piping zcat/gunzip to psql.
-        command = f"zcat '{filepath}' | psql -h {host} -p {port} -U {user} -d {name}"
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, env=env)
-
-        if result.returncode != 0:
-            raise Exception(f"Restore failed: {result.stderr}")
+        func(update_progress, *args, **kwargs)
+        task = BackgroundTask.objects.get(id=task_id)
+        if task.status == 'RUNNING':
+            update_progress(100, status='SUCCESS')
+    except Exception as e:
+        logger.error(f"TaskRegistry - Error - Task {task_id} execution failed: {e}", exc_info=True)
+        update_progress(100, status='FAILED', error_msg=str(e))
     finally:
-        # ALWAYS release the maintenance lock
-        cache.delete("MAINTENANCE_MODE")
+        import sys
+        if 'test' not in sys.argv:
+            connection.close()
 
-    return f"Restored backup: {filename}"
+
+def submit_backup_task(task_name: str, func: Callable[..., None], *args: Any, **kwargs: Any) -> BackgroundTask:
+    """Submits a background task executed via a daemon thread."""
+    task = BackgroundTask.objects.create(status=BackgroundTask.Status.RUNNING, progress=0)
+    import sys
+    if 'test' in sys.argv:
+        run_task_in_thread(task.id, func, *args, **kwargs)
+    else:
+        thread = threading.Thread(
+            target=run_task_in_thread,
+            args=(task.id, func) + args,
+            kwargs=kwargs,
+            daemon=True
+        )
+        thread.start()
+    return task
 
 
-@shared_task
-def prune_backups():
-    """Deletes oldest backups if we exceed the retention limit."""
-    retention_count = int(SystemSetting.get_val("backup_retention", default="14"))
+# ---------------------------------------------------------------------------
+# Scheduler Daemon Loop
+# ---------------------------------------------------------------------------
 
-    # If 0, we don't prune
-    if retention_count == 0:
-        return
+def backup_scheduler_loop():
+    """Periodic daemon loop checking every 60s if a scheduled GFS backup is due."""
+    logger.info("BackupScheduler - Started automated GFS backup daemon thread.")
+    while True:
+        try:
+            from django.utils import timezone
+            from apps.core.services.backup_service import determine_gfs_tier, execute_backup
 
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-    backups = glob.glob(os.path.join(BACKUP_DIR, "grainlab_backup_*.sql.gz"))
-    backups.sort(key=os.path.getctime)
+            config = BackupConfiguration.get_config()
+            if config.is_enabled:
+                now = timezone.now()
+                target_hour, target_min = map(int, config.backup_time.split(':'))
+                is_due_time = (now.hour > target_hour) or (now.hour == target_hour and now.minute >= target_min)
+                not_run_today = (config.last_run_at is None) or (config.last_run_at.date() < now.date())
 
-    # If we have more backups than retention limit, delete the oldest
-    while len(backups) > retention_count:
-        oldest = backups.pop(0)
-        os.remove(oldest)
+                if is_due_time and not_run_today:
+                    with connection.cursor() as cursor:
+                        cursor.execute("SELECT pg_try_advisory_lock(987654321);")
+                        locked = cursor.fetchone()[0]
 
+                    if locked:
+                        try:
+                            config.refresh_from_db()
+                            if (config.last_run_at is None) or (config.last_run_at.date() < now.date()):
+                                tier = determine_gfs_tier(now, config)
+                                logger.info(f"BackupScheduler - Executing scheduled {tier} database backup...")
+                                execute_backup(tier=tier, config=config)
+                                logger.info(f"BackupScheduler - Scheduled {tier} database backup succeeded.")
+                        finally:
+                            with connection.cursor() as cursor:
+                                cursor.execute("SELECT pg_advisory_unlock(987654321);")
+        except Exception as e:
+            logger.error(f"BackupScheduler - Error in scheduler loop: {e}", exc_info=True)
+
+        time.sleep(60)
+
+
+def start_backup_scheduler_task():
+    thread = threading.Thread(target=backup_scheduler_loop, daemon=True, name="GrainLabBackupSchedulerThread")
+    thread.start()
+    logger.info("BackupScheduler - Dispatched automated GFS backup daemon thread.")
+
+
+# ---------------------------------------------------------------------------
+# Celery compatibility bridges
+# ---------------------------------------------------------------------------
 
 @shared_task
 def scheduled_backup_check():
-    """
-    Runs every hour (via Celery beat).
-    Checks the SystemSetting 'backup_schedule' to see if we should run a backup.
-    """
-    schedule = SystemSetting.get_val("backup_schedule", default="disabled")
+    """Celery beat task hook running GFS check if Celery is used."""
+    from django.utils import timezone
+    from apps.core.services.backup_service import determine_gfs_tier, execute_backup
 
-    if schedule == "disabled":
+    config = BackupConfiguration.get_config()
+    if not config.is_enabled:
         return
 
-    # Get last backup time
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-    backups = glob.glob(os.path.join(BACKUP_DIR, "grainlab_backup_*.sql.gz"))
-    backups.sort(key=os.path.getctime)
+    now = timezone.now()
+    target_hour, target_min = map(int, config.backup_time.split(':'))
+    is_due_time = (now.hour > target_hour) or (now.hour == target_hour and now.minute >= target_min)
+    not_run_today = (config.last_run_at is None) or (config.last_run_at.date() < now.date())
 
-    now = datetime.datetime.now()
+    if is_due_time and not_run_today:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(987654321);")
+            locked = cursor.fetchone()[0]
 
-    if not backups:
-        # No backups exist, trigger one immediately
-        create_backup.delay()
-        return
-
-    latest_backup_time = datetime.datetime.fromtimestamp(os.path.getctime(backups[-1]))
-    hours_since_last = (now - latest_backup_time).total_seconds() / 3600
-
-    if schedule == "daily" and hours_since_last >= 24 or schedule == "weekly" and hours_since_last >= 168:
-        create_backup.delay()
+        if locked:
+            try:
+                config.refresh_from_db()
+                if (config.last_run_at is None) or (config.last_run_at.date() < now.date()):
+                    tier = determine_gfs_tier(now, config)
+                    execute_backup(tier=tier, config=config)
+            finally:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT pg_advisory_unlock(987654321);")

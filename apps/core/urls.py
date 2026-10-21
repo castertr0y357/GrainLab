@@ -32,6 +32,14 @@ urlpatterns = [
     path("settings/save/", views.SaveSettingsView.as_view(), name="save_settings"),
     path("settings/discover-models/", views.DiscoverModelsView.as_view(), name="discover_models"),
     # Backup Management Routes
+    path("settings/export/", views.export_data, name="export_data"),
+    path("settings/import/", views.import_data, name="import_data"),
+    path("settings/backup/config/", views.save_backup_config_api, name="save_backup_config_api"),
+    path("settings/backup/test-connection/", views.test_backup_storage_api, name="test_backup_storage_api"),
+    path("settings/backup/run-now/", views.run_backup_now_api, name="run_backup_now_api"),
+    path("settings/backup/<uuid:uuid>/download/", views.download_backup_file, name="download_backup_file"),
+    path("settings/backup/<uuid:uuid>/restore/", views.restore_backup_record_api, name="restore_backup_record_api"),
+    path("settings/backup/<uuid:uuid>/delete/", views.delete_backup_record_api, name="delete_backup_record_api"),
     path("settings/backups/status/", views.BackupsStatusView.as_view(), name="backups_status"),
     path("settings/backups/list/", views.BackupsListPartial.as_view(), name="backups_list"),
     path("settings/backups/create/", views.BackupCreateView.as_view(), name="backup_create"),
@@ -92,3 +100,4 @@ urlpatterns = [
     path("ai-recipe-tweaks/", views.AiRecipeTweaksView.as_view(), name="ai_recipe_tweaks"),
     path("ai-apply-tweak/", views.AiApplyTweakView.as_view(), name="ai_apply_tweak"),
 ]
+
