@@ -8,6 +8,6 @@ resources:
 
 # Production image configuration
 images:
-  - name: ghcr.io/your-username/grainlab
-    newName: ghcr.io/your-username/grainlab
+  - name: ghcr.io/castertr0y357/grainlab
+    newName: ghcr.io/castertr0y357/grainlab
     newTag: latest

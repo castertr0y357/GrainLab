@@ -41,7 +41,7 @@ spec:
               memory: 128Mi
       containers:
         - name: beat
-          image: ghcr.io/your-username/grainlab:latest
+          image: ghcr.io/castertr0y357/grainlab:latest
           imagePullPolicy: IfNotPresent
           command:
             - celery

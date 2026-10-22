@@ -398,3 +398,4 @@
 - [x] Refactored seed_db.py data into JSON fixtures.
 - [x] Removed dead LLM batch generation functions and their associated tests.
 - [x] Installed and configured Ruff and pre-commit for formatting and linting, fixing over 860 style issues project-wide.
+- [x] Switched local tracking and CI/CD workflows to `main` branch, and updated all Kubernetes manifests (`k8s/base`, `k8s/overlays/production`) and ArgoCD application configuration to point to `ghcr.io/castertr0y357/grainlab:latest`.
