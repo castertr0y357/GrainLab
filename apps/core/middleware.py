@@ -191,3 +191,37 @@ class LoginRequiredMiddleware:
             return redirect(f"{login_url}?next={request.path}")
 
         return self.get_response(request)
+
+
+class MaintenanceModeMiddleware:
+    """
+    Middleware that returns a 503 Service Unavailable if the maintenance mode flag
+    is set in the cache (e.g., during a database restore).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.bypass_paths = (
+            "/settings/backups/status/",
+            "/readyz",
+            "/readyz/",
+            "/livez",
+            "/livez/",
+            "/healthz",
+            "/healthz/",
+            "/metrics",
+            "/metrics/",
+        )
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        from django.core.cache import cache
+        from django.template.loader import render_to_string
+
+        if cache.get("MAINTENANCE_MODE"):
+            if request.path_info in self.bypass_paths:
+                return self.get_response(request)
+
+            content = render_to_string("maintenance.html", request=request)
+            return HttpResponse(content, status=503)
+
+        return self.get_response(request)

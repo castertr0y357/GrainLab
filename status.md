@@ -400,3 +400,4 @@
 - [x] Installed and configured Ruff and pre-commit for formatting and linting, fixing over 860 style issues project-wide.
 - [x] Switched local tracking and CI/CD workflows to `main` branch, and updated all Kubernetes manifests (`k8s/base`, `k8s/overlays/production`) and ArgoCD application configuration to point to `ghcr.io/castertr0y357/grainlab:latest`.
 - [x] Harden database settings configuration to support discrete environment variables (POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, DATABASE_HOST, DATABASE_PORT) and add defensive try/except handling around url.port and port parsing to prevent ValueError crashes on boot.
+- [x] Implement missing BackupsStatusView in pps/core/views/backups.py and MaintenanceModeMiddleware in pps/core/middleware.py for system backup status polling and maintenance mode handling.

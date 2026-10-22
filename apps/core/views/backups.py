@@ -485,6 +485,14 @@ def delete_backup_record_api(request: HttpRequest, uuid: Any) -> JsonResponse:
         return JsonResponse({'error': str(e)}, status=500)
 
 
+class BackupsStatusView(View):
+    """Returns maintenance mode status for backup/restore polling."""
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
+        from django.core.cache import cache
+        return JsonResponse({"maintenance_mode": bool(cache.get("MAINTENANCE_MODE"))})
+
+
 class BackupsListPartial(LoginRequiredMixin, TemplateView):
     """Renders partial backup history table with one-click restore."""
     template_name = "partials/backups_list.html"
