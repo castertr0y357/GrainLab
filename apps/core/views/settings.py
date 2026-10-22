@@ -1,9 +1,11 @@
+import json
 import logging
-
 import requests
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from apps.core import gemma
 from apps.core.models import (
@@ -12,6 +14,7 @@ from apps.core.models import (
     BackupConfiguration,
     BackupRecord,
 )
+from apps.core.middleware import metrics, set_debug_logging, is_debug_enabled
 
 logger = logging.getLogger("grainlab.views")
 
@@ -43,7 +46,11 @@ class SettingsPageView(View):
             "soft_delete_retention_days": SystemSetting.get_val("soft_delete_retention_days", "30"),
             "export_format_default": SystemSetting.get_val("export_format_default", "json"),
             "backup_schedule": SystemSetting.get_val("backup_schedule", "disabled"),
-            "backup_retention": SystemSetting.get_val("backup_retention", "14"),`n            "backup_config": BackupConfiguration.get_config(),`n            "backup_records": BackupRecord.objects.all().order_by("-created_at")[:50],`n            "storage_choices": BackupConfiguration.STORAGE_CHOICES,`n            "weekday_choices": BackupConfiguration.WEEKDAY_CHOICES,
+            "backup_retention": SystemSetting.get_val("backup_retention", "14"),
+            "backup_config": BackupConfiguration.get_config(),
+            "backup_records": BackupRecord.objects.all().order_by("-created_at")[:50],
+            "storage_choices": BackupConfiguration.STORAGE_CHOICES,
+            "weekday_choices": BackupConfiguration.WEEKDAY_CHOICES,
             # Inventory for dropdowns
             "mixers": Equipment.objects.filter(equipment_type="mixer", deleted_at__isnull=True),
             "proofing_environments": Equipment.objects.filter(equipment_type="proofing_box", deleted_at__isnull=True),
@@ -127,7 +134,6 @@ class DiscoverModelsView(View):
 
         current_model = SystemSetting.get_val("ai_model_name", "gemma:12b")
 
-        # Try to form the models URL
         models_url = api_url.split("/chat/completions")[0]
         if models_url.endswith("/v1"):
             models_url = models_url + "/models"
@@ -141,14 +147,12 @@ class DiscoverModelsView(View):
             headers["Authorization"] = f"Bearer {api_key}"
 
         try:
-            # Short timeout to avoid hanging the UI
             response = requests.get(models_url, headers=headers, timeout=3)
             if response.status_code == 200:
                 data = response.json()
                 if "data" in data:
                     models = [m.get("id") for m in data["data"] if "id" in m]
                 elif "models" in data:
-                    # Some Ollama raw endpoints return {"models": [{"name": ...}]}
                     models = [m.get("name") for m in data["models"] if "name" in m]
             else:
                 error_msg = f"API returned status {response.status_code}"
@@ -163,3 +167,26 @@ class DiscoverModelsView(View):
         }
         return render(request, "partials/model_discovery_output.html", context)
 
+
+@require_http_methods(["GET"])
+def metrics_view(request: HttpRequest) -> HttpResponse:
+    """Prometheus metrics scrape endpoint."""
+    return HttpResponse(
+        metrics.generate_metrics(),
+        content_type="text/plain; version=0.0.4; charset=utf-8"
+    )
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def debug_logging_toggle_api(request: HttpRequest) -> JsonResponse:
+    """Get or toggle runtime debug logging."""
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body.decode('utf-8'))
+            enabled = bool(body.get('enabled', False))
+            set_debug_logging(enabled)
+            return JsonResponse({'debug_enabled': is_debug_enabled(), 'message': f'Debug logging set to {enabled}'})
+        except Exception as e:
+            return JsonResponse({'error': f'Invalid request: {e}'}, status=400)
+    return JsonResponse({'debug_enabled': is_debug_enabled()})

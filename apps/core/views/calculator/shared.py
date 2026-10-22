@@ -1,3 +1,5 @@
+import json
+import logging
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.core.models import SavedRecipe
@@ -7,6 +9,9 @@ from apps.core.services.calculator.session import (
     get_engines_archetypes_json,
     get_engines_ff_json,
 )
+from apps.core.middleware import metrics
+
+logger = logging.getLogger("grainlab.recipes")
 
 
 def save_recipe(request):
@@ -28,9 +33,7 @@ def save_recipe(request):
                     recipe_context[key] = model_to_dict(value)
 
         except Exception as e:
-            import logging
-
-            logging.getLogger(__name__).error(f"Error calculating final recipe: {e}")
+            logger.error(f"[Recipe] - [Compile] - Error calculating final recipe: {e}", exc_info=True)
             recipe_context = {}
 
         category_slug = state.get("selected_master", "unknown")
@@ -62,14 +65,21 @@ def save_recipe(request):
             compiled_data=recipe_context,
         )
 
+        logger.info(
+            f"[Recipe] - [Save] - Successfully compiled and saved formula '{final_name}' (ID: {formula.id})",
+            extra={
+                "action": "recipe.save",
+                "context": {"recipe_id": str(formula.id), "category": category_slug, "archetype": archetype_slug}
+            }
+        )
+        metrics.record_action("recipe.save")
+
         return redirect("shared_recipe", recipe_id=formula.id)
     return redirect("calculator_phase1")
 
 
 def shared_recipe(request, recipe_id):
     formula = get_object_or_404(SavedRecipe, id=recipe_id)
-
-    import json
 
     process_recs = formula.configuration_state.get("process_recommendations", {})
 

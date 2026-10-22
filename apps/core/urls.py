@@ -9,6 +9,11 @@ from apps.core.views.calculator.phase4 import Phase4View
 from apps.core.views.calculator.shared import save_recipe, shared_recipe
 
 urlpatterns = [
+    # Observability & Metrics
+    path("metrics", views.metrics_view, name="metrics_view"),
+    path("metrics/", views.metrics_view, name="metrics_view_slash"),
+    path("api/observability/debug/", views.debug_logging_toggle_api, name="debug_logging_toggle_api"),
+
     # Calculator Routes (Phases 1-4)
     path("", Phase1View.as_view(), name="calculator_phase1"),
     path("phase-2/<slug:category>/", Phase2View.as_view(), name="calculator_phase2"),
@@ -100,4 +105,3 @@ urlpatterns = [
     path("ai-recipe-tweaks/", views.AiRecipeTweaksView.as_view(), name="ai_recipe_tweaks"),
     path("ai-apply-tweak/", views.AiApplyTweakView.as_view(), name="ai_apply_tweak"),
 ]
-

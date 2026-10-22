@@ -165,7 +165,9 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
 
-# Structured logger system with request correlation ID tracking
+# Structured logger system with request correlation ID tracking for Loki & Prometheus
+APP_LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -175,6 +177,9 @@ LOGGING = {
         },
     },
     "formatters": {
+        "json": {
+            "()": "apps.core.middleware.LokiJsonFormatter",
+        },
         "standard": {
             "format": "[%(asctime)s] [%(correlation_id)s] [%(name)s:%(levelname)s] - %(message)s",
         },
@@ -183,23 +188,33 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "filters": ["correlation_id"],
-            "formatter": "standard",
+            "formatter": "standard" if os.environ.get("CONSOLE_PRETTY", "").lower() in ("true", "1") else "json",
         },
         "file": {
             "class": "logging.FileHandler",
             "filename": logs_dir / "grainlab.log",
             "filters": ["correlation_id"],
-            "formatter": "standard",
+            "formatter": "json",
         },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": APP_LOG_LEVEL,
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "file"],
+            "handlers": ["console"],
             "level": "INFO",
+            "propagate": False,
         },
         "grainlab": {
-            "handlers": ["console", "file"],
-            "level": "DEBUG",
+            "handlers": ["console"],
+            "level": APP_LOG_LEVEL,
+            "propagate": False,
+        },
+        "apps.core": {
+            "handlers": ["console"],
+            "level": APP_LOG_LEVEL,
             "propagate": False,
         },
     },
