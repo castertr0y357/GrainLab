@@ -50,9 +50,6 @@ spec:
             - worker
             - -l
             - info
-          env:
-            - name: DATABASE_URL
-              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(POSTGRES_DB)"
           envFrom:
             - configMapRef:
                 name: grainlab-config

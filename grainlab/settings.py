@@ -68,19 +68,45 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "grainlab.wsgi.application"
 
-# Database configuration: check if DATABASE_URL is available (PostgreSQL)
-# Fallback to local SQLite if it's missing or if we run tests locally.
+# Database configuration: support discrete variables or DATABASE_URL (PostgreSQL)
+# Fallback to local SQLite if neither is configured (e.g. local offline development).
 DATABASE_URL = os.getenv("DATABASE_URL")
+db_name = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME")
+db_user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER")
+db_password = os.getenv("POSTGRES_PASSWORD") or os.getenv("DB_PASSWORD")
+db_host = os.getenv("DATABASE_HOST") or os.getenv("POSTGRES_HOST") or os.getenv("DB_HOST")
+raw_port = os.getenv("DATABASE_PORT") or os.getenv("POSTGRES_PORT") or os.getenv("DB_PORT", "5432")
+
+try:
+    default_db_port = int(raw_port)
+except (ValueError, TypeError):
+    default_db_port = 5432
+
 if DATABASE_URL:
     url = urllib.parse.urlparse(DATABASE_URL)
+    try:
+        parsed_port = url.port or default_db_port
+    except (ValueError, TypeError):
+        parsed_port = default_db_port
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": url.path[1:],
-            "USER": url.username,
-            "PASSWORD": url.password,
-            "HOST": url.hostname,
-            "PORT": url.port or 5432,
+            "NAME": url.path.lstrip("/"),
+            "USER": urllib.parse.unquote(url.username) if url.username else (db_user or "grainlab_user"),
+            "PASSWORD": urllib.parse.unquote(url.password) if url.password else (db_password or ""),
+            "HOST": url.hostname or (db_host or "db"),
+            "PORT": parsed_port,
+        }
+    }
+elif db_host or db_name:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name or "grainlab",
+            "USER": db_user or "grainlab_user",
+            "PASSWORD": db_password or "",
+            "HOST": db_host or "db",
+            "PORT": default_db_port,
         }
     }
 else:
