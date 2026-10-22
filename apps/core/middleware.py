@@ -151,14 +151,20 @@ class LoginRequiredMiddleware:
             "shared_recipe",
             "metrics_view",
             "debug_logging_toggle_api",
+            "readyz",
+            "readyz_slash",
+            "livez",
+            "livez_slash",
+            "healthz",
+            "healthz_slash",
         }
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         if "test" in sys.argv:
             return self.get_response(request)
 
-        # Allow /metrics without authentication for Prometheus scraping
-        if request.path_info in ("/metrics", "/metrics/"):
+        # Allow /metrics, /readyz, /livez, /healthz without authentication
+        if request.path_info in ("/metrics", "/metrics/", "/readyz", "/readyz/", "/livez", "/livez/", "/healthz", "/healthz/"):
             return self.get_response(request)
 
         if not request.user.is_authenticated:
